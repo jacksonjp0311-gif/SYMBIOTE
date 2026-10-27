@@ -2,6 +2,20 @@
 
 ## v1 candidate — unreleased
 
+- Value-of-symbiosis decisions and receiver-originated reciprocal receipts.
+  Benefit requires local evidence, adoption, a behavior change, a strictly
+  lower declared cost than the equal-resource isolated control, and no
+  certification bypass. Restart durability is a separate flag. Quarantine,
+  agreement and promotion are not benefit.
+- Width-3 affine mechanism check: all 16 canonical truths take 4 oracle queries
+  under independent maximin, fixed basis, a true hint and a bias-flipped hint.
+  Hints do not shrink support. Incorrect certificates: 0. The value function
+  returns DEFER. This is not query-transfer protocol 001 and not the
+  preregistered protocol 002 cohort.
+- Configured cognitive episodes emit a MEASURE record when no receiver receipt
+  is present. `partner_benefits_verified` stays 0. Inert offers are unchanged.
+- CI run 40545912958 at `4da99383` passed Ubuntu, Windows and macOS. That run
+  does not cover later commits. The cancelled hour remains HOLD.
 - Configured native cognitive episodes with bounded authorized sensing,
   independent local evaluation, persistent learning and reciprocal inert offers.
 - Exact graph query-policy transfer, held-out graph facts, durable strategy

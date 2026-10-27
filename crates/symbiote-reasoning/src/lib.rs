@@ -5,6 +5,7 @@
 pub mod planning;
 pub mod query_strategy;
 pub mod structural;
+pub mod symbiosis;
 
 use serde::Serialize;
 use std::collections::BTreeSet;

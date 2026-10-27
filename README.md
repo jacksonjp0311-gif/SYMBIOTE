@@ -20,12 +20,12 @@ local demonstrations.
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
 > **Development handoff — v1.0.0 candidate, not a stable v1 release.**
-> Implementation and compact evidence are pushed for continued work with Grok.
-> The hour campaign was cancelled at the user's request after 71/120 cycles
-> (35m33s), with verified cleanup; its result remains HOLD.
-> [Start with the Grok handoff](docs/GROK_HANDOFF.md). The latest verified public
-> binary release remains v0.5.1. New macOS verification fixes and the public-binary
-> test driver still need current-head CI.
+> CI run [40545912958](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40545912958)
+> at `4da99383` passed Ubuntu, Windows, and macOS. The cancelled hour campaign
+> remains HOLD at 71/120 cycles. The verified public binary remains v0.5.1.
+> [Start with the Grok handoff](docs/GROK_HANDOFF.md).
+> A value-of-symbiosis check can decline a redundant exchange. It does not
+> establish a reciprocal-efficiency gain.
 
 
 ## Get started
@@ -123,7 +123,7 @@ From a Windows checkout, the single entrypoint also supports:
 
 ## How it works
 
-**SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN → CONTRIBUTE → REASSESS**
+**SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN → CONTRIBUTE → MEASURE → REASSESS**
 
 SYMBIOTE treats observations, conditional inferences and unverified hypotheses as
 different kinds of information. A received strategy cannot become trusted merely
@@ -138,9 +138,11 @@ because a partner supplied it or because it matches a few examples.
 3. **Learn durably.** Promote evaluated declarative models into a versioned ledger
    with identity, applicability, provenance and evidence. Corruption or an
    unsupported claim fails explicitly.
-4. **Contribute and reassess.** Offer useful knowledge to the partner, which retains
-   adoption authority. Counterexamples revoke invalidated knowledge without
-   deleting its history.
+4. **Contribute, measure and reassess.** Offer useful knowledge to the partner,
+   which retains adoption authority. A configured episode records a `MEASURE`
+   event when no receiver-originated receipt is available. Quarantine and
+   promotion are not partner benefit. Counterexamples revoke invalidated
+   knowledge without deleting its history.
 
 The structural experiment uses two separate learning algorithms: exact hypothesis
 enumeration and Gaussian elimination over binary observations. It evaluates
@@ -230,10 +232,10 @@ behavior explicit without fragmenting the system into placeholder packages.
 
 | Path | Responsibility |
 | --- | --- |
-| `crates/symbiote-reasoning/` | Exact hidden-state and affine inference, conservative graph certificates, active queries and conditional prediction |
+| `crates/symbiote-reasoning/` | Exact hidden-state and affine inference, conservative graph certificates, active queries, conditional prediction and the value-of-symbiosis decision |
 | `crates/symbiote-protocol/` | Authorized local sessions, separate TLS 1.3 API, resource limits, sensors and revocation |
-| `crates/symbiote-memory/` | Private identity, evaluated knowledge, operational journals, idempotency, rollback and lifecycle integrity |
-| `crates/symbiote-runtime/` | Native peers, configured knowledge service, active learning, experiments and isolated controls |
+| `crates/symbiote-memory/` | Private identity, evaluated knowledge, operational journals, reciprocal evaluation receipts, idempotency, rollback and lifecycle integrity |
+| `crates/symbiote-runtime/` | Native peers, configured knowledge service, active learning, experiments, isolated controls and redundant-exchange measurement |
 | `docs/` | Architecture, mathematics, operations, provenance, research and version objectives |
 | `docs/assets/` | Original project artwork and its provenance |
 | `docs/reference/` | Preserved upstream algorithm used by developer parity checks |
@@ -250,9 +252,12 @@ behavior explicit without fragmenting the system into placeholder packages.
 Development is continuing beyond v0.5.1. The candidate adds a configured native
 cognitive runtime, portable query strategies with durable revocation, controlled
 three-peer TLS topology, outcome-conditioned exploration and strategy-aware
-backup/migration. These capabilities have focused engineering checks; the new
-prospective transfer study and source-frozen one-hour continuity campaign must
-finish before release claims are updated.
+backup/migration. The runtime can also score a proposed exchange against an
+equal-query isolated control and refuse to call quarantine a benefit. These are
+focused engineering checks. Query-transfer protocol 001 remains
+`NOT_DEMONSTRATED`. The source-frozen one-hour campaign remains HOLD. Neither
+is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
+is preregistered and has not been run.
 
 [Native architecture](docs/NATIVE_ARCHITECTURE.md) ·
 [Run your configured agent](docs/LIVE_RUNTIME.md) ·

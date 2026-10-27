@@ -7,6 +7,7 @@ pub mod backup;
 pub mod knowledge;
 pub mod maintenance;
 pub mod operational;
+pub mod reciprocal;
 pub mod strategy;
 
 use serde::{Deserialize, Serialize};

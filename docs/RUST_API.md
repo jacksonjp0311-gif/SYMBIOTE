@@ -23,7 +23,10 @@ not reset identity, relax grants or initialize a replacement for corrupt state.
 | `policy_status`, `policy_transition` | Inspect or explicitly advance an offline policy epoch |
 
 The reusable reasoning, protocol and memory types are documented in their Rust
-sources. Build the documentation with `cargo doc --workspace --no-deps --locked`.
+sources. `symbiote_reasoning::symbiosis` and `symbiote_memory::reciprocal` are
+part of that surface. `symbiote_runtime::reciprocal::redundant_affine_exchange`
+runs the width-bounded mechanism check. Build the documentation with
+`cargo doc --workspace --no-deps --locked`.
 Research controllers such as `transfer`, `topology_research` and
 `exploration_research` are experimental, versioned receipt producers; they are
 not a promise of stable study design or broad scientific applicability.

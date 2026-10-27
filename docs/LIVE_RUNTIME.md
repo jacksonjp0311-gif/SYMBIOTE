@@ -65,6 +65,11 @@ evaluation budget or count recovered old learning as a new result.
   independent local fixture, and count only fresh durable promotions as learning.
 - **Contribute:** offer a useful already-validated model to another permitted
   participant. An accepted quarantine is not proof that the partner adopted it.
+- **Measure:** record whether a receiver-originated reciprocal receipt verified
+  a strict improvement over an equal-resource isolated control. With no receipt,
+  the episode's decision is `OBSERVE` and partner benefit stays unverified.
+  The value function can decline a redundant proposal; this episode does not
+  use that decline to suppress an already qualified inert offer.
 - **Reassess:** retain decisions, transport/application outcomes, failures and
   learning receipts. Later choices can use this history without resetting identity.
 

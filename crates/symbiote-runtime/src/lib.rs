@@ -2,6 +2,7 @@
 pub mod exploration;
 pub mod exploration_research;
 pub mod network;
+pub mod reciprocal;
 pub mod service;
 pub mod topology_research;
 pub mod transfer;

@@ -81,6 +81,40 @@ Acceptance into quarantine is delivery evidence. The receiving owner keeps
 evaluation and adoption authority. Benefits to the sender and receiver are
 reported separately; a negative total cost result stays negative.
 
+## Value of an exchange
+
+`symbiote_reasoning::symbiosis` scores one participant at a time:
+
+`U = expected_gain - transfer_cost - verification_cost - regression_risk`
+
+The eight decisions are Connect, Observe, RequestKnowledge, OfferKnowledge,
+Experiment, Defer, Abstain and Disconnect. Abstain is the result when no
+operator grant is present. A decision never creates a grant. Knowledge is
+offered, requested or exchanged only for Connect, RequestKnowledge and
+OfferKnowledge. Zero utility defers. A remote participant with negative utility
+also defers, even when the local score is positive.
+
+`symbiote_memory::reciprocal` seals a receiver-originated receipt. The binding
+is SHA-256 over the canonical body, including both identities and the knowledge
+digests from before the exchange. Receiver benefit is true only when validation
+is local evidence, the receiver adopted the record, later behavior changed, the
+exchange path cost is strictly below the isolated control, and certification
+was not bypassed. Durable benefit also requires `persisted_after_restart` to
+be true. Mutual research success requires the sender's return net to be
+strictly positive as well. Missing restart evidence is not durability.
+
+The configured cognitive episode emits `MEASURE` with decision `OBSERVE` while
+no such receipt exists. Its summary still reports `partner_benefits_verified`
+as 0. The qualified offer path is unchanged: an inert quarantine is delivery,
+not benefit.
+
+A width-3 enumeration of all 16 affine truths finds that a true hint and a
+wrong hint both take the same 4 oracle queries as independent maximin and the
+fixed basis. Support is unchanged by the hint. The cycle therefore defers and
+both receipts deny benefit. This is a mechanism result inside the information
+bound of that family. It is not evidence that a richer transferable structure
+is impossible, and it is not a rerun of the frozen query-policy cohort.
+
 ## Failure envelope
 
 All native work has finite admission limits. Socket deadlines do not preempt

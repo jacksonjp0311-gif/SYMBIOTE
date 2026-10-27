@@ -63,9 +63,13 @@ failure envelope. No v0.6 research milestone is inferred from maintenance tests.
 
 The next research milestone needs newly declared transfer tasks and unfamiliar
 partner identities, including negative transfer and matched-cost controls.
-Freeze the new evaluation before seeing its results; do not retune the completed
-cohort. The [stable release gates](STABLE_RELEASE_GATES.md) distinguish reliable
-bounded software from unresolved hypotheses.
+[Protocol 002](RESEARCH_V06_PROTOCOL.md) freezes that evaluation and has not
+been opened. Do not retune the completed query-policy cohort. The value
+function and reciprocal receipt are mechanism code. On the enumerated width-3
+affine family they decline a hint that ties the fixed basis after costs. That
+check is not protocol 002 and does not convert protocol 001 from
+`NOT_DEMONSTRATED`. The [stable release gates](STABLE_RELEASE_GATES.md)
+distinguish reliable bounded software from unresolved hypotheses.
 
 A proposed single-PC v0.6 pilot should test a portable reasoning strategy on
 held-out graph topologies, unfamiliar partners and remapped action labels. Compare

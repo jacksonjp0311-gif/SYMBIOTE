@@ -1,9 +1,52 @@
 # SYMBIOTE: Grok handoff
 
-The user requested a clean stop at 9% remaining usage. This checkpoint is ready
-for continued development. **Stable v1.0 is not qualified or published.** Cargo's
-`1.0.0` is the candidate version; no stable v1 tag should be inferred from it.
-The verified public binary release remains v0.5.1.
+**Stable v1.0 is not qualified or published.** Cargo's `1.0.0` is the candidate
+version; no stable v1 tag should be inferred from it. The verified public
+binary release remains v0.5.1.
+
+## Source-grounded assessment
+
+What is implemented: four crates for exact reasoning, authorized exchange,
+durable memory and a configured cognitive runtime. Query policies, three-peer
+custody, bounded exploration, backup and migration are in the tree. The new
+`symbiosis` and `reciprocal` modules add a participant-specific value function
+and a receiver-bound receipt. The cognitive episode now records `MEASURE`.
+
+What verified evidence supports: CI run `40545912958` at
+`4da99383e9081767f4f0e08eda671323a76629fa` passed Ubuntu, Windows and macOS.
+Frozen research at `ddd63d7954917c949ea1173a90f30343bcb16397` still stands,
+including parity, the cognitive promotion/restart control, reciprocal adoption
+inside that control, and the negative utility results below. On this Windows machine, `cargo test --workspace --locked` passed 351 tests
+and left the 3 registered duration tests ignored. Clippy with `-D warnings`
+passed for the workspace crates. Python is not installed here, so
+`tools/verify.py` and `tools/parity.py` were not re-run and the committed
+parity receipt was not rewritten. Do not treat CI run `40545912958` as
+coverage for commits after `4da99383`.
+
+What is incomplete: the hour campaign, independent two-host deployment, public
+v1 assets, and any reciprocal-efficiency gain. Protocol 002 is preregistered
+and not run. The configured `run` path still delivers inert offers; it does not
+yet let the value function suppress them. `partner_benefits_verified` remains 0
+because no receiver receipt is produced by those peers during the episode.
+
+The next bottleneck is not more message delivery. Transferred query guidance
+on the frozen cohort, and affine hints in the new mechanism check, match cheap
+fixed strategies once verification is required. The information bound for a
+width-3 affine truth is 4 binary queries. A hint that cannot shrink support
+cannot beat that bound. Useful symbiosis has to supply a constraint the
+receiver can certify more cheaply than discovering it alone, across tasks the
+isolated control does not already solve. Protocol 002 is the preregistered
+place to test that. It is not a license to rerun protocol 001.
+
+Highest-value next work, in order:
+
+1. Run the fresh source-frozen hour campaign on a commit whose software gate
+   has passed, with a new registration. Do not resume the cancelled run.
+2. Keep the qualified offer path honest: wire `exchanges_knowledge` into
+   `contribute` only under a new policy revision that old cognition receipts
+   do not have to replay.
+3. Execute protocol 002 only after a registration pin. Report a negative net
+   as negative.
 
 ## Start here
 
@@ -66,42 +109,35 @@ test drivers and documentation:
   and reject a binary version different from the workspace.
 - macOS verifier fixtures resolve `/var` aliases while preserving strict evidence
   link checks. POSIX cleanup handles already-gone groups without hiding EPERM.
-- The latest Darwin fix uses a bounded complete process census to distinguish
-  absent/zombie-only groups from active or uncertain ones. Focused checks and
-  independent review pass; **real current-head macOS CI is still required**.
-  Earlier failed CI process states were not retained, so their cause is not
-  retrospectively proven.
+- The Darwin process census at `4da99383` is covered by CI run `40545912958`,
+  which passed Ubuntu, Windows and macOS. Preserve the earlier macOS failure at
+  `5fd63ad` (run `40537061291`); it was not regraded.
 - The public-cognition test driver has a thread-scoped executable selector.
-  Only its positive test reads `SYMBIOTE_COGNITION_TEST_BINARY`; other threads,
-  including duration tests, retain the compiled binary. A new isolation test
-  and manifest path/SHA fields need current-head compilation/CI. No local build
-  was performed during the frozen hour or after the clean-stop request.
-
-Previous CI `40537061291` at `5fd63adb4d97f304ac67ed54c13a930804ca925b`
-passed Windows and Ubuntu; macOS failed one synthetic cancellation check. Preserve
-that result. The newly pushed checkpoint's CI must be checked separately.
+  Only its positive test reads `SYMBIOTE_COGNITION_TEST_BINARY`. Public v1
+  assets are still unpublished, so that installed-binary check has not run.
+- Value-of-symbiosis and reciprocal receipts are later than `4da99383`. Their
+  CI is the run for the commit that contains them, not run `40545912958`.
 
 ## Next actions, in order
 
-1. Inspect the new HEAD and CI. Fix genuine failures without weakening gates.
-   Run focused tests first; the latest source has reviewed changes that are not
-   yet a completed full qualification.
-2. Build source-stamped native and service-test executables from a clean commit;
-   select their actual paths using Cargo JSON, not guessed filenames.
-3. Register a fresh `tools/soak_campaign.py` run. Keep source, HEAD and executables
-   unchanged throughout its actual 60-minute/120-cycle envelope. Preserve every
-   HOLD. Repeated cycles are not new scientific samples.
-4. Update compatibility, qualification, research findings and roadmap from actual
-   results. Keep the v0.5 primary, S3/S4 and this cancelled run unchanged.
-5. Publish stable v1 only after the declared supported software gates pass.
-   Keep independent two-host qualification **OPEN_UNAVAILABLE** until a second
-   host is explicitly authorized; this PC is the accepted scope.
-6. Verify public assets and install into a temporary directory. Use a newly built
-   service-test executable for the exact positive cognitive test, with
-   `SYMBIOTE_COGNITION_TEST_BINARY` pointing to the downloaded installed binary and
-   `SYMBIOTE_COGNITION_ARTIFACTS` to a fresh directory. Compare the artifact
-   manifest's binary SHA to the independent download pin. The old frozen test
-   executable cannot perform this substitution.
+1. Confirm the value-function commit's cross-platform CI. Fix genuine failures
+   without weakening gates or frozen receipts.
+2. Build source-stamped native and service-test executables from that clean
+   commit. Select paths from Cargo JSON, not guessed filenames.
+3. Register a fresh `tools/soak_campaign.py` run. Keep source, HEAD and
+   executables unchanged throughout its 60-minute/120-cycle envelope. Preserve
+   every HOLD, including the cancelled 71/120 run. Repeated cycles are not new
+   scientific samples.
+4. Update qualification from that campaign's actual result. Keep the v0.5
+   primary, S3/S4, protocol 001 and the cancelled hour unchanged.
+5. Publish stable v1 only after the declared software gates pass. Two-host
+   qualification stays **OPEN_UNAVAILABLE** on this PC's scope.
+6. Verify public assets in a temporary directory. Point
+   `SYMBIOTE_COGNITION_TEST_BINARY` at the downloaded binary and
+   `SYMBIOTE_COGNITION_ARTIFACTS` at a fresh directory. The frozen study
+   executable cannot perform that substitution.
+7. Execute protocol 002 only from a new registration pin. Do not describe a
+   negative or unrun result as a gain.
 
 ## Tooling and evidence
 

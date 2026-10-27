@@ -1360,6 +1360,38 @@ fn run_controlled(
                 }
             }
             contributions += cycle.contribute()?;
+            // Benefit evidence is incomplete in this episode: no receiver-originated
+            // receipt has been checked against an isolated control. Observation is
+            // the constrained decision. Inert quarantine still runs because the
+            // qualified offer path counts delivery separately from benefit.
+            let prospective = symbiote_reasoning::symbiosis::decide(
+                symbiote_reasoning::symbiosis::ParticipantView {
+                    terms: symbiote_reasoning::symbiosis::ExchangeTerms {
+                        expected_gain: 0,
+                        transfer_cost: 0,
+                        verification_cost: 0,
+                        regression_risk: 0,
+                    },
+                    evidence_complete: false,
+                    prior_negative_exchanges: 0,
+                    authorization_present: true,
+                    local_has_unshared_evidence: false,
+                    remote_has_unshared_evidence: false,
+                    discriminating_experiment_available: false,
+                },
+                None,
+            )?;
+            cycle.recorder.emit("MEASURE", json!({
+                "schema": "symbiote.reciprocal-measure/1",
+                "decision": prospective,
+                "utility": Value::Null,
+                "evidence_complete": false,
+                "partner_benefit_verified": false,
+                "exchanges_knowledge": prospective.exchanges_knowledge(),
+                "reason": "no receiver-originated reciprocal receipt; quarantine and promotion are not benefit",
+                "quarantine_is_benefit": false,
+                "promotion_is_benefit": false
+            }))?;
             cycle.recorder.emit("REASSESS",json!({"episode":episodes,"fresh_promotions":novel,"quarantined_contributions":contributions,"budget":budget.lock().map_err(|_|"native resource lock poisoned")?.clone()}))?;
             let until = (Instant::now() + Duration::from_millis(policy.interval_ms)).min(deadline);
             while Instant::now() < until && !cancelled.load(Ordering::Acquire) {

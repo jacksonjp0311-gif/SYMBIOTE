@@ -3,6 +3,11 @@
 Status: **PAUSED FOR HANDOFF — not a stable release approval.** The public verified release
 remains v0.5.1 until the candidate's outstanding gates and delivery checks finish.
 
+CI run `40545912958` at `4da99383e9081767f4f0e08eda671323a76629fa` passed
+Ubuntu, Windows and macOS. Later source, including the value-of-symbiosis
+mechanism, is not covered by that run and does not regrade the frozen receipts
+below. The cancelled hour remains HOLD.
+
 SYMBIOTE's v1 target is a bounded native reasoning and learning core for its
 declared finite task families. Software reliability, actual persistent learning,
 research utility and deployment qualification have separate results.

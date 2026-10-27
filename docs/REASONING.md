@@ -106,3 +106,14 @@ The next reasoning milestone should compare an additional refusal or
 resynchronization guard against unchanged BRUTE fixtures, then assess it under
 drifting and wrong-family simulated partners. Increasing state similarity or
 the number of observations alone is not a learning or reasoning improvement.
+
+## Exchange value
+
+`symbiosis::decide` answers whether a proposed exchange is worth more than
+continuing alone, in one participant's declared units. It does not authorize a
+connection. `measure_affine_exchange` counts oracle queries for every canonical
+truth of a small width. On width 3 the true hint, the wrong hint, independent
+maximin and the fixed basis each use 4 queries for every truth. That is the
+information bound `width + 1`. The extra transfer and verification units make
+utility negative, so the decision is Defer. Wrong hints are not certified.
+This enumeration is a mechanism check, not a transferable-knowledge study.

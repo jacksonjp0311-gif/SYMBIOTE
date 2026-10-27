@@ -1,12 +1,14 @@
 # Intelligence architecture
 
 The v0.4 operational system has four crates. The reasoning crate contains exact
-Moore prefix inference, affine version spaces and conservative positive-cost graph
-certificates. The protocol crate supplies sensors, bounded authenticated local
-sessions and a separately versioned TLS 1.3 transport. Memory stores private
-identities and evaluated declarative models with provenance, applicability,
-rollback and audited lifecycle operations. Runtime composes these into native
-learning experiments and offline queries.
+Moore prefix inference, affine version spaces, conservative positive-cost graph
+certificates and a participant-specific value-of-symbiosis decision. The protocol
+crate supplies sensors, bounded authenticated local sessions and a separately
+versioned TLS 1.3 transport. Memory stores private identities, evaluated
+declarative models and receiver-originated reciprocal receipts, with provenance,
+applicability, rollback and audited lifecycle operations. Runtime composes these
+into native learning experiments and offline queries. A hint still cannot shrink
+exact affine support. Receipt binding does not turn promotion into benefit.
 
 The graph experiment exchanges independently authenticated edge observations,
 chooses further observations through exact route reasoning, and promotes only
