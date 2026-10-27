@@ -1,0 +1,15 @@
+{
+  "schema": "symbiote.protocol-planning-registration/1",
+  "protocol_id": "SYMBIOTE-PROSPECTIVE-FRONTIER-003",
+  "protocol_sha256": "b6b4622303446131750f935a90a3bf322e8d1eebdc317c30ca2128bac69356da",
+  "protocol_file": "docs/RESEARCH_V05_PROTOCOL.md",
+  "base_release": {
+    "tag": "v0.4.0",
+    "commit": "8dbbd4a7550a88f7f6b91b7aa287665dbc481ef1"
+  },
+  "registered_at": "2026-10-27T05:56:14.065527+00:00",
+  "candidate_source_commit": null,
+  "evaluation_executed": false,
+  "primary_report_path": "experiments/v0.5/primary/reciprocal-frontier.json",
+  "requirement": "A separate immutable source/environment registration must precede the first evaluation. Preserve failed primary runs and protocol amendments."
+}
