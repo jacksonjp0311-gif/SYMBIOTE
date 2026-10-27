@@ -18,10 +18,12 @@ Frozen research at `ddd63d7954917c949ea1173a90f30343bcb16397` still stands,
 including parity, the cognitive promotion/restart control, reciprocal adoption
 inside that control, and the negative utility results below. On this Windows machine, `cargo test --workspace --locked` passed 351 tests
 and left the 3 registered duration tests ignored. Clippy with `-D warnings`
-passed for the workspace crates. Python is not installed here, so
-`tools/verify.py` and `tools/parity.py` were not re-run and the committed
-parity receipt was not rewritten. Do not treat CI run `40545912958` as
-coverage for commits after `4da99383`.
+passed for the workspace crates. Python is not installed here, so local
+`tools/verify.py` was not re-run and the committed parity receipt was not
+rewritten. CI run `40557119693` at `b7f46a63bd1268458124aaf05cf6097a6d44c841`
+then passed Ubuntu, Windows and macOS, including `tools/verify.py`. Run
+`40545912958` remains the record for `4da99383` only. A later documentation
+commit is not covered by `40557119693`.
 
 What is incomplete: the hour campaign, independent two-host deployment, public
 v1 assets, and any reciprocal-efficiency gain. Protocol 002 is preregistered
@@ -120,9 +122,9 @@ test drivers and documentation:
 
 ## Next actions, in order
 
-1. Confirm the value-function commit's cross-platform CI. Fix genuine failures
-   without weakening gates or frozen receipts.
-2. Build source-stamped native and service-test executables from that clean
+1. CI for `b7f46a6` passed on Ubuntu, Windows and macOS in run `40557119693`.
+   Fix any later failure without weakening gates or frozen receipts.
+2. Build source-stamped native and service-test executables from a clean
    commit. Select paths from Cargo JSON, not guessed filenames.
 3. Register a fresh `tools/soak_campaign.py` run. Keep source, HEAD and
    executables unchanged throughout its 60-minute/120-cycle envelope. Preserve

@@ -14,8 +14,10 @@
   preregistered protocol 002 cohort.
 - Configured cognitive episodes emit a MEASURE record when no receiver receipt
   is present. `partner_benefits_verified` stays 0. Inert offers are unchanged.
-- CI run 40545912958 at `4da99383` passed Ubuntu, Windows and macOS. That run
-  does not cover later commits. The cancelled hour remains HOLD.
+- CI run 40545912958 at `4da99383` passed Ubuntu, Windows and macOS.
+  CI run 40557119693 at `b7f46a6` also passed all three platforms, including
+  `tools/verify.py`. The cancelled hour remains HOLD. Documentation commits
+  after `b7f46a6` need their own run.
 - Configured native cognitive episodes with bounded authorized sensing,
   independent local evaluation, persistent learning and reciprocal inert offers.
 - Exact graph query-policy transfer, held-out graph facts, durable strategy
