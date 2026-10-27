@@ -39,6 +39,7 @@ class SafetyTests(unittest.TestCase):
         ticks = iter([0, 0, 0, 0, 0, 0.3])
         with tempfile.TemporaryDirectory(prefix="symbiote-posix-race-test-") as temp:
             with patch.object(c, "os", SimpleNamespace(name="posix", killpg=killpg)), \
+                    patch.object(c.sys, "platform", "linux"), \
                     patch.object(c, "signal", SimpleNamespace(SIGTERM=15, SIGKILL=9)), \
                     patch.object(c, "group_alive", side_effect=[True, False, False]), \
                     patch.object(c.time, "monotonic", side_effect=lambda: next(ticks, 0.3)), \
@@ -67,12 +68,12 @@ class SafetyTests(unittest.TestCase):
             c.check_exit(result)
 
     def test_darwin_complete_census_distinguishes_zombies_absence_and_active_descendants(self):
-        witness = b"0 0 S\n900 800 R+\n"
+        witness = b"0 0 S\n100 99 ?Ls\n900 800 R+\n"
         for members in (b"", b"42 42 Z\n43 42 Z+\n"):
             result = c.parse_darwin_group_census(witness + members, 42, 900)
             self.assertFalse(result["active"])
             self.assertEqual(result["raw_sha256"], c.hashlib.sha256(witness + members).hexdigest())
-        for state in ("R", "S", "I", "T", "U", "D", "S<", "R+"):
+        for state in ("R", "S", "I", "T", "U", "D", "S<", "R+", "?", "?Ls"):
             result = c.parse_darwin_group_census(witness + f"42 42 Z\n43 42 {state}\n".encode(), 42, 900)
             self.assertTrue(result["active"], result)
         for raw in (b"", b"900 800 R", b"42 42 Z\n", b"900 800 Z\n",

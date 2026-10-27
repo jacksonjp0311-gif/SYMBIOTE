@@ -220,7 +220,7 @@ def parse_darwin_group_census(raw, pid, sampler_pid):
     for line in lines:
         fields = line.split()
         require(len(fields) == 3 and all(re.fullmatch(r"[0-9]+", field) for field in fields[:2])
-                and re.fullmatch(r"[A-Za-z][A-Za-z0-9<+>\-]*", fields[2]),
+                and re.fullmatch(r"[A-Za-z?][A-Za-z0-9<+>\-]*", fields[2]),
                 "Darwin group census contains an unsupported row")
         row_pid, group = map(int, fields[:2])
         # ps -A may include kernel_task with PID/PGID zero.
@@ -235,6 +235,8 @@ def parse_darwin_group_census(raw, pid, sampler_pid):
             "Darwin group census lacks its own live sampler witness outside the owned group")
     return dict(basis="native-ps-complete-pid-pgid-stat-census", sampler_pid=sampler_pid,
                 rows=len(seen), raw_bytes=len(raw), raw_sha256=hashlib.sha256(raw).hexdigest(),
+                # Apple's ps reports '?' for uninspectable Mach tasks. Such a
+                # target remains active; only an explicit Z proves a zombie.
                 members=members, active=any(row["state"][0] != "Z" for row in members))
 
 
