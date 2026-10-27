@@ -1,0 +1,111 @@
+{
+  "schema": "symbiote.local-qualification-summary/1",
+  "status": "PASS_BOUNDED_LOCAL",
+  "protocol": "SYMBIOTE-LOCAL-STABILITY-001",
+  "protocol_sha256": "8c87d28a898c451083d0893d70dd28d46616523805ab20dc6666d089354f1455",
+  "source_commit": "cd792651d77765532cf39f9d8307ca3bcbb7e0fb",
+  "source_sha256": "1b1d2e23dd930ef1b7101409ae5c82bb3277992abe2855d82a50955ab3e4157b",
+  "unchanged_bounds": {
+    "campaign_seconds": 600,
+    "command_seconds": 30,
+    "network_seconds": 45,
+    "cleanup_seconds": 10,
+    "root_launches": 96,
+    "preflight_launches": 3,
+    "output_bytes_per_process": 2097152,
+    "evidence_bytes": 67108864,
+    "final_report_reserve_bytes": 1048576,
+    "endurance_seconds": 180,
+    "windows_active_processes_per_job": 8,
+    "windows_job_memory_bytes": 268435456
+  },
+  "attempts": [
+    {
+      "candidate": "S3",
+      "source_commit": "68248001731d5073051d8175c746e83070149b65",
+      "status": "HOLD",
+      "failure": "[Errno 22] Invalid argument: 'C:\\\\Users\\\\jacks\\\\AppData\\\\Local\\\\Temp\\\\symbiote-v051-local-607f9e1163a444c39326f870f70be8b3\\\\65-endurance::mixed_family_24_cycle_local_campaign.stdout'",
+      "elapsed_seconds": 49.155999999988126,
+      "root_processes": 65,
+      "exit_zero": 58,
+      "expected_negative_exits": 7,
+      "registration_sha256": "2461208f5a8b7d18daaa910deacdb76a4cf3e0c68182126f104f0a9c44d81c44",
+      "raw_report_sha256": "bebd97abfa0da15595a9627362885fce89ac795697016f199924012f9ab0eca2",
+      "independent_audit_sha256": "135749353b7c973b17573c2dfa9ac57b3ec24710db33de3a5a0ff883c136a7a4",
+      "native_continuity_status": "NOT_RUN",
+      "native_continuity_report_sha256": null
+    },
+    {
+      "candidate": "S4",
+      "source_commit": "2403b2e852eb916a18d1088ba4c0e09610a5e023",
+      "status": "HOLD",
+      "failure": "midpoint activation must fail at restore review, not unrelated argument parsing",
+      "elapsed_seconds": 82.56200000000536,
+      "root_processes": 66,
+      "exit_zero": 59,
+      "expected_negative_exits": 7,
+      "registration_sha256": "8b85ad8850c6d951650d81167e4768a53fd39f9c0961f9458b2d9d214b054b9b",
+      "raw_report_sha256": "4cd118fed7c10ce0c1bae32179234aeda2c34e34c47570da9b60a36469e9959d",
+      "independent_audit_sha256": "761378513e4069f27de78d41f37a31a2d56d86e4d4319ad75efaa0e88d61b5ad",
+      "native_continuity_status": "PASS",
+      "native_continuity_report_sha256": "c008c461c2b32f4ffa3e4704453089cb9521c82073324b52fd6e005e0867755c"
+    },
+    {
+      "candidate": "S5",
+      "source_commit": "cd792651d77765532cf39f9d8307ca3bcbb7e0fb",
+      "status": "PASS",
+      "failure": null,
+      "elapsed_seconds": 83.96899999998277,
+      "root_processes": 66,
+      "exit_zero": 59,
+      "expected_negative_exits": 7,
+      "registration_sha256": "656a6ad12be1aaee32a5de03e04603fd52bdf21142ec07dcc1dfda9a5569333e",
+      "raw_report_sha256": "fb9d090970d11b8d58dea31e67adbaf37e6557ffb68f29132ec4d87094aced4d",
+      "independent_audit_sha256": "627f8d59febba02f18129780352dfdaf0c7709ac597f42573e45aec32f97b40a",
+      "native_continuity_status": "PASS",
+      "native_continuity_report_sha256": "11bc5d30c8f0f5d925ef89bc4e638573c345ee4d0133a8a8128393d613f055ac"
+    }
+  ],
+  "final_native_continuity": {
+    "status": "PASS",
+    "classification": "BOUNDED_LOCAL_CONTINUITY",
+    "cycles": 24,
+    "owners": [
+      "symbiote-c1d3e5beee53f816572d82ad",
+      "symbiote-45b4e20d6bfcef09f7d67a18"
+    ],
+    "wire_keys": 99,
+    "durable_candidate_keys": 3,
+    "service_starts": 26,
+    "owned_stops": 26,
+    "retained_models": 2,
+    "model_digests": [
+      "16415c236987f4ccb7ae3ebb0adf8b10fd2202288e3d31417b2b14330dac2297",
+      "f3e965f07c2a92da6ff0251b8f02c6fd24c96d3184f968754fa8f746479fe06d"
+    ],
+    "events_sha256": "d60a30b51c967c707b89dec4a870b4df3b3775bfecadfb65115ac8c73ab6bca2",
+    "independent_host_validation": "OPEN_UNAVAILABLE",
+    "scientific_samples": 0,
+    "report_sha256": "11bc5d30c8f0f5d925ef89bc4e638573c345ee4d0133a8a8128393d613f055ac",
+    "unreviewed_activation_guard": "POLICY_CHANGE_HOLD"
+  },
+  "final_demo_backup": {
+    "identity": "symbiote-4b7904173df82e163b8dab43",
+    "revisions": {
+      "alpha-table": 2,
+      "beta-table": 1
+    },
+    "history_records": 4,
+    "preserved_history_sha256": "d2b01462ea64917a2976c41c123d47d13c1e7ef134e0e62c4193099d6a01fd03",
+    "rejected_transfer": true,
+    "drift_revocation": true,
+    "offline_restoration": true
+  },
+  "regression_repeats": 16,
+  "independent_audit_sha256": "627f8d59febba02f18129780352dfdaf0c7709ac597f42573e45aec32f97b40a",
+  "scientific_samples": 0,
+  "host_count": 1,
+  "two_host_validation": "OPEN_UNAVAILABLE",
+  "stable_v1_qualification": "OPEN",
+  "interpretation": "S3 and S4 remain HOLD. S5 is an independently audited local software PASS on two fixed fixtures. Repeated regression/cycle executions are not independent scientific discoveries."
+}

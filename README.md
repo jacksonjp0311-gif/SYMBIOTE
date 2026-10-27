@@ -17,14 +17,14 @@ local demonstrations.
 
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
-[Operations](docs/OPERATIONS.md) · [Stable release gates](docs/STABLE_RELEASE_GATES.md)
+[Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
-> **Research preview — v0.5.1.** Native TLS peers, exact reasoning, evaluated
-> persistent knowledge, verified owner backups and reviewed offline policy rotation. The
-> [first primary study remains HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md); a repaired
-> engineering reproduction completes all 192 control cases. The fixed-peer
-> control still performs better. Stable v1.0, general intelligence and broad
-> autonomous improvement are not established.
+> **Research preview — v0.5.1.** The [24-cycle local qualification passed](docs/LOCAL_QUALIFICATION_V051.md)
+> with real TLS, retained models, reviewed rotation, a killed service and verified
+> restore. This is one PC and two fixed fixtures. Two-host validation and
+> long-term reliability remain open. The [v0.5 primary remains HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md);
+> its engineering reproduction completes all 192 cases, with the fixed-peer
+> control still cheaper. Stable v1.0 and better partner selection are not established.
 
 ## Get started
 
@@ -67,10 +67,6 @@ You can also download a matching archive directly, extract it, and run
 
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
-symbiote research   # Run structural learning, exchange and isolated controls
-symbiote graph-research    # Learn route maps and measure every paired world
-symbiote adaptive-research --reproduce  # Full, bounded study; allow about 20 minutes
-symbiote network-research  # Run two real native peer processes and restart them
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
 symbiote doctor     # Inspect readiness without changing local state
@@ -82,17 +78,25 @@ to choose the report destination. Default local state is `state/demo`; generated
 reports are written under `experiments/local/`. Both are ignored by Git.
 
 Run `demo` twice to observe retained knowledge being rechecked and reused. Run
-`research`, then `status`, to inspect structural knowledge retained from the
-extended experiment. `graph-research` prints a ready-to-copy `route` command for
-its private retained graph store. Route queries return a conditional certificate
-or an explicit abstention. To run supervised peers over TLS, follow the
+`status` or `predict` to inspect and use the retained state. Optional experiments
+exercise the broader native system:
+
+| Command | What it runs |
+| --- | --- |
+| `symbiote research` | Structural learning, verified exchange and isolated controls |
+| `symbiote graph-research` | Paired routing tasks; prints a command for retained `route` queries |
+| `symbiote network-research` | Two native peer processes with private state and actual restart |
+| `symbiote adaptive-research --reproduce` | Full controlled study; allow about 20 minutes, with a 30-minute cap |
+
+Route queries return a conditional certificate or an explicit abstention. To run
+supervised peers over TLS, follow the
 [identity and credential guide](docs/TLS_DEPLOYMENT.md). The
 [configured knowledge service](docs/SERVICE.md) supports explicitly granted
 queries and quarantined offers over operator-provisioned TLS. Local evaluation
 controls promotion. `symbiote --help` lists every command and option.
 
-Start with `demo`. The full adaptive study is optional and has a 30-minute cap.
-It owns its local peer processes, writes fresh temporary state and preserves all
+Start with `demo`. The full adaptive study owns its local peer processes,
+writes fresh temporary state and preserves all
 failed or unfinished cases. A recorded setup can be restored for reproducible
 control comparisons; it imports no learned knowledge or private keys.
 
@@ -167,12 +171,22 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Native processes, retained prediction, recovery and migration | [v0.3 software gates](experiments/v0.3/software-verification.json), [deployment verification](experiments/v0.3/deployed-verification.json) and [native exchange receipt](experiments/v0.3/native-process-exchange.json) |
 | Complete graph cohort, conditional routes and durable graph learning | [v0.4 graph verification](experiments/v0.4/graph-verification.json), [raw paired cases](experiments/v0.4/graph-exchange.json), and [experiment protocol](docs/RESEARCH_V04_PROTOCOL.md) |
 | Native adaptive relationships, exact setup replay and honest controls | [v0.5 engineering verification](experiments/v0.5/engineering-verification.json), [preserved primary HOLD](experiments/v0.5/primary-verification.json), and [methods/results](docs/RESEARCH_V05.md) |
+| v0.5.1 local maintenance and continuity | [S5 qualification](docs/LOCAL_QUALIFICATION_V051.md) and [evidence index](experiments/v0.5.1/README.md): 24 TLS cycles, reviewed rotation, denial/regrant, lost reply, owned crash and verified relocation |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
 
+The v0.5.1 default software gate passed **292 Rust test executions, 53 Python
+tests and 6,093 parity cases**. A separately selected ignored test completed the
+24-cycle continuity check; 16 named regression repeats are existing tests, not
+new tests or independent samples. S5 took 83.969 seconds with 66 root commands.
+The earlier S3 and S4 checker failures remain **HOLD**, even though S4's native
+phase passed. The same two fixtures, two owners and two evaluated models were
+used throughout; this is narrow local recovery evidence, not long-term or
+two-host qualification. [Full account](docs/LOCAL_QUALIFICATION_V051.md).
+
 Genesis increased prediction coverage from 32/64 to 64/64 on repeated four-input
-tasks, while the equal-probe-budget control also reached 64/64. That result does
-not establish a sample-efficiency advantage for exchange.
+tasks; its equal-probe-budget control also reached 64/64. This does not establish
+a sample-efficiency advantage for exchange.
 
 The structural experiment studies reuse of authenticated observations under a
 trusted synthetic oracle registry and an explicit cost model. Any reciprocal
@@ -184,22 +198,11 @@ agreement within an affine family does not prove that an arbitrary external
 agent belongs to that family. Repeated laws or predictions must not be counted
 as independent discoveries.
 
-The recorded v0.2 cohort contains 24 paired contexts and 3,720 held-out predictions,
-all correct for both exchange and isolated learning. Declared observation-model
-cost totals are 35,360 for exchange and 66,120 for isolation. A cheap-observation
-control loses that advantage and is rejected. CPU/controller/evaluator work is
-not priced; these figures establish no wall-clock or general efficiency gain.
-Separate-process offline prediction uses retained models; benchmark reruns
-deliberately reconstruct fresh learners.
-
-The v0.4 route-planning cohort enumerates all 81 four-edge worlds under two
-predeclared price regimes. Both isolated and exchanging learners certify 231/324
-held-out routes, with 93 abstentions and no wrong certificates. Normal logical
-costs are 69,093 versus 54,105; cheap-observation costs are 15,930 versus 15,216.
-Each regime includes 144 lower-cost and 18 higher-cost participant comparisons;
-64/81 worlds benefit both. Only 69 complete maps are retained; 93 partial maps
-are withheld. These are conditional results in one topology, with laboratory
-overhead excluded as declared. [Methods and limits](docs/RESEARCH_V04.md).
+The [affine](docs/RESEARCH_V02.md) and [routing](docs/RESEARCH_V04.md) studies
+include conditional benefits, cheap-observation controls, harmful exchanges and
+withheld predictions. They retain their original formulas, evidence and limits.
+Declared participant costs exclude laboratory overhead and establish no general
+efficiency or wall-clock advantage.
 
 The v0.5 engineering reproduction runs five native learner roles across four
 controls and two prices on the same 24 unfamiliar graphs. It retains two complete
@@ -214,9 +217,8 @@ The first primary remains HOLD; complete evidence and failed criteria are
 Stable v1.0 requires broader independent environments, demonstrated reciprocal
 benefits after all costs, secure external connections, robust persistent memory
 and a documented failure envelope. Version numbers advance after the evidence.
-The [release gates](docs/STABLE_RELEASE_GATES.md) distinguish the bounded stable
-core from research hypotheses and specify credential lifecycle, verified restore
-and deployment checks still needed before release.
+The [release gates](docs/STABLE_RELEASE_GATES.md) record which local lifecycle
+checks passed and which deployment, duration and scientific criteria remain open.
 
 ## Architecture
 
@@ -270,8 +272,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 5.51 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 99.04% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 5.94 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.97% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

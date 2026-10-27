@@ -1,0 +1,42 @@
+{
+  "schema": "symbiote.release-software-summary/1",
+  "source_commit": "cd792651d77765532cf39f9d8307ca3bcbb7e0fb",
+  "raw_receipt_sha256": "b62c5cbf68597ed28370498d3ba110bf258f32994d3f4908bb7e31130aa56194",
+  "verification": {
+    "schema": "symbiote.software-verification/1",
+    "status": "PASS",
+    "source_sha256": "1b1d2e23dd930ef1b7101409ae5c82bb3277992abe2855d82a50955ab3e4157b",
+    "platform": "Windows",
+    "architecture": "AMD64",
+    "native_tests_passed": 292,
+    "packaging_and_installation_tests_passed": 53,
+    "legacy_parity_executed": true,
+    "cargo_gates_executed": true,
+    "genesis_compatibility": true,
+    "structural_exchange": true,
+    "deployed_processes_migration_and_recovery": true,
+    "graph_exchange_and_retained_routes": true,
+    "stable_v1_criteria": "remain separate from software gate"
+  },
+  "strict_debug_and_release_clippy": "PASS",
+  "default_ignored_continuity_tests": 1,
+  "continuity_execution": "executed separately in registered campaign",
+  "dependency_audit": {
+    "raw_receipt_sha256": "1968a03e6441f56025ebeae411a65bfae06be953e59899478adea30a59478ad3",
+    "database": {
+      "advisory-count": 1380,
+      "last-commit": "99670cfc0bc574433034b75876a4b791ccaa2efb",
+      "last-updated": "2026-10-27T11:02:42+01:00"
+    },
+    "lockfile": {
+      "dependency-count": 79
+    },
+    "vulnerabilities": {
+      "found": false,
+      "count": 0,
+      "list": []
+    },
+    "warnings": {}
+  },
+  "note": "JSON reading summary; byte-exact raw receipts are retained in the release evidence archive."
+}

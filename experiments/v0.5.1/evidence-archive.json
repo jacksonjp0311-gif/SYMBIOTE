@@ -1,0 +1,46 @@
+{
+  "schema": "symbiote.release-evidence-asset/1",
+  "asset": "SYMBIOTE-v0.5.1-local-qualification.tar.gz",
+  "sha256": "52fca539bac260bbeae30f87168cea9b3d899e3afc12a9de12f64ae58dfe7de0",
+  "bytes": 18093152,
+  "manifest_sha256": "f532413c97b0785c1421147bd16ea9219a49355116239aa075d18ef9486788a0",
+  "files_including_manifest": 1752,
+  "source_bytes": 67710572,
+  "verification_receipt_sha256": "76fd6c18ec9846a94f1db12c3133441bb5a5609ac1e41baf1cf69d5bd78b0b1c",
+  "byte_exact_source_and_extraction_validation": "PASS",
+  "credentials_scanned": true,
+  "inputs_unchanged": true,
+  "campaign_statuses": [
+    "HOLD",
+    "HOLD",
+    "PASS"
+  ],
+  "checksum_manifest": "EVIDENCE_SHA256SUMS",
+  "download_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v0.5.1/SYMBIOTE-v0.5.1-local-qualification.tar.gz",
+  "qualification_source_commit": "cd792651d77765532cf39f9d8307ca3bcbb7e0fb",
+  "qualification_source_sha256": "1b1d2e23dd930ef1b7101409ae5c82bb3277992abe2855d82a50955ab3e4157b",
+  "packaging_failure_history": [
+    {
+      "stage": "initial_archive_collection",
+      "status": "HOLD",
+      "cause": "Public explicit-local-registry CONNECT label classified as credential"
+    },
+    {
+      "stage": "v2_read_only_plan",
+      "status": "HOLD",
+      "cause": "Python provenance docstring classified as whole JSON"
+    },
+    {
+      "stage": "v3_archive_extraction",
+      "status": "HOLD",
+      "cause": "282-character extraction path exceeded Windows filename support"
+    }
+  ],
+  "packaging_corrections": [
+    "Exact public enum context guard; all other credential scanning retained",
+    "Strict JSON data and output scanning; provenance scripts retain raw credential scanning",
+    "Zero-byte captured JSON stdout/stderr logs preserved; ordinary JSON remains strict",
+    "Short extraction path, maximum 226 characters; same original source bytes"
+  ],
+  "interpretation": "Packaging PASS preserves original HOLD/HOLD/PASS campaign statuses; no runtime rerun or new scientific result"
+}

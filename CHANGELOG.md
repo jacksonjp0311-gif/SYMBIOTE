@@ -14,9 +14,21 @@
   artifact grants remain identity-specific; outbound connections remain alias-only.
 - Native ZIPs now contain concise platform instructions and versioned absolute
   documentation links, with the same three-file integrity contract.
+- Default software gates passed 292 Rust test executions, 53 Python tests and
+  6,093 BRUTE parity cases. One separately selected ignored test passed a fixed
+  24-cycle same-PC TLS continuity campaign; its 16 named regression repeats are
+  existing tests, not new scientific samples.
+- S5 local qualification passed in 83.969 seconds with 66 root commands, two
+  retained models, four reviewed two-leaf rotations, two denial/regrant pairs,
+  one genuinely lost quarantine reply, an owned service crash and verified
+  midpoint relocation. S3's output-filename failure and S4's incorrect consumer
+  text check remain HOLD; their raw evidence was preserved. See the
+  [qualification account](docs/LOCAL_QUALIFICATION_V051.md) and
+  [evidence index](experiments/v0.5.1/README.md).
 - The v0.5 scientific results are unchanged. This hardening release does not
   establish better partner selection or qualify stable v1.0. Independent
-  two-host deployment remains open.
+  two-host deployment and long-term reliability remain open. No v0.6 research
+  milestone is inferred from this maintenance release.
 
 ## v0.5.0 — Adaptive Relationships — 2026-10-27
 
