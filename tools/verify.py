@@ -21,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-cargo", action="store_true")
     parser.add_argument("--skip-parity", action="store_true")
-    parser.add_argument("--output", type=Path, default=ROOT / "experiments" / "genesis-verification.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "experiments/local/genesis-verification.json")
     args = parser.parse_args()
     if not args.skip_cargo:
         for command in [["cargo", "fmt", "--all", "--", "--check"], ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["cargo", "test", "--workspace", "--locked"], ["cargo", "build", "--workspace", "--locked"]]:
@@ -30,6 +30,8 @@ def main():
     if not args.skip_parity:
         result = execute([sys.executable, ROOT / "tools" / "parity.py", "--output", ROOT / "experiments" / "parity.json"])
         print(result.stdout.strip(), flush=True)
+    execute([sys.executable, "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"])
+    print("PASS release packaging and native installer integrity tests", flush=True)
     binary = ROOT / "target" / "debug" / ("symbiote.exe" if sys.platform == "win32" else "symbiote")
     with tempfile.TemporaryDirectory(prefix="symbiote-verification-") as directory:
         base = Path(directory)
@@ -37,7 +39,9 @@ def main():
 
         def run(command, fault=None, state_dir=state, expect=0):
             receipt = base / "latest.json"
-            cmd = [binary, command, "--state", state_dir, "--receipts", receipt]
+            cmd = [binary, command, "--json", "--state", state_dir]
+            if command in {"demo", "benchmark", "research"}:
+                cmd += ["--receipts", receipt]
             if fault:
                 cmd += ["--fault", fault]
             result = execute(cmd, expected=expect)
@@ -78,6 +82,8 @@ def main():
         report = dict(schema="symbiote.verification/1", status="PASS", process_restart=True, stable_identity=True, first_promoted=2, restart_reused=2, rejected_wrong_transfer=True, failed_candidate_recovery=True, drift_revoked=True, drift_recovery_revision=2, retained_network_requests=0, symbiote=dict(isolated_correct=32, exchanged_correct=64, total=64, matched_probe_control_correct=64, verification_queries=8), partner=dict(baseline_resource_units_each=176, strategy_resource_units_each_including_verification=72), limitations=["four-input deterministic laboratory tasks", "repeated predictions are not independent samples", "same-probe-budget control also achieves complete coverage", "partner resource costs are declared simulation units", "hidden-state reasoning parity is separate from finite-table learning"])
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
+    result = execute([sys.executable, ROOT / "tools/verify_research.py"])
+    print(result.stdout.strip(), flush=True)
 
 
 if __name__ == "__main__":

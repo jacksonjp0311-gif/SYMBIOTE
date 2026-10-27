@@ -6,5 +6,6 @@ mod transport;
 
 pub use telemetry::{EchoBuffer, Sensor, Telemetry};
 pub use transport::{
-    spawn_server, Client, Endpoint, ServerConfig, ServerHandle, PROTOCOL_VERSION, SCOPE,
+    spawn_scoped_server, spawn_server, Client, Endpoint, ServerConfig, ServerHandle,
+    PROTOCOL_VERSION, SCOPE,
 };

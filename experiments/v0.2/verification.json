@@ -1,0 +1,27 @@
+{
+  "schema": "symbiote.research-verification/1",
+  "status": "PASS",
+  "source_sha256": "a25d1f1a0128365f860ed92b83eb069a13c57941301d7f0a709f0a69e9c4b60b",
+  "aggregate": {
+    "correct": 3720,
+    "exchange_cost": 35360,
+    "heldout_predictions": 3720,
+    "isolated_correct": 3720,
+    "isolated_cost": 66120
+  },
+  "negative_controls": {
+    "cheap_observation_no_gain_blocks_promotion": true,
+    "cross_domain_receipt_rejected": true,
+    "forged_receipt_rejected": true,
+    "hint_only_abstains": true,
+    "repeated_evidence_rejected": true,
+    "wrong_family_unseen_failure_blocks_promotion": true
+  },
+  "separate_persistent_identities": true,
+  "offline_predictions_after_restart": true,
+  "ledger_unchanged_on_read": true,
+  "rerun_reconstructs_fresh_learners": true,
+  "rerun_duplicates_not_promoted": true,
+  "legacy_gates": "required separately by tools/verify.py",
+  "scientific_status": "Declared affine laboratory and trusted oracle-registry assumptions; stable v1.0 criteria remain open"
+}

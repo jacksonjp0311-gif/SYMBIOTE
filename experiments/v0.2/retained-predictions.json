@@ -1,0 +1,1164 @@
+{
+  "active_artifacts": 24,
+  "genesis_artifacts": 0,
+  "identity": "symbiote-5b72599f0c1673f29089c7db",
+  "network_requests": 0,
+  "predictions": [],
+  "schema": "symbiote.retained/1",
+  "status": "PASS",
+  "structural_artifacts": 24,
+  "structural_knowledge": [
+    {
+      "id": "partner-linear-affine-3-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 6,
+        "kind": "affine",
+        "width": 3
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "e3efcffd628a1bca9c5e277175c179bb15083107aa9915423bf5c45000761047",
+      "scope": "affine-3-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-3-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 4,
+        "kind": "affine",
+        "width": 3
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e3efcffd628a1bca9c5e277175c179bb15083107aa9915423bf5c45000761047",
+      "scope": "affine-3-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-3-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 4,
+        "kind": "affine",
+        "width": 3
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e3efcffd628a1bca9c5e277175c179bb15083107aa9915423bf5c45000761047",
+      "scope": "affine-3-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-3-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 1,
+        "kind": "affine",
+        "width": 3
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 1
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e3efcffd628a1bca9c5e277175c179bb15083107aa9915423bf5c45000761047",
+      "scope": "affine-3-7-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-4-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 6,
+        "kind": "affine",
+        "width": 4
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "e739640c7086a87c5107e3eeea60e95ebc1889813de9bbf54e74647f62189d62",
+      "scope": "affine-4-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-4-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 12,
+        "kind": "affine",
+        "width": 4
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e739640c7086a87c5107e3eeea60e95ebc1889813de9bbf54e74647f62189d62",
+      "scope": "affine-4-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-4-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 4,
+        "kind": "affine",
+        "width": 4
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e739640c7086a87c5107e3eeea60e95ebc1889813de9bbf54e74647f62189d62",
+      "scope": "affine-4-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-4-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 1,
+        "kind": "affine",
+        "width": 4
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 1
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "e739640c7086a87c5107e3eeea60e95ebc1889813de9bbf54e74647f62189d62",
+      "scope": "affine-4-7-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-5-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 22,
+        "kind": "affine",
+        "width": 5
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "0a59c8d1c3dc44c2acc10063461f0606a647a02372e2b605de868c2854fabab3",
+      "scope": "affine-5-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-5-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 12,
+        "kind": "affine",
+        "width": 5
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "0a59c8d1c3dc44c2acc10063461f0606a647a02372e2b605de868c2854fabab3",
+      "scope": "affine-5-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-5-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 4,
+        "kind": "affine",
+        "width": 5
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "0a59c8d1c3dc44c2acc10063461f0606a647a02372e2b605de868c2854fabab3",
+      "scope": "affine-5-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-5-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 16,
+        "kind": "affine",
+        "width": 5
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 0
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "0a59c8d1c3dc44c2acc10063461f0606a647a02372e2b605de868c2854fabab3",
+      "scope": "affine-5-7-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-6-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 54,
+        "kind": "affine",
+        "width": 6
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "be04b3c539687b96555b5c88b28b450b76b84b51016ddd8df1eb1f71183fa3f5",
+      "scope": "affine-6-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-6-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 44,
+        "kind": "affine",
+        "width": 6
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "be04b3c539687b96555b5c88b28b450b76b84b51016ddd8df1eb1f71183fa3f5",
+      "scope": "affine-6-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-6-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 36,
+        "kind": "affine",
+        "width": 6
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "be04b3c539687b96555b5c88b28b450b76b84b51016ddd8df1eb1f71183fa3f5",
+      "scope": "affine-6-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-6-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 16,
+        "kind": "affine",
+        "width": 6
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 0
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "be04b3c539687b96555b5c88b28b450b76b84b51016ddd8df1eb1f71183fa3f5",
+      "scope": "affine-6-7-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-7-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 118,
+        "kind": "affine",
+        "width": 7
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "f1d7ed4598b2066e6e4697807279405e43a33b4668a734dcb2b29655786e4d53",
+      "scope": "affine-7-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-7-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 44,
+        "kind": "affine",
+        "width": 7
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "f1d7ed4598b2066e6e4697807279405e43a33b4668a734dcb2b29655786e4d53",
+      "scope": "affine-7-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-7-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 100,
+        "kind": "affine",
+        "width": 7
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "f1d7ed4598b2066e6e4697807279405e43a33b4668a734dcb2b29655786e4d53",
+      "scope": "affine-7-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-7-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 80,
+        "kind": "affine",
+        "width": 7
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 0
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "f1d7ed4598b2066e6e4697807279405e43a33b4668a734dcb2b29655786e4d53",
+      "scope": "affine-7-7-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-8-101-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 118,
+        "kind": "affine",
+        "width": 8
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 1
+        },
+        {
+          "input": 3,
+          "output": 1
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "1983175771a033a95064f99a92cea4de2129fe4e5df2f73db70f938c6b36b28a",
+      "scope": "affine-8-101-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-8-19-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 44,
+        "kind": "affine",
+        "width": 8
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "1983175771a033a95064f99a92cea4de2129fe4e5df2f73db70f938c6b36b28a",
+      "scope": "affine-8-19-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-8-43-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 228,
+        "kind": "affine",
+        "width": 8
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 1
+        },
+        {
+          "input": 5,
+          "output": 1
+        },
+        {
+          "input": 6,
+          "output": 1
+        },
+        {
+          "input": 7,
+          "output": 1
+        }
+      ],
+      "schema_fingerprint": "1983175771a033a95064f99a92cea4de2129fe4e5df2f73db70f938c6b36b28a",
+      "scope": "affine-8-43-beta",
+      "source": "partner-linear"
+    },
+    {
+      "id": "partner-linear-affine-8-7-beta",
+      "model": {
+        "bias": false,
+        "coefficients": 208,
+        "kind": "affine",
+        "width": 8
+      },
+      "prediction_status": "validated-in-declared-synthetic-scope",
+      "revision": 1,
+      "sample_predictions": [
+        {
+          "input": 0,
+          "output": 0
+        },
+        {
+          "input": 1,
+          "output": 0
+        },
+        {
+          "input": 2,
+          "output": 0
+        },
+        {
+          "input": 3,
+          "output": 0
+        },
+        {
+          "input": 4,
+          "output": 0
+        },
+        {
+          "input": 5,
+          "output": 0
+        },
+        {
+          "input": 6,
+          "output": 0
+        },
+        {
+          "input": 7,
+          "output": 0
+        }
+      ],
+      "schema_fingerprint": "1983175771a033a95064f99a92cea4de2129fe4e5df2f73db70f938c6b36b28a",
+      "scope": "affine-8-7-beta",
+      "source": "partner-linear"
+    }
+  ]
+}

@@ -3,6 +3,8 @@
 //! A hash chain detects accidental corruption; it does not authenticate a ledger
 //! against an adversary capable of rewriting its complete contents. Evaluation
 //! receives a privileged simulator oracle. It is not a universal truth verifier.
+pub mod knowledge;
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;

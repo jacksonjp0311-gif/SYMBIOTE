@@ -1,134 +1,214 @@
+<p align="center">
+  <img src="docs/assets/symbiote-hero.png" alt="SYMBIOTE — interconnected geometric cores exchanging structured knowledge" width="1200">
+</p>
+
 # SYMBIOTE
 
-**Symbiotic Adaptive Intelligence — v0.1.0 Genesis**
+**Symbiotic Adaptive Intelligence**
 
-An independent Rust process that develops persistent, evaluated knowledge through
-authorized reciprocal interactions. SYMBIOTE descends from BRUTE's exact bounded
-reasoning work and keeps its own identity and knowledge ledger. It runs without a
-language model or the Python BRUTE application.
+A Rust-native intelligence that reasons from evidence, learns through authorized
+exchange, and returns useful knowledge to its partners. Its identity and validated
+experience persist between runs. No language model or API key is required for the
+local demonstrations.
 
-This is a working research preview on small deterministic laboratory tasks.
-It demonstrates scoped reasoning, verified learning, retained predictions and
-independently accepted return strategies. General intelligence, general transfer
-benefits and autonomous self-improvement remain unverified.
+[![Verification](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml/badge.svg)](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/jacksonjp0311-gif/SYMBIOTE)](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases)
+[![Rust](https://img.shields.io/badge/language-Rust-c98957?logo=rust&logoColor=white)](Cargo.toml)
 
-## Run
+[Get started](#get-started) · [How it works](#how-it-works) ·
+[Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
+[Operations](docs/OPERATIONS.md)
 
-Install stable Rust with Cargo. No API keys, model service or Python are needed
-for the runtime. The demo creates two explicitly authorized loopback TCP endpoints.
+> **Research preview.** v0.2 First Symbiosis provides the verified local experiment below. The stable
+> v1.0 criteria remain open. Current experiments concern declared finite synthetic
+> environments; generalized intelligence and autonomous self-improvement are not
+> established.
+
+## Get started
+
+Download or clone this repository. The release installers select your platform,
+verify the downloaded archive against its SHA256 manifest, and install a standalone
+binary. Release installation does not need Rust, Python, or a model service.
+
+**Windows — PowerShell**
 
 ```powershell
-.\SYMBIOTE-All-One.ps1 -Build -Run
-cargo run --locked -p symbiote-runtime --bin symbiote -- predict --state state/demo
-cargo run --locked -p symbiote-runtime --bin symbiote -- demo --state state/demo
-.\SYMBIOTE-All-One.ps1 -Test -GitStatus
-.\SYMBIOTE-All-One.ps1 -Verify
-.\SYMBIOTE-All-One.ps1 -Benchmark
+git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
+cd SYMBIOTE
+.\tools\install.ps1 -Version v0.2.0 -AddToPath
+symbiote doctor
+symbiote demo
 ```
 
-`predict` is a separate process: it loads retained knowledge and identity and
-makes no network requests. A subsequent `demo` reuses both artifacts, rechecks
-their applicability against four probes per partner and makes no new promotions.
-`-Verify` additionally needs Python 3.11+ for the original-reference parity check;
-use `-Python PATH` if Python is not on PATH. Linux/macOS: `cargo test --workspace
---locked`, then `python tools/verify.py`. Default demo state lives under ignored
-`state/`; benchmarks use fresh ignored directories. [Detailed commands](docs/OPERATIONS.md).
+**Linux or macOS — from the checkout**
+
+```sh
+sh tools/install.sh --version v0.2.0
+~/.local/bin/symbiote doctor
+~/.local/bin/symbiote demo
+```
+
+Installers require the matching binary bundle on the
+[release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases). If a bundle
+has not been published for your version or architecture, build from source:
+
+```sh
+cargo install --path crates/symbiote-runtime --locked
+symbiote demo
+```
+
+You can also download a matching archive directly, extract it, and run
+`symbiote demo` from its directory (`.\symbiote.exe demo` on Windows). See
+[installation and recovery](docs/OPERATIONS.md) for paths and platform details.
+
+## Use it
+
+```sh
+symbiote demo       # Watch the original two-agent learning cycle
+symbiote research   # Run structural learning, exchange and isolated controls
+symbiote status     # Inspect retained identity and knowledge
+symbiote predict    # Use retained models without network requests
+symbiote doctor     # Inspect readiness without changing local state
+```
+
+Output is readable by default. Add `--json` for scripts and complete receipts.
+Use `--state PATH` to keep independent experiments separate, and `--receipts FILE`
+to choose the report destination. Default local state is `state/demo`; generated
+reports are written under `experiments/local/`. Both are ignored by Git.
+
+Run `demo` twice to observe retained knowledge being rechecked and reused. Run
+`research`, then `status`, to inspect structural knowledge retained from the
+extended experiment. `symbiote --help` lists every command and option.
+
+From a Windows checkout, the single entrypoint also supports:
+
+```powershell
+.\SYMBIOTE-All-One.ps1 -Run
+.\SYMBIOTE-All-One.ps1 -Research
+.\SYMBIOTE-All-One.ps1 -Doctor
+.\SYMBIOTE-All-One.ps1 -Verify
+```
+
+## How it works
+
+**SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN → CONTRIBUTE → REASSESS**
+
+SYMBIOTE treats observations, conditional inferences and unverified hypotheses as
+different kinds of information. A received strategy cannot become trusted merely
+because a partner supplied it or because it matches a few examples.
+
+1. **Sense and model.** Read authorized structured telemetry and maintain exact
+   hypothesis support. Structural reasoning selects queries that maximize
+   worst-case elimination of surviving explanations within its declared family.
+2. **Exchange and verify.** Negotiate explicit capabilities, scope and resource
+   limits. Check received observations against the separate synthetic oracle
+   registry before replaying them into the receiver's unrestricted learner.
+3. **Learn durably.** Promote evaluated declarative models into a versioned ledger
+   with identity, applicability, provenance and evidence. Corruption or an
+   unsupported claim fails explicitly.
+4. **Contribute and reassess.** Offer useful knowledge to the partner, which retains
+   adoption authority. Counterexamples revoke invalidated knowledge without
+   deleting its history.
+
+The structural experiment uses two separate learning algorithms: exact hypothesis
+enumeration and Gaussian elimination over binary observations. It evaluates
+unobserved inputs across configured widths 3–8 and seeds 7, 19, 43 and 101.
+Transferred observations supply evidence; hints never silently restrict the
+candidate family or authorize a prediction.
+
+The local protocol provides mutual authentication, revocation, sequence checks,
+bounded JSONL frames and request budgets. It is scoped to trusted loopback use;
+secure nonlocal transports remain a later milestone.
+
+## Evidence and limits
+
+| What is checked | Evidence |
+| --- | --- |
+| Original BRUTE algorithm preserved exactly | [Byte-identical Python reference](docs/reference/brute/symbolic.py) and [parity receipt](experiments/parity.json): 6,093 cases, 20,843 checkpoints |
+| Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
+| Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
+| Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
+| Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
+
+Genesis increased prediction coverage from 32/64 to 64/64 on repeated four-input
+tasks, while the equal-probe-budget control also reached 64/64. That result does
+not establish a sample-efficiency advantage for exchange.
+
+The structural experiment studies reuse of authenticated observations under a
+trusted synthetic oracle registry and an explicit cost model. Any reciprocal
+benefit is limited to those conditions. Acquisition cost is counted for both
+participants; exchanged evidence, verification, adoption and predictions also have
+declared costs. The learners, oracle implementations and evaluation logic are
+separate software components, not independent research teams. Conditional
+agreement within an affine family does not prove that an arbitrary external
+agent belongs to that family. Repeated laws or predictions must not be counted
+as independent discoveries.
+
+The recorded v0.2 cohort contains 24 paired contexts and 3,720 held-out predictions,
+all correct for both exchange and isolated learning. Declared observation-model
+cost totals are 35,360 for exchange and 66,120 for isolation. A cheap-observation
+control loses that advantage and is rejected. CPU/controller/evaluator work is
+not priced; these figures establish no wall-clock or general efficiency gain.
+Separate-process offline prediction uses retained models; benchmark reruns
+deliberately reconstruct fresh learners.
+
+Stable v1.0 requires broader independent environments, demonstrated reciprocal
+benefits after all costs, secure external connections, robust persistent memory
+and a documented failure envelope. Version numbers advance after the evidence.
 
 ## Architecture
 
-The cognitive cycle is SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN →
-CONTRIBUTE → REASSESS. An initial authenticated connection supplies the first
-telemetry; later cycles use the resulting model to identify exchange opportunities.
+Four substantive Cargo crates keep reasoning, authorization, learning and runtime
+behavior explicit without fragmenting the system into placeholder packages.
 
-```mermaid
-flowchart LR
-    A[Authorized partner APIs] --> S[Typed sensors and bounded echoes]
-    S --> R[Exact conditional reasoning]
-    R --> X[Scoped exchange opportunity]
-    X --> V[Independent finite-task verification]
-    V --> K[Versioned knowledge and ledger]
-    K --> P[Persistent task predictions]
-    P --> C[Derive and offer a strategy]
-    C --> A
-    K --> D[Reassess and revoke on counterexample]
-    D --> R
+| Path | Responsibility |
+| --- | --- |
+| `crates/symbiote-reasoning/` | Exact hidden-state support, affine structural inference, active query selection and conditional prediction |
+| `crates/symbiote-protocol/` | Authorized local sessions, capability negotiation, telemetry sensors, bounded echoes and revocation |
+| `crates/symbiote-memory/` | Persistent identity, versioned knowledge, evidence-bound promotion, integrity checks and rollback |
+| `crates/symbiote-runtime/` | Human-friendly commands, simulated services, reciprocal learning experiments and controls |
+| `docs/` | Architecture, mathematics, operations, provenance, research and version objectives |
+| `docs/assets/` | Original project artwork and its provenance |
+| `docs/reference/` | Preserved upstream algorithm used by developer parity checks |
+| `experiments/` | Compact checked receipts; local generated runs stay ignored |
+| `tests/fixtures/` | Shared original-Python/native fixtures |
+| `tools/` | Installers, verification, packaging and upstream audit utilities |
+| `SYMBIOTE-All-One.ps1` | Synchronous Windows build, run, research, test, verify and Git operations |
+
+[Architecture](docs/ARCHITECTURE.md) · [Reasoning](docs/REASONING.md) ·
+[Protocol](docs/PROTOCOL.md) · [Operations](docs/OPERATIONS.md)
+
+## Develop and verify
+
+Stable Rust and Cargo build the native system. Python 3.11+ is needed only for
+developer verification against the original Python implementation.
+
+```sh
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+python tools/verify.py
 ```
 
-Four substantive crates keep boundaries clear without placeholder packages.
-The exact hidden-state estimator and the evaluated finite-table predictor are
-distinct representations. A conditional prediction from BRUTE's declared model
-family is never a universal claim about an arbitrary agent.
+`Cargo.lock` pins dependencies. Verification reports failures and preserves the
+distinction between software correctness, measured fixture outcomes and broader
+research claims. [Changelog](CHANGELOG.md).
 
-| Directory/file | Responsibility |
-| --- | --- |
-| `crates/symbiote-reasoning/` | Exact Moore-machine prefix version space, support projection, contradiction and budget abstention |
-| `crates/symbiote-protocol/` | Mutual authorization, API versioning, budgets, revocation, telemetry sensor interfaces and bounded echoes |
-| `crates/symbiote-memory/` | Exhaustive finite-task evaluation, promotion gates, durable identity, versioned knowledge and rollback ledger |
-| `crates/symbiote-runtime/` | Independent process, two simulated services, reasoning/learning loop, strategy extraction and controls |
-| `docs/` | Architecture, mathematics, provenance, operations, research and roadmap |
-| `docs/reference/` | Byte-identical BRUTE algorithm used by developer parity checks |
-| `experiments/` | Small actual Genesis receipts, parity evidence and cost accounting |
-| `tests/fixtures/` | Shared original-Python/native reasoning fixtures |
-| `tools/` | Reproduction, upstream classification and verification tools |
-| `SYMBIOTE-All-One.ps1` | Build, run, test, verify, benchmark and visible Git operations |
+## Foundation and attribution
 
-## Observed capabilities
+SYMBIOTE is a clean derivative of
+[BRUTE](https://github.com/jacksonjp0311-gif/Brute/tree/9edbc035792ca75d3a3333b8454e5bf31c706eb1),
+pinned at `9edbc035792ca75d3a3333b8454e5bf31c706eb1` from its v0.11.0 era.
+BRUTE's selected symbolic algorithm is retained unchanged. Its full SP8/SAT
+certification policy is not claimed ported, and its failed sound-transfer gates
+remain documented. AEFL contributes independently adapted bounded telemetry and
+drift concepts; similarity is not a learning criterion.
 
-The default two-agent experiment starts with two observed inputs out of four per
-partner. It builds an exact hidden-state hypothesis space, detects missing task
-knowledge, receives untrusted tables, checks every finite input through the
-authorized API, and promotes only correct knowledge that improves prediction
-coverage without regression. It then derives an XOR or second-bit strategy from
-the checked table. Each partner independently validates that strategy before use.
+All 983 upstream files are classified in the
+[migration manifest](docs/upstream-manifest.json). Original repositories,
+authorship and scientific evidence remain untouched and accessible through
+pinned links. Historical archives and massive generated results stay upstream.
 
-| Measurement | Actual result |
-| --- | --- |
-| SYMBIOTE isolated partial-model predictions | 32/64 correct; 32 abstentions |
-| After evaluated exchange | 64/64 correct; 0 abstentions |
-| Same four-probe-budget control, without requesting an exchange artifact | 64/64 correct |
-| Verification cost | 8 SYMBIOTE probes + 8 separate control probes + 8 partner checks |
-| Partner cost, each 32-task batch | 176 → 72 declared resource units, including 4 verification calls |
-| Restart | Same identity; 2 artifacts reused; 0 new promotions |
-| Incorrect knowledge | Rejected; no promotion; later valid candidate accepted |
-| Changed environment | Counterexample detected; affected artifact durably revoked |
-| Exact Python/Rust reasoning parity | 6,093 cases; 20,843 checkpoints; 0 mismatches |
-| Native unit/integration tests | 33 passed; strict Clippy and formatting passed |
-
-These are four-input fixtures repeated across 32 predictions per partner, not
-64 independent research samples. An abstention is not an incorrect certificate.
-The partner cost model assigns 1 unit to a local prediction and 10 to an oracle
-call; it is not a measured CPU speedup. The matched-probe control also learns the
-whole table: **this release establishes no sample-efficiency advantage for
-exchange**. [Research findings and receipts](docs/RESEARCH.md).
-
-## Provenance and scientific status
-
-BRUTE main is pinned at `9edbc035792ca75d3a3333b8454e5bf31c706eb1`, release
-v0.11.0 at `d8b449d45931145ae9b177a88de3833f54301479`.
-The source of the exact port, `bgr90/symbolic.py`, is preserved byte-for-byte.
-Full BRUTE SP8/SAT certification-policy parity is not claimed. BRUTE's failed
-sound-transfer gates remain explicitly documented and its original evidence
-remains upstream. AEFL contributes independently adapted bounded-buffer and
-drift concepts; increased similarity is never a learning metric.
-
-Every one of the 983 upstream files is classified in the
-[migration manifest](docs/upstream-manifest.json). BRUTE's active upstream tree
-contains 548.17 MiB and 41 root entries; SYMBIOTE's active tracked files occupy
-less than 0.5 MiB with 14 root entries, reducing bytes by over 99.9% and root
-entries by 65.85%. It excludes massive result payloads, duplicate version layout
-and generated material. [Measured footprint](experiments/footprint.json). Original repositories
-are untouched. Neither inspected upstream supplies a license declaration; the
-reference retains its original rights and is excluded from the MIT license for
-new SYMBIOTE code. [Full provenance](docs/PROVENANCE.md).
-
-## Milestones
-
-v0.1 Genesis delivers the complete first operational vertical slice, including
-limited prototypes of later objectives. Version advancement requires new
-evidence, not the existence of infrastructure.
-
-Next: v0.2 First Symbiosis should test independently implemented partners,
-hold-out task families and real exchange opportunities, then compare both agents
-against matched-cost isolated learners. Persistent storage and rollback already
-exist, but generalized adaptive memory and networked relationships remain future
-work. [Version objectives and acceptance criteria](docs/ROADMAP.md).
+New SYMBIOTE code uses the [MIT license](LICENSE). The retained BRUTE reference
+has an explicit exception because the inspected upstream supplied no license
+declaration; its original rights are preserved. See
+[full provenance](docs/PROVENANCE.md) and [artwork provenance](docs/assets/README.md).

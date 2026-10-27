@@ -5,6 +5,10 @@ param(
     [switch]$Test,
     [switch]$Verify,
     [switch]$Benchmark,
+    [switch]$Research,
+    [switch]$Doctor,
+    [switch]$Install,
+    [switch]$Json,
     [switch]$GitStatus,
     [string]$State = 'state/demo',
     [string]$Python = ''
@@ -20,9 +24,18 @@ function Invoke-Checked([scriptblock]$Operation) {
     if ($LASTEXITCODE -ne 0) { throw "Operation failed with exit code $LASTEXITCODE" }
 }
 
+function Invoke-Symbiote([string[]]$Arguments) {
+    $commandArguments = @($Arguments)
+    if ($Json) { $commandArguments += '--json' }
+    Invoke-Checked { cargo run --release --locked -q -p symbiote-runtime --bin symbiote -- @commandArguments }
+}
+
 try {
-    if ($Build) { Invoke-Checked { cargo build --workspace --locked } }
-    if ($Run) { Invoke-Checked { cargo run --locked -p symbiote-runtime --bin symbiote -- demo --state $State } }
+    if ($Build) { Invoke-Checked { cargo build --workspace --release --locked } }
+    if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
+    if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
+    if ($Doctor) { Invoke-Symbiote -Arguments @('doctor', '--state', $State) }
+    if ($Install) { & (Join-Path $repoRoot 'tools/install.ps1') -FromSource; if ($LASTEXITCODE -ne 0) { throw 'Installation failed' } }
     if ($Test) { Invoke-Checked { cargo test --workspace --locked } }
     if ($Verify) {
         if ([string]::IsNullOrWhiteSpace($Python)) {
@@ -34,15 +47,23 @@ try {
     }
     if ($Benchmark) {
         $benchmarkState = Join-Path 'experiments/local' ('benchmark-' + [guid]::NewGuid().ToString('N'))
-        Invoke-Checked { cargo run --locked -p symbiote-runtime --bin symbiote -- benchmark --state $benchmarkState --receipts experiments/local/benchmark.json }
+        Invoke-Symbiote -Arguments @('benchmark', '--state', $benchmarkState, '--receipts', 'experiments/local/benchmark.json')
     }
     if ($GitStatus) {
         Invoke-Checked { git status --short --branch }
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $GitStatus)) {
-        Write-Output 'SYMBIOTE-All-One.ps1 [-Build] [-Run] [-Test] [-Verify] [-Benchmark] [-GitStatus] [-State DIR] [-Python EXE]'
+    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $Doctor -or $Install -or $GitStatus)) {
+        Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
+        Write-Output ''
+        Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
+        Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
+        Write-Output 'Check:      .\SYMBIOTE-All-One.ps1 -Doctor'
+        Write-Output 'Verify:     .\SYMBIOTE-All-One.ps1 -Verify'
+        Write-Output 'Install:    .\SYMBIOTE-All-One.ps1 -Install'
+        Write-Output ''
+        Write-Output 'Other switches: -Build -Test -Benchmark -GitStatus -Json -State DIR -Python EXE'
     }
 }
 finally { Set-Location -LiteralPath $repoRoot }

@@ -1,9 +1,12 @@
 //! Independent, bounded, LLM-free SYMBIOTE genesis runtime.
+mod research;
+
 use serde_json::{json, Value};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use symbiote_memory::knowledge::KnowledgeStore;
 use symbiote_memory::{evaluate, Artifact, Store};
 use symbiote_protocol::{spawn_server, Client, EchoBuffer, Sensor, ServerConfig, Telemetry};
 use symbiote_reasoning::SymbolicLearner;
@@ -354,7 +357,7 @@ fn demo(state: &Path, receipts: &Path, fault: &str) -> Result<Value, String> {
         server.shutdown()?;
     }
     let report = json!({
-        "schema":"symbiote.demo/1","version":"0.1.0","status":"PASS","identity":identity,
+        "schema":"symbiote.demo/1","version":env!("CARGO_PKG_VERSION"),"status":"PASS","identity":identity,
         "language_model":false,"authorized_endpoints":2,"promoted":promoted,"reused":reused,"active_artifacts":store.active().len(),
         "participants":participants,"phases":phases,
         "scientific_status":"deterministic finite-domain software experiment; not generalized intelligence",
@@ -365,52 +368,403 @@ fn demo(state: &Path, receipts: &Path, fault: &str) -> Result<Value, String> {
     Ok(report)
 }
 
-fn argument(args: &[String], flag: &str, default: &str) -> String {
-    args.iter()
-        .position(|s| s == flag)
-        .and_then(|i| args.get(i + 1))
-        .cloned()
-        .unwrap_or_else(|| default.into())
+#[derive(Debug)]
+struct Cli {
+    command: String,
+    state: PathBuf,
+    receipts: PathBuf,
+    fault: String,
+    artifact: Option<String>,
+    json: bool,
 }
 
-fn execute() -> Result<Value, String> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let command = args.first().map(String::as_str).unwrap_or("help");
-    let state = PathBuf::from(argument(&args, "--state", "state/demo"));
-    let receipts = PathBuf::from(argument(&args, "--receipts", "experiments/local/demo.json"));
-    if command == "demo" || command == "benchmark" {
-        return demo(&state, &receipts, &argument(&args, "--fault", "none"));
+impl Cli {
+    fn parse(args: Vec<String>) -> Result<Self, String> {
+        let mut command = None;
+        let mut options = std::collections::BTreeMap::new();
+        let mut json = false;
+        let mut index = 0;
+        while index < args.len() {
+            let arg = &args[index];
+            if arg == "--json" {
+                if json {
+                    return Err("--json was supplied more than once".into());
+                }
+                json = true;
+                index += 1;
+                continue;
+            }
+            if arg == "--help" || arg == "-h" {
+                command = Some("help".to_string());
+                index += 1;
+                continue;
+            }
+            if arg == "--version" || arg == "-V" {
+                command = Some("version".to_string());
+                index += 1;
+                continue;
+            }
+            if ["--state", "--receipts", "--fault", "--artifact"].contains(&arg.as_str()) {
+                let value = args
+                    .get(index + 1)
+                    .ok_or_else(|| format!("{arg} requires a value"))?;
+                if value.is_empty() || value.starts_with("--") {
+                    return Err(format!("{arg} requires a nonempty value"));
+                }
+                if options.insert(arg.clone(), value.clone()).is_some() {
+                    return Err(format!("{arg} was supplied more than once"));
+                }
+                index += 2;
+                continue;
+            }
+            if arg.starts_with('-') {
+                return Err(format!("unknown option: {arg}"));
+            }
+            if command.is_some() {
+                return Err(format!("unexpected argument: {arg}"));
+            }
+            command = Some(arg.clone());
+            index += 1;
+        }
+        let command = command.unwrap_or_else(|| "help".into());
+        if ![
+            "help",
+            "version",
+            "demo",
+            "benchmark",
+            "research",
+            "predict",
+            "verify-memory",
+            "status",
+            "revoke",
+            "doctor",
+        ]
+        .contains(&command.as_str())
+        {
+            return Err(format!("unknown command: {command}"));
+        }
+        for option in options.keys() {
+            let allowed = match option.as_str() {
+                "--state" => !["help", "version"].contains(&command.as_str()),
+                "--receipts" => ["demo", "benchmark", "research"].contains(&command.as_str()),
+                "--fault" => ["demo", "benchmark"].contains(&command.as_str()),
+                "--artifact" => command == "revoke",
+                _ => false,
+            };
+            if !allowed {
+                return Err(format!("{option} does not apply to {command}"));
+            }
+        }
+        let fault = options.remove("--fault").unwrap_or_else(|| "none".into());
+        if !["none", "wrong-artifact", "drift"].contains(&fault.as_str()) {
+            return Err(format!(
+                "unknown fault: {fault}; choose wrong-artifact or drift"
+            ));
+        }
+        let artifact = options.remove("--artifact");
+        if command == "revoke" && artifact.is_none() {
+            return Err("revoke requires --artifact ID".into());
+        }
+        let default_receipt = if command == "research" {
+            "experiments/local/research.json"
+        } else {
+            "experiments/local/demo.json"
+        };
+        Ok(Self {
+            command,
+            state: PathBuf::from(
+                options
+                    .remove("--state")
+                    .unwrap_or_else(|| "state/demo".into()),
+            ),
+            receipts: PathBuf::from(
+                options
+                    .remove("--receipts")
+                    .unwrap_or_else(|| default_receipt.into()),
+            ),
+            fault,
+            artifact,
+            json,
+        })
     }
-    if command == "predict" || command == "verify-memory" {
-        let store = Store::open(&state)?;
-        let predictions: Vec<Value> = store.active().into_iter().map(|a| json!({"partner":a.source,"artifact":a.id,"revision":a.revision,"scope":a.scope,"predictions":a.table})).collect();
+}
+
+fn path_exists(path: &Path) -> Result<bool, String> {
+    match fs::metadata(path) {
+        Ok(_) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(format!("cannot inspect {}: {error}", path.display())),
+    }
+}
+
+fn execute(cli: &Cli) -> Result<Value, String> {
+    let command = cli.command.as_str();
+    let state = &cli.state;
+    let receipts = &cli.receipts;
+    if command == "research" {
+        return research::run(state, receipts);
+    }
+    if command == "demo" || command == "benchmark" {
+        return demo(state, receipts, &cli.fault);
+    }
+    if command == "doctor" {
+        let state_exists = path_exists(state)?;
+        let ledger_exists = path_exists(&state.join("ledger.jsonl"))?;
+        let lock_exists = path_exists(&state.join("writer.lock"))?;
+        let knowledge_exists = path_exists(&state.join("knowledge.jsonl"))?;
+        let knowledge_lock_exists = path_exists(&state.join("knowledge.writer.lock"))?;
         return Ok(
-            json!({"schema":"symbiote.retained/1","identity":store.identity(),"active_artifacts":predictions.len(),"predictions":predictions,"network_requests":0,"status":"PASS"}),
+            json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":if lock_exists || knowledge_lock_exists { "ATTENTION" } else { "PASS" },"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"network_requests":0,"state_modified":false}),
+        );
+    }
+    if ["status", "predict", "verify-memory"].contains(&command)
+        && !path_exists(&state.join("ledger.jsonl"))?
+    {
+        if path_exists(&state.join("knowledge.jsonl"))? {
+            return Err("structural knowledge exists without its identity ledger".into());
+        }
+        return Ok(
+            json!({"schema":"symbiote.retained/1","identity":null,"active_artifacts":0,"genesis_artifacts":0,"structural_artifacts":0,"predictions":[],"structural_knowledge":[],"network_requests":0,"status":"EMPTY","state_modified":false}),
+        );
+    }
+    if command == "predict" || command == "verify-memory" || command == "status" {
+        let store = Store::open(state)?;
+        let predictions: Vec<Value> = store.active().into_iter().map(|a| json!({"partner":a.source,"artifact":a.id,"revision":a.revision,"scope":a.scope,"predictions":a.table})).collect();
+        let mut structural_knowledge = Vec::new();
+        if path_exists(&state.join("knowledge.jsonl"))? {
+            let knowledge = KnowledgeStore::open(state, store.identity())?;
+            for record in knowledge.active() {
+                let width = record.payload["width"]
+                    .as_u64()
+                    .ok_or("structural knowledge width missing")?;
+                let count = 8_usize.min(1_usize << width);
+                let mut sample_predictions = Vec::new();
+                for input in 0..count {
+                    sample_predictions
+                        .push(json!({"input":input,"output":record.predict(input as u16)?}));
+                }
+                structural_knowledge.push(json!({"id":record.id,"source":record.source,"scope":record.scope,"revision":record.revision,"schema_fingerprint":record.schema_fingerprint,"model":record.payload,"sample_predictions":sample_predictions,"prediction_status":"validated-in-declared-synthetic-scope"}));
+            }
+        }
+        return Ok(
+            json!({"schema":"symbiote.retained/1","identity":store.identity(),"active_artifacts":predictions.len()+structural_knowledge.len(),"genesis_artifacts":predictions.len(),"structural_artifacts":structural_knowledge.len(),"predictions":predictions,"structural_knowledge":structural_knowledge,"network_requests":0,"status":"PASS"}),
         );
     }
     if command == "revoke" {
-        let mut store = Store::open(&state)?;
-        let id = argument(&args, "--artifact", "");
-        if id.is_empty() {
-            return Err("--artifact is required".into());
+        if !path_exists(&state.join("ledger.jsonl"))? {
+            return Err("no retained state to revoke; check --state DIR".into());
         }
-        store.revoke(&id, "operator requested rollback")?;
-        return Ok(json!({"status":"PASS","revoked":id,"active_artifacts":store.active().len()}));
-    }
-    if command == "help" || command == "--help" || command == "-h" {
+        let mut store = Store::open(state)?;
+        let id = cli.artifact.as_deref().ok_or("--artifact is required")?;
+        let mut structural_count = 0;
+        let mut revoked_kind = "genesis";
+        if store.active().iter().any(|artifact| artifact.id == id) {
+            store.revoke(id, "operator requested rollback")?;
+            if path_exists(&state.join("knowledge.jsonl"))? {
+                structural_count = KnowledgeStore::open(state, store.identity())?
+                    .active()
+                    .len();
+            }
+        } else {
+            if !path_exists(&state.join("knowledge.jsonl"))? {
+                return Err(format!("no active knowledge named {id}"));
+            }
+            let mut knowledge = KnowledgeStore::open(state, store.identity())?;
+            knowledge.revoke(id, "operator requested rollback")?;
+            structural_count = knowledge.active().len();
+            revoked_kind = "structural";
+        }
         return Ok(
-            json!({"SYMBIOTE":"0.1.0","commands":["demo --state DIR --receipts FILE","benchmark --state FRESH_DIR --receipts FILE","predict --state DIR","verify-memory --state DIR","revoke --state DIR --artifact ID"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"status":"PASS","revoked":id,"revoked_kind":revoked_kind,"active_artifacts":store.active().len()+structural_count}),
+        );
+    }
+    if command == "version" {
+        return Ok(json!({"name":"SYMBIOTE","version":env!("CARGO_PKG_VERSION")}));
+    }
+    if command == "help" {
+        return Ok(
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
 }
 
+fn display(report: &Value, cli: &Cli) -> String {
+    if cli.json {
+        return serde_json::to_string_pretty(report).expect("serializable report");
+    }
+    let version = env!("CARGO_PKG_VERSION");
+    if cli.command == "version" {
+        return format!("SYMBIOTE {version}");
+    }
+    if cli.command == "help" {
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for demo, research or benchmark\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+    }
+    let status = report["status"].as_str().unwrap_or("COMPLETE");
+    let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
+    if cli.command == "doctor" {
+        lines.push(format!(
+            "Platform: {} / {}",
+            report["os"].as_str().unwrap_or("unknown"),
+            report["architecture"].as_str().unwrap_or("unknown")
+        ));
+        lines.push(format!("State: {}", cli.state.display()));
+        lines.push(format!(
+            "Genesis ledger: {} | Structural knowledge: {}",
+            report["ledger_exists"], report["knowledge_exists"]
+        ));
+        lines.push(format!(
+            "Writer locks: genesis {} / knowledge {}",
+            report["writer_lock_exists"], report["knowledge_writer_lock_exists"]
+        ));
+        if report["writer_lock_exists"] == true || report["knowledge_writer_lock_exists"] == true {
+            lines.push(
+                "A writer may be active. Confirm it has exited before recovering a stale lock."
+                    .into(),
+            );
+        }
+        lines.push("Inspection only; no state changes or network requests.".into());
+        return lines.join("\n");
+    }
+    if let Some(identity) = report["identity"].as_str() {
+        lines.push(format!("Identity: {identity}"));
+    }
+    if let Some(active) = report["active_artifacts"].as_u64() {
+        lines.push(format!("Validated knowledge: {active} active artifact(s)"));
+    }
+    if let Some(promoted) = report["promoted"].as_u64() {
+        if cli.command == "research" {
+            lines.push(format!(
+                "This experiment: {promoted} promoted, {} already retained",
+                report["already_retained"].as_u64().unwrap_or(0)
+            ));
+        } else {
+            lines.push(format!(
+                "This cycle: {promoted} promoted, {} reused",
+                report["reused"].as_u64().unwrap_or(0)
+            ));
+        }
+    }
+    if let Some(participants) = report["participants"]
+        .as_array()
+        .filter(|_| cli.command != "research")
+    {
+        for participant in participants {
+            let s = &participant["symbiote"];
+            let p = &participant["partner_benefit"];
+            lines.push(format!(
+                "  {}: prediction coverage {}/{} -> {}/{}; equal-probe control {}/{}",
+                participant["partner"].as_str().unwrap_or("partner"),
+                s["isolated_correct"],
+                s["total"],
+                s["exchange_correct"],
+                s["total"],
+                s["matched_probe_control_correct"],
+                s["total"]
+            ));
+            lines.push(format!(
+                "    Partner resource units: {} -> {} (simulation units, validation included)",
+                p["baseline_resource_units"], p["strategy_resource_units_including_verification"]
+            ));
+        }
+        lines.push(
+            "Finite laboratory tasks; this does not establish a general transfer advantage.".into(),
+        );
+    }
+    if let Some(predictions) = report["predictions"].as_array() {
+        for prediction in predictions {
+            lines.push(format!(
+                "  {}: revision {} | inputs 0..3 -> {}",
+                prediction["partner"].as_str().unwrap_or("partner"),
+                prediction["revision"],
+                prediction["predictions"]
+            ));
+        }
+        let structural_count = report["structural_artifacts"].as_u64().unwrap_or(0);
+        if structural_count > 0 {
+            lines.push(format!(
+                "Structural knowledge: {structural_count} validated affine model(s)"
+            ));
+            if let Some(models) = report["structural_knowledge"].as_array() {
+                for model in models.iter().take(8) {
+                    lines.push(format!(
+                        "  {}: revision {}, {}-bit model, coefficients {}",
+                        model["id"].as_str().unwrap_or("model"),
+                        model["revision"],
+                        model["model"]["width"],
+                        model["model"]["coefficients"]
+                    ));
+                }
+                if models.len() > 8 {
+                    lines.push(format!(
+                        "  ... {} more; use --json for all models and sample predictions",
+                        models.len() - 8
+                    ));
+                }
+            }
+        }
+        if predictions.is_empty() && structural_count == 0 {
+            lines.push("No retained knowledge yet. Run: symbiote demo".into());
+        }
+        lines.push("Network requests: 0".into());
+    }
+    if cli.command == "revoke" {
+        lines.push(format!(
+            "Revoked: {}",
+            report["revoked"].as_str().unwrap_or("unknown")
+        ));
+    }
+    if cli.command == "research" {
+        for field in ["cases", "passed", "failed", "experiment", "scope"] {
+            if let Some(value) = report.get(field) {
+                lines.push(format!(
+                    "{field}: {}",
+                    value
+                        .as_str()
+                        .map(str::to_owned)
+                        .unwrap_or_else(|| value.to_string())
+                ));
+            }
+        }
+        if let Some(participants) = report["participants"].as_array() {
+            for participant in participants {
+                lines.push(format!(
+                    "  {}: isolated cost {} / exchange cost {} | correct {}/{}",
+                    participant["agent"].as_str().unwrap_or("participant"),
+                    participant["isolated_cost"],
+                    participant["exchange_cost"],
+                    participant["correct"],
+                    participant["total"]
+                ));
+            }
+        }
+        if let Some(conclusion) = report["conclusion"].as_str() {
+            lines.push(conclusion.into());
+        }
+        lines.push("Use --json for complete experimental measurements.".into());
+    }
+    lines.push(format!("State: {}", cli.state.display()));
+    if ["demo", "benchmark", "research"].contains(&cli.command.as_str()) {
+        lines.push(format!("Receipt: {}", cli.receipts.display()));
+    }
+    lines.join("\n")
+}
+
 fn main() {
-    match execute() {
-        Ok(report) => println!(
-            "{}",
-            serde_json::to_string_pretty(&report).expect("serializable report")
-        ),
+    let cli = match Cli::parse(std::env::args().skip(1).collect()) {
+        Ok(cli) => cli,
+        Err(error) => {
+            eprintln!("SYMBIOTE: {error}\nRun `symbiote --help` for usage.");
+            std::process::exit(2);
+        }
+    };
+    match execute(&cli) {
+        Ok(report) => {
+            println!("{}", display(&report, &cli));
+            if ["FAIL", "HOLD", "REJECTED"].contains(&report["status"].as_str().unwrap_or("")) {
+                std::process::exit(1);
+            }
+        }
         Err(error) => {
             eprintln!("SYMBIOTE failure: {error}");
             std::process::exit(1);

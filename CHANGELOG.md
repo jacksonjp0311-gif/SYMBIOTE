@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.2.0 — First Symbiosis — 2026-10-27
+
+- Exact Boolean affine reasoning with active maximin observations, explicit
+  epistemic status, bounded work and hints that never replace evidence.
+- Two distinct native learner implementations, real scoped TCP exchange of
+  oracle-attested observations, independent held-out evaluation and executed
+  isolated/negative controls under a declared cost model.
+- Schema-bound declarative persistent knowledge with separate agent identities,
+  unique training/held-out evidence, cost-aware gates, rollback and offline use.
+- Readable terminal commands, diagnostics, strict argument validation, original
+  banner, professional README and checksum-verified native installers/bundles.
+- Legacy exact BRUTE parity and Genesis behavior retained; stable v1.0 criteria
+  remain open. Trusted local oracle, affine-family and simulated-cost assumptions
+  do not establish unrestricted transfer or autonomous self-improvement.
+
 ## v0.1.0 — Genesis — 2026-10-26
 
 - Independent clean Rust derivative of pinned BRUTE v0.11.0-era source; exhaustive

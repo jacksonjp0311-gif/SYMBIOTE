@@ -19,10 +19,12 @@ impl RunDir {
     fn run(&self, command: &str, fault: Option<&str>) -> std::process::Output {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_symbiote"));
         cmd.arg(command)
+            .arg("--json")
             .arg("--state")
-            .arg(self.0.join("state"))
-            .arg("--receipts")
-            .arg(self.0.join("receipt.json"));
+            .arg(self.0.join("state"));
+        if matches!(command, "demo" | "benchmark" | "research") {
+            cmd.arg("--receipts").arg(self.0.join("receipt.json"));
+        }
         if let Some(fault) = fault {
             cmd.arg("--fault").arg(fault);
         }
@@ -108,6 +110,7 @@ fn operator_rollback_requires_a_new_evaluated_revision() {
     let first = json_output(dir.run("demo", None));
     let rollback = Command::new(env!("CARGO_BIN_EXE_symbiote"))
         .arg("revoke")
+        .arg("--json")
         .arg("--state")
         .arg(dir.0.join("state"))
         .arg("--artifact")

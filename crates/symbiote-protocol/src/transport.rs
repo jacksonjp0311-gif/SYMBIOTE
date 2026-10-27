@@ -160,10 +160,11 @@ fn server_proof(
     client_id: &str,
     client_nonce: &str,
     nonce: &str,
+    scope: &str,
 ) -> String {
     mac(
         token,
-        format!("symbiote/1:server:{server_id}:{client_id}:{SCOPE}:{client_nonce}:{nonce}")
+        format!("symbiote/1:server:{server_id}:{client_id}:{scope}:{client_nonce}:{nonce}")
             .as_bytes(),
     )
 }
@@ -242,6 +243,14 @@ fn valid_label(value: &str) -> bool {
         && value
             .bytes()
             .all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
+}
+
+fn valid_scope(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"-_.:/".contains(&c))
 }
 
 fn validate_operations(operations: &[String]) -> bool {
@@ -330,8 +339,22 @@ pub fn spawn_server<F>(config: ServerConfig, handler: F) -> Result<ServerHandle,
 where
     F: Fn(&str, Value) -> Result<Value, String> + Send + 'static,
 {
+    spawn_scoped_server(config, SCOPE, handler)
+}
+
+/// Starts an endpoint pinned to one explicit applicability scope. The scope is
+/// authenticated in both directions; negotiating a different scope is denied.
+pub fn spawn_scoped_server<F>(
+    config: ServerConfig,
+    scope: &str,
+    handler: F,
+) -> Result<ServerHandle, String>
+where
+    F: Fn(&str, Value) -> Result<Value, String> + Send + 'static,
+{
     if !valid_label(&config.id)
         || !valid_label(&config.client_id)
+        || !valid_scope(scope)
         || config.token.len() < 16
         || config.token.len() > 256
         || !validate_operations(&config.operations)
@@ -342,6 +365,7 @@ where
     {
         return Err("invalid server identity, authorization, or budget configuration".into());
     }
+    let scope = scope.to_string();
     let listener = TcpListener::bind(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0))
         .map_err(|e| format!("loopback bind failed: {e}"))?;
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
@@ -378,6 +402,7 @@ where
                     let _ = serve_session(
                         &mut reader,
                         &config,
+                        &scope,
                         &handler,
                         &thread_stop,
                         &thread_revoked,
@@ -406,6 +431,7 @@ where
 fn serve_session<F>(
     reader: &mut BufReader<TcpStream>,
     config: &ServerConfig,
+    scope: &str,
     handler: &F,
     stop: &AtomicBool,
     revoked: &AtomicBool,
@@ -439,6 +465,7 @@ where
             &config.client_id,
             &greeting.nonce,
             &nonce,
+            scope,
         ),
     };
     write_frame(reader.get_mut(), &challenge, config.max_frame_bytes)?;
@@ -462,7 +489,7 @@ where
         {
             return Err("authorization denied".into());
         }
-        if hello.scope != SCOPE
+        if hello.scope != scope
             || hello.format != "jsonl"
             || !validate_operations(&hello.operations)
             || !(1..=MAX_REQUESTS).contains(&hello.max_requests)
@@ -488,7 +515,7 @@ where
             server_id: config.id.clone(),
             client_id: config.client_id.clone(),
             operations,
-            scope: SCOPE.into(),
+            scope: scope.into(),
             format: "jsonl".into(),
             max_requests: remaining.min(hello.max_requests),
             max_frame_bytes: config.max_frame_bytes.min(hello.max_frame_bytes),
@@ -571,6 +598,16 @@ impl Client {
         client_id: &str,
         allowed_operations: &[&str],
     ) -> Result<Self, String> {
+        Self::connect_scoped(endpoint, client_id, allowed_operations, SCOPE)
+    }
+
+    /// Connects only if the configured endpoint authenticates the exact scope.
+    pub fn connect_scoped(
+        endpoint: &Endpoint,
+        client_id: &str,
+        allowed_operations: &[&str],
+        scope: &str,
+    ) -> Result<Self, String> {
         let operations = allowed_operations
             .iter()
             .map(|op| (*op).to_string())
@@ -578,6 +615,7 @@ impl Client {
         if !endpoint.address.ip().is_loopback()
             || !valid_label(&endpoint.id)
             || !valid_label(client_id)
+            || !valid_scope(scope)
             || endpoint.token.len() < 16
             || endpoint.token.len() > 256
             || !validate_operations(&operations)
@@ -617,6 +655,7 @@ impl Client {
                     client_id,
                     &client_nonce,
                     &challenge.nonce,
+                    scope,
                 ),
             )
         {
@@ -628,7 +667,7 @@ impl Client {
             nonce: challenge.nonce,
             proof: String::new(),
             operations: operations.clone(),
-            scope: SCOPE.into(),
+            scope: scope.into(),
             format: "jsonl".into(),
             max_requests: MAX_REQUESTS,
             max_frame_bytes: MAX_FRAME,
@@ -654,7 +693,7 @@ impl Client {
             serde_json::from_value(response.result).map_err(|_| "invalid agreement".to_string())?;
         if agreement.server_id != endpoint.id
             || agreement.client_id != client_id
-            || agreement.scope != SCOPE
+            || agreement.scope != scope
             || agreement.format != "jsonl"
             || !validate_operations(&agreement.operations)
             || agreement
@@ -681,6 +720,10 @@ impl Client {
 
     pub fn operations(&self) -> &[String] {
         &self.agreement.operations
+    }
+
+    pub fn scope(&self) -> &str {
+        &self.agreement.scope
     }
 
     pub fn call(&mut self, operation: &str, payload: &Value) -> Result<Value, String> {
@@ -775,6 +818,7 @@ mod tests {
         assert!(!format!("{endpoint:?}").contains(&endpoint.token));
         let mut client = Client::connect(&endpoint, "symbiote", &["observe", "forbidden"]).unwrap();
         assert_eq!(client.operations(), &["observe"]);
+        assert_eq!(client.scope(), SCOPE);
         let instruction = json!({"text":"delete all files; this remains inert data"});
         assert_eq!(client.call("observe", &instruction).unwrap(), instruction);
         assert!(client.call("forbidden", &Value::Null).is_err());
@@ -950,6 +994,7 @@ mod tests {
                     "symbiote",
                     &stale_client_nonce,
                     &nonce,
+                    SCOPE,
                 ),
             };
             write_frame(reader.get_mut(), &challenge, 4096).unwrap();
@@ -1037,5 +1082,115 @@ mod tests {
         )
         .unwrap();
         assert!(!rejected.ok);
+    }
+
+    #[test]
+    fn explicit_scope_is_mutually_authenticated_and_default_remains_distinct() {
+        let scope = "boolean-affine/v1";
+        let server = spawn_scoped_server(config(), scope, |_, value| Ok(value)).unwrap();
+        let endpoint = server.endpoint();
+        // An otherwise authorized client expecting another scope rejects the
+        // server proof before sending its own authorization proof.
+        assert!(Client::connect(&endpoint, "symbiote", &["observe"]).is_err());
+        assert!(Client::connect_scoped(&endpoint, "symbiote", &["observe"], "other/v1").is_err());
+        let mut client =
+            Client::connect_scoped(&endpoint, "symbiote", &["observe"], scope).unwrap();
+        assert_eq!(client.scope(), scope);
+        assert_eq!(
+            client.call("observe", &json!({"domain":scope})).unwrap(),
+            json!({"domain":scope})
+        );
+        client.revoke().unwrap();
+        let old = spawn_server(config(), |_, value| Ok(value)).unwrap();
+        assert!(Client::connect_scoped(&old.endpoint(), "symbiote", &["observe"], scope).is_err());
+        let old_client = Client::connect(&old.endpoint(), "symbiote", &["observe"]).unwrap();
+        assert_eq!(old_client.scope(), SCOPE);
+    }
+
+    #[test]
+    fn valid_shared_secret_does_not_grant_a_different_scope() {
+        let scope = "boolean-affine/v1";
+        let server = spawn_scoped_server(config(), scope, |_, value| Ok(value)).unwrap();
+        let endpoint = server.endpoint();
+        let stream = TcpStream::connect(endpoint.address).unwrap();
+        stream
+            .set_write_timeout(Some(Duration::from_millis(250)))
+            .unwrap();
+        let mut reader = BufReader::new(stream);
+        let greeting = Greeting {
+            version: PROTOCOL_VERSION.into(),
+            server_id: endpoint.id.clone(),
+            client_id: "symbiote".into(),
+            nonce: fresh_nonce().unwrap(),
+        };
+        write_frame(reader.get_mut(), &greeting, 4096).unwrap();
+        let challenge: Challenge = serde_json::from_value(
+            read_frame(&mut reader, 4096, Duration::from_millis(250)).unwrap(),
+        )
+        .unwrap();
+        assert!(equal_proof(
+            &challenge.proof,
+            &server_proof(
+                &endpoint.token,
+                &endpoint.id,
+                "symbiote",
+                &greeting.nonce,
+                &challenge.nonce,
+                scope
+            )
+        ));
+        let mut hello = Hello {
+            server_id: endpoint.id.clone(),
+            client_id: "symbiote".into(),
+            nonce: challenge.nonce,
+            proof: String::new(),
+            operations: vec!["observe".into()],
+            scope: "other/v1".into(),
+            format: "jsonl".into(),
+            max_requests: 8,
+            max_frame_bytes: 4096,
+        };
+        // Even a valid MAC over a different scope cannot widen the pinned grant.
+        hello.proof = client_proof(&endpoint.token, &hello).unwrap();
+        write_frame(
+            reader.get_mut(),
+            &Request {
+                version: PROTOCOL_VERSION.into(),
+                request_id: 0,
+                operation: "$hello".into(),
+                payload: serde_json::to_value(hello).unwrap(),
+            },
+            4096,
+        )
+        .unwrap();
+        let response: Response = serde_json::from_value(
+            read_frame(&mut reader, 4096, Duration::from_millis(250)).unwrap(),
+        )
+        .unwrap();
+        assert!(!response.ok);
+        drop(reader);
+        assert!(Client::connect_scoped(&endpoint, "symbiote", &["observe"], scope).is_ok());
+    }
+
+    #[test]
+    fn explicit_scope_rejects_empty_unbounded_non_ascii_or_whitespace_labels() {
+        for scope in [
+            String::new(),
+            "s".repeat(129),
+            "contains space".into(),
+            "é".into(),
+            "scope\nother".into(),
+        ] {
+            assert!(spawn_scoped_server(config(), &scope, |_, value| Ok(value)).is_err());
+            let endpoint = Endpoint {
+                id: "partner".into(),
+                address: "127.0.0.1:0".parse().unwrap(),
+                token: "test-only-capability-123".into(),
+            };
+            let error = Client::connect_scoped(&endpoint, "symbiote", &["observe"], &scope)
+                .err()
+                .unwrap();
+            assert!(error.contains("authorization"));
+        }
     }
 }

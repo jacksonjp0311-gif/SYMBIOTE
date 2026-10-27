@@ -1,5 +1,8 @@
 # Genesis research findings
 
+This file preserves the v0.1 interpretation. The subsequent structural experiment
+is documented separately in [First Symbiosis research](RESEARCH_V02.md).
+
 Status: actual deterministic software experiments for v0.1.0, not a preregistered
 general intelligence study. The plan preceded implementation; algorithm, fixture,
 evaluator and author are not independent research teams. Failed controls remain

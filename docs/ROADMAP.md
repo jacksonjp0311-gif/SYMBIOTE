@@ -17,7 +17,12 @@ Maintain failed criteria and matched-cost controls for every release.
 | v0.9 Generalization and Stability | Adversarial and drift stress | Wrong/malicious knowledge, dishonest APIs, long-running stability, drift, resource exhaustion and recovery |
 | v1.0 Stable SYMBIOTE | Reliable embeddable Rust system | Secure nonlocal transports, reproducible reciprocal learning across multiple independent controlled environments, compatibility and documented failure envelope |
 
-Next recommended milestone: v0.2 with separate partner implementations and a task
-family where a compressed abstraction is useful on new inputs that are too costly
-to enumerate. Predeclare paired seeds, compute budgets, rejection criteria and
-all-cost utility. Retain the existing gates; validate new claims separately.
+The v0.2 implementation now exercises two different native learning algorithms,
+exact active queries, held-out inputs and reciprocal verified evidence reuse.
+Its trusted local oracle and declared cost model are explicit limitations; both
+learners still share one controller process. See [v0.2 research](RESEARCH_V02.md).
+
+Next: strengthen v0.3 persistence/crash/migration behavior and separate partner
+deployment, while expanding beyond the affine task family. Predeclare compute
+budgets, rejection criteria and participant utility. The broader v0.4–v1.0 claims
+remain open; local software success does not automatically advance those versions.

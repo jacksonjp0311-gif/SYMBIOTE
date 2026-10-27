@@ -1,6 +1,7 @@
 /target/
 /state/
 /experiments/local/
+/dist/
 __pycache__/
 *.pyc
 *.tmp

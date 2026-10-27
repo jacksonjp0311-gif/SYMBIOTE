@@ -1,5 +1,35 @@
 # Build, run and recover
 
+## Standalone installation and daily commands
+
+v0.2 native bundles run without Cargo, Python or an LLM. From a checkout, Windows:
+`./tools/install.ps1 -Version v0.2.0 -AddToPath`; Unix:
+`sh tools/install.sh --version v0.2.0`. Installers validate SHA256 and extract only
+the expected flat executable. `-FromSource`/`--from-source` uses a local Cargo
+checkout explicitly. Install paths default to `%LOCALAPPDATA%/SYMBIOTE/bin` and
+`~/.local/bin`; no administrator permission is required. Checksums detect asset
+changes but do not replace signed publisher attestation.
+
+Use `symbiote demo`, `symbiote research`, `symbiote status`, `symbiote predict` and
+`symbiote doctor`. Output is readable by default; add `--json` for scripts. The
+default state is `state/demo` relative to the current directory; use an explicit
+`--state DIR` for a stable location when launching from different directories.
+`--receipts FILE` applies only to demo/benchmark/research. Invalid flags fail before
+state changes. Structural knowledge lives in `knowledge.jsonl` and has a separate
+`knowledge.writer.lock`, with the same stale-lock precautions described below.
+
+`research` evaluates the predefined cohort from fresh learners; repeat runs report
+matching records as `already_retained`. `predict` is the command that actually
+uses persisted models offline. Its sample outputs include input values that were
+held out from the source observations. Partner knowledge is independently owned
+under `state/research-partner`; inspect that explicit path separately.
+
+The PowerShell entrypoint adds `-Research`, `-Doctor`, `-Json` and `-Install` to the
+original switches. Native release bundles and SHA256SUMS are built and checked on
+Windows x64, Linux x64, macOS arm64 and macOS x64 by the release workflow.
+
+## Developer verification and Genesis recovery
+
 Rust stable and Cargo are sufficient for the native process. Python 3.11+ is
 needed only for developer reference parity and complete reproduction. Cargo.lock
 pins dependencies. The workspace uses serde/serde_json for data and sha2 for

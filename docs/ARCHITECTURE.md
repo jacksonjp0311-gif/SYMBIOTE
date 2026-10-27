@@ -1,5 +1,10 @@
 # Intelligence architecture
 
+The Genesis design below remains the legacy operational slice. v0.2 additionally
+provides exact affine reasoning, scoped protocol connections, two distinct native
+learning implementations and a schema-bound held-out knowledge ledger. See
+[First Symbiosis](RESEARCH_V02.md) for its trust and evaluation boundaries.
+
 SYMBIOTE v0.1.0 is one independent Rust process with two local simulated services.
 The services communicate over real authenticated loopback TCP sockets; simulation
 does not replace the wire protocol with direct function calls. Discovery is a
