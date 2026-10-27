@@ -7,6 +7,7 @@ import argparse
 import ctypes
 import hashlib
 import json
+import ntpath
 import os
 from pathlib import Path
 import platform
@@ -590,6 +591,86 @@ def bound_quarantine(row,request,response,peer):
             "actual quarantine key/body/hash/candidate/response binding")
 
 
+POLICY_ACTIVATION_HOLD = "SYMBIOTE failure: HOLD: operational service/policy changed; preserve deny and idempotency history and use an explicit supported policy revision"
+RESTORE_ACTIVATION_HOLD = "SYMBIOTE failure: HOLD: unreviewed restore cannot activate or mutate service state; inspect policy-status and explicitly review verified relocation"
+
+
+def activation_guard_kind(blocked,stdout,stderr,policy_changed):
+    """Classify only the two real guards, never an arbitrary failed command."""
+    require(blocked["success"] is False and type(blocked["exit_code"]) is int and blocked["exit_code"]==1
+            and stdout==b"" and type(policy_changed) is bool,"blocked activation needs an empty-output native exit one")
+    expected=POLICY_ACTIVATION_HOLD if policy_changed else RESTORE_ACTIVATION_HOLD
+    require(stderr in ((expected+"\n").encode(),(expected+"\r\n").encode()),
+            "blocked activation did not reach the exact expected policy/restore guard")
+    return "POLICY_CHANGE_HOLD" if policy_changed else "UNREVIEWED_RESTORE_HOLD"
+
+
+def verify_midpoint_activation_guard(root,midpoint,owner):
+    """Prove the fixed midpoint's owner/history and state-only policy change."""
+    root=Path(root)
+    blocked=midpoint["unreviewed_activation"]
+    streams={name:artifact_file(root,blocked[name]).read_bytes() for name in ("stdout","stderr")}
+    require(all(hashlib.sha256(data).hexdigest()==blocked[name+"_sha256"] for name,data in streams.items()),
+            "blocked activation raw output differs from its preserved hashes")
+    old=root/"owners/server-pre-restore";current=root/"owners/server-restored"
+    old_identity,_=identity_chain(old/"ledger.jsonl")
+    current_identity,current_rows=identity_chain(current/"ledger.jsonl")
+    require(old_identity==current_identity and current_rows[0]["payload"]["identity"]==owner,
+            "blocked activation must preserve the same real owner identity")
+    old_knowledge,_=knowledge_chain(old/"knowledge.jsonl")
+    current_knowledge,_=knowledge_chain(current/"knowledge.jsonl")
+    require(old_knowledge==current_knowledge,"blocked activation cannot replace retained knowledge")
+    before,prior=operational_chain(old/"operations.jsonl",owner)
+    after,later=operational_chain(current/"operations.jsonl",owner)
+    require(after.startswith(before),"restored operational history must retain its exact old prefix")
+    backup=root/"midpoint-backup"
+    manifest=load(backup/"backup-manifest.json")
+    pin=sha(backup/"backup-manifest.json")
+    require(manifest["schema"]=="symbiote.owner-backup/1" and manifest["identity"]==owner
+            and all(midpoint[key]["identity"]==owner and midpoint[key]["manifest_sha256"]==pin for key in ("backup","verification","restore")),
+            "blocked activation must concern the actual verified same-owner backup")
+    for name in ("ledger.jsonl","knowledge.jsonl","operations.jsonl","operations-owner.json"):
+        saved=artifact_file(root,"midpoint-backup/files/"+name).read_bytes()
+        expected=artifact_file(root,"owners/server-pre-restore/"+name).read_bytes()
+        require(saved==expected and manifest["files"][name]==dict(bytes=len(saved),sha256=hashlib.sha256(saved).hexdigest()),
+                "backup and pre-restore owner/history bytes must agree")
+    old_manifest=load(artifact_file(root,"public-policies/rotation-8-server.json"))
+    new_manifest=load(artifact_file(root,"public-policies/midpoint-restored-server.json"))
+    require(old_manifest["identity"]==new_manifest["identity"]==owner
+            and old_manifest["schema"]==new_manifest["schema"]=="symbiote.service-config/1"
+            and {k:v for k,v in old_manifest.items() if k!="state"}=={k:v for k,v in new_manifest.items() if k!="state"},
+            "midpoint public policy may change only its state path")
+    ca=sha(artifact_file(root,"public-certificates/ca.pem"))
+    previous=dict(manifest=old_manifest,ca_sha256=ca);following=dict(manifest=new_manifest,ca_sha256=ca)
+    old_policy=digest(previous);new_policy=digest(following)
+    latest=next((row["payload"]["policy_digest"] for row in reversed(prior) if row["payload"]["event"]=="policy_transitioned"),prior[0]["payload"]["policy_digest"])
+    require(old_policy==latest==manifest["operational_policy_sha256"]
+            and prior[-1]["sha256"]==manifest["operational_head_sha256"],"copied old public policy must match the real backup epoch/head")
+    activation=midpoint["activation"]
+    require(activation["identity"]==owner and activation["previous_policy_sha256"]==old_policy
+            and activation["policy_sha256"]==new_policy,"reviewed relocation must bind both recomputed public policy digests")
+    mapping_pin=midpoint["restore"]["restore_mapping_sha256"]
+    require(isinstance(mapping_pin,str) and re.fullmatch(r"[0-9a-f]{64}",mapping_pin) is not None,"bounded restore mapping digest")
+    mapping_file=artifact_file(root,"owners/server-restored/restored-owner-"+mapping_pin+".json")
+    mapping=load(mapping_file)
+    require(sha(mapping_file)==mapping_pin and mapping["schema"]=="symbiote.restored-owner/1"
+            and mapping["identity"]==owner and mapping["manifest_sha256"]==pin
+            and mapping["manifest_json"].encode()==(backup/"backup-manifest.json").read_bytes(),"restore mapping binds the exact verified backup and owner")
+    def location(value):
+        require(isinstance(value,str) and bool(value),"public policy state path is required")
+        if manifest["operating_system"]=="windows":return ntpath.normcase(ntpath.normpath(value.removeprefix("\\\\?\\")))
+        return os.path.normpath(value)
+    require(location(old_manifest["state"])==location(manifest["source_state"])==location(mapping["source_state"])==location(activation["relocation"]["prior_state"])
+            and location(new_manifest["state"])==location(mapping["restored_state"])==location(activation["relocation"]["restored_state"])
+            and activation["relocation"]["restore_mapping_sha256"]==mapping_pin,"copied policy paths must bind the actual source and reviewed restore mapping")
+    transitions=[row["payload"] for row in later[len(prior):] if row["payload"]["event"]=="policy_transitioned"
+                 and row["payload"]["relocation"] is not None]
+    require(len(transitions)==1 and transitions[0]["previous_policy"]==previous and transitions[0]["policy"]==following
+            and transitions[0]["previous_policy_digest"]==old_policy and transitions[0]["policy_digest"]==new_policy
+            and transitions[0]["relocation"]==activation["relocation"],"actual policy transition must anchor the copied snapshots and relocation")
+    return activation_guard_kind(blocked,streams["stdout"],streams["stderr"],old_policy!=new_policy)
+
+
 def verify_endurance(root,binaries):
     """Independent fixed-fixture continuity checks on preserved native evidence."""
     root=Path(root).resolve(strict=True)
@@ -767,8 +848,7 @@ def verify_endurance(root,binaries):
         bound_native_receipt(parsed,label,midpoint[key])
     blocked=midpoint["unreviewed_activation"]
     require(encode(native.get("midpoint-unreviewed-peers"))==encode(blocked),"unreviewed activation is the actual preserved failed native command")
-    require(blocked["success"] is False and blocked["exit_code"]==1 and "restor" in artifact_file(root,blocked["stderr"]).read_text(encoding="utf-8").lower(),
-            "midpoint activation must fail at restore review, not unrelated argument parsing")
+    activation_guard=verify_midpoint_activation_guard(root,midpoint,owners[0])
     final=report["final_continuity"]
     require(encode(final)==encode(cycles[-1]["continuity"]) and report["identity_and_model_continuity"] is True
             and final["server_operations_sha256"]==hashlib.sha256(operations).hexdigest()
@@ -789,7 +869,7 @@ def verify_endurance(root,binaries):
             require(not any(marker in data for marker in (b"-----BEGIN PRIVATE KEY-----",b"-----BEGIN EC PRIVATE KEY-----",b"-----BEGIN RSA PRIVATE KEY-----")),"private key material in continuity evidence")
     return dict(status="PASS",classification="BOUNDED_LOCAL_CONTINUITY",cycles=24,owners=owners,wire_keys=99,durable_candidate_keys=3,
                 service_starts=26,owned_stops=26,retained_models=2,model_digests=sorted(model_hashes),events_sha256=report["events_sha256"],
-                independent_host_validation="OPEN_UNAVAILABLE",scientific_samples=0,report_sha256=sha(root/"endurance-report.json"))
+                independent_host_validation="OPEN_UNAVAILABLE",scientific_samples=0,report_sha256=sha(root/"endurance-report.json"),unreviewed_activation_guard=activation_guard)
 
 
 def plan_descriptor():

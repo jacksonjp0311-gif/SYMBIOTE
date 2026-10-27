@@ -178,6 +178,20 @@ class SafetyTests(unittest.TestCase):
             c.register("missing-native","missing-cli","missing-service",destination,"a"*40)
         self.assertFalse(destination.exists())
 
+    def test_activation_guard_classification_requires_exact_causal_error_and_exit(self):
+        blocked=dict(success=False,exit_code=1)
+        for changed,message,kind in ((True,c.POLICY_ACTIVATION_HOLD,"POLICY_CHANGE_HOLD"),(False,c.RESTORE_ACTIVATION_HOLD,"UNREVIEWED_RESTORE_HOLD")):
+            for ending in ("\n","\r\n"):
+                self.assertEqual(c.activation_guard_kind(blocked,b"",(message+ending).encode(),changed),kind)
+            for error in (message,"prefix "+message+"\n",message+" extra\n",message+"\n\n",
+                          "SYMBIOTE failure: unknown flag --restore\n","SYMBIOTE failure: cannot open configured service file\n",
+                          "SYMBIOTE failure: service configuration does not match a prepared persistent identity\n",
+                          (c.RESTORE_ACTIVATION_HOLD if changed else c.POLICY_ACTIVATION_HOLD)+"\n"):
+                with self.assertRaises(RuntimeError):c.activation_guard_kind(blocked,b"",error.encode(),changed)
+            for status,stdout in ((dict(success=True,exit_code=1),b""),(dict(success=False,exit_code=True),b""),
+                                  (dict(success=False,exit_code=2),b""),(blocked,b"{}\n")):
+                with self.assertRaises(RuntimeError):c.activation_guard_kind(status,stdout,(message+"\n").encode(),changed)
+
     def test_frozen_plan_has_one_host_and_no_research_cohort_entry_points(self):
         plan=c.plan_descriptor()
         self.assertEqual(plan["two_host_validation"],"OPEN_UNAVAILABLE")
@@ -191,6 +205,58 @@ class SafetyTests(unittest.TestCase):
 
 
 class NativeContractTests(unittest.TestCase):
+    def test_actual_native_restored_owner_hits_policy_or_restore_guard_without_mutation(self):
+        binary=Path(os.environ.get("SYMBIOTE_TEST_BINARY",ROOT/"target/debug"/("symbiote.exe" if os.name=="nt" else "symbiote")))
+        if not binary.is_file():self.skipTest("build native candidate before running the actual contract calibration")
+        for changed in (True,False):
+            with self.subTest(policy_changed=changed),tempfile.TemporaryDirectory(prefix="symbiote-native-activation-guard-") as temp:
+                root=Path(temp);old=root/"original";new=root/"restored"
+                old.mkdir();new.mkdir()
+                def command(label,*args,expected=0):
+                    result=c.execute([binary,*args,"--json"],root,label,timeout=10)
+                    c.check_exit(result,expected)
+                    return result
+                prepared=json.loads(c.output(command("prepare","prepare-service","--state",old/"owner"),root))
+                owner=prepared["identity"]
+                # These offline public-only operations need neither credentials
+                # nor a listener. The CA bytes are nevertheless policy-pinned.
+                ca=b"manual offline public CA placeholder\n"
+                for directory in (old,new):(directory/"ca.pem").write_bytes(ca)
+                manifest=dict(schema="symbiote.service-config/1",state=str(old/"owner") if changed else "owner",identity=owner,
+                              certificate="missing.pem",private_key="missing.key",certificate_sha256="a"*64,ca_certificate="ca.pem",bind_address="127.0.0.1:30001",
+                              peers=[dict(alias="partner",id="manual-peer",address="127.0.0.1:30002",server_name="manual.symbiote.test",certificate_sha256="b"*64,
+                                          access=[dict(scope="manual/v1",operations=["knowledge.read"],artifacts=["*"])])],
+                              contexts=[dict(scope="manual/v1",schema_fingerprint="c"*64,truth_fixture=None,truth_sha256=None)],
+                              limits=dict(max_requests=8,max_connections=8,max_frame_bytes=4096,timeout_ms=100,lifetime_ms=1000,per_peer_requests=8,max_offers=1,max_offer_bytes=1024,model_work=1024))
+                c.write_new(old/"service.json",manifest)
+                command("register","peer-revoke","--config",old/"service.json","--peer","manual-peer","--reason","offline fixture registration")
+                backup=json.loads(c.output(command("backup","backup-state","--state",old/"owner","--backup",root/"backup"),root))
+                command("restore","restore-state","--backup",root/"backup","--manifest-sha256",backup["manifest_sha256"],"--state",new/"owner")
+                following=copy.deepcopy(manifest)
+                if changed:following["state"]=str(new/"owner")
+                c.write_new(new/"service.json",following)
+                old_digest=c.digest(dict(manifest=manifest,ca_sha256=c.sha(old/"ca.pem")))
+                new_digest=c.digest(dict(manifest=following,ca_sha256=c.sha(new/"ca.pem")))
+                self.assertEqual(old_digest!=new_digest,changed)
+                _,history=c.operational_chain(new/"owner/operations.jsonl",owner)
+                self.assertEqual(history[0]["payload"]["policy_digest"],old_digest)
+                names=("ledger.jsonl","knowledge.jsonl","operations.jsonl","operations-owner.json")
+                preserved={name:(new/"owner"/name).read_bytes() for name in names}
+                blocked=command("activation","peer-revoke","--config",new/"service.json","--peer","manual-peer","--reason","must not mutate before review",expected=1)
+                outcome=dict(success=False,exit_code=blocked["exit_code"])
+                stdout=(root/blocked["stdout"]).read_bytes();stderr=(root/blocked["stderr"]).read_bytes()
+                self.assertEqual(c.activation_guard_kind(outcome,stdout,stderr,changed),"POLICY_CHANGE_HOLD" if changed else "UNREVIEWED_RESTORE_HOLD")
+                self.assertEqual(preserved,{name:(new/"owner"/name).read_bytes() for name in names})
+                for label,args,exit_code in (("parser",["peers","--config",new/"service.json","--unknown-restore-flag"],2),
+                                             ("credential",["peers","--config",new/"service.json"],1)):
+                    failed=command(label,*args,expected=exit_code)
+                    with self.assertRaises(RuntimeError):c.activation_guard_kind(dict(success=False,exit_code=failed["exit_code"]),(root/failed["stdout"]).read_bytes(),(root/failed["stderr"]).read_bytes(),changed)
+                foreign=copy.deepcopy(following);foreign["identity"]="foreign-owner"
+                c.write_new(new/"foreign.json",foreign)
+                failed=command("foreign","peer-revoke","--config",new/"foreign.json","--peer","manual-peer","--reason","foreign owner rejected",expected=1)
+                with self.assertRaises(RuntimeError):c.activation_guard_kind(dict(success=False,exit_code=failed["exit_code"]),(root/failed["stdout"]).read_bytes(),(root/failed["stderr"]).read_bytes(),changed)
+                self.assertEqual(preserved,{name:(new/"owner"/name).read_bytes() for name in names})
+
     def test_actual_demo_prediction_fields_and_dead_lock_inspection_exit(self):
         binary=Path(os.environ.get("SYMBIOTE_TEST_BINARY",ROOT/"target/debug"/("symbiote.exe" if os.name=="nt" else "symbiote")))
         if not binary.is_file():self.skipTest("build native candidate before running the actual contract calibration")
