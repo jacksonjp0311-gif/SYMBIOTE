@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import signal
@@ -15,6 +16,30 @@ import stability_campaign as safety
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / 'docs/QUERY_TRANSFER_PROTOCOL.md'
 SCHEMA = 'symbiote.transfer-campaign-registration/1'
+
+
+def canonical_path(value):
+    """Resolve caller-relative paths and existing links before Windows aliases."""
+    raw = str(Path(value))
+    if os.name == 'nt':
+        require(not raw.startswith('\\\\.\\'), 'unsupported absolute filesystem namespace')
+        if raw.startswith('\\\\?\\'):
+            drive = len(raw) >= 7 and raw[4].isalpha() and raw[5:7] == ':\\'
+            require(drive or raw.upper().startswith('\\\\?\\UNC\\'),
+                    'unsupported absolute filesystem namespace')
+            require(not any(part.endswith(('.', ' ')) for part in Path(raw).parts),
+                    'extended paths with trailing-dot or trailing-space components are unsupported')
+    value = Path(value).resolve()
+    if os.name == 'nt':
+        text = str(value)
+        if text.upper().startswith('\\\\?\\UNC\\'):
+            text = '\\\\'+text[8:]
+        elif text.startswith('\\\\?\\'):
+            text = text[4:]
+        value = Path(text)
+    require(value.is_absolute() and not str(value).startswith('\\\\.\\'),
+            'unsupported absolute filesystem namespace')
+    return value
 
 
 def require(condition, message):
@@ -64,18 +89,19 @@ def preflight(registration):
     require(raw['native_sha256'] == registration['native_sha256']
             and raw['protocol_document_sha256'] == registration['protocol_document_sha256']
             and raw['source_commit'] == registration['source_commit']
-            and Path(raw['state_directory']).resolve() == Path(registration['state']).resolve(),
+            and canonical_path(raw['state_directory']) == canonical_path(registration['state']),
             'native/outer source, executable, protocol or state bindings differ')
     return native, native_reg
 
 
 def register(binary, state, artifacts, commit, cancelled=lambda: False):
     clean(commit)
-    native = Path(binary).resolve(strict=True)
-    state = Path(state).resolve()
-    directory = Path(artifacts).resolve()
+    native = canonical_path(binary)
+    state = canonical_path(state)
+    directory = canonical_path(artifacts)
     require(not directory.exists() and not state.exists(), 'fresh campaign and state paths required')
-    require(not directory.is_relative_to(ROOT) and not state.is_relative_to(ROOT),
+    source_root = canonical_path(ROOT)
+    require(not directory.is_relative_to(source_root) and not state.is_relative_to(source_root),
             'registered artifacts and state must be outside frozen source checkout')
     require(not directory.is_relative_to(state) and not state.is_relative_to(directory),
             'state and artifact trees must be disjoint')
@@ -106,14 +132,14 @@ def register(binary, state, artifacts, commit, cancelled=lambda: False):
 
 
 def run(path, external_sha, cancelled=lambda: False):
-    path = Path(path).resolve(strict=True)
+    path = canonical_path(path)
     require(re.fullmatch('[0-9a-f]{64}', external_sha) is not None and sha(path) == external_sha,
             'campaign registration differs from external digest')
     registration = load(path)
     native, native_reg = preflight(registration)
     require(not cancelled(), 'campaign cancelled before admission')
     directory = Path(registration['artifact_directory'])
-    require(directory.resolve() == path.parent and not Path(registration['state']).exists(),
+    require(canonical_path(directory) == path.parent and not Path(registration['state']).exists(),
             'registered locations changed or state already started')
     write_new(directory/'campaign-started.json', dict(registration_sha256=external_sha))
     report = dict(schema='symbiote.transfer-campaign/1', status='HOLD', registration_sha256=external_sha)

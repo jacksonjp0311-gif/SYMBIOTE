@@ -1,5 +1,6 @@
 """Manual binding counterexamples only; never open the prospective cohort."""
 import json
+import os
 import contextlib
 import io
 from pathlib import Path
@@ -13,6 +14,26 @@ import transfer_campaign as campaign
 
 
 class TransferCampaignBindings(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'Windows device-prefix aliases')
+    def test_windows_aliases_compare_identically_and_cannot_escape_source_exclusion(self):
+        plain = self.base/'not-created'
+        extended = Path('\\\\?\\'+str(plain))
+        self.assertEqual(campaign.canonical_path(plain), campaign.canonical_path(extended))
+        with self.assertRaisesRegex(RuntimeError, 'unsupported absolute filesystem namespace'):
+            campaign.canonical_path('\\\\.\\'+str(plain))
+        for suffix in ('.', ' '):
+            alias = campaign.ROOT.with_name(campaign.ROOT.name+suffix)/'state'/self.base.name
+            with self.assertRaisesRegex(RuntimeError, 'trailing-dot or trailing-space'):
+                campaign.canonical_path('\\\\?\\'+str(alias))
+        inside = campaign.ROOT/'state'/self.base.name
+        with self.assertRaisesRegex(RuntimeError, 'outside frozen source'):
+            campaign.register(self.native, self.base/'state',
+                              Path('\\\\?\\'+str(inside)), 'a'*40)
+        with patch.object(campaign, 'ROOT', Path('\\\\?\\'+str(campaign.ROOT))):
+            with self.assertRaisesRegex(RuntimeError, 'outside frozen source'):
+                campaign.register(self.native, self.base/'state', inside, 'a'*40)
+        self.assertFalse(inside.exists())
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
