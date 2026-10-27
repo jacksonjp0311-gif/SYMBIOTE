@@ -65,6 +65,21 @@ primary guard checks the compiled commit and executable hash against the
 registration. An unbound source reproduction can run but cannot pass the full
 source/binary evidence verifier. `symbiote version --json` exposes the binding.
 
+To reproduce a recorded setup, add `--setup-catalogue FILE --setup-sha256 SHA256`
+to `adaptive-research --reproduce`. Obtain the digest from a trusted published
+evidence manifest. This imports only original empty identity records and public
+opaque context labels. It regenerates and checks the environments, creates fresh
+TLS credentials and observation-authority epochs, and imports no learned models,
+outcomes or private keys. The output is labelled `engineering-reproduction` and
+cannot replace a failed primary. The original registration and artifact bundle
+are also required by the independent verifier when checking this lineage.
+
+The runner now admits parent TLS sessions at intervals of at least 50 ms to bound
+connection churn. Nested agent calls keep their existing limits. Admission waits
+are reported separately as laboratory overhead; they do not lower logical costs,
+change deadlines, retry failed requests or modify operating-system TCP settings.
+This does not guarantee available ports under arbitrary competing host workloads.
+
 For an operator-managed deployment, follow [the configured service guide](SERVICE.md):
 prepare an identity, provision authorized TLS credentials and grants, then use
 `serve`, `peers` and `connect`. Candidates remain quarantined until the local

@@ -1,6 +1,7 @@
 //! Prospective frontier exchange. Primary generation requires an immutable
 //! operator registration; development uses only hardcoded released fixtures.
 mod actor;
+mod admission;
 mod authority;
 mod cohort;
 mod controller;
@@ -11,6 +12,7 @@ mod policy;
 mod process;
 mod profile_audit;
 mod registration;
+mod replay_setup;
 mod summary;
 mod wire;
 
@@ -30,8 +32,12 @@ pub(crate) fn run_primary(
 ) -> Result<Value, String> {
     controller::prospective(registration::primary(state, receipts, registration)?)
 }
-pub(crate) fn run_reproduction(state: &Path, receipts: &Path) -> Result<Value, String> {
-    controller::prospective(registration::reproduction(state, receipts)?)
+pub(crate) fn run_reproduction(
+    state: &Path,
+    receipts: &Path,
+    setup: Option<(&Path, &str)>,
+) -> Result<Value, String> {
+    controller::prospective(registration::reproduction(state, receipts, setup)?)
 }
 pub(crate) fn serve_from_stdin() -> Result<(), String> {
     process::run_child(|bootstrap, owner| match &bootstrap.role {
@@ -45,6 +51,10 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
 struct DevelopmentPaths {
     state: PathBuf,
     receipts: PathBuf,
+    #[serde(default)]
+    setup_catalogue: Option<PathBuf>,
+    #[serde(default)]
+    setup_sha256: Option<String>,
 }
 #[cfg(debug_assertions)]
 pub(crate) fn development_from_stdin() -> Result<(), String> {
@@ -72,7 +82,12 @@ pub(crate) fn development_from_stdin() -> Result<(), String> {
     let paths: DevelopmentPaths = serde_json::from_slice(&input)
         .map_err(|_| "manual development accepts only bounded state/receipt paths")?;
     let _ = input_ready.send(());
-    let report = controller::development(&paths.state, &paths.receipts)?;
+    let setup = match (&paths.setup_catalogue, &paths.setup_sha256) {
+        (Some(path), Some(hash)) => Some((path.as_path(), hash.as_str())),
+        (None, None) => None,
+        _ => return Err("manual setup requires both catalogue and SHA256".into()),
+    };
+    let report = controller::development(&paths.state, &paths.receipts, setup)?;
     println!(
         "{}",
         serde_json::to_string(&report).map_err(|_| "development receipt serialization failed")?

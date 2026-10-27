@@ -300,6 +300,27 @@ impl Store {
         Ok(snapshot.identity)
     }
 
+    /// Validate an original, complete genesis-only ledger without opening a
+    /// writer or creating files. Later learning history is never setup data.
+    pub fn validate_empty_genesis(bytes: &[u8]) -> Result<String, String> {
+        if bytes.is_empty() || bytes.len() > 4096 || bytes.last() != Some(&b'\n') {
+            return Err("empty genesis must be a complete bounded JSONL record".into());
+        }
+        let text = std::str::from_utf8(bytes).map_err(|_| "genesis must be UTF8")?;
+        if text.lines().count() != 1 {
+            return Err("setup accepts exactly one genesis record, without history".into());
+        }
+        let receipt: Receipt = serde_json::from_str(text.trim_end_matches(['\r', '\n']))
+            .map_err(|_| "setup genesis receipt schema rejected")?;
+        if receipt.sequence != 0
+            || receipt.previous != ZERO_HASH
+            || !matches!(receipt.payload, Event::Genesis { version: 1, .. })
+        {
+            return Err("setup accepts only an original version-one genesis".into());
+        }
+        Self::validate_snapshot(bytes)
+    }
+
     pub fn identity(&self) -> &str {
         &self.identity
     }
@@ -502,6 +523,29 @@ mod tests {
     }
     fn good_evaluation(a: &Artifact) -> Evaluation {
         evaluate(a, &[0, 3, 0, 3], &[Some(0), None, None, None]).unwrap()
+    }
+
+    #[test]
+    fn empty_genesis_validation_is_read_only_and_rejects_learning_and_tampering() {
+        let dir = TestDirectory::new();
+        let mut store = Store::open(&dir.0).unwrap();
+        let original = fs::read(store.ledger_path()).unwrap();
+        assert_eq!(
+            Store::validate_empty_genesis(&original).unwrap(),
+            store.identity()
+        );
+        let mut changed = original.clone();
+        let index = changed.iter().position(|byte| *byte == b's').unwrap();
+        changed[index] = b'x';
+        assert!(Store::validate_empty_genesis(&changed).is_err());
+        assert!(Store::validate_empty_genesis(&original[..original.len() - 1]).is_err());
+        assert!(
+            Store::validate_empty_genesis(&[original.clone(), b"\n".to_vec()].concat()).is_err()
+        );
+        let a = artifact();
+        store.promote(a.clone(), good_evaluation(&a)).unwrap();
+        assert!(Store::validate_empty_genesis(&fs::read(store.ledger_path()).unwrap()).is_err());
+        assert_eq!(store.record_count(), 2);
     }
 
     #[test]

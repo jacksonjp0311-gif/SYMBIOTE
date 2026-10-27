@@ -1,10 +1,12 @@
 //! Frozen paired experiment controller. Private labels remain outside learners.
+use super::admission::ParentAdmission;
 use super::cohort::{self, SetupWork, Truth, World};
 use super::meter::Bill;
 use super::model::{Algorithm, ExactModel};
 use super::policy::Arm;
 use super::process::SupervisedProcess;
 use super::registration::{EvaluationPermit, PROTOCOL_ID, PROTOCOL_SHA256, SOURCE_COMMIT};
+use super::replay_setup::LoadedSetup;
 use super::wire::{
     AuthorityWorld, Bootstrap, Descriptor, Grant, LabCa, Material, OfferMode, PublicEndpoint, Role,
     AUTHORITY_OPS, CONTROL_OPS, PEER_OPS, SCOPE,
@@ -12,10 +14,12 @@ use super::wire::{
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
+use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::Path;
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use symbiote_memory::operational::body_digest;
@@ -71,6 +75,19 @@ struct Campaign {
     failed: bool,
     restarts: usize,
     lifecycle: Vec<Value>,
+    controls: Arc<ParentControls>,
+    world_deadline: Cell<Option<Instant>>,
+}
+struct ParentControls {
+    admission: ParentAdmission,
+    deadline: Instant,
+    cancelled: AtomicBool,
+}
+struct WorldDeadline<'a>(&'a Cell<Option<Instant>>);
+impl Drop for WorldDeadline<'_> {
+    fn drop(&mut self) {
+        self.0.set(None);
+    }
 }
 fn grant(identity: &str, material: &Material, operations: &[&str]) -> Grant {
     Grant {
@@ -99,12 +116,22 @@ fn reverse_bill(traffic: SecureTrafficSnapshot) -> Bill {
     }
 }
 fn call(
+    campaign: &Campaign,
     client: &TlsClientConfig,
     endpoint: &PublicEndpoint,
     operation: &str,
     payload: &Value,
     frame: usize,
 ) -> Result<(Value, SecureTrafficSnapshot), String> {
+    let deadline = campaign
+        .world_deadline
+        .get()
+        .unwrap_or(campaign.controls.deadline)
+        .min(campaign.controls.deadline);
+    campaign
+        .controls
+        .admission
+        .admit(deadline, &campaign.controls.cancelled)?;
     let traffic = SecureTraffic::default();
     let mut connection = SecureClient::connect_with_metering(
         &endpoint.endpoint(operation, frame)?,
@@ -124,6 +151,7 @@ fn role_call(
     payload: &Value,
 ) -> Result<(Value, SecureTrafficSnapshot), String> {
     call(
+        campaign,
         &campaign.controller,
         &campaign.roles[index].endpoint()?,
         operation,
@@ -133,6 +161,7 @@ fn role_call(
 }
 fn authority_call(campaign: &Campaign, operation: &str, payload: &Value) -> Result<Value, String> {
     Ok(call(
+        campaign,
         &campaign.controller,
         &campaign.authority.endpoint()?,
         operation,
@@ -229,6 +258,8 @@ struct IdentitySetup<'a> {
     controller_material: &'a Material,
     controller_identity: &'a str,
     role_genesis: Option<&'a [Vec<u8>]>,
+    restored: Option<&'a LoadedSetup>,
+    controls: &'a Arc<ParentControls>,
 }
 fn campaign(
     state: &Path,
@@ -242,6 +273,8 @@ fn campaign(
         controller_material,
         controller_identity,
         role_genesis,
+        restored,
+        controls,
     } = identities;
     let controller_identity = *controller_identity;
     let root = state
@@ -252,13 +285,13 @@ fn campaign(
     let role_paths = (0..5)
         .map(|role| root.join(format!("participant-{role}")))
         .collect::<Vec<_>>();
-    if let Some(genesis) = role_genesis {
+    if let Some(genesis) = role_genesis.filter(|_| restored.is_none()) {
         if genesis.len() != 5 {
             return Err(
                 "paired counterfactual setup requires exactly five role genesis records".into(),
             );
         }
-        for (path, bytes) in role_paths.iter().zip(*genesis) {
+        for (path, bytes) in role_paths.iter().zip(genesis) {
             fs::create_dir_all(path).map_err(|e| e.to_string())?;
             let mut file = OpenOptions::new()
                 .write(true)
@@ -298,7 +331,10 @@ fn campaign(
             vec![role_ids[role].clone(), role_ids[0].clone()],
         );
     }
-    let prelude_context = format!("frontier-prelude-{}", fresh_capability()?);
+    let prelude_context = match restored {
+        Some(setup) => setup.prelude(price, arm)?,
+        None => format!("frontier-prelude-{}", fresh_capability()?),
+    };
     let mut authority_worlds = worlds
         .iter()
         .map(|world| AuthorityWorld {
@@ -395,6 +431,8 @@ fn campaign(
         failed: false,
         restarts: 0,
         lifecycle: Vec::new(),
+        controls: Arc::clone(controls),
+        world_deadline: Cell::new(None),
     })
 }
 impl Campaign {
@@ -536,6 +574,10 @@ impl Campaign {
 
 fn world_case(campaign: &mut Campaign, world: &World, truth: &Truth) -> Result<Value, String> {
     let started = Instant::now();
+    campaign
+        .world_deadline
+        .set(Some(started + Duration::from_secs(30)));
+    let _world_deadline = WorldDeadline(&campaign.world_deadline);
     let (warmup, public_work) = warmups(world)?;
     let observers = [0, 1, 2, 4]
         .into_iter()
@@ -926,7 +968,10 @@ fn restart(campaign: &mut Campaign, planned_index: usize) -> Result<Value, Strin
     Ok(receipt)
 }
 pub(super) fn prospective(permit: EvaluationPermit) -> Result<Value, String> {
-    let (worlds, setup) = cohort::prospective(&permit)?;
+    let (mut worlds, setup) = cohort::prospective(&permit)?;
+    if let Some(saved) = &permit.setup {
+        saved.apply_worlds(&mut worlds)?;
+    }
     run_worlds(
         RunConfig {
             state: &permit.registration.state_directory,
@@ -936,13 +981,18 @@ pub(super) fn prospective(permit: EvaluationPermit) -> Result<Value, String> {
             run_id: &permit.registration.run_id,
             registration_sha256: &permit.registration_sha256,
             restart_after: 11,
+            restored: permit.setup.as_ref(),
         },
         worlds,
         setup,
     )
 }
 #[cfg(debug_assertions)]
-pub(super) fn development(state: &Path, receipts: &Path) -> Result<Value, String> {
+pub(super) fn development(
+    state: &Path,
+    receipts: &Path,
+    source: Option<(&Path, &str)>,
+) -> Result<Value, String> {
     let artifacts = state
         .parent()
         .ok_or("development artifact parent missing")?;
@@ -977,7 +1027,7 @@ pub(super) fn development(state: &Path, receipts: &Path) -> Result<Value, String
             })
             .collect(),
     };
-    let worlds = [[1, 3, 2, 2], [2, 1, 3, 2], [3, 2, 1, 3]]
+    let mut worlds = [[1, 3, 2, 2], [2, 1, 3, 2], [3, 2, 1, 3]]
         .into_iter()
         .enumerate()
         .map(|(index, costs)| {
@@ -994,6 +1044,13 @@ pub(super) fn development(state: &Path, receipts: &Path) -> Result<Value, String
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
+    let saved = source
+        .map(|(path, hash)| LoadedSetup::read(path, hash))
+        .transpose()?;
+    if let Some(saved) = &saved {
+        saved.apply_worlds(&mut worlds)?;
+        saved.copy_artifact(artifacts)?;
+    }
     run_worlds(
         RunConfig {
             state,
@@ -1003,6 +1060,7 @@ pub(super) fn development(state: &Path, receipts: &Path) -> Result<Value, String
             run_id: "released-v04-manual-fixtures",
             registration_sha256: "not-a-primary-registration",
             restart_after: 0,
+            restored: saved.as_ref(),
         },
         worlds,
         SetupWork::default(),
@@ -1016,6 +1074,7 @@ struct RunConfig<'a> {
     run_id: &'a str,
     registration_sha256: &'a str,
     restart_after: usize,
+    restored: Option<&'a LoadedSetup>,
 }
 fn run_worlds(
     config: RunConfig<'_>,
@@ -1030,17 +1089,31 @@ fn run_worlds(
         run_id,
         registration_sha256,
         restart_after,
+        restored,
     } = config;
     let started = Instant::now();
     let deadline = started + Duration::from_secs(1800);
-    let owner = Arc::new(Store::open(state)?);
-    let identity = owner.identity().to_string();
+    let controls = Arc::new(ParentControls {
+        admission: ParentAdmission::new(),
+        deadline,
+        cancelled: AtomicBool::new(false),
+    });
     let truths = worlds
         .iter()
         .map(|world| cohort::freeze_truth(&world.schema, &world.costs))
         .collect::<Result<Vec<_>, _>>()?;
     let frozen = json!({"worlds":worlds,"truths":truths});
     let frozen_digest = body_digest(&frozen)?;
+    if restored.is_some_and(|saved| {
+        saved.binding().original_primary.frozen_environments_sha256 != frozen_digest
+    }) {
+        return Err(
+            "HOLD: regenerated environments differ from the original setup's frozen digest".into(),
+        );
+    }
+    let restored_receipt = restored.map(|saved| saved.install(state)).transpose()?;
+    let owner = Arc::new(Store::open(state)?);
+    let identity = owner.identity().to_string();
     let mut frozen_file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -1066,6 +1139,8 @@ fn run_worlds(
                     controller_material: &controller_material,
                     controller_identity: &identity,
                     role_genesis: role_genesis.as_deref(),
+                    restored,
+                    controls: &controls,
                 },
             )?;
             if role_genesis.is_none() {
@@ -1312,6 +1387,12 @@ fn run_worlds(
             })
         });
     let report = json!({"schema":"symbiote.adaptive-research/1","version":env!("CARGO_PKG_VERSION"),"mode":mode,"status":status,"run_id":run_id,"registration_sha256":registration_sha256,"protocol_id":PROTOCOL_ID,"protocol_sha256":PROTOCOL_SHA256,"source_commit":SOURCE_COMMIT,"identity":identity,"world_count":worlds.len(),"price_regimes":2,"comparison_arms":4,"cases_expected":worlds.len()*8,"cases_recorded":cases.len(),"frozen_environments_sha256":frozen_digest,"initial_simulation_genesis_sha256":catalogue_digest,"native_learner_profiles":40,"native_learner_logical_identities":5,"native_authority_profiles":8,"learning_gate":{"prospective_normal_shared_retained_context":if retained{"DEMONSTRATED"}else{"NOT_DEMONSTRATED"},"central_A_prior_profile_use_after_restart":if profile_use{"DEMONSTRATED"}else{"NOT_DEMONSTRATED"},"status":if retained&&profile_use&&status=="PASS"{"DEMONSTRATED"}else{"NOT_DEMONSTRATED"}},"controller_resources":super::process::parent_resources(),"generator_setup_work":setup_work,"judge_setup_work":truths.iter().map(|truth|truth.path_work).sum::<u64>(),"cases":cases,"comparisons":super::summary::summarize(&cases,worlds.len()),"campaigns":campaign_reports,"failures":failures,"campaign_cap_reached":capped,"elapsed_ms":started.elapsed().as_millis(),"logical_cost_scope":"all participant application RPC/session/full-JSONL negotiation+RPC bytes/acquisition/verification attempts/adoption/live-model-work/export categories; TLS records, OS, controller/judge and audit-I/O reported separately; replay RPCs are separate validation overhead","limits":["fixed synthetic DAG family; no arbitrary-remote-truth or cross-domain-generalization claim","normal and cheap reuse the same worlds; not independent additional environments","five role identities are matched across counterfactual profiles; their initial order varies across fresh setups","per-process peaks are not a simultaneous system memory peak"]});
+    let mut report = report;
+    report["parent_admission"] = controls.admission.snapshot();
+    if let Some(saved) = restored {
+        report["setup_binding"] = json!(saved.binding());
+        report["setup_restore"] = json!(restored_receipt);
+    }
     let mut output = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -1371,6 +1452,12 @@ mod tests {
                 controller_material: &material,
                 controller_identity: owner.identity(),
                 role_genesis: None,
+                restored: None,
+                controls: &Arc::new(ParentControls {
+                    admission: ParentAdmission::new(),
+                    deadline: Instant::now() + Duration::from_secs(1800),
+                    cancelled: AtomicBool::new(false),
+                }),
             },
         )
         .unwrap();

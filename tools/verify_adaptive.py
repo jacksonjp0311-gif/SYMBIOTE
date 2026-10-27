@@ -518,7 +518,8 @@ def validate_case(case, world, identities, authority_epoch):
         else:
             require(participant["main_status"] in ("abstained", "not-completed"), "known main-task outcome")
         require(type(participant["utility_evaluable"]) is bool, "explicit source-purchase utility eligibility")
-        judge_receipts_check(participant, world, authority_epoch)
+        if authority_epoch is not None:
+            judge_receipts_check(participant, world, authority_epoch)
 
 
 def _profile_add(profiles, event):
@@ -787,6 +788,7 @@ def journal_check(path, identity, marker_path, group, role, world_map, arm=None,
 
 
 def knowledge_check(path, identity, authority_identity, authority_epoch, worlds, cases, role):
+    require(authority_epoch is not None, "knowledge authenticity cannot be inferred without an independent authority audit")
     _, rows, _ = chain(path, "knowledge", identity)
     active, historical, revisions, scopes = {}, {}, {}, set()
     for row in rows[1:]:
@@ -842,6 +844,67 @@ def knowledge_check(path, identity, authority_identity, authority_epoch, worlds,
         else:
             require(participant["promotion"].startswith("withheld-"), "withheld outcome is not learning")
     return active, historical
+
+
+def unverified_knowledge_structure(path, identity, worlds):
+    """Check retained bytes/owner only; this never authenticates an observation.
+
+    A received envelope's claimed epoch is deliberately not used as a substitute
+    for a missing authority audit. Its records remain NOT_VERIFIED.
+    """
+    _, rows, _ = chain(path, "knowledge", identity)
+    active, historical, revisions = {}, {}, {}
+    for row in rows[1:]:
+        event = row["payload"]
+        if event["event"] == "revoke":
+            require(event["id"] in active and isinstance(event["reason"], str) and event["reason"].strip(), "unverified history still requires an auditable active revocation")
+            del active[event["id"]]
+            continue
+        require(event["event"] == "promote_graph" and event["policy_version"] == 2, "bounded supported graph event in unverified history")
+        record, assessment = event["record"], event["assessment"]
+        context = record["scope"]
+        require(all(isinstance(record[key], str) and re.fullmatch(r"[A-Za-z0-9._:/-]{1,128}", record[key]) is not None
+                    for key in ("id", "source", "scope")) and isinstance(record["provenance"], str)
+                and record["provenance"].strip() and len(record["provenance"].encode("utf-8")) <= 4096,
+                "unverified record remains inert bounded declarative data")
+        require(context in worlds and record["source"] == identity and natural(record["revision"], "unverified revision") > revisions.get(record["id"], 0),
+                "unverified history still binds owner, context and monotonically increasing revision")
+        require(record["schema_fingerprint"] == schema_fingerprint(worlds[context]["schema"])
+                and set(record["payload"]) == {"kind", "schema", "observations"}
+                and record["payload"]["kind"] == "graph-map" and record["payload"]["schema"] == worlds[context]["schema"], "unverified record keeps its declared graph context")
+        observations, edges = record["payload"]["observations"], worlds[context]["schema"]["edges"]
+        require(isinstance(observations, list) and len(observations) <= len(edges), "unverified observation count is bounded")
+        previous = -1
+        for observation in observations:
+            require(isinstance(observation, dict) and set(observation) == {"edge_id", "cost"}, "strict inert unverified observation")
+            edge = natural(observation["edge_id"], "unverified observed edge", len(edges) - 1)
+            cost = natural(observation["cost"], "unverified observed cost", 9)
+            require(edge > previous and edges[edge]["lower"] <= cost <= edges[edge]["upper"], "unverified observations remain unique, ordered and inside declared intervals")
+            previous = edge
+        record_hash = record_digest(record)
+        require(assessment["record_digest"] == record_hash, "unverified assessment content digest remains bound")
+        revisions[record["id"]] = record["revision"]
+        active[record["id"]] = record
+        historical[record_hash] = record
+    return active, historical
+
+
+def group_verification(campaign, cases, mid_count):
+    missing = []
+    if campaign["authority_audit"] is None:
+        missing.append("authority-audit-missing; received epochs do not authenticate themselves")
+    if campaign["final_restart"] is None:
+        missing.append("final-restart-evidence-missing")
+    if mid_count != 1:
+        missing.append("fixed-midpoint-restart-evidence-missing")
+    if any(case["status"] != "COMPLETED" for case in cases):
+        missing.append("case-registry-incomplete")
+    if campaign["failed"]:
+        missing.append("native-campaign-failed")
+    return dict(price=campaign["price"], arm=campaign["arm"], status="NOT_VERIFIED" if missing else "VERIFIED",
+                authority="NOT_VERIFIED" if campaign["authority_audit"] is None else "VERIFIED",
+                observations_are_authenticated=campaign["authority_audit"] is not None,
+                reasons=missing)
 
 
 def _original_parts(path):
@@ -1000,14 +1063,98 @@ def registration_check(report, registration, binary, registration_sha256):
     require(registration["run_id"] == report["run_id"] and bool(registration["runner"]["toolchain"]), "run ID/environment binding")
 
 
+def prelude_mapping(report):
+    result = []
+    for price in PRICES:
+        for arm in ARMS:
+            campaigns = [campaign for campaign in report["campaigns"] if (campaign["price"], campaign["arm"]) == (price, arm)]
+            require(len(campaigns) == 1, "setup prelude has exactly one declared campaign")
+            rows = [entry for entry in campaigns[0]["lifecycle"] if entry.get("event") == "genuine-stale-control-calibration"]
+            require(len(rows) == 1, "setup has one original genuine prelude per arm/regime")
+            receipt = rows[0]["receipt"]
+            result.append(dict(arm=arm, price=price, context=receipt["context"], schema_fingerprint=receipt["schema_fingerprint"]))
+    return result
+
+
+def prelude_index(rows):
+    require(isinstance(rows, list) and len(rows) == 8, "exact eight setup prelude mappings")
+    result = {}
+    for row in rows:
+        require(isinstance(row, dict) and set(row) == {"arm", "price", "context", "schema_fingerprint"}, "strict public prelude context mapping")
+        key = (row["price"], row["arm"])
+        require(key in {(price, arm) for price in PRICES for arm in ARMS} and key not in result, "unique declared prelude arm/regime pair")
+        require(re.fullmatch(r"frontier-prelude-[0-9a-f]{64}", row["context"]) is not None and hexdigest(row["schema_fingerprint"]), "opaque prelude label and graph fingerprint")
+        result[key] = row
+    return result
+
+
+def setup_binding_check(report, registration, setup, setup_sha256, original_report, original_registration,
+                        original_registration_sha256, original_report_sha256, original_binary_sha256,
+                        catalogue, frozen, original_catalogue, original_frozen):
+    require(set(setup) == {"schema", "protocol_id", "protocol_sha256", "original_primary", "genesis_catalogue", "world_contexts", "prelude_contexts"}
+            and setup["schema"] == "symbiote.reproduction-setup/1" and setup["protocol_id"] == PROTOCOL_ID
+            and setup["protocol_sha256"] == PROTOCOL_SHA256, "strict engineering setup/protocol schema")
+    require(report["mode"] == "engineering-reproduction" and original_report["mode"] == "primary", "engineering reproduction remains distinct from its original primary")
+    refs = dict(run_id=original_report["run_id"], registration_sha256=original_registration_sha256,
+                report_sha256=original_report_sha256, frozen_environments_sha256=digest(original_frozen),
+                candidate_source_commit=original_report["source_commit"], candidate_binary_sha256=original_binary_sha256)
+    require(setup["original_primary"] == refs and original_registration["candidate_source_commit"] == refs["candidate_source_commit"]
+            and original_registration["candidate_binary_sha256"] == original_binary_sha256
+            and original_report["registration_sha256"] == original_registration_sha256
+            and original_report["frozen_environments_sha256"] == refs["frozen_environments_sha256"],
+            "setup binds actual original primary registration/report/binary/source/frozen bytes")
+    binding = dict(setup_sha256=setup_sha256, original_primary=refs)
+    require(registration.get("setup_binding") == report.get("setup_binding") == binding, "engineering registration and report bind the actual setup file hash")
+    require(encode(setup["genesis_catalogue"], canonical=True) == encode(original_catalogue, canonical=True)
+            == encode(catalogue, canonical=True), "engineering run restores only exact original genesis identities, never a fresh favorable identity draw")
+    require(original_report["initial_simulation_genesis_sha256"] == report["initial_simulation_genesis_sha256"] == digest(catalogue), "both runs bind the paired genesis catalogue")
+    require(encode(frozen, canonical=True) == encode(original_frozen, canonical=True)
+            and report["frozen_environments_sha256"] == refs["frozen_environments_sha256"], "engineering run uses identical recorded contexts/topology/costs/held-out registry")
+    contexts = [dict(index=world["index"], context=world["context"], schema_fingerprint=schema_fingerprint(world["schema"])) for world in frozen["worlds"]]
+    require(setup["world_contexts"] == contexts, "every ordered restored context and graph fingerprint matches the primary")
+    original_preludes, current_preludes = prelude_mapping(original_report), prelude_mapping(report)
+    require(prelude_index(setup["prelude_contexts"]) == prelude_index(original_preludes) == prelude_index(current_preludes), "all eight original genuine prelude contexts are restored without replacement")
+    return dict(status="VERIFIED", original_primary_status=original_report["status"], original_primary_unchanged=True,
+                setup_sha256=setup_sha256, original_primary=refs,
+                interpretation="engineering reproduction of a fixed observed cohort; not a new primary or an independent replication")
+
+
+def parent_admission_check(snapshot, completed):
+    counters = ("admission_calls", "admitted", "cancelled", "deadline_rejected", "wait_cap_rejected", "poisoned_rejected", "clock_range_rejected",
+                "wait_nanoseconds", "wait_ms", "max_wait_nanoseconds", "max_wait_ms")
+    descriptions = dict(retry_policy="none; a failed connection retains its consumed admission",
+                        scope="parent/controller owner and judge session admissions only; nested learner RPCs separately bounded",
+                        wait_basis="actual monotonic elapsed inside admit, including pacing and lock waits; excludes TCP/TLS",
+                        timing_limit="10ms cancellation/deadline polling under a normally scheduled OS; measured descheduling overshoot is not clamped")
+    require(isinstance(snapshot, dict) and set(snapshot) == {"schema", *counters, *descriptions, "minimum_spacing_ms", "max_rate_per_second", "max_admission_wait_ms"}
+            and snapshot["schema"] == "symbiote.parent-session-admission/1", "strict parent admission overhead snapshot")
+    require(all(snapshot[key] == value for key, value in descriptions.items()), "admission descriptions preserve no-retry, parent-only, measured-wait and scheduling limitations")
+    for key in counters + ("minimum_spacing_ms", "max_rate_per_second", "max_admission_wait_ms"):
+        natural(snapshot[key], "parent admission " + key)
+    require(snapshot["minimum_spacing_ms"] == 50 and snapshot["max_rate_per_second"] == 20
+            and snapshot["max_admission_wait_ms"] == 5000, "preregistered engineering parent admission caps")
+    rejected = sum(snapshot[key] for key in ("cancelled", "deadline_rejected", "wait_cap_rejected", "poisoned_rejected", "clock_range_rejected"))
+    require(snapshot["admission_calls"] == snapshot["admitted"] + rejected, "every parent admission has one actual quiescent result")
+    require(snapshot["wait_ms"] == snapshot["wait_nanoseconds"] // 1000000
+            and snapshot["max_wait_ms"] == snapshot["max_wait_nanoseconds"] // 1000000
+            and snapshot["max_wait_nanoseconds"] <= snapshot["wait_nanoseconds"], "reported admission wait milliseconds derive from measured monotonic nanoseconds")
+    if completed:
+        require(rejected == 0, "successful engineering run cannot conceal a rejected parent admission")
+    return dict(verified=snapshot, participant_logical_cost_adjustment=0,
+                scope="actual parent session admissions and elapsed waiting only; excludes child-owned sessions and does not assert a global TCP rate")
+
+
 def validate_bundle(report_path, *, registration_path=None, binary=None, artifacts=None, state=None,
-                    source_root=ROOT, allow_development=False):
+                    source_root=ROOT, allow_development=False, setup_path=None, original_primary=None, original_binary=None):
     report_path = Path(report_path).resolve(strict=True)
     report = load(report_path)
-    full = report.get("mode") in ("primary", "reproduction")
+    full = report.get("mode") in ("primary", "reproduction", "engineering-reproduction")
     require(full or allow_development and report.get("mode") == "development-calibration", "primary/reproduction evidence required unless development is explicit")
     require(report["schema"] == "symbiote.adaptive-research/1" and report["protocol_id"] == PROTOCOL_ID
             and report["protocol_sha256"] == PROTOCOL_SHA256, "supported report/protocol binding")
+    if report["mode"] == "engineering-reproduction":
+        require("parent_admission" in report, "engineering run must report actual parent admission overhead")
+    admission_overhead = parent_admission_check(report["parent_admission"], report["status"] == "PASS") if "parent_admission" in report else None
     registration = None
     if full:
         require(registration_path is not None and binary is not None, "registered source/binary evidence cannot be skipped")
@@ -1048,6 +1195,21 @@ def validate_bundle(report_path, *, registration_path=None, binary=None, artifac
     require([(case["price"], case["world"], case["arm"]) for case in case_rows] == expected_case_order(len(worlds)), "complete price/world/Latin-square arm order, including failures and NOT_RUN")
     catalogue = load(bundle.artifacts / "simulation-genesis-catalogue.json")
     require(digest(catalogue) == report["initial_simulation_genesis_sha256"], "pre-observation role genesis catalogue digest")
+    setup_verification = None
+    if report["mode"] == "engineering-reproduction":
+        require(setup_path is not None and original_primary is not None, "engineering evidence requires explicit setup and preserved original primary artifacts")
+        original_primary = Path(original_primary).resolve(strict=True)
+        original_binary = Path(original_binary or original_primary / "candidate-symbiote.exe").resolve(strict=True)
+        original_report = load(original_primary / "report.json")
+        original_registration = load(original_primary / "primary-registration.json", 16384)
+        registration_check(original_report, original_registration, original_binary, file_sha(original_primary / "primary-registration.json"))
+        setup_verification = setup_binding_check(report, registration, load(setup_path, 65536), file_sha(setup_path),
+                                                 original_report, original_registration, file_sha(original_primary / "primary-registration.json"),
+                                                 file_sha(original_primary / "report.json"), file_sha(original_binary), catalogue, frozen,
+                                                 load(original_primary / "simulation-genesis-catalogue.json"), load(original_primary / "frozen-environments.json"))
+    else:
+        require(report.get("setup_binding") is None and (registration is None or registration.get("setup_binding") is None),
+                "restored setup cannot be disguised as a fresh primary or plain reproduction")
     require(catalogue["identity_count"] == 14 and catalogue["state_path_count"] == 49
             and catalogue["counterfactual_learner_identities"] == 5 and catalogue["isolated_learner_profiles"] == 40
             and catalogue["contains_private_keys"] is False and catalogue["contains_learned_records"] is False,
@@ -1062,7 +1224,7 @@ def validate_bundle(report_path, *, registration_path=None, binary=None, artifac
             and set(groups) == set(campaigns) == expected_groups, "all eight independent arm/regime namespaces")
     shared_roles, authority_ids, state_paths, files = None, set(), [state_path], []
     policies, authority_epochs, certificate_pins = set(), set(), set()
-    retained, journal_results, historical_count = {}, {}, 0
+    retained, journal_results, historical_count, unverified_historical_count, group_results = {}, {}, 0, 0, []
     all_complete = all(case["status"] == "COMPLETED" for case in case_rows)
     for price, arm in [(price, arm) for price in PRICES for arm in ARMS]:
         group, campaign = groups[(price, arm)], campaigns[(price, arm)]
@@ -1106,12 +1268,20 @@ def validate_bundle(report_path, *, registration_path=None, binary=None, artifac
                 files.append(candidate)
             journal = journal_check(directory / "operations.jsonl", identities[role], directory / "operations-owner.json", identities, role, world_map, arm, price)
             journals[role] = journal
-            active, historical = knowledge_check(directory / "knowledge.jsonl", identities[role], authority_identity, epoch, world_map, cases, role) if role != 3 else ({}, {})
+            if role == 3:
+                active, historical = {}, {}
+            elif epoch is not None:
+                active, historical = knowledge_check(directory / "knowledge.jsonl", identities[role], authority_identity, epoch, world_map, cases, role)
+            else:
+                active, historical = unverified_knowledge_structure(directory / "knowledge.jsonl", identities[role], world_map)
             if role == 3:
                 _, idle, _ = chain(directory / "knowledge.jsonl", "knowledge", identities[role])
                 require(len(idle) == 1 and len(journal["rows"]) == 1, "incompatible actor has genesis-only state and zero agent API use")
             active_by_role[role] = active
-            historical_count += len(historical)
+            if epoch is not None:
+                historical_count += len(historical)
+            else:
+                unverified_historical_count += len(historical)
             for case in cases.values():
                 if case["status"] == "COMPLETED" and role != 3:
                     require(case["participants"][role]["profiles"] == journal["profile_snapshots"].get(case["context"], {}), "reported profiles match recipient's chronological completed-outcome ledger")
@@ -1189,25 +1359,30 @@ def validate_bundle(report_path, *, registration_path=None, binary=None, artifac
         require(campaign["completed_worlds"] == len(completed_cases) and campaign["completed_task_cost"] == task_cost
                 and campaign["completed_whole_system_logical_cost_with_setup"] == task_cost + campaign["setup_cost"],
                 "whole-system campaign totals retain all participants and common setup")
-        if campaign["final_restart"] is not None:
+        if campaign["final_restart"] is not None and epoch is not None:
             expected_profiles = {role: journals[role]["profile_snapshots"].get(worlds[-1]["context"], {}) for role in ACTIVE_ROLES}
             retained[(price, arm)] = validate_restart(campaign["final_restart"], identities, active_by_role, world_map, final_index=len(worlds) - 1,
                                                      expected_profiles=expected_profiles,
                                                      expected_hashes=protected_cutpoint(root, identities, journals, world_map, len(worlds) - 1))
-        else:
+        elif campaign["final_restart"] is None:
             require(campaign["failed"] is True, "missing restart evidence is explicit failure")
         mid_index = 11 if full else 0
         mid = [entry for entry in campaign["lifecycle"] if entry.get("after_completed_world") == mid_index]
         if not campaign["failed"]:
             require(len(mid) == 1, "exact fixed planned mid-campaign restart cannot be omitted or selected by outcome")
+        if len(mid) == 1 and epoch is not None:
             validate_restart(mid[0], identities, active_by_role, world_map, final_index=mid_index,
                              expected_profiles={role: journals[role]["profile_snapshots"].get(worlds[mid_index]["context"], {}) for role in ACTIVE_ROLES},
                              expected_hashes=protected_cutpoint(root, identities, journals, world_map, mid_index))
+        require(campaign["planned_profile_restarts"] == len(mid) + int(campaign["final_restart"] is not None),
+                "reported completed restarts equal retained restart evidence")
+        group_results.append(group_verification(campaign, list(cases.values()), len(mid)))
         journal_results[(price, arm)] = journals
     require(len(state_paths) == 49 and len({path.resolve(strict=True) for path in state_paths}) == 49 and len(authority_ids) == 8, "all49private state directories remain distinct")
     require(report["comparisons"] == comparisons(case_rows, len(worlds)), "all participant classes and paired controls recomputed from raw bills/coverage")
-    complete = all_complete and not report["failures"] and report["campaign_cap_reached"] is False
-    require(report["status"] == ("PASS" if complete else "HOLD"), "native software status agrees with complete failure registry")
+    native_complete = all_complete and not report["failures"] and report["campaign_cap_reached"] is False
+    require(report["status"] == ("PASS" if native_complete else "HOLD"), "native software status agrees with complete failure registry")
+    complete = native_complete and all(group["status"] == "VERIFIED" for group in group_results)
     summary = comparisons(case_rows, len(worlds))
     utility = summary["normal_policy_utility"] if complete else "HOLD"
     primary_retained = retained.get((100, ARMS[3]), {})
@@ -1217,12 +1392,18 @@ def validate_bundle(report_path, *, registration_path=None, binary=None, artifac
     native_learning = learning_summary(complete, primary_retained, int(profile_use[0]))
     require(encode(report["learning_gate"], canonical=True) == encode(native_learning, canonical=True),
             "native learning claim requires common retained capability and actual central-A profile effect")
-    return dict(schema="symbiote.adaptive-verification/1", mode=report["mode"], integrity="PASS", software_safety="PASS" if complete else "HOLD",
+    return dict(schema="symbiote.adaptive-verification/1", mode=report["mode"], integrity="PASS" if complete else "HOLD", structural_integrity="PASS", software_safety="PASS" if complete else "HOLD",
                 selection_vs_isolated=utility, better_partner_selection=summary["normal_better_partner_selection"] if complete else "HOLD",
                 persistent_learning=native_learning["status"], prospective_primary_prior_profile_use=profile_use,
                 world_count=len(worlds), cases=len(case_rows), counterfactual_role_identities=5, private_state_paths=49,
-                historical_promotions=historical_count, retained=[dict(price=price,arm=arm,**value) for (price,arm),value in retained.items()], comparisons=summary,
+                historical_promotions=historical_count, unverified_historical_records=unverified_historical_count,
+                groups=group_results, retained=[dict(price=price,arm=arm,**value) for (price,arm),value in retained.items()], comparisons=summary,
+                diagnostic_only=not complete,
+                conditional_normal_arithmetic=dict(vs_isolated=summary["normal_policy_utility"], vs_all_controls=summary["normal_better_partner_selection"],
+                                                  qualification="diagnostic arithmetic does not rescue incomplete authority, restart or operational evidence"),
                 failures=report["failures"], source_binding="REGISTERED_BINARY_AND_SOURCE" if full else "DEVELOPMENT_ONLY_UNREGISTERED",
+                setup_verification=setup_verification,
+                parent_admission_overhead=admission_overhead,
                 primitive_witness_scope="native counters/registry assertions; no independent packet capture or remote-truth attestation")
 
 
@@ -1233,12 +1414,16 @@ def main():
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--artifacts", type=Path, help="explicit original artifact root or extracted evidence directory; remaps only the registered original prefix")
     parser.add_argument("--state", type=Path, help="development mode only")
+    parser.add_argument("--setup", type=Path, help="engineering reproduction: exact externally registered setup companion")
+    parser.add_argument("--original-primary", type=Path, help="engineering reproduction: preserved original primary evidence directory")
+    parser.add_argument("--original-binary", type=Path, help="original registered executable; defaults to candidate-symbiote.exe in original-primary")
     parser.add_argument("--source-root", type=Path, default=ROOT)
     parser.add_argument("--allow-development", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = validate_bundle(args.report, registration_path=args.registration, binary=args.binary, artifacts=args.artifacts,
-                             state=args.state, source_root=args.source_root, allow_development=args.allow_development)
+                             state=args.state, source_root=args.source_root, allow_development=args.allow_development,
+                             setup_path=args.setup, original_primary=args.original_primary, original_binary=args.original_binary)
     if args.output:
         with args.output.open("x", encoding="utf-8") as stream:
             json.dump(result, stream, ensure_ascii=False, indent=2)

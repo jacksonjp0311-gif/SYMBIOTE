@@ -1,5 +1,6 @@
 //! Primary registration is checked before the generator can produce a world.
 //! The candidate binary/source binding has no runtime Git dependency.
+use super::replay_setup::{LoadedSetup, SetupBinding};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -38,11 +39,14 @@ pub(super) struct Registration {
     pub(super) state_directory: PathBuf,
     pub(super) receipt_path: PathBuf,
     pub(super) runner: Runner,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) setup_binding: Option<SetupBinding>,
 }
 pub(super) struct EvaluationPermit {
     pub(super) registration: Registration,
     pub(super) mode: &'static str,
     pub(super) registration_sha256: String,
+    pub(super) setup: Option<LoadedSetup>,
     _private: (),
 }
 fn hex(value: &str, length: usize) -> bool {
@@ -152,6 +156,7 @@ pub(super) fn primary(
     let registration: Registration =
         serde_json::from_slice(&bytes).map_err(|_| "primary registration schema rejected")?;
     if registration.schema != "symbiote.primary-registration/1"
+        || registration.setup_binding.is_some()
         || registration.protocol_id != PROTOCOL_ID
         || registration.protocol_sha256 != PROTOCOL_SHA256
         || registration.base_release_commit != BASE
@@ -181,11 +186,22 @@ pub(super) fn primary(
         registration,
         mode: "primary",
         registration_sha256,
+        setup: None,
         _private: (),
     })
 }
-pub(super) fn reproduction(state: &Path, receipts: &Path) -> Result<EvaluationPermit, String> {
+pub(super) fn reproduction(
+    state: &Path,
+    receipts: &Path,
+    source: Option<(&Path, &str)>,
+) -> Result<EvaluationPermit, String> {
     compiled_protocol()?;
+    let setup = source
+        .map(|(path, hash)| LoadedSetup::read(path, hash))
+        .transpose()?;
+    if let Some(setup) = &setup {
+        setup.require_worlds(24)?;
+    }
     let state_parent = state.parent().ok_or("reproduction state parent missing")?;
     let registration = Registration {
         schema: "symbiote.primary-registration/1".into(),
@@ -204,6 +220,7 @@ pub(super) fn reproduction(state: &Path, receipts: &Path) -> Result<EvaluationPe
             architecture: std::env::consts::ARCH.into(),
             toolchain: "binary-reproduction; build toolchain not asserted".into(),
         },
+        setup_binding: setup.as_ref().map(LoadedSetup::binding),
     };
     validate_paths(&registration, state, receipts)?;
     let bytes = serde_json::to_vec(&registration).map_err(|e| e.to_string())?;
@@ -220,10 +237,18 @@ pub(super) fn reproduction(state: &Path, receipts: &Path) -> Result<EvaluationPe
     file.write_all(&bytes)
         .and_then(|_| file.sync_all())
         .map_err(|_| "reproduction registration could not be committed")?;
+    if let Some(setup) = &setup {
+        setup.copy_artifact(&registration.artifact_directory)?;
+    }
     Ok(EvaluationPermit {
         registration,
-        mode: "reproduction",
+        mode: if setup.is_some() {
+            "engineering-reproduction"
+        } else {
+            "reproduction"
+        },
         registration_sha256,
+        setup,
         _private: (),
     })
 }

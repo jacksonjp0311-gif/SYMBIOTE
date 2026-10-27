@@ -19,12 +19,12 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Stable release gates](docs/STABLE_RELEASE_GATES.md)
 
-> **Research preview.** v0.4 adds persistent route-planning knowledge, a fully
-> enumerated reciprocal-cost experiment, offline route queries, and native peers
-> running through explicitly configured mutual TLS. The stable
+> **Research preview.** The latest public release is v0.4.0. This branch develops
+> the v0.5 candidate's configured knowledge service and adaptive relationship
+> experiment. Its [first registered study ended HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md)
+> after Windows socket exhaustion; a transport repair is in progress. The stable
 > v1.0 criteria remain open. Current experiments concern declared finite synthetic
-> environments; generalized intelligence and autonomous self-improvement are not
-> established.
+> environments; generalized intelligence and autonomous self-improvement are not established.
 
 ## Get started
 

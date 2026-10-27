@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -53,6 +54,24 @@ def empty_restart():
                  roles_before=before, roles_after=after, roles_stopped=stopped, before=pages, after=copy.deepcopy(pages),
                  oracle_before={}, oracle_after={}, learning=counts)
     return identities, proof
+
+
+def native_admission_snapshot():
+    """Use production macro fields/descriptions, without starting a native run."""
+    source = (ROOT / "crates/symbiote-runtime/src/adaptive_research/admission.rs").read_text(encoding="utf-8")
+    macro = next(line for line in source.splitlines() if 'json!({"schema":"symbiote.parent-session-admission/1"' in line)
+    quoted = r'"(?:[^"\\]|\\.)*"'
+    native_strings = {json.loads(key): json.loads(value) for key, value in re.findall(r'(' + quoted + r')\s*:\s*(' + quoted + r')', macro)}
+    native_numbers = {key: int(value) for key, value in re.findall(r'"([a-z_]+)"\s*:\s*([0-9]+)\s*[,}]', macro)}
+    snapshot = dict(admission_calls=2, admitted=2, cancelled=0, deadline_rejected=0, wait_cap_rejected=0,
+                    poisoned_rejected=0, clock_range_rejected=0, wait_nanoseconds=50000001, wait_ms=50,
+                    max_wait_nanoseconds=50000001, max_wait_ms=50)
+    snapshot.update(native_strings)
+    snapshot.update(native_numbers)
+    native_fields = {json.loads(key) for key in re.findall(r'(' + quoted + r')\s*:', macro)}
+    if native_fields != set(snapshot):
+        raise RuntimeError("Native admission schema changed; update the independent actual-schema fixture explicitly")
+    return snapshot
 
 
 class AdaptiveVerifierTests(unittest.TestCase):
@@ -166,7 +185,7 @@ class AdaptiveVerifierTests(unittest.TestCase):
 
     def test_explicit_portable_prefix_remap_never_reads_outside_bundle(self):
         with tempfile.TemporaryDirectory(prefix="symbiote-verifier-remap-") as temp:
-            root = Path(temp)
+            root = Path(temp).resolve(strict=True)
             (root / "state").mkdir()
             bundle = gate.Bundle(root, r"C:\original\registered")
             self.assertEqual(bundle.remap(r"\\?\C:\original\registered\state"), root / "state")
@@ -341,6 +360,101 @@ class AdaptiveVerifierTests(unittest.TestCase):
         self.assertEqual(gate.learning_summary(True, dict(A_B1_common_validated_contexts=0), 1)["status"], "NOT_DEMONSTRATED")
         self.assertEqual(gate.learning_summary(True, dict(A_B1_common_validated_contexts=1), 1)["status"], "DEMONSTRATED")
         self.assertEqual(gate.learning_summary(False, dict(A_B1_common_validated_contexts=1), 1)["status"], "NOT_DEMONSTRATED")
+
+    def test_missing_authority_audit_remains_not_verified_even_with_claimed_epochs(self):
+        campaign = dict(price=1, arm="isolated", failed=True, authority_audit=None, final_restart=None)
+        group = gate.group_verification(campaign, [dict(status="COMPLETED")], 1)
+        self.assertEqual(group["status"], "NOT_VERIFIED")
+        self.assertEqual(group["authority"], "NOT_VERIFIED")
+        self.assertFalse(group["observations_are_authenticated"])
+        self.assertIn("authority-audit-missing", group["reasons"][0])
+        with self.assertRaisesRegex(RuntimeError, "authenticity cannot be inferred"):
+            gate.knowledge_check(Path("never-read"), "owner", "authority", None, {}, {}, 0)
+        # Restoring other evidence cannot silently manufacture the missing audit.
+        campaign["final_restart"] = {"claimed_epoch": "a" * 64}
+        campaign["failed"] = False
+        self.assertEqual(gate.group_verification(campaign, [dict(status="COMPLETED")], 1)["status"], "NOT_VERIFIED")
+
+    def test_engineering_setup_binds_primary_bytes_contexts_and_exact_genesis(self):
+        world = manual_world()
+        frozen = dict(worlds=[world], truths=[dict(costs={str(key): value for key, value in gate.shortest(world["schema"], world["costs"]).items()}, path_work=10)])
+        catalogue = dict(manual_genesis_only="same identities; no learned records")
+        campaigns = []
+        for index, (price, arm) in enumerate((price, arm) for price in gate.PRICES for arm in gate.ARMS):
+            receipt = dict(context="frontier-prelude-" + f"{index + 1:064x}", schema_fingerprint=gate.schema_fingerprint(world["schema"]))
+            campaigns.append(dict(price=price, arm=arm, lifecycle=[dict(event="genuine-stale-control-calibration", receipt=receipt)]))
+        original = dict(mode="primary", status="HOLD", run_id="manual-original", source_commit="a" * 40,
+                        registration_sha256="b" * 64, frozen_environments_sha256=gate.digest(frozen),
+                        initial_simulation_genesis_sha256=gate.digest(catalogue), campaigns=campaigns)
+        old_registration = dict(candidate_source_commit="a" * 40, candidate_binary_sha256="c" * 64)
+        refs = dict(run_id=original["run_id"], registration_sha256="b" * 64, report_sha256="d" * 64,
+                    frozen_environments_sha256=gate.digest(frozen), candidate_source_commit="a" * 40, candidate_binary_sha256="c" * 64)
+        setup = dict(schema="symbiote.reproduction-setup/1", protocol_id=gate.PROTOCOL_ID, protocol_sha256=gate.PROTOCOL_SHA256,
+                     original_primary=refs, genesis_catalogue=catalogue,
+                     world_contexts=[dict(index=world["index"], context=world["context"], schema_fingerprint=gate.schema_fingerprint(world["schema"]))],
+                     prelude_contexts=gate.prelude_mapping(original))
+        binding = dict(setup_sha256="e" * 64, original_primary=refs)
+        report = dict(original, mode="engineering-reproduction", source_commit="f" * 40, setup_binding=binding)
+        registration = dict(setup_binding=binding)
+
+        def check(proposed_setup=setup, proposed_report=report, proposed_catalogue=catalogue, proposed_frozen=frozen, setup_hash="e" * 64):
+            return gate.setup_binding_check(proposed_report, registration, proposed_setup, setup_hash,
+                                            original, old_registration, "b" * 64, "d" * 64, "c" * 64,
+                                            proposed_catalogue, proposed_frozen, catalogue, frozen)
+
+        result = check()
+        self.assertEqual(result["status"], "VERIFIED")
+        self.assertEqual(result["original_primary_status"], "HOLD")
+        reordered = copy.deepcopy(setup)
+        reordered["prelude_contexts"].reverse()
+        self.assertEqual(check(proposed_setup=reordered)["status"], "VERIFIED")
+        alterations = []
+        altered = copy.deepcopy(setup)
+        altered["original_primary"]["candidate_source_commit"] = "0" * 40
+        alterations.append(dict(proposed_setup=altered))
+        altered = copy.deepcopy(setup)
+        altered["world_contexts"][0]["context"] = "frontier-context-" + "0" * 64
+        alterations.append(dict(proposed_setup=altered))
+        altered = copy.deepcopy(setup)
+        altered["prelude_contexts"][0]["context"] = "frontier-prelude-" + "0" * 64
+        alterations.append(dict(proposed_setup=altered))
+        altered = copy.deepcopy(frozen)
+        altered["worlds"][0]["costs"][0] = 2
+        alterations.extend([dict(proposed_frozen=altered), dict(proposed_catalogue={"redrawn": "identities"}),
+                            dict(setup_hash="0" * 64), dict(proposed_report=dict(report, mode="primary"))])
+        for fields in alterations:
+            with self.assertRaises(RuntimeError):
+                check(**fields)
+
+    def test_parent_admission_reports_actual_elapsed_overhead_without_changing_bill(self):
+        snapshot = native_admission_snapshot()
+        result = gate.parent_admission_check(snapshot, True)
+        self.assertEqual(result["participant_logical_cost_adjustment"], 0)
+        for key, value in (("admission_calls", 3), ("admitted", True), ("wait_ms", 49), ("minimum_spacing_ms", 1)):
+            altered = dict(snapshot)
+            altered[key] = value
+            with self.assertRaises(RuntimeError, msg=key):
+                gate.parent_admission_check(altered, True)
+        # OS descheduling can overshoot the checked cap. Preserve the actual
+        # measured wait with an explicit rejection instead of clamping evidence.
+        rejected = dict(snapshot, admitted=1, wait_cap_rejected=1, wait_nanoseconds=6000000000,
+                        wait_ms=6000, max_wait_nanoseconds=6000000000, max_wait_ms=6000)
+        gate.parent_admission_check(rejected, False)
+        with self.assertRaises(RuntimeError):
+            gate.parent_admission_check(rejected, True)
+
+    def test_full_native_admission_schema_preserves_scope_retry_and_timing_limits(self):
+        snapshot = native_admission_snapshot()
+        gate.parent_admission_check(snapshot, True)
+        for name in ("retry_policy", "scope", "wait_basis", "timing_limit"):
+            missing = dict(snapshot)
+            del missing[name]
+            with self.assertRaises(RuntimeError, msg="missing " + name):
+                gate.parent_admission_check(missing, True)
+            altered = dict(snapshot)
+            altered[name] = "all TCP globally throttled, retried, and wait silently clamped"
+            with self.assertRaises(RuntimeError, msg="altered " + name):
+                gate.parent_admission_check(altered, True)
 
 
 if __name__ == "__main__":

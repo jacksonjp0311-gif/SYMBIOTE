@@ -19,6 +19,8 @@ param(
     [switch]$GitStatus,
     [string]$State = 'state/demo',
     [string]$TlsConfig = '',
+    [string]$SetupCatalogue = '',
+    [string]$SetupSha256 = '',
     [string]$Python = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -40,6 +42,10 @@ function Invoke-Symbiote([string[]]$Arguments) {
 
 try {
     if (-not $NetworkResearch -and -not [string]::IsNullOrWhiteSpace($TlsConfig)) { throw '-TlsConfig requires -NetworkResearch.' }
+    $hasSetup = -not [string]::IsNullOrWhiteSpace($SetupCatalogue)
+    $hasSetupHash = -not [string]::IsNullOrWhiteSpace($SetupSha256)
+    if ($hasSetup -ne $hasSetupHash) { throw 'Provide both -SetupCatalogue FILE and -SetupSha256 SHA256.' }
+    if ($hasSetup -and -not $AdaptiveResearch) { throw '-SetupCatalogue requires -AdaptiveResearch.' }
     if ($Build) { Invoke-Checked { cargo build --workspace --release --locked } }
     if ($InspectState) { Invoke-Symbiote -Arguments @('inspect-state', '--state', $State) }
     if ($Recover) { Invoke-Symbiote -Arguments @('recover', '--state', $State) }
@@ -47,7 +53,11 @@ try {
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
     if ($GraphResearch) { Invoke-Symbiote -Arguments @('graph-research', '--state', $State) }
-    if ($AdaptiveResearch) { Invoke-Symbiote -Arguments @('adaptive-research', '--reproduce') }
+    if ($AdaptiveResearch) {
+        $adaptiveArguments = @('adaptive-research', '--reproduce')
+        if ($hasSetup) { $adaptiveArguments += @('--setup-catalogue', $SetupCatalogue, '--setup-sha256', $SetupSha256) }
+        Invoke-Symbiote -Arguments $adaptiveArguments
+    }
     if ($PrepareTlsState) { Invoke-Symbiote -Arguments @('prepare-tls-state', '--state', $State) }
     if ($NetworkResearch) {
         $networkArguments = @('network-research', '--state', $State)
@@ -88,6 +98,7 @@ try {
         Write-Output ''
         Write-Output 'State: -InspectState -Recover -Migrate -State DIR'
         Write-Output 'TLS roles: -PrepareTlsState -State DIR; then -NetworkResearch -TlsConfig FILE'
+        Write-Output 'Recorded setup: -AdaptiveResearch -SetupCatalogue FILE -SetupSha256 SHA256'
         Write-Output 'Other switches: -Build -Test -Benchmark -GitStatus -Json -Python EXE'
     }
 }

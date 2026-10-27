@@ -1,0 +1,41 @@
+{
+  "schema": "symbiote.primary-evidence-manifest/1",
+  "protocol_id": "SYMBIOTE-PROSPECTIVE-FRONTIER-004",
+  "protocol_sha256": "d3e8454147b67fec510712eac094d0f946e683cd5472e3304ba912f1fea1c567",
+  "run_id": "primary-004-0f40670e1d2a41e39488ecd5593ae886",
+  "source_commit": "31764625bedd4e58a828078b30b5dfa175218325",
+  "candidate_binary_sha256": "3277e52b8f811a0d0a6596476cd780eefb3661802af397bed4a4f0ae479957c9",
+  "registration_sha256": "0c4337529853a83ec7b85e4aa2ddf80c8b1b145d7114bf961639ea041318d7ae",
+  "report_sha256": "0215288f7e515e70b4d7359de81ac57e2fb6f8efd4db9475578c561ba59702b3",
+  "case_receipts_sha256": "45a0c50b4d41ced37bb40556e318a88eb89e044ede57b3d4ea47517d9c4f4cc8",
+  "frozen_environments_sha256": "7dc6ae6637422427b06a0d2de8ee58039d6b9a8a6468c341a75b4a89c6f78014",
+  "initial_simulation_genesis_sha256": "2348e511cfa26c146f9ffdeae6bbd5c4cc71efe9023d2cbff7cd278ac666300f",
+  "status": "HOLD",
+  "cases": {
+    "completed": 136,
+    "failed": 1,
+    "not_run": 55,
+    "total": 192
+  },
+  "elapsed_ms": 114135,
+  "reproduction_setup_sha256": "024456d06065859c8d8602b65da4dbbf6a7921667dee551415c7ef5dc9b58c1d",
+  "primary_retried": false,
+  "scope": "Original failed primary; any later engineering reproduction is a separate artifact.",
+  "archive": {
+    "filename": "SYMBIOTE-v0.5-primary-004-HOLD.tar.gz",
+    "sha256": "d5a5a507398c7359af0def08f26cb8b25287f4525c1c64024c2868fd05d7c0cc",
+    "bytes": 4614922,
+    "uncompressed_bytes": 31095323,
+    "files": 185,
+    "private_key_scan": "PASS",
+    "byte_exact_archive_check": "PASS",
+    "publication_status": "pending release asset publication",
+    "scope": "Original primary and first frozen-checker diagnostics; later analysis is separate."
+  },
+  "post_primary_analysis": {
+    "filename": "SYMBIOTE-v0.5-primary-004-HOLD-analysis.json.gz",
+    "sha256": "3b1dee18bce1a7a8965de8c587a097d3060042391f464db8783d5b569f1e5526",
+    "bytes": 13100,
+    "publication_status": "pending release asset publication"
+  }
+}

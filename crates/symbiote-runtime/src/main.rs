@@ -388,6 +388,8 @@ struct Cli {
     candidate: Option<String>,
     reason: Option<String>,
     registration: Option<PathBuf>,
+    setup_catalogue: Option<PathBuf>,
+    setup_sha256: Option<String>,
     reproduce: bool,
     automatic_artifact_paths: bool,
     json: bool,
@@ -443,6 +445,8 @@ impl Cli {
                 "--candidate",
                 "--reason",
                 "--registration",
+                "--setup-catalogue",
+                "--setup-sha256",
             ]
             .contains(&arg.as_str())
             {
@@ -531,6 +535,7 @@ impl Cli {
                 "--candidate" => command == "evaluate",
                 "--reason" => command == "peer-revoke",
                 "--registration" => command == "adaptive-research",
+                "--setup-catalogue" | "--setup-sha256" => command == "adaptive-research",
                 _ => false,
             };
             if !allowed {
@@ -598,6 +603,25 @@ impl Cli {
         let candidate = options.remove("--candidate");
         let reason = options.remove("--reason");
         let registration = options.remove("--registration").map(PathBuf::from);
+        let setup_catalogue = options.remove("--setup-catalogue").map(PathBuf::from);
+        let setup_sha256 = options.remove("--setup-sha256");
+        if setup_catalogue.is_some() != setup_sha256.is_some() {
+            return Err(
+                "setup restoration requires both --setup-catalogue FILE and --setup-sha256 SHA256"
+                    .into(),
+            );
+        }
+        if setup_catalogue.is_some() && !reproduce {
+            return Err("setup restoration applies only to adaptive-research --reproduce".into());
+        }
+        if setup_sha256.as_ref().is_some_and(|value| {
+            value.len() != 64
+                || !value
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        }) {
+            return Err("--setup-sha256 requires 64 lowercase hexadecimal characters".into());
+        }
         if reproduce && command != "adaptive-research" {
             return Err("--reproduce applies only to adaptive-research".into());
         }
@@ -684,6 +708,8 @@ impl Cli {
             candidate,
             reason,
             registration,
+            setup_catalogue,
+            setup_sha256,
             reproduce,
             automatic_artifact_paths,
             json,
@@ -711,7 +737,13 @@ fn execute(cli: &Cli) -> Result<Value, String> {
             fs::create_dir(state).map_err(|_| "cannot create fresh reproduction state")?;
         }
         if cli.reproduce {
-            return adaptive_research::run_reproduction(state, receipts);
+            return adaptive_research::run_reproduction(
+                state,
+                receipts,
+                cli.setup_catalogue
+                    .as_deref()
+                    .zip(cli.setup_sha256.as_deref()),
+            );
         }
         return adaptive_research::run_primary(
             state,
@@ -908,7 +940,7 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
@@ -937,7 +969,7 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
@@ -1140,6 +1172,10 @@ fn display(report: &Value, cli: &Cli) -> String {
         lines.push("Deployment/persistence prototype; no new paired efficiency claim.".into());
     }
     if cli.command == "adaptive-research" {
+        lines.push(format!(
+            "Study mode: {}",
+            report["mode"].as_str().unwrap_or("unknown")
+        ));
         lines.push(format!(
             "Build source: {}",
             report["source_commit"].as_str().unwrap_or("unknown")

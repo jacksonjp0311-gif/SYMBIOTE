@@ -14,8 +14,10 @@
   actual process restarts. Independent raw-evidence verification separates
   software completion, utility and persistent learning.
 - Fresh temporary study command, configured service guide and explicit stable
-  release gates. The 24-world primary study has not yet been executed in this
-  candidate; no outcome or stable v1.0 claim is made.
+  release gates. The first registered 24-world primary ended HOLD after Windows
+  socket exhaustion: 136 completed, one failed and 55 not-run cases remain intact.
+  A paced engineering reproduction with the original setup is being prepared;
+  it cannot replace that primary. See [the failure report](docs/RESEARCH_V05_PRIMARY_HOLD.md).
 
 ## v0.4.0 — Reciprocal Improvement — 2026-10-27
 
