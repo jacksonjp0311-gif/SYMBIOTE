@@ -37,8 +37,10 @@ and not run. The configured `run` path now plans a value decision before
 those episodes send no contribution payload. `partner_benefits_verified`
 remains 0. CI run `40558477313` passed Ubuntu, Windows and macOS at
 `b957548`, including `tools/verify.py`. CI run `40584546812` passed Ubuntu,
-Windows and macOS at `9825165`, including `tools/verify.py`. That run does not
-cover the receipt-attribution change.
+Windows and macOS at `9825165`, including `tools/verify.py`. CI run
+`40587280975` passed Ubuntu, Windows and macOS at `4737640`, including
+`tools/verify.py`. That run covers the receipt-attribution commit and does not
+cover a later documentation commit.
 
 The next bottleneck is not more message delivery. Transferred query guidance
 on the frozen cohort, and affine hints in the new mechanism check, match cheap

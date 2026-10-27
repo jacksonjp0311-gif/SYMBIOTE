@@ -31,8 +31,10 @@
   CI run 40557119693 at `b7f46a6` also passed all three platforms, including
   `tools/verify.py`. CI run 40558477313 at `b957548` passed the following
   documentation commit on all three platforms. CI run 40584546812 at `9825165`
-  passed Ubuntu, Windows and macOS, including `tools/verify.py`. That run does
-  not cover the receipt-attribution change. The cancelled hour remains HOLD.
+  passed Ubuntu, Windows and macOS, including `tools/verify.py`. CI run
+  40587280975 at `4737640` passed Ubuntu, Windows and macOS, including
+  `tools/verify.py`. That run covers the receipt-attribution commit only.
+  The cancelled hour remains HOLD.
   Later commits need their own run.
 - Configured native cognitive episodes with bounded authorized sensing,
   independent local evaluation, persistent learning and reciprocal inert offers.
