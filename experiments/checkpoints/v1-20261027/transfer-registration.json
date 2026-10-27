@@ -1,0 +1,89 @@
+{
+  "schema": "symbiote.query-transfer-registration/1",
+  "source_commit": "ddd63d7954917c949ea1173a90f30343bcb16397",
+  "native_sha256": "bf787d167e6108c3f884132b860baf94d295ebcf2718f5ddcd52a1c125b211be",
+  "protocol_document_sha256": "fba9eedf96a9136058ecabfe320454579eb991c81f29ddbdea1e19fe6ff7ab37",
+  "state_directory": "\\\\?\\C:\\Users\\jacks\\AppData\\Local\\Temp\\ts-1d858e45",
+  "protocol": {
+    "calibration_contexts_per_stage": 2,
+    "calibration_graph_layers": 3,
+    "canonical_metadata": "endpoint-aware exact weighted graph witness after unique colour refinement; ambiguous graphs abstain, not conflated; no significance or independent-world claim",
+    "controls": [
+      "isolated-prior",
+      "fresh-default",
+      "fixed-start",
+      "fixed-goal",
+      "local-trained",
+      "exchanged"
+    ],
+    "costs": "all actual source observations including unused offers; each calibration default/candidate/incumbent evaluator full truth pass; target full truth and2subroute truth passes; reasoning/policy/verification/replay work plus canonical refinement scans; both send+receive KiB units; adoption; diagnostics",
+    "family": "finite-positive-cost-directed-graph/v1",
+    "id": "SYMBIOTE-QUERY-TRANSFER-001",
+    "limits": {
+      "max_actor_cost": 10000000,
+      "seconds": 60,
+      "trial": {
+        "max_queries": 24,
+        "model_work": 10000,
+        "policy_work": 10000
+      }
+    },
+    "minimum_distinct_source_contexts": 2,
+    "missing_roles": "original optimistic-route edge order after trained roles",
+    "negative_controls": "unsupported declared grammar, actual observed interval drift, query-count regression with durable revocation if harmful",
+    "permutations": "explicit verified complete node and edge bijections, deterministic controller seed; learner receives no role-family label or seed",
+    "policy": "rank unknown edges only on exact optimistic route by public endpoint role",
+    "positive_utility": "both participants strictly reduce full cost without coverage/error loss against fresh/local-trained/best-fixed on every normal-price seed",
+    "private_truth_recipe": "penalty 4+seed%6 on first-path start or goal; peer source roles complementary; receiver target role opposite its own source",
+    "public_bounds": "first edge of alternate path lower=2; all other lowers=1; every upper=9; first path uniquely optimistic before permutation",
+    "retention": "all arms persist actual queried edges as bounded GraphMaps; two endpoint-disjoint subroute queries distinct from main acquisition route are independently evaluated before promotion; actual owner/knowledge restart yields nonempty predictions with zero new oracle calls",
+    "retention_domain": "2..12 nodes, at most56 edges, edge costs1..9, encoded route cost1..63; larger outputs explicitly unsupported",
+    "sampling": "16 labelled target tasks reused over6arms and2prices,192 target evaluations; seeds7/19/43 share penalty5,101 penalty9; report exact structural collision groups",
+    "scope": "single trusted controller; no external-agent, statistical-population or physical-certificate claim",
+    "source_calibration_target_contexts_disjoint": true,
+    "source_contexts_per_actor": 2,
+    "source_graph_layers": 2,
+    "source_score": "sum(cost-lower)/sum(upper-lower); exact integer cross products",
+    "strong_control": "best measured fixed start/goal per participant is a labelled hindsight bound",
+    "target_graph_layers": [
+      4,
+      5
+    ],
+    "target_observations_used_for_graph_fact_retention": true,
+    "target_topology": "two longer directed paths; second variant adds a high-cost cross edge",
+    "targets_used_for_policy_promotion": false,
+    "ties": [
+      "from-start",
+      "interior",
+      "to-goal",
+      "direct"
+    ]
+  },
+  "protocol_sha256": "e2c0f927940e8b43d02a97e1a24b5cb2f66046c953d11e6286395a4ebd0839ef",
+  "cohort": {
+    "seeds": [
+      7,
+      19,
+      43,
+      101
+    ],
+    "prices": [
+      1,
+      100
+    ],
+    "target_layers": [
+      4,
+      5
+    ],
+    "arms": [
+      "isolated-prior",
+      "fresh-default",
+      "fixed-start",
+      "fixed-goal",
+      "local-trained",
+      "exchanged"
+    ],
+    "actors_per_pair": 2
+  },
+  "cohort_sha256": "80a6957550626b3d022ba14b5ed3f05e3748b95cd07a9a1aaf847e9771fb6b9b"
+}

@@ -1,0 +1,437 @@
+{
+  "choice_after_restart": "partner-b",
+  "choice_before": "partner-a",
+  "controller_pid": 37952,
+  "declared_task_units": 36,
+  "identity": "symbiote-733af691a84e0f0a0f65387f",
+  "information_rank_basis": "declared initial-family estimate from exact initial affine hypothesis count; one binary observation has worst-case half-space elimination; not an optimal live information-gain claim; source usefulness uses durable observed outcomes",
+  "matched_budget_control": "isolated exact learners receive the same observation budget and also cover all held-out inputs; no transfer efficiency advantage claimed",
+  "measured_local_oracle_calls": 24,
+  "native_instances": 3,
+  "neutral_history_choice_after_restart": "partner-a",
+  "no_unsanctioned_endpoint": true,
+  "phase_reports": [
+    {
+      "choice": {
+        "before": {
+          "head_sha256": "79050076aea465d11d3e3e5aa9eef0539d5a45da5a0b6585a72bb00f1fee477d",
+          "identity": "symbiote-733af691a84e0f0a0f65387f",
+          "records": 1
+        },
+        "experiment": "partner-a",
+        "prior_attempts": 0,
+        "prior_verified_benefits": 0,
+        "reserved_cost": 64,
+        "scope": "portfolio-a/v1",
+        "score_denominator": 2048,
+        "score_numerator": 8,
+        "sequence": 1
+      },
+      "control_frame": {
+        "cost_scope": "actual local private-control frame bytes; no TLS/external-agent transport in this control",
+        "native_wall_ms": 43,
+        "stdin_bytes": 165,
+        "stdout_bytes": 3071
+      },
+      "identity": "symbiote-733af691a84e0f0a0f65387f",
+      "instance_nonce": "ea9ebada904b9da3ce9bf536f536236767f25f944cac391a51bfa100866cca75",
+      "knowledge_head": {
+        "head_sha256": "e75c4edd2f381c11ec76e1308a8108fb1ec34354041dbed12aeb47ff2468f9ca",
+        "identity": "symbiote-733af691a84e0f0a0f65387f",
+        "records": 2
+      },
+      "local_learning_after_rejected_offer": true,
+      "neutral_history_choice": {
+        "before": {
+          "head_sha256": "79050076aea465d11d3e3e5aa9eef0539d5a45da5a0b6585a72bb00f1fee477d",
+          "identity": "symbiote-733af691a84e0f0a0f65387f",
+          "records": 1
+        },
+        "experiment": "partner-a",
+        "prior_attempts": 0,
+        "prior_verified_benefits": 0,
+        "reserved_cost": 64,
+        "scope": "portfolio-a/v1",
+        "score_denominator": 2048,
+        "score_numerator": 8,
+        "sequence": 1
+      },
+      "phase": "reject-first",
+      "pid": 42132,
+      "reserved_cost": 64,
+      "result": {
+        "independent_local_model": "self-a",
+        "local_discovery_metrics": {
+          "complete_declared_units": 12,
+          "heldout_inputs": [
+            3,
+            5,
+            6,
+            7
+          ],
+          "hypotheses_after": 1,
+          "hypotheses_before": 16,
+          "matched_query_budget_control_correct": 4,
+          "matched_query_budget_control_total": 4,
+          "model_work_units": 252,
+          "observations": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "oracle_calls": 8,
+          "scope": "one fixed affine task; labels are trusted local lab observations",
+          "unit_contract": "declared model:4 source/acquisition +4 heldout verification +1 adoption +3 proposal/selection coordination; no network-traffic cost claim; CPU work reported separately"
+        },
+        "metrics": {
+          "complete_declared_units": 12,
+          "heldout_inputs": [
+            3,
+            5,
+            6,
+            7
+          ],
+          "hypotheses_after": 1,
+          "hypotheses_before": 16,
+          "matched_query_budget_control_correct": 4,
+          "matched_query_budget_control_total": 4,
+          "model_work_units": 252,
+          "observations": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "oracle_calls": 8,
+          "scope": "one fixed affine task; labels are trusted local lab observations",
+          "unit_contract": "declared model:4 source/acquisition +4 heldout verification +1 adoption +3 proposal/selection coordination; no network-traffic cost claim; CPU work reported separately"
+        },
+        "reason": "knowledge must be correct on held-out evidence and improve coverage or equal-coverage total cost",
+        "status": "REJECTED"
+      },
+      "retained_models": 1,
+      "snapshot": {
+        "events": [
+          {
+            "choice": {
+              "before": {
+                "head_sha256": "79050076aea465d11d3e3e5aa9eef0539d5a45da5a0b6585a72bb00f1fee477d",
+                "identity": "symbiote-733af691a84e0f0a0f65387f",
+                "records": 1
+              },
+              "experiment": "partner-a",
+              "prior_attempts": 0,
+              "prior_verified_benefits": 0,
+              "reserved_cost": 64,
+              "scope": "portfolio-a/v1",
+              "score_denominator": 2048,
+              "score_numerator": 8,
+              "sequence": 1
+            },
+            "event": "selected"
+          },
+          {
+            "event": "failed",
+            "experiment": "partner-a",
+            "reason": "actual incorrect held-out predictions; independently learned local model retained"
+          }
+        ],
+        "policy_sha256": "c45e5fb99f55bbb3c55c0f835aab32a321908b94ebcf86f92c3857d590399aae",
+        "schema": "symbiote.exploration-state/1",
+        "sha256": "3a4040661903b19bbccc0713d5437e1f987de125e5ff0f650a5ca508dea83719"
+      }
+    },
+    {
+      "choice": {
+        "before": {
+          "head_sha256": "e75c4edd2f381c11ec76e1308a8108fb1ec34354041dbed12aeb47ff2468f9ca",
+          "identity": "symbiote-733af691a84e0f0a0f65387f",
+          "records": 2
+        },
+        "experiment": "partner-b",
+        "prior_attempts": 0,
+        "prior_verified_benefits": 0,
+        "reserved_cost": 64,
+        "scope": "portfolio-b/v1",
+        "score_denominator": 2048,
+        "score_numerator": 8,
+        "sequence": 2
+      },
+      "control_frame": {
+        "cost_scope": "actual local private-control frame bytes; no TLS/external-agent transport in this control",
+        "native_wall_ms": 44,
+        "stdin_bytes": 928,
+        "stdout_bytes": 3899
+      },
+      "identity": "symbiote-733af691a84e0f0a0f65387f",
+      "instance_nonce": "70f3693f65d7ca70ae35b8e48ef13631621475d3c1e85e797c2ca32b2fb96c30",
+      "knowledge_head": {
+        "head_sha256": "f280c3ad60a5c0e0ea845250c2257c03c6b3658495584f42af5bb6b1fd51f4c1",
+        "identity": "symbiote-733af691a84e0f0a0f65387f",
+        "records": 3
+      },
+      "local_learning_after_rejected_offer": false,
+      "neutral_history_choice": {
+        "before": {
+          "head_sha256": "e75c4edd2f381c11ec76e1308a8108fb1ec34354041dbed12aeb47ff2468f9ca",
+          "identity": "symbiote-733af691a84e0f0a0f65387f",
+          "records": 2
+        },
+        "experiment": "partner-a",
+        "prior_attempts": 0,
+        "prior_verified_benefits": 0,
+        "reserved_cost": 64,
+        "scope": "portfolio-a/v1",
+        "score_denominator": 2048,
+        "score_numerator": 8,
+        "sequence": 1
+      },
+      "phase": "learn-second",
+      "pid": 43056,
+      "reserved_cost": 128,
+      "result": {
+        "metrics": {
+          "complete_declared_units": 12,
+          "heldout_inputs": [
+            3,
+            5,
+            6,
+            7
+          ],
+          "hypotheses_after": 1,
+          "hypotheses_before": 16,
+          "matched_query_budget_control_correct": 4,
+          "matched_query_budget_control_total": 4,
+          "model_work_units": 252,
+          "observations": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          "oracle_calls": 8,
+          "scope": "one fixed affine task; labels are trusted local lab observations",
+          "unit_contract": "declared model:4 source/acquisition +4 heldout verification +1 adoption +3 proposal/selection coordination; no network-traffic cost claim; CPU work reported separately"
+        },
+        "status": "PROMOTED"
+      },
+      "retained_models": 2,
+      "snapshot": {
+        "events": [
+          {
+            "choice": {
+              "before": {
+                "head_sha256": "79050076aea465d11d3e3e5aa9eef0539d5a45da5a0b6585a72bb00f1fee477d",
+                "identity": "symbiote-733af691a84e0f0a0f65387f",
+                "records": 1
+              },
+              "experiment": "partner-a",
+              "prior_attempts": 0,
+              "prior_verified_benefits": 0,
+              "reserved_cost": 64,
+              "scope": "portfolio-a/v1",
+              "score_denominator": 2048,
+              "score_numerator": 8,
+              "sequence": 1
+            },
+            "event": "selected"
+          },
+          {
+            "event": "failed",
+            "experiment": "partner-a",
+            "reason": "actual incorrect held-out predictions; independently learned local model retained"
+          },
+          {
+            "choice": {
+              "before": {
+                "head_sha256": "e75c4edd2f381c11ec76e1308a8108fb1ec34354041dbed12aeb47ff2468f9ca",
+                "identity": "symbiote-733af691a84e0f0a0f65387f",
+                "records": 2
+              },
+              "experiment": "partner-b",
+              "prior_attempts": 0,
+              "prior_verified_benefits": 0,
+              "reserved_cost": 64,
+              "scope": "portfolio-b/v1",
+              "score_denominator": 2048,
+              "score_numerator": 8,
+              "sequence": 2
+            },
+            "event": "selected"
+          },
+          {
+            "after": {
+              "head_sha256": "f280c3ad60a5c0e0ea845250c2257c03c6b3658495584f42af5bb6b1fd51f4c1",
+              "identity": "symbiote-733af691a84e0f0a0f65387f",
+              "records": 3
+            },
+            "event": "verified",
+            "evidence": {
+              "evidence": {
+                "cases": [
+                  {
+                    "baseline": null,
+                    "candidate": 1,
+                    "expected": 1,
+                    "id": "held-b-3",
+                    "input": 3
+                  },
+                  {
+                    "baseline": null,
+                    "candidate": 0,
+                    "expected": 0,
+                    "id": "held-b-5",
+                    "input": 5
+                  },
+                  {
+                    "baseline": null,
+                    "candidate": 1,
+                    "expected": 1,
+                    "id": "held-b-6",
+                    "input": 6
+                  },
+                  {
+                    "baseline": null,
+                    "candidate": 0,
+                    "expected": 0,
+                    "id": "held-b-7",
+                    "input": 7
+                  }
+                ],
+                "costs": {
+                  "acquisition": 4,
+                  "adoption": 1,
+                  "baseline": 16,
+                  "candidate": 12,
+                  "verification": 4
+                },
+                "evaluator": "portfolio-local-evaluator",
+                "training_case_ids": [
+                  "training-b-0",
+                  "training-b-1",
+                  "training-b-2",
+                  "training-b-4"
+                ],
+                "training_inputs": [
+                  0,
+                  1,
+                  2,
+                  4
+                ]
+              },
+              "family": "affine",
+              "record": {
+                "id": "received-b",
+                "payload": {
+                  "bias": false,
+                  "coefficients": 5,
+                  "kind": "affine",
+                  "width": 3
+                },
+                "provenance": "Fixed native two-world control. Source proposal is inert; independent exact observations and disjoint held-out cases govern adoption.",
+                "revision": 1,
+                "schema_fingerprint": "e3efcffd628a1bca9c5e277175c179bb15083107aa9915423bf5c45000761047",
+                "scope": "portfolio-b/v1",
+                "source": "partner-b"
+              }
+            },
+            "experiment": "partner-b"
+          }
+        ],
+        "policy_sha256": "c45e5fb99f55bbb3c55c0f835aab32a321908b94ebcf86f92c3857d590399aae",
+        "schema": "symbiote.exploration-state/1",
+        "sha256": "780fcd390057091200c2a58c016469340f36fe02c085d47ca8760d90f20954eb"
+      }
+    },
+    {
+      "active_models": 2,
+      "budget_exhausted": true,
+      "control_frame": {
+        "cost_scope": "actual local private-control frame bytes; no TLS/external-agent transport in this control",
+        "native_wall_ms": 44,
+        "stdin_bytes": 2441,
+        "stdout_bytes": 407
+      },
+      "identity": "symbiote-733af691a84e0f0a0f65387f",
+      "instance_nonce": "081c2fdad4b974cf4b737f0536a4f4a7f08e1ac479c859c64a978ecc4570c37b",
+      "new_promotions": 0,
+      "oracle_calls": 0,
+      "phase": "replay",
+      "pid": 30772,
+      "predictions": [
+        {
+          "artifact": "received-b",
+          "scope": "portfolio-b/v1",
+          "values": [
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "artifact": "self-a",
+          "scope": "portfolio-a/v1",
+          "values": [
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "replay_oracle_calls": 0,
+  "reserved_cost": 128,
+  "retained_models": 2,
+  "schema": "symbiote.exploration-control/1",
+  "scope": "fixed two-world native engineering control; does not establish general experiment optimality, new statistical samples or independent multi-host operation",
+  "status": "PASS",
+  "version": "1.0.0"
+}

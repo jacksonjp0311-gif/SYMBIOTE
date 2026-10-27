@@ -1,0 +1,10 @@
+{
+  "source_commit": "ddd63d7954917c949ea1173a90f30343bcb16397",
+  "profile": "release",
+  "native": "C:\\Users\\jacks\\.codex\\worktrees\\stable-lifecycle\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\release\\symbiote.exe",
+  "native_sha256": "bf787d167e6108c3f884132b860baf94d295ebcf2718f5ddcd52a1c125b211be",
+  "service_tests": "C:\\Users\\jacks\\.codex\\worktrees\\stable-lifecycle\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\release\\deps\\service-25665165513dacaa.exe",
+  "service_tests_sha256": "fc049030d34635ef2ba2d665489c543a8485d22d1e1736d913cd7f9eeb7d09a2",
+  "build_receipts": "C:\\Users\\jacks\\AppData\\Local\\Temp\\sb-a12cfc5f",
+  "cognition_artifacts": "C:\\Users\\jacks\\AppData\\Local\\Temp\\sb-a12cfc5f\\cognition"
+}

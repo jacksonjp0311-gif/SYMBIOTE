@@ -1,0 +1,2135 @@
+{
+  "after_restart": [
+    {
+      "explicit_work_units": 44,
+      "history_anchor": {
+        "head_sha256": "6b9da1c9a6066a6f66e8141ad8473e391fa969b12746890fd628e3595d923381",
+        "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+        "records": 2
+      },
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "incoming_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          null
+        ],
+        "learner_work": 27,
+        "oracle_calls": 3,
+        "route_cost": 2,
+        "total_work_units": 30
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 0,
+        "attempted_forwards": 0,
+        "direct_denial_probes": 0,
+        "evaluation_oracle_calls": 0,
+        "explicit_learner_work": 42,
+        "failed_forwards": 0,
+        "fresh_promotions": 0,
+        "library_assessment_work": 0,
+        "oracle_learner_work": 0,
+        "predictions": 2,
+        "received_artifacts": 0,
+        "secure_plaintext_quote_bytes": 0,
+        "source_warmup_oracle_calls": 0,
+        "validation_oracle_calls": 0,
+        "verified_observations": 0
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "pid": 38432,
+      "preexchange_heldout": [
+        null,
+        null
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [],
+      "role": 0,
+      "tls_session_failures": 0
+    },
+    {
+      "explicit_work_units": 43,
+      "history_anchor": {
+        "head_sha256": "9c3f54af68ef5dafc532ace37b2e4523a61892608308fdf716aa1f92fd5e5d97",
+        "identity": "symbiote-81eb7b10ef644f7c54092733",
+        "records": 2
+      },
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "incoming_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          null
+        ],
+        "learner_work": 34,
+        "oracle_calls": 2,
+        "route_cost": 2,
+        "total_work_units": 36
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 0,
+        "attempted_forwards": 1,
+        "direct_denial_probes": 0,
+        "evaluation_oracle_calls": 0,
+        "explicit_learner_work": 41,
+        "failed_forwards": 1,
+        "fresh_promotions": 0,
+        "library_assessment_work": 0,
+        "oracle_learner_work": 0,
+        "predictions": 2,
+        "received_artifacts": 0,
+        "secure_plaintext_quote_bytes": 0,
+        "source_warmup_oracle_calls": 0,
+        "validation_oracle_calls": 0,
+        "verified_observations": 0
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "pid": 26060,
+      "preexchange_heldout": [
+        1,
+        null
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [],
+      "role": 1,
+      "tls_session_failures": 0
+    },
+    {
+      "explicit_work_units": 43,
+      "history_anchor": {
+        "head_sha256": "1f4166e18fae581879a0654c0a5ad346d510d46fa4a116931536afc6eab62d8a",
+        "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "records": 2
+      },
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "incoming_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          3
+        ],
+        "learner_work": 47,
+        "oracle_calls": 3,
+        "route_cost": 2,
+        "total_work_units": 50
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 0,
+        "attempted_forwards": 0,
+        "direct_denial_probes": 0,
+        "evaluation_oracle_calls": 0,
+        "explicit_learner_work": 41,
+        "failed_forwards": 0,
+        "fresh_promotions": 0,
+        "library_assessment_work": 0,
+        "oracle_learner_work": 0,
+        "predictions": 2,
+        "received_artifacts": 0,
+        "secure_plaintext_quote_bytes": 0,
+        "source_warmup_oracle_calls": 0,
+        "validation_oracle_calls": 0,
+        "verified_observations": 0
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 0,
+        "negotiation_received_bytes": 0,
+        "negotiation_sent_bytes": 0,
+        "rpc_received_bytes": 0,
+        "rpc_sent_bytes": 0
+      },
+      "pid": 44516,
+      "preexchange_heldout": [
+        null,
+        3
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "role": 2,
+      "tls_session_failures": 0
+    }
+  ],
+  "aggregate_cost_saving_work_units": -428,
+  "aggregate_exhaustion_denial": {
+    "acknowledgment": null,
+    "delivered": false,
+    "failure": "aggregate network budget exhausted before dispatch",
+    "receipt": null,
+    "snapshot": {
+      "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "receipts": [
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+          "outcome": "delivered-inert",
+          "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2064,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 1,
+          "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "source": "symbiote-b5f4d9ffbc55338a3538f558"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+          "outcome": "delivered-inert",
+          "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 2,
+          "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+          "outcome": "delivered-inert",
+          "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 3,
+          "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivered-inert",
+          "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 4,
+          "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+          "outcome": "delivered-inert",
+          "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2100,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 5,
+          "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+          "outcome": "delivered-inert",
+          "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1462,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 6,
+          "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivery-unknown",
+          "previous_sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 7,
+          "sha256": "694d57d2bfb7e44f023d5653098a0c57848afed4aaddb46d061dc34daab110c8",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        }
+      ],
+      "revoked": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "schema": "symbiote.network-state/1",
+      "sha256": "95c89ef89e5b2f62af46c790d5a3857efe7caa6ef85fe62931559163c69288b0"
+    },
+    "source_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+    "source_pid": 24604
+  },
+  "all_participants_positive_complete_cost_benefit": false,
+  "before_restart": [
+    {
+      "explicit_work_units": 123,
+      "history_anchor": {
+        "head_sha256": "6b9da1c9a6066a6f66e8141ad8473e391fa969b12746890fd628e3595d923381",
+        "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+        "records": 2
+      },
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "incoming_tls_traffic": {
+        "connection_attempts": 3,
+        "negotiation_received_bytes": 751,
+        "negotiation_sent_bytes": 751,
+        "rpc_received_bytes": 7561,
+        "rpc_sent_bytes": 1404
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          null
+        ],
+        "learner_work": 27,
+        "oracle_calls": 3,
+        "route_cost": 2,
+        "total_work_units": 30
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 2,
+        "attempted_forwards": 2,
+        "direct_denial_probes": 1,
+        "evaluation_oracle_calls": 2,
+        "explicit_learner_work": 54,
+        "failed_forwards": 1,
+        "fresh_promotions": 1,
+        "library_assessment_work": 32,
+        "oracle_learner_work": 16,
+        "predictions": 2,
+        "received_artifacts": 2,
+        "secure_plaintext_quote_bytes": 786432,
+        "source_warmup_oracle_calls": 2,
+        "validation_oracle_calls": 2,
+        "verified_observations": 2
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 2,
+        "negotiation_received_bytes": 256,
+        "negotiation_sent_bytes": 512,
+        "rpc_received_bytes": 502,
+        "rpc_sent_bytes": 2632
+      },
+      "pid": 24604,
+      "preexchange_heldout": [
+        null,
+        null
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [],
+      "role": 0,
+      "tls_session_failures": 0
+    },
+    {
+      "explicit_work_units": 146,
+      "history_anchor": {
+        "head_sha256": "9c3f54af68ef5dafc532ace37b2e4523a61892608308fdf716aa1f92fd5e5d97",
+        "identity": "symbiote-81eb7b10ef644f7c54092733",
+        "records": 2
+      },
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "incoming_tls_traffic": {
+        "connection_attempts": 3,
+        "negotiation_received_bytes": 751,
+        "negotiation_sent_bytes": 751,
+        "rpc_received_bytes": 6520,
+        "rpc_sent_bytes": 1404
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          null
+        ],
+        "learner_work": 34,
+        "oracle_calls": 2,
+        "route_cost": 2,
+        "total_work_units": 36
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 3,
+        "attempted_forwards": 5,
+        "direct_denial_probes": 1,
+        "evaluation_oracle_calls": 2,
+        "explicit_learner_work": 53,
+        "failed_forwards": 1,
+        "fresh_promotions": 1,
+        "library_assessment_work": 32,
+        "oracle_learner_work": 16,
+        "predictions": 2,
+        "received_artifacts": 2,
+        "secure_plaintext_quote_bytes": 1966080,
+        "source_warmup_oracle_calls": 1,
+        "validation_oracle_calls": 3,
+        "verified_observations": 3
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 5,
+        "negotiation_received_bytes": 1024,
+        "negotiation_sent_bytes": 1280,
+        "rpc_received_bytes": 2008,
+        "rpc_sent_bytes": 15258
+      },
+      "pid": 44520,
+      "preexchange_heldout": [
+        1,
+        null
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [],
+      "role": 1,
+      "tls_session_failures": 0
+    },
+    {
+      "explicit_work_units": 125,
+      "history_anchor": {
+        "head_sha256": "1f4166e18fae581879a0654c0a5ad346d510d46fa4a116931536afc6eab62d8a",
+        "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "records": 2
+      },
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "incoming_tls_traffic": {
+        "connection_attempts": 9,
+        "negotiation_received_bytes": 1707,
+        "negotiation_sent_bytes": 1707,
+        "rpc_received_bytes": 9203,
+        "rpc_sent_bytes": 3004
+      },
+      "isolated_adaptive_control": {
+        "heldout": [
+          1,
+          3
+        ],
+        "learner_work": 47,
+        "oracle_calls": 3,
+        "route_cost": 2,
+        "total_work_units": 50
+      },
+      "knowledge_records": 2,
+      "meter": {
+        "adopted_edges": 3,
+        "attempted_forwards": 2,
+        "direct_denial_probes": 0,
+        "evaluation_oracle_calls": 2,
+        "explicit_learner_work": 53,
+        "failed_forwards": 1,
+        "fresh_promotions": 1,
+        "library_assessment_work": 32,
+        "oracle_learner_work": 16,
+        "predictions": 2,
+        "received_artifacts": 2,
+        "secure_plaintext_quote_bytes": 786432,
+        "source_warmup_oracle_calls": 1,
+        "validation_oracle_calls": 3,
+        "verified_observations": 3
+      },
+      "outgoing_tls_traffic": {
+        "connection_attempts": 2,
+        "negotiation_received_bytes": 256,
+        "negotiation_sent_bytes": 256,
+        "rpc_received_bytes": 502,
+        "rpc_sent_bytes": 3637
+      },
+      "pid": 24228,
+      "preexchange_heldout": [
+        null,
+        3
+      ],
+      "quarantined": 2,
+      "retained_predictions": [
+        1,
+        3
+      ],
+      "revoked_peers": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "role": 2,
+      "tls_session_failures": 2
+    }
+  ],
+  "charged_failed_delivery": {
+    "acknowledgment": null,
+    "delivered": false,
+    "failure": "delivery unconfirmed, cancelled, late or adapter panicked; attempt remains charged",
+    "receipt": null,
+    "snapshot": {
+      "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "receipts": [
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+          "outcome": "delivered-inert",
+          "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2064,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 1,
+          "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "source": "symbiote-b5f4d9ffbc55338a3538f558"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+          "outcome": "delivered-inert",
+          "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 2,
+          "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+          "outcome": "delivered-inert",
+          "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 3,
+          "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivered-inert",
+          "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 4,
+          "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+          "outcome": "delivered-inert",
+          "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2100,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 5,
+          "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+          "outcome": "delivered-inert",
+          "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1462,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 6,
+          "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivery-unknown",
+          "previous_sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 7,
+          "sha256": "694d57d2bfb7e44f023d5653098a0c57848afed4aaddb46d061dc34daab110c8",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        }
+      ],
+      "revoked": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "schema": "symbiote.network-state/1",
+      "sha256": "95c89ef89e5b2f62af46c790d5a3857efe7caa6ef85fe62931559163c69288b0"
+    },
+    "source_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+    "source_pid": 24228
+  },
+  "deliveries": [
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-b5f4d9ffbc55338a3538f558",
+        "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-81eb7b10ef644f7c54092733",
+        "receiver_pid": 44520
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+        "outcome": "delivered-inert",
+        "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+        "reserved_bytes": 2064,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 1,
+        "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+        "source": "symbiote-b5f4d9ffbc55338a3538f558"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "6018941f79d1407dcf3dce4688da1c50f1b349ad36f134ee8f811fe667f19fc2"
+      },
+      "source_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "source_pid": 24604
+    },
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+        "receiver_pid": 24604
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+        "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+        "outcome": "delivered-inert",
+        "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+        "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 2,
+        "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+            "outcome": "delivered-inert",
+            "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 2,
+            "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "0ecd052e4fbd473f7baa2f6f95dd06cfc61178d20844d4a4f5dd191e1a902e06"
+      },
+      "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+      "source_pid": 44520
+    },
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "receiver_pid": 24228
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+        "outcome": "delivered-inert",
+        "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+        "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 3,
+        "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+            "outcome": "delivered-inert",
+            "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 2,
+            "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+            "outcome": "delivered-inert",
+            "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 3,
+            "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "a1a8278ebd93896fef0cbac6a666c6ff25b34345533529f7787f0a77a734362c"
+      },
+      "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+      "source_pid": 44520
+    },
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-81eb7b10ef644f7c54092733",
+        "receiver_pid": 44520
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+        "outcome": "delivered-inert",
+        "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+        "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 4,
+        "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+        "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+            "outcome": "delivered-inert",
+            "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 2,
+            "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+            "outcome": "delivered-inert",
+            "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 3,
+            "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+            "outcome": "delivered-inert",
+            "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 4,
+            "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+            "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "d072b7eb24915201d4a465b1bb53e14f407660a25d2dc7b60b7bd6e0cca78d57"
+      },
+      "source_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "source_pid": 24228
+    },
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "receiver_pid": 24228
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+        "outcome": "delivered-inert",
+        "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+        "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+        "reserved_bytes": 2100,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 5,
+        "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+            "outcome": "delivered-inert",
+            "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 2,
+            "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+            "outcome": "delivered-inert",
+            "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 3,
+            "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+            "outcome": "delivered-inert",
+            "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 4,
+            "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+            "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+            "outcome": "delivered-inert",
+            "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2100,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 5,
+            "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "3ef7e88510ea02bd72ed829da34322a816d2262160a779f669b70a3b1575e7d7"
+      },
+      "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+      "source_pid": 44520
+    },
+    {
+      "acknowledgment": {
+        "authenticated_source": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+        "promoted": false,
+        "quarantined": true,
+        "receiver_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+        "receiver_pid": 24604
+      },
+      "delivered": true,
+      "failure": null,
+      "receipt": {
+        "consent_epoch": 1,
+        "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+        "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+        "outcome": "delivered-inert",
+        "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+        "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+        "reserved_bytes": 1462,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 6,
+        "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      "snapshot": {
+        "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+        "receipts": [
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+            "outcome": "delivered-inert",
+            "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2064,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 1,
+            "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "source": "symbiote-b5f4d9ffbc55338a3538f558"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+            "outcome": "delivered-inert",
+            "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 2,
+            "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+            "outcome": "delivered-inert",
+            "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+            "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 3,
+            "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-81eb7b10ef644f7c54092733",
+            "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+            "outcome": "delivered-inert",
+            "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+            "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+            "reserved_bytes": 1426,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 4,
+            "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+            "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+            "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+            "outcome": "delivered-inert",
+            "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+            "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+            "reserved_bytes": 2100,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 5,
+            "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          },
+          {
+            "consent_epoch": 1,
+            "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+            "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+            "outcome": "delivered-inert",
+            "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+            "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+            "reserved_bytes": 1462,
+            "scope": "controlled-topology-diamond/v1",
+            "sequence": 6,
+            "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+            "source": "symbiote-81eb7b10ef644f7c54092733"
+          }
+        ],
+        "revoked": [],
+        "schema": "symbiote.network-state/1",
+        "sha256": "c121ed92e83f3a1133fed83ff1c631530b416039e32873f735687438cb01ee25"
+      },
+      "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+      "source_pid": 44520
+    }
+  ],
+  "fresh_local_adoptions": [
+    {
+      "assessment": {
+        "authority_id": "pinned-topology-laboratory/v1",
+        "baseline_correct": 0,
+        "baseline_cost": 30,
+        "candidate_correct": 2,
+        "candidate_cost": 87,
+        "cost_improved": false,
+        "coverage_improved": true,
+        "evidence": {
+          "acquisitions": [
+            {
+              "cost": 1,
+              "edge_id": 0,
+              "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 0,
+                "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 1
+              },
+              "receipt_sha256": "8df69fae41756947df2945fb612c969a7f464e23dea0878bd159bf2ee1c60cd2"
+            },
+            {
+              "cost": 1,
+              "edge_id": 1,
+              "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 1,
+                "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+                "observer_identity": "symbiote-81eb7b10ef644f7c54092733",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 2
+              },
+              "receipt_sha256": "cb628f4b301557286388700a8b61e09cf03f2113eb720c0dcea1df884aa2fc45"
+            },
+            {
+              "cost": 3,
+              "edge_id": 2,
+              "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 2,
+                "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 3
+              },
+              "receipt_sha256": "2bf165c42a0e3a03bc7258c409efad7b4ddc91f3bb5e2d03c7947749f266036e"
+            },
+            {
+              "cost": 3,
+              "edge_id": 3,
+              "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 3,
+                "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+                "observer_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 4
+              },
+              "receipt_sha256": "912f9a3ea8af49c58232f268ed2bc609b8b53f7361a4fdfebedbc8349abce378"
+            }
+          ],
+          "cases": [
+            {
+              "baseline": null,
+              "candidate": 1,
+              "expected": 1,
+              "id": "topology-heldout-0",
+              "input": 7
+            },
+            {
+              "baseline": null,
+              "candidate": 3,
+              "expected": 3,
+              "id": "topology-heldout-1",
+              "input": 11
+            }
+          ],
+          "costs": {
+            "acquisition": 2,
+            "adoption": 3,
+            "baseline": 30,
+            "candidate": 87,
+            "verification": 76
+          },
+          "evaluator": "symbiote-b5f4d9ffbc55338a3538f558",
+          "training_tasks": []
+        },
+        "heldout_route_queries": 2,
+        "record_digest": "0240351ee69685f58c68ea3c5e4de3679f9c204240995cb3e38d1edeb4c786cf",
+        "regressions": 0
+      },
+      "fresh_promotion": true,
+      "history_anchor": {
+        "head_sha256": "6b9da1c9a6066a6f66e8141ad8473e391fa969b12746890fd628e3595d923381",
+        "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+        "records": 2
+      },
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "pid": 24604
+    },
+    {
+      "assessment": {
+        "authority_id": "pinned-topology-laboratory/v1",
+        "baseline_correct": 1,
+        "baseline_cost": 36,
+        "candidate_correct": 2,
+        "candidate_cost": 109,
+        "cost_improved": false,
+        "coverage_improved": true,
+        "evidence": {
+          "acquisitions": [
+            {
+              "cost": 1,
+              "edge_id": 0,
+              "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 0,
+                "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 1
+              },
+              "receipt_sha256": "8df69fae41756947df2945fb612c969a7f464e23dea0878bd159bf2ee1c60cd2"
+            },
+            {
+              "cost": 1,
+              "edge_id": 1,
+              "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 1,
+                "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+                "observer_identity": "symbiote-81eb7b10ef644f7c54092733",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 2
+              },
+              "receipt_sha256": "cb628f4b301557286388700a8b61e09cf03f2113eb720c0dcea1df884aa2fc45"
+            },
+            {
+              "cost": 3,
+              "edge_id": 2,
+              "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 2,
+                "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 3
+              },
+              "receipt_sha256": "2bf165c42a0e3a03bc7258c409efad7b4ddc91f3bb5e2d03c7947749f266036e"
+            },
+            {
+              "cost": 3,
+              "edge_id": 3,
+              "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 3,
+                "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+                "observer_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 4
+              },
+              "receipt_sha256": "912f9a3ea8af49c58232f268ed2bc609b8b53f7361a4fdfebedbc8349abce378"
+            }
+          ],
+          "cases": [
+            {
+              "baseline": 1,
+              "candidate": 1,
+              "expected": 1,
+              "id": "topology-heldout-0",
+              "input": 7
+            },
+            {
+              "baseline": null,
+              "candidate": 3,
+              "expected": 3,
+              "id": "topology-heldout-1",
+              "input": 11
+            }
+          ],
+          "costs": {
+            "acquisition": 1,
+            "adoption": 4,
+            "baseline": 36,
+            "candidate": 109,
+            "verification": 77
+          },
+          "evaluator": "symbiote-81eb7b10ef644f7c54092733",
+          "training_tasks": []
+        },
+        "heldout_route_queries": 2,
+        "record_digest": "6abb8113b07c09ce97c6ea5fbd23ad96a288b348959eb14a2af1873e44716c0b",
+        "regressions": 0
+      },
+      "fresh_promotion": true,
+      "history_anchor": {
+        "head_sha256": "9c3f54af68ef5dafc532ace37b2e4523a61892608308fdf716aa1f92fd5e5d97",
+        "identity": "symbiote-81eb7b10ef644f7c54092733",
+        "records": 2
+      },
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "pid": 44520
+    },
+    {
+      "assessment": {
+        "authority_id": "pinned-topology-laboratory/v1",
+        "baseline_correct": 1,
+        "baseline_cost": 50,
+        "candidate_correct": 2,
+        "candidate_cost": 89,
+        "cost_improved": false,
+        "coverage_improved": true,
+        "evidence": {
+          "acquisitions": [
+            {
+              "cost": 1,
+              "edge_id": 0,
+              "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 0,
+                "id": "f7f7558525f0e71aadee186a1dae357d73ed7007c7497ce352a6695652363f07",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 1
+              },
+              "receipt_sha256": "8df69fae41756947df2945fb612c969a7f464e23dea0878bd159bf2ee1c60cd2"
+            },
+            {
+              "cost": 1,
+              "edge_id": 1,
+              "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 1,
+                "edge_id": 1,
+                "id": "a3770aec89ba68b6a2954e7a732e44a46a47e86e7552d40ec7bfe7c727cb30d2",
+                "observer_identity": "symbiote-81eb7b10ef644f7c54092733",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 2
+              },
+              "receipt_sha256": "cb628f4b301557286388700a8b61e09cf03f2113eb720c0dcea1df884aa2fc45"
+            },
+            {
+              "cost": 3,
+              "edge_id": 2,
+              "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 2,
+                "id": "217ea345511cd79dfaae6e25f634d48a8306bbddbbf5456ce8d7ab02d1cbe9fa",
+                "observer_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 3
+              },
+              "receipt_sha256": "2bf165c42a0e3a03bc7258c409efad7b4ddc91f3bb5e2d03c7947749f266036e"
+            },
+            {
+              "cost": 3,
+              "edge_id": 3,
+              "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+              "receipt": {
+                "authority_id": "pinned-topology-laboratory/v1",
+                "context": "controlled-topology-diamond/v1",
+                "cost": 3,
+                "edge_id": 3,
+                "id": "835bd5db98e25a11719621f30398dfd91671aae2516b9799a9e316e4b94c2bb3",
+                "observer_identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+                "schema": "symbiote.graph-observation/1",
+                "schema_fingerprint": "e8669c2ffc7ad3d4be9df1371d3100f9bfc1ccb00686631ac4d076db201b5c58",
+                "sequence": 4
+              },
+              "receipt_sha256": "912f9a3ea8af49c58232f268ed2bc609b8b53f7361a4fdfebedbc8349abce378"
+            }
+          ],
+          "cases": [
+            {
+              "baseline": null,
+              "candidate": 1,
+              "expected": 1,
+              "id": "topology-heldout-0",
+              "input": 7
+            },
+            {
+              "baseline": 3,
+              "candidate": 3,
+              "expected": 3,
+              "id": "topology-heldout-1",
+              "input": 11
+            }
+          ],
+          "costs": {
+            "acquisition": 1,
+            "adoption": 4,
+            "baseline": 50,
+            "candidate": 89,
+            "verification": 77
+          },
+          "evaluator": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "training_tasks": []
+        },
+        "heldout_route_queries": 2,
+        "record_digest": "17f60e7c8bd9d1182dfeb0c9c1ac1f6df0f986a868b0f7110b0f8341bf33b7b5",
+        "regressions": 0
+      },
+      "fresh_promotion": true,
+      "history_anchor": {
+        "head_sha256": "1f4166e18fae581879a0654c0a5ad346d510d46fa4a116931536afc6eab62d8a",
+        "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "records": 2
+      },
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "pid": 24228
+    }
+  ],
+  "identities": [
+    "symbiote-b5f4d9ffbc55338a3538f558",
+    "symbiote-81eb7b10ef644f7c54092733",
+    "symbiote-7c16d5d8719cd8c0a65d7e0e"
+  ],
+  "initial_pids": [
+    24604,
+    44520,
+    24228
+  ],
+  "limitations": [
+    "single manually fixed stationary diamond graph",
+    "shared trusted-host laboratory oracle; no remote honesty proof",
+    "no independent population samples or generalization claim",
+    "no performance or reciprocal utility claim when complete cost comparison is negative",
+    "TLS cryptographic wire bytes and operating system CPU time are not measured",
+    "private process control is trusted; source artifacts cannot choose endpoints, grants, private keys or code"
+  ],
+  "network_snapshot": {
+    "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+    "receipts": [
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+        "outcome": "delivered-inert",
+        "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+        "reserved_bytes": 2064,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 1,
+        "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+        "source": "symbiote-b5f4d9ffbc55338a3538f558"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+        "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+        "outcome": "delivered-inert",
+        "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+        "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 2,
+        "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+        "outcome": "delivered-inert",
+        "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+        "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 3,
+        "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+        "outcome": "delivered-inert",
+        "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+        "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 4,
+        "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+        "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+        "outcome": "delivered-inert",
+        "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+        "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+        "reserved_bytes": 2100,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 5,
+        "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+        "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+        "outcome": "delivered-inert",
+        "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+        "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+        "reserved_bytes": 1462,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 6,
+        "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+        "source": "symbiote-81eb7b10ef644f7c54092733"
+      },
+      {
+        "consent_epoch": 1,
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+        "outcome": "delivery-unknown",
+        "previous_sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+        "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+        "reserved_bytes": 1426,
+        "scope": "controlled-topology-diamond/v1",
+        "sequence": 7,
+        "sha256": "694d57d2bfb7e44f023d5653098a0c57848afed4aaddb46d061dc34daab110c8",
+        "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+      }
+    ],
+    "revoked": [
+      [
+        "symbiote-81eb7b10ef644f7c54092733",
+        "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "controlled-topology-diamond/v1"
+      ]
+    ],
+    "schema": "symbiote.network-state/1",
+    "sha256": "95c89ef89e5b2f62af46c790d5a3857efe7caa6ef85fe62931559163c69288b0"
+  },
+  "no_direct_a_c_tls_grant": {
+    "admission_verdict": "VERIFIED_SERVER_POLICY_DENIAL",
+    "denial_stage": "peer authorization after TLS certificate authentication",
+    "expected_reason": "ungranted-peer",
+    "live_after": {
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "pid": 24228,
+      "role": 2
+    },
+    "live_before": {
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "pid": 24228,
+      "role": 2
+    },
+    "proof_basis": "live same-PID same-instance TLS control before and after; exactly one recorded receiver rejection with expected policy reason",
+    "receiver_after": {
+      "armed_revocations": [],
+      "armed_snapshot_sha256": "c121ed92e83f3a1133fed83ff1c631530b416039e32873f735687438cb01ee25",
+      "connection_count": 6,
+      "granted_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "last_failure": "client certificate has no operator-owned identity grant",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "operator_policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "pid": 24228,
+      "quarantined": 2,
+      "revoked_peer_ids": [],
+      "session_failures": 1
+    },
+    "receiver_before": {
+      "armed_revocations": [],
+      "armed_snapshot_sha256": "c121ed92e83f3a1133fed83ff1c631530b416039e32873f735687438cb01ee25",
+      "connection_count": 4,
+      "granted_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "last_failure": null,
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "operator_policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "pid": 24228,
+      "quarantined": 2,
+      "revoked_peer_ids": [],
+      "session_failures": 0
+    },
+    "source_probe": {
+      "admission_verdict": "HOLD_UNVERIFIED_CONNECT_FAILURE",
+      "connect_error": "secure transport I/O: An existing connection was forcibly closed by the remote host. (os error 10054)",
+      "connected": false,
+      "delivery_attempted": false,
+      "failure_class": "transport-connect-or-handshake-failure",
+      "source_identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "source_pid": 24604,
+      "tls_denied": false
+    },
+    "tls_denied": true
+  },
+  "owned_native_processes": 3,
+  "participant_comparisons": [
+    {
+      "accounting": "source oracle + independent validation + heldout oracle + explicit and repeated assessment model work + adoption + outbound sessions/plaintext + inbound plaintext + private control bytes",
+      "cost_saving_work_units": -128,
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "isolated_adaptive_coverage": [
+        1,
+        null
+      ],
+      "isolated_adaptive_total_work_units": 30,
+      "network_heldout_predictions": [
+        1,
+        3
+      ],
+      "network_total_work_units": 158,
+      "positive_complete_cost_benefit": false,
+      "preexchange_coverage": [
+        null,
+        null
+      ]
+    },
+    {
+      "accounting": "source oracle + independent validation + heldout oracle + explicit and repeated assessment model work + adoption + outbound sessions/plaintext + inbound plaintext + private control bytes",
+      "cost_saving_work_units": -169,
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "isolated_adaptive_coverage": [
+        1,
+        null
+      ],
+      "isolated_adaptive_total_work_units": 36,
+      "network_heldout_predictions": [
+        1,
+        3
+      ],
+      "network_total_work_units": 205,
+      "positive_complete_cost_benefit": false,
+      "preexchange_coverage": [
+        1,
+        null
+      ]
+    },
+    {
+      "accounting": "source oracle + independent validation + heldout oracle + explicit and repeated assessment model work + adoption + outbound sessions/plaintext + inbound plaintext + private control bytes",
+      "cost_saving_work_units": -131,
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "isolated_adaptive_coverage": [
+        1,
+        3
+      ],
+      "isolated_adaptive_total_work_units": 50,
+      "network_heldout_predictions": [
+        1,
+        3
+      ],
+      "network_total_work_units": 181,
+      "positive_complete_cost_benefit": false,
+      "preexchange_coverage": [
+        null,
+        3
+      ]
+    }
+  ],
+  "payload_budget_basis": "forwarded inert-envelope serialization only; failed dispatch remains reserved",
+  "persisted_revocation_denial": {
+    "acknowledgment": null,
+    "delivered": false,
+    "failure": "mutual consent, custody, revocation or hop limit rejected",
+    "receipt": null,
+    "snapshot": {
+      "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "receipts": [
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+          "outcome": "delivered-inert",
+          "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2064,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 1,
+          "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "source": "symbiote-b5f4d9ffbc55338a3538f558"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+          "outcome": "delivered-inert",
+          "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 2,
+          "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+          "outcome": "delivered-inert",
+          "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 3,
+          "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivered-inert",
+          "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 4,
+          "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+          "outcome": "delivered-inert",
+          "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2100,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 5,
+          "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+          "outcome": "delivered-inert",
+          "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1462,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 6,
+          "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        }
+      ],
+      "revoked": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "schema": "symbiote.network-state/1",
+      "sha256": "2bf286bbb472bf0ac35a58256a9163d7a5b716920a76e6412772a3d1a2b69ff9"
+    },
+    "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+    "source_pid": 44520
+  },
+  "private_control_bytes": [
+    {
+      "child_diagnostics": {
+        "child_pid": 24604,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "stdin_bytes": 12923,
+      "stdout_bytes": 11322
+    },
+    {
+      "child_diagnostics": {
+        "child_pid": 44520,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "stdin_bytes": 26627,
+      "stdout_bytes": 22661
+    },
+    {
+      "child_diagnostics": {
+        "child_pid": 24228,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "stdin_bytes": 25196,
+      "stdout_bytes": 15366
+    }
+  ],
+  "reopened_revocation_denial": {
+    "acknowledgment": null,
+    "delivered": false,
+    "failure": "mutual consent, custody, revocation or hop limit rejected",
+    "receipt": null,
+    "snapshot": {
+      "policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "receipts": [
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "9653bc04f65bd62e877d595301ade6a55d93bf8514639fa41a137cc55c1d437c",
+          "outcome": "delivered-inert",
+          "previous_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2064,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 1,
+          "sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "source": "symbiote-b5f4d9ffbc55338a3538f558"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "cd34330d456869e413b97885fc8783a27c3458c29da16eb0567b2ffe3105274f",
+          "outcome": "delivered-inert",
+          "previous_sha256": "08a115750d557c93a9dc6f07060533c9e7ec5b9bc09acc34fdf8460f1758d03a",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 2,
+          "sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "be0d4b87ddfe2662337e943916d5abc143b471fc476cec43687997eb97b93dc0",
+          "outcome": "delivered-inert",
+          "previous_sha256": "7d0dda82a2f99dd7241ee3939eb7485410e2a104035bbcac863fdb6849158e50",
+          "record_sha256": "ec873e2b73b2ea94675c3cd930eee8d6375d6066cda6f8fce32debe3a40c3ef7",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 3,
+          "sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivered-inert",
+          "previous_sha256": "fe905c06d6c3b67dc1afcf6c28621693bcd85c84b0ed0e7ca41d9ee4f3d307b5",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 4,
+          "sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "envelope_sha256": "bd8bec59db31f1b36a04f4a1a4dbdc67120318379f6174966e82af14985618a4",
+          "outcome": "delivered-inert",
+          "previous_sha256": "dcfde36bdc7dd8f7db22cec28cbc72d0e50a1d7d411451efc957fb5024b6e245",
+          "record_sha256": "a17e39da9672ae57a65c12819ac45901ecb12c388f36e160cbcd4309e8f8c77d",
+          "reserved_bytes": 2100,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 5,
+          "sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+          "envelope_sha256": "28dcec954e4b7b39157a4b91526234fe2a3917347b0894740745458faa7f99ec",
+          "outcome": "delivered-inert",
+          "previous_sha256": "93ed2ecd71a8917e9b5ea1ca0fb02c67a7738195ca54041bfaf734f1cd4cc16f",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1462,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 6,
+          "sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "source": "symbiote-81eb7b10ef644f7c54092733"
+        },
+        {
+          "consent_epoch": 1,
+          "destination": "symbiote-81eb7b10ef644f7c54092733",
+          "envelope_sha256": "2223d936601f1ab9d19435885c503e2a9b68c0e8c522dc5f9c90bd2b08408871",
+          "outcome": "delivery-unknown",
+          "previous_sha256": "9c94d620b19fa0947eedaa6e5cfaa0496bd1e7881448380ed56461448607a964",
+          "record_sha256": "6a28d5592ffbd33932fe62a86b693bc19a18047d28345e7e96b43dd57fca53a5",
+          "reserved_bytes": 1426,
+          "scope": "controlled-topology-diamond/v1",
+          "sequence": 7,
+          "sha256": "694d57d2bfb7e44f023d5653098a0c57848afed4aaddb46d061dc34daab110c8",
+          "source": "symbiote-7c16d5d8719cd8c0a65d7e0e"
+        }
+      ],
+      "revoked": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "schema": "symbiote.network-state/1",
+      "sha256": "95c89ef89e5b2f62af46c790d5a3857efe7caa6ef85fe62931559163c69288b0"
+    },
+    "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+    "source_pid": 26060
+  },
+  "restart_private_control_bytes": [
+    {
+      "child_diagnostics": {
+        "child_pid": 38432,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-b5f4d9ffbc55338a3538f558",
+      "stdin_bytes": 4053,
+      "stdout_bytes": 1476
+    },
+    {
+      "child_diagnostics": {
+        "child_pid": 26060,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-81eb7b10ef644f7c54092733",
+      "stdin_bytes": 8444,
+      "stdout_bytes": 5871
+    },
+    {
+      "child_diagnostics": {
+        "child_pid": 44516,
+        "redacted_diagnostic": "",
+        "stderr_captured_bytes": 0
+      },
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "stdin_bytes": 8328,
+      "stdout_bytes": 1541
+    }
+  ],
+  "restarted_pids": [
+    38432,
+    26060,
+    44516
+  ],
+  "schema": "symbiote.native-topology-research/1",
+  "scientific_status": "one controlled manual fixture; measured negative cost result is retained",
+  "scope": "controlled-topology-diamond/v1",
+  "secure_plaintext_quotes": {
+    "basis": "negotiation and RPC application plaintext; TLS record and cryptographic handshake wire bytes excluded",
+    "controller_actual": {
+      "connection_attempts": 7,
+      "negotiation_received_bytes": 1673,
+      "negotiation_sent_bytes": 1673,
+      "rpc_received_bytes": 2800,
+      "rpc_sent_bytes": 1757
+    },
+    "controller_reserved_bytes": 2752512,
+    "per_actor_budget": 4194304,
+    "quote_per_attempt": 393216
+  },
+  "status": "ENGINEERING_PASS",
+  "successful_inert_hops": 6,
+  "tls_revocation_denial": {
+    "admission_verdict": "VERIFIED_SERVER_POLICY_DENIAL",
+    "denial_stage": "peer authorization after TLS certificate authentication",
+    "expected_reason": "revoked-peer",
+    "live_after": {
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "pid": 24228,
+      "role": 2
+    },
+    "live_before": {
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "pid": 24228,
+      "role": 2
+    },
+    "proof_basis": "live same-PID same-instance TLS control before and after; exactly one recorded receiver rejection with expected policy reason",
+    "receiver_after": {
+      "armed_revocations": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "armed_snapshot_sha256": "2bf286bbb472bf0ac35a58256a9163d7a5b716920a76e6412772a3d1a2b69ff9",
+      "connection_count": 9,
+      "granted_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "last_failure": "client authorization revoked",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "operator_policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "pid": 24228,
+      "quarantined": 2,
+      "revoked_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "session_failures": 2
+    },
+    "receiver_before": {
+      "armed_revocations": [
+        [
+          "symbiote-81eb7b10ef644f7c54092733",
+          "symbiote-7c16d5d8719cd8c0a65d7e0e",
+          "controlled-topology-diamond/v1"
+        ]
+      ],
+      "armed_snapshot_sha256": "2bf286bbb472bf0ac35a58256a9163d7a5b716920a76e6412772a3d1a2b69ff9",
+      "connection_count": 7,
+      "granted_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "identity": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+      "last_failure": "client certificate has no operator-owned identity grant",
+      "listener_instance": "8b7502e0aafb26be01d4a7c7edb321a6c0c4618281d45b7528960e18cb410eb1",
+      "operator_policy_sha256": "e00c87c6bcb02593fcda7121cbaccf9410843dcce01dedba4dfe6e7b9aa9dfc3",
+      "pid": 24228,
+      "quarantined": 2,
+      "revoked_peer_ids": [
+        "symbiote-81eb7b10ef644f7c54092733"
+      ],
+      "session_failures": 1
+    },
+    "source_probe": {
+      "admission_verdict": "HOLD_UNVERIFIED_CONNECT_FAILURE",
+      "connect_error": "secure transport I/O: An existing connection was forcibly closed by the remote host. (os error 10054)",
+      "connected": false,
+      "delivery_attempted": false,
+      "failure_class": "transport-connect-or-handshake-failure",
+      "source_identity": "symbiote-81eb7b10ef644f7c54092733",
+      "source_pid": 44520,
+      "tls_denied": false
+    },
+    "tls_denied": true
+  },
+  "topology_policy": {
+    "coordinator": "topology-controller",
+    "edges": [
+      {
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "destination_granted": true,
+        "epoch": 1,
+        "scope": "controlled-topology-diamond/v1",
+        "source": "symbiote-b5f4d9ffbc55338a3538f558",
+        "source_granted": true
+      },
+      {
+        "destination": "symbiote-b5f4d9ffbc55338a3538f558",
+        "destination_granted": true,
+        "epoch": 1,
+        "scope": "controlled-topology-diamond/v1",
+        "source": "symbiote-81eb7b10ef644f7c54092733",
+        "source_granted": true
+      },
+      {
+        "destination": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "destination_granted": true,
+        "epoch": 1,
+        "scope": "controlled-topology-diamond/v1",
+        "source": "symbiote-81eb7b10ef644f7c54092733",
+        "source_granted": true
+      },
+      {
+        "destination": "symbiote-81eb7b10ef644f7c54092733",
+        "destination_granted": true,
+        "epoch": 1,
+        "scope": "controlled-topology-diamond/v1",
+        "source": "symbiote-7c16d5d8719cd8c0a65d7e0e",
+        "source_granted": true
+      }
+    ],
+    "limits": {
+      "attempts": 7,
+      "hops": 2,
+      "payload_bytes": 16384,
+      "total_bytes": 114688
+    },
+    "schema": "symbiote.network-policy/1"
+  }
+}

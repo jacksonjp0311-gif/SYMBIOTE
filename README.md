@@ -19,12 +19,14 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
-> **Research preview — v0.5.1.** The [24-cycle local qualification passed](docs/LOCAL_QUALIFICATION_V051.md)
-> with real TLS, retained models, reviewed rotation, a killed service and verified
-> restore. This is one PC and two fixed fixtures. Two-host validation and
-> long-term reliability remain open. The [v0.5 primary remains HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md);
-> its engineering reproduction completes all 192 cases, with the fixed-peer
-> control still cheaper. Stable v1.0 and better partner selection are not established.
+> **Development handoff — v1.0.0 candidate, not a stable v1 release.**
+> Implementation and compact evidence are pushed for continued work with Grok.
+> The hour campaign was cancelled at the user's request after 71/120 cycles
+> (35m33s), with verified cleanup; its result remains HOLD.
+> [Start with the Grok handoff](docs/GROK_HANDOFF.md). The latest verified public
+> binary release remains v0.5.1. New macOS verification fixes and the public-binary
+> test driver still need current-head CI.
+
 
 ## Get started
 

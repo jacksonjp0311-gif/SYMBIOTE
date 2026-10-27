@@ -131,10 +131,16 @@ class TransferCampaignBindings(unittest.TestCase):
         self.assertEqual({signum: signal.getsignal(signum) for signum in before}, before)
         report = campaign.load(self.base/'campaign-report.json')
         self.assertEqual(report['status'], 'HOLD')
-        self.assertIn('cancelled', report['first_failure'])
+        self.assertIn('cancelled', report['first_failure'], report)
         process = report['native_process']
-        self.assertEqual(process['outcome'], 'cancelled')
-        self.assertTrue(process['cleanup_verified'])
+        self.assertEqual(process['outcome'], 'cancelled', process)
+        self.assertTrue(process['cleanup_verified'], process)
+        if sys.platform == 'darwin':
+            proof = process['posix_group_observation']
+            self.assertEqual(proof['basis'], 'native-ps-complete-pid-pgid-stat-census')
+            self.assertFalse(proof['active'])
+            self.assertGreater(proof['rows'], 0)
+            self.assertTrue(all(row['state'].startswith('Z') for row in proof['members']))
         self.assertNotEqual(process['exit_code'], 0)
         self.assertGreater(campaign.load(ready)['child_pid'], 0)
         self.assertEqual(campaign.load(self.base/process['process_receipt']), process)

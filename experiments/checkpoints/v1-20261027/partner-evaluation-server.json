@@ -1,0 +1,12 @@
+{
+  "artifact": "service-fb0fd90eeecd0eeb4229fc74d4900dc3",
+  "fixture_sha256": "7600cedfe81b53712e43923850e6dc5bf3281c1f9d19aa2422af000cb3b695c4",
+  "model_work_units": 12291,
+  "promoted": true,
+  "record_sha256": "49f368677fcc1e71d7759ae0b3d7e59563ae8ab8b82dd5dcb5715e5aef54eebe",
+  "revision": 1,
+  "schema": "symbiote.service-evaluation/1",
+  "status": "PROMOTED",
+  "truth_basis": "operator-pinned local finite fixture; no remote truth or generalization claim",
+  "validated_cases": 3
+}

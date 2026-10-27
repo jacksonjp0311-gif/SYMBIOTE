@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import selectors
 import signal
 import subprocess
 import sys
@@ -205,7 +206,85 @@ class WindowsJob:
             self.handle = None
 
 
-def group_alive(pid):
+def parse_darwin_group_census(raw, pid, sampler_pid):
+    """Accept only a complete, clean native ps census with its own witness."""
+    require(type(pid) is int and pid > 0 and type(sampler_pid) is int and sampler_pid > 0,
+            "Darwin group census needs positive owned and sampler identities")
+    require(raw and len(raw) <= 128 * 1024 and raw.endswith(b"\n"),
+            "Darwin group census is empty, truncated or oversized")
+    try:
+        lines = raw.decode("ascii").splitlines()
+    except UnicodeError as error:
+        raise RuntimeError("Darwin group census encoding is unsupported") from error
+    seen, members, sampler = set(), [], None
+    for line in lines:
+        fields = line.split()
+        require(len(fields) == 3 and all(re.fullmatch(r"[0-9]+", field) for field in fields[:2])
+                and re.fullmatch(r"[A-Za-z][A-Za-z0-9<+>\-]*", fields[2]),
+                "Darwin group census contains an unsupported row")
+        row_pid, group = map(int, fields[:2])
+        # ps -A may include kernel_task with PID/PGID zero.
+        require(row_pid <= 2**31-1 and group <= 2**31-1 and row_pid not in seen,
+                "Darwin group census contains duplicate or invalid identities")
+        seen.add(row_pid)
+        if row_pid == sampler_pid:
+            sampler = (group, fields[2])
+        if group == pid:
+            members.append(dict(pid=row_pid, state=fields[2]))
+    require(sampler is not None and sampler[0] != pid and sampler[1][0] != "Z",
+            "Darwin group census lacks its own live sampler witness outside the owned group")
+    return dict(basis="native-ps-complete-pid-pgid-stat-census", sampler_pid=sampler_pid,
+                rows=len(seen), raw_bytes=len(raw), raw_sha256=hashlib.sha256(raw).hexdigest(),
+                members=members, active=any(row["state"][0] != "Z" for row in members))
+
+
+def darwin_group_alive(pid, deadline=None, observation=None):
+    """Bound native ps bytes/time inside the existing cleanup deadline."""
+    start = time.monotonic()
+    cutoff = min(start + 0.25, deadline if deadline is not None else start + 0.25)
+    require(cutoff - start > 0.05, "Darwin group census cleanup deadline exhausted")
+    selector = selectors.DefaultSelector()
+    process = None
+    raw = bytearray()
+    try:
+        process = subprocess.Popen(["/bin/ps", "-A", "-o", "pid=,pgid=,stat="],
+                                   stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, env=dict(os.environ, LC_ALL="C"))
+        os.set_blocking(process.stdout.fileno(), False)
+        selector.register(process.stdout, selectors.EVENT_READ)
+        while selector.get_map():
+            remaining = cutoff - 0.025 - time.monotonic()
+            require(remaining > 0, "Darwin group census timed out before complete EOF")
+            for key, _ in selector.select(remaining):
+                block = os.read(key.fileobj.fileno(), 4096)
+                if not block:
+                    selector.unregister(key.fileobj)
+                    continue
+                require(len(raw) + len(block) <= 128 * 1024, "Darwin group census byte budget exhausted")
+                raw.extend(block)
+        require(process.wait(timeout=max(0.001, cutoff-time.monotonic())) == 0,
+                "Darwin native ps census failed")
+        result = parse_darwin_group_census(bytes(raw), pid, process.pid)
+        require(time.monotonic() <= cutoff, "Darwin group census deadline exhausted during parsing")
+        if observation is not None:
+            observation.clear()
+            observation.update(result)
+        return result["active"]
+    finally:
+        selector.close()
+        if process is not None:
+            process.stdout.close()
+        if process is not None and process.poll() is None:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+            process.wait(timeout=max(0.001, cutoff-time.monotonic()))
+
+
+def group_alive(pid, deadline=None, observation=None):
+    if sys.platform == "darwin":
+        return darwin_group_alive(pid, deadline, observation)
     try:
         os.killpg(pid, 0)
         # A killed orphan can briefly remain a zombie under Linux's reaper.
@@ -227,7 +306,7 @@ def group_alive(pid):
         return False
 
 
-def signal_owned_group(pid, signum):
+def signal_owned_group(pid, signum, deadline=None, observation=None):
     """An owned group can exit between a liveness probe and its signal."""
     try:
         os.killpg(pid, signum)
@@ -235,6 +314,13 @@ def signal_owned_group(pid, signum):
         # Absence is idempotent; permission and other signalling errors remain
         # failures. The caller still verifies quiescence before accepting cleanup.
         pass
+    except PermissionError:
+        # XNU killpg excludes zombie members, so a zombie-only group can yield
+        # EPERM. Only a fresh complete census can prove no executing member;
+        # an active group, failed census or other platform retains the error.
+        if sys.platform == "darwin" and not group_alive(pid, deadline, observation):
+            return
+        raise
 
 
 def artifact_stem(label):
@@ -259,6 +345,7 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
     readers = []
     cleanup_verified = False
     cleanup_deadline = None
+    group_observation = {}
     with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
         try:
             options = dict(stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=ROOT)
@@ -305,20 +392,20 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                 if job:
                     job.terminate()
                 else:
-                    signal_owned_group(process.pid, signal.SIGTERM)
+                    signal_owned_group(process.pid, signal.SIGTERM, cleanup_deadline, group_observation)
             try:
                 process.wait(timeout=max(0.001,min(BOUNDS["cleanup_seconds"]/2,cleanup_deadline-time.monotonic())))
             except subprocess.TimeoutExpired:
                 if job:
                     job.terminate()
                 else:
-                    signal_owned_group(process.pid, signal.SIGKILL)
+                    signal_owned_group(process.pid, signal.SIGKILL, cleanup_deadline, group_observation)
                 process.wait(timeout=max(0.001,cleanup_deadline-time.monotonic()))
             # Job accounting can lag a signalled/reaped root by a scheduler
             # turn. Observe bounded quiescence before declaring a leaked child.
             settle_deadline = min(cleanup_deadline,time.monotonic()+0.25)
             while time.monotonic()<settle_deadline:
-                active = job.active()!=0 if job else group_alive(process.pid)
+                active = job.active()!=0 if job else group_alive(process.pid, cleanup_deadline, group_observation)
                 if not active: break
                 time.sleep(0.01)
             if job:
@@ -326,13 +413,13 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                 if leaked:
                     job.terminate()
             else:
-                leaked = group_alive(process.pid)
+                leaked = group_alive(process.pid, cleanup_deadline, group_observation)
                 if leaked:
-                    signal_owned_group(process.pid, signal.SIGKILL)
+                    signal_owned_group(process.pid, signal.SIGKILL, cleanup_deadline, group_observation)
             if leaked and outcome == "completed":
                 outcome = "descendant-leak"
             while time.monotonic()<cleanup_deadline:
-                cleanup_verified = job.active()==0 if job else not group_alive(process.pid)
+                cleanup_verified = job.active()==0 if job else not group_alive(process.pid, cleanup_deadline, group_observation)
                 if cleanup_verified: break
                 time.sleep(0.02)
         except BaseException as failure:
@@ -342,9 +429,11 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                 if process is not None:
                     if job and job.attached: job.terminate()
                     elif job and process.poll() is None: process.kill()
-                    elif not job and group_alive(process.pid): signal_owned_group(process.pid,signal.SIGKILL)
+                    # A failed liveness census must not prevent escalation of
+                    # the session we already own. Verify quiescence afterwards.
+                    elif not job: signal_owned_group(process.pid,signal.SIGKILL,cleanup_deadline,group_observation)
                     process.wait(timeout=max(0.001,cleanup_deadline-time.monotonic()))
-                    cleanup_verified = job.active()==0 if job and job.attached else (not group_alive(process.pid) if not job else True)
+                    cleanup_verified = job.active()==0 if job and job.attached else (not group_alive(process.pid, cleanup_deadline, group_observation) if not job else True)
             except BaseException as cleanup_failure:
                 error += "; cleanup uncertain: "+str(cleanup_failure)
                 outcome="cleanup-incomplete"
@@ -374,6 +463,8 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                   stdout=stdout_path.name, stderr=stderr_path.name,
                   stdout_sha256=sha(stdout_path), stderr_sha256=sha(stderr_path),
                   stdout_bytes=stdout_path.stat().st_size, stderr_bytes=stderr_path.stat().st_size)
+    if group_observation:
+        record["posix_group_observation"] = group_observation
     if record["stdout_bytes"] + record["stderr_bytes"] > BOUNDS["output_bytes_per_process"]:
         record["outcome"] = "output-budget"
     write_new(receipt_path, record)

@@ -12,7 +12,7 @@ import time
 import tomllib
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 ROOT=Path(__file__).resolve().parents[1]
 SPEC=importlib.util.spec_from_file_location("campaign",ROOT/"tools/stability_campaign.py")
@@ -35,7 +35,7 @@ class SafetyTests(unittest.TestCase):
         """Deterministically reproduce disappearance after a positive group probe."""
         process = SimpleNamespace(pid=43210, returncode=-15, stdout=io.BytesIO(), stderr=io.BytesIO(),
                                   poll=Mock(return_value=None), wait=Mock(return_value=-15))
-        killpg = Mock(side_effect=[None, failure])
+        killpg = Mock(side_effect=[None, failure, failure])
         ticks = iter([0, 0, 0, 0, 0, 0.3])
         with tempfile.TemporaryDirectory(prefix="symbiote-posix-race-test-") as temp:
             with patch.object(c, "os", SimpleNamespace(name="posix", killpg=killpg)), \
@@ -45,7 +45,10 @@ class SafetyTests(unittest.TestCase):
                     patch.object(c.subprocess, "Popen", return_value=process) as launch:
                 result = c.execute(["manual-owned-child"], Path(temp), "posix-race", timeout=0)
             self.assertTrue(launch.call_args.kwargs["start_new_session"])
-            self.assertEqual(killpg.call_args_list, [((43210, 15),), ((43210, 9),)])
+            expected = [call(43210, 15), call(43210, 9)]
+            if isinstance(failure, PermissionError):
+                expected.append(call(43210, 9))
+            self.assertEqual(killpg.call_args_list, expected)
             self.assertEqual(c.load(Path(temp) / result["process_receipt"]), result)
         return result
 
@@ -57,8 +60,96 @@ class SafetyTests(unittest.TestCase):
 
     def test_posix_group_permission_error_remains_a_failure(self):
         result = self.raced_posix_cleanup(PermissionError(errno.EPERM, "Operation not permitted"))
-        self.assertEqual(result["outcome"], "execution-error", result)
+        self.assertEqual(result["outcome"], "cleanup-incomplete", result)
+        self.assertFalse(result["cleanup_verified"], result)
         self.assertIn("Operation not permitted", result["error"])
+        with self.assertRaises(RuntimeError):
+            c.check_exit(result)
+
+    def test_darwin_complete_census_distinguishes_zombies_absence_and_active_descendants(self):
+        witness = b"0 0 S\n900 800 R+\n"
+        for members in (b"", b"42 42 Z\n43 42 Z+\n"):
+            result = c.parse_darwin_group_census(witness + members, 42, 900)
+            self.assertFalse(result["active"])
+            self.assertEqual(result["raw_sha256"], c.hashlib.sha256(witness + members).hexdigest())
+        for state in ("R", "S", "I", "T", "U", "D", "S<", "R+"):
+            result = c.parse_darwin_group_census(witness + f"42 42 Z\n43 42 {state}\n".encode(), 42, 900)
+            self.assertTrue(result["active"], result)
+        for raw in (b"", b"900 800 R", b"42 42 Z\n", b"900 800 Z\n",
+                    b"900 42 R\n", b"900 800 R\n900 800 R\n", b"900 800 R\nwarning\n",
+                    b"900 800 R\n42 nope Z\n", b"900 800 R\n42 42 Z\xff\n",
+                    b"900 800 R\n" + b" " * (128 * 1024) + b"\n"):
+            with self.assertRaises(RuntimeError, msg=repr(raw[:80])):
+                c.parse_darwin_group_census(raw, 42, 900)
+
+    def test_darwin_eperm_requires_fresh_complete_quiescence_proof(self):
+        denied = PermissionError(errno.EPERM, "Operation not permitted")
+        for active in (False, True):
+            with patch.object(c.sys, "platform", "darwin"), \
+                    patch.object(c.os, "killpg", side_effect=denied, create=True), \
+                    patch.object(c, "darwin_group_alive", return_value=active) as sample:
+                if active:
+                    with self.assertRaises(PermissionError):
+                        c.signal_owned_group(42, 15, 123.0)
+                else:
+                    c.signal_owned_group(42, 15, 123.0)
+                sample.assert_called_once_with(42, 123.0, None)
+        with patch.object(c.sys, "platform", "darwin"), \
+                patch.object(c.os, "killpg", side_effect=denied, create=True), \
+                patch.object(c, "darwin_group_alive", side_effect=RuntimeError("incomplete census")):
+            with self.assertRaisesRegex(RuntimeError, "incomplete census"):
+                c.signal_owned_group(42, 15, 123.0)
+
+    def test_darwin_sampler_uses_complete_bounded_eof_and_same_deadline(self):
+        raw = b"900 800 R\n42 42 Z\n"
+        pipe = SimpleNamespace(fileno=lambda: 11, close=Mock())
+        process = SimpleNamespace(pid=900, stdout=pipe, wait=Mock(return_value=0),
+                                  poll=Mock(return_value=0), kill=Mock())
+        for blocks, returncode, accepted in (([raw, b""], 0, True), ([raw, b""], 1, False),
+                                             ([b"x" * 4096] * 33, 0, False)):
+            mapping = {}
+            selector = SimpleNamespace(register=lambda *args: mapping.update(pipe=pipe),
+                                       get_map=lambda: mapping,
+                                       select=lambda timeout: [(SimpleNamespace(fileobj=pipe), 1)],
+                                       unregister=lambda *args: mapping.clear(), close=Mock())
+            process.wait.return_value = returncode
+            mocked_os = SimpleNamespace(environ={}, set_blocking=Mock(), read=Mock(side_effect=blocks))
+            with patch.object(c, "os", mocked_os), patch.object(c.time, "monotonic", return_value=10.0), \
+                    patch.object(c.selectors, "DefaultSelector", return_value=selector), \
+                    patch.object(c.subprocess, "Popen", return_value=process) as launch:
+                if accepted:
+                    proof = {}
+                    self.assertFalse(c.darwin_group_alive(42, 10.2, proof))
+                    self.assertFalse(proof["active"])
+                else:
+                    with self.assertRaises(RuntimeError):
+                        c.darwin_group_alive(42, 10.2)
+                self.assertEqual(launch.call_args.args[0], ["/bin/ps", "-A", "-o", "pid=,pgid=,stat="])
+                self.assertEqual(launch.call_args.kwargs["stderr"], c.subprocess.STDOUT)
+                self.assertTrue(all(call.kwargs.get("timeout", 0) <= 0.2 for call in process.wait.call_args_list))
+            process.wait.reset_mock()
+        with patch.object(c.time, "monotonic", return_value=10.0), \
+                patch.object(c.subprocess, "Popen") as launch:
+            with self.assertRaisesRegex(RuntimeError, "deadline exhausted"):
+                c.darwin_group_alive(42, 10.01)
+            launch.assert_not_called()
+
+    def test_failed_darwin_census_does_not_prevent_owned_kill_escalation_or_become_pass(self):
+        process = SimpleNamespace(pid=43210, returncode=-15, stdout=io.BytesIO(), stderr=io.BytesIO(),
+                                  poll=Mock(return_value=None), wait=Mock(return_value=-15))
+        killpg = Mock()
+        ticks = iter([0, 0, 0, 0, 0, 0.3])
+        with tempfile.TemporaryDirectory(prefix="symbiote-darwin-census-failure-") as temp:
+            with patch.object(c, "os", SimpleNamespace(name="posix", killpg=killpg)), \
+                    patch.object(c.sys, "platform", "darwin"), \
+                    patch.object(c, "signal", SimpleNamespace(SIGTERM=15, SIGKILL=9)), \
+                    patch.object(c, "darwin_group_alive", side_effect=RuntimeError("census failed")), \
+                    patch.object(c.time, "monotonic", side_effect=lambda: next(ticks, 0.3)), \
+                    patch.object(c.subprocess, "Popen", return_value=process):
+                result = c.execute(["manual-owned-child"], Path(temp), "census-failure", timeout=0)
+        self.assertEqual(killpg.call_args_list, [call(43210, 15), call(43210, 9)])
+        self.assertEqual(result["outcome"], "cleanup-incomplete", result)
+        self.assertFalse(result["cleanup_verified"], result)
         with self.assertRaises(RuntimeError):
             c.check_exit(result)
 

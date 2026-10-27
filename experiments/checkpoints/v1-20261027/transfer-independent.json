@@ -1,0 +1,607 @@
+{
+  "schema": "symbiote.independent-query-transfer/1",
+  "status": "PASS",
+  "protocol": "SYMBIOTE-QUERY-TRANSFER-001",
+  "source_commit": "ddd63d7954917c949ea1173a90f30343bcb16397",
+  "registration_sha256": "c8ebf2d76bb3787ea2a27e19e535b5d39cd26a5d7f5e5e87d1bf06e11669620e",
+  "raw_report_sha256": "c84767160971237d8a948a24076c3f12483e89b197f2758af7ea91eb3e70a817",
+  "verified_cells": 48,
+  "participants": 96,
+  "target_evaluations": 192,
+  "labelled_target_tasks": 16,
+  "unique_weighted_isomorphism_groups": 8,
+  "canonical_collision_groups": {
+    "0d536a43c5b8f2d6c00cd36117a26bf87789d23e37f9b056c79d24843f9604e5": [
+      "query-transfer-06b244b852aeb37ef616fab129bcc19d717bfc05fd3960165f8e7f76505da264",
+      "query-transfer-4a3cb907fa1afe91beb89975e90685b4093b5713dda3c568de1f449bcf6d21a7",
+      "query-transfer-d30eab346874be3a037982c666811044282fb81fb5c15a32a4f5775b5162f095"
+    ],
+    "76124ef66ab01ba0844ca545887b173eda97d1203f491ad528bca2030c43254c": [
+      "query-transfer-324049ba2e54b2dd5ea852af0340aa32f427095722f8aefc9a1e7d7df5837203",
+      "query-transfer-f1598b4fb6d3421ce9c57c18f4a2a6d84c4d5724e4f15392d7313a4b2eb2e053",
+      "query-transfer-f95bd8fdcd3a65920f3fa35f9bf86ce78fc97f620a4fc34437eb4e1b1cd9a343"
+    ],
+    "fa6135a1670a6dd952274756240c189fb1bfdc4adc18ffb736c65e4b0d8e741f": [
+      "query-transfer-3de9a3e3e50f8b9949971e741bbfafa4ab2c8fa9d3ed20a16169c822ba22c571"
+    ],
+    "69a9e2699a33129711e17a947d7ca2a8fa9e2e59b60a91eef9f67957471a1b52": [
+      "query-transfer-4e1b14b4ce221d45f71d9fb2c03f2c64668fc49f46c3ef597721add07c5ab89c",
+      "query-transfer-e42245f763f63e60d3d6f8033113625713ae780b5f9cf3db00f6b864453cdaf4",
+      "query-transfer-f870346bc99a42c5eaefd1df084c87d6e0ee8c0b61836a8f13475f9a0835e530"
+    ],
+    "902b0f464bf44492358a2337a04e2ffdcb89c61daa5afac4924ef9701af17d8f": [
+      "query-transfer-90969da47551bd2612be63ebb370fe127c00c8d6897529a600ea446480c0d056",
+      "query-transfer-bbaba993b643de43a2e0507af0454ecbe194bccb24a3d39efcdeb2b572174c6f",
+      "query-transfer-bd6bb13c5d38fd9b0fab3e647f562121e653a859dc0fb74459244147056f7891"
+    ],
+    "3a919e7c8b2879af13c0fc6c13a023166a69e8d148ac07e5f2c9754a429d4255": [
+      "query-transfer-ac7eca534563f0b1845c9051950f291a90eef3bd9403c26862d9bc3aa7fa3ec5"
+    ],
+    "8ae56446cf37f900b83693ed28c21e8a3cf452f7c0bfe33a202d1983d6489d16": [
+      "query-transfer-d88965af93a0bfa9e4c02e506ef378291eaabeadf42ea10f1fa31a0e2ed61939"
+    ],
+    "11d89a9536157906782f45d2c1eab2b385760ff65f5ca4eab74f1716b515d5a5": [
+      "query-transfer-fc81d0499fd5c05e782f6dfaca3dce06fc9d84a384d0adb1f0c4b1eae2f4fa23"
+    ]
+  },
+  "reciprocal_efficiency": "NOT_DEMONSTRATED",
+  "predeclared_design_expectation": "NOT_DEMONSTRATED: received role orders are contained in measured fixed controls and add positive overhead",
+  "actual_fixed_policy_containment": [
+    {
+      "oracle_price": 1,
+      "seed": 7,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 8710
+    },
+    {
+      "oracle_price": 1,
+      "seed": 7,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 7540
+    },
+    {
+      "oracle_price": 1,
+      "seed": 19,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 8702
+    },
+    {
+      "oracle_price": 1,
+      "seed": 19,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 7540
+    },
+    {
+      "oracle_price": 1,
+      "seed": 43,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 8548
+    },
+    {
+      "oracle_price": 1,
+      "seed": 43,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 7666
+    },
+    {
+      "oracle_price": 1,
+      "seed": 101,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 8559
+    },
+    {
+      "oracle_price": 1,
+      "seed": 101,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 7760
+    },
+    {
+      "oracle_price": 100,
+      "seed": 7,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 22966
+    },
+    {
+      "oracle_price": 100,
+      "seed": 7,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 21499
+    },
+    {
+      "oracle_price": 100,
+      "seed": 19,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 22958
+    },
+    {
+      "oracle_price": 100,
+      "seed": 19,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 21499
+    },
+    {
+      "oracle_price": 100,
+      "seed": 43,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 22804
+    },
+    {
+      "oracle_price": 100,
+      "seed": 43,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 21625
+    },
+    {
+      "oracle_price": 100,
+      "seed": 101,
+      "actor": 0,
+      "matching_fixed_control": "fixed-start",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 22815
+    },
+    {
+      "oracle_price": 100,
+      "seed": 101,
+      "actor": 1,
+      "matching_fixed_control": "fixed-goal",
+      "target_behavior_identical": true,
+      "full_cost_overhead": 21719
+    }
+  ],
+  "comparisons": [
+    {
+      "seed": 7,
+      "oracle_price": 1,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 19,
+      "oracle_price": 1,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 43,
+      "oracle_price": 1,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 101,
+      "oracle_price": 1,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 7,
+      "oracle_price": 100,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 19,
+      "oracle_price": 100,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 43,
+      "oracle_price": 100,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    },
+    {
+      "seed": 101,
+      "oracle_price": 100,
+      "controls": [
+        {
+          "control": "isolated-prior",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fresh-default",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-start",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "fixed-goal",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        },
+        {
+          "control": "local-trained",
+          "participant_benefits": [
+            false,
+            false
+          ],
+          "bilateral": false
+        }
+      ],
+      "best_fixed_hindsight_participant_benefits": [
+        false,
+        false
+      ],
+      "strong_bilateral_utility": false,
+      "hindsight_bound_is_not_a_deployable_selector": true
+    }
+  ],
+  "trial_replay": "independent shortest path, query roles, observations, certificates and counters",
+  "persistence": "actual single-process Store/StrategyLedger/KnowledgeStore reopen reports with byte-pinned histories and nonempty retained predictions",
+  "limitations": [
+    "trusted local controller evidence, not remote authenticity or resistance to whole-history rewriting",
+    "reopen reports do not establish OS-process isolation",
+    "source observations are named provenance partitions, not independent samples",
+    "canonical complete weighted witnesses establish isomorphism, not statistical significance",
+    "best fixed policy is a hindsight bound, not a deployable selector",
+    "logical work/cost units are not measured hardware speed"
+  ]
+}

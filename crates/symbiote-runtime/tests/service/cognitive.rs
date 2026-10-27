@@ -138,7 +138,7 @@ impl CognitiveFixture {
             fs::File::create(self.fixture.dir.0.join(format!("{tag}-stdout.jsonl"))).unwrap();
         let stderr =
             fs::File::create(self.fixture.dir.0.join(format!("{tag}-stderr.txt"))).unwrap();
-        let mut process = Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        let mut process = Command::new(native_binary())
             .args(["run", "--json", "--config"])
             .arg(self.fixture.dir.0.join("actor.json"))
             .arg("--run-policy")
@@ -189,6 +189,10 @@ impl CognitiveFixture {
 
 #[test]
 fn native_cognition_learns_two_families_cross_contributes_and_restarts_without_relearning() {
+    // Only this test thread can select the downloaded public executable.
+    // Other tests, including the registered duration harness, retain their
+    // compile-time binary even when this environment variable is present.
+    let _binary = cognition_binary_override();
     let fixture = CognitiveFixture::new(false);
     let mut first = ServiceProcess::start(&fixture.fixture);
     let mut second = ServiceProcess::start_config(&fixture.fixture.dir.0.join("client.json"));
@@ -485,5 +489,6 @@ fn retain_public_artifacts(fixture: &CognitiveFixture) {
         );
     }
     fs::write(destination.join("artifact-manifest.json"),serde_json::to_vec_pretty(&json!({"schema":"symbiote.cognition-engineering-artifacts/1","files":entries,
+        "native_binary":native_binary(),"native_binary_sha256":hash(&fs::read(native_binary()).unwrap()),
         "status":"operational integration evidence; no new independent scientific sample","private_keys_copied":false})).unwrap()).unwrap();
 }

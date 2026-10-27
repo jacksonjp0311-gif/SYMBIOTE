@@ -1,0 +1,570 @@
+{
+  "schema": "symbiote.source-manifest/2",
+  "selection": "native-source-tree",
+  "path_order": "relative POSIX path UTF-8 bytes",
+  "content_policy": "exact bytes; no newline normalization",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 69,
+      "sha256": "2a35fc4e70b732e7348515122ed5b96af4b51ec768b8d2f8b33de8381c847445"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 526,
+      "sha256": "cac431c027c25da3d6e46940ab5034e898cdda14e1ac8ad835a4428e12a3df46"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "bytes": 5951,
+      "sha256": "10c60b0793041b90ce26ec24b8c2b47176e372df8f38e63f56364f1e2d38fadb"
+    },
+    {
+      "path": "Cargo.lock",
+      "bytes": 17943,
+      "sha256": "0dcc59d7fa22bdd2c102a6f54fc37e485a74933f4f4805a64af47c49e0933530"
+    },
+    {
+      "path": "Cargo.toml",
+      "bytes": 443,
+      "sha256": "9a6a9ee2be9b2a2913dca2832256aa1c915522899bb1bb6506c18b7b8ffabc8c"
+    },
+    {
+      "path": "SYMBIOTE-All-One.ps1",
+      "bytes": 6318,
+      "sha256": "5ab2932db9756785a0d2b15a0db115327de1f48c8568166e97b86e6d41e4e1f7"
+    },
+    {
+      "path": "crates/symbiote-memory/Cargo.toml",
+      "bytes": 371,
+      "sha256": "fa51f5abd9925885d8b3b66fd37737bbbac15224cdbeb96c9514f6b596aba15c"
+    },
+    {
+      "path": "crates/symbiote-memory/src/backup.rs",
+      "bytes": 43556,
+      "sha256": "6cc63b15540a9ea4e974abef94d69ae7b34d27d8a3e2da5ee6073d7f8339aab3"
+    },
+    {
+      "path": "crates/symbiote-memory/src/backup/tests.rs",
+      "bytes": 35592,
+      "sha256": "cca7baf0941fcb687b8351e627d61a1dd6ea32eab8c21e17b6b287598425cdbb"
+    },
+    {
+      "path": "crates/symbiote-memory/src/bin/symbiote-memory-crash-fixture.rs",
+      "bytes": 4152,
+      "sha256": "e30f6c8857e6a44ec14f65f09d714d114a7030aee1be1644d37ac72c2f733fb6"
+    },
+    {
+      "path": "crates/symbiote-memory/src/knowledge.rs",
+      "bytes": 50057,
+      "sha256": "16c1de77f4d6c32d0e52c136170bbfcc26ad4b8b4260eb96969726c79e025f84"
+    },
+    {
+      "path": "crates/symbiote-memory/src/knowledge/graph.rs",
+      "bytes": 15052,
+      "sha256": "31d8bee61fd7d1a03cc3e0cf6ca8f1e199b69c7034286a735b3121415ab19946"
+    },
+    {
+      "path": "crates/symbiote-memory/src/knowledge/graph/tests.rs",
+      "bytes": 17807,
+      "sha256": "21854c2d691922fa063f5b2b985582ac996a64540ae07e2a0e7f23d3b0ca8b4a"
+    },
+    {
+      "path": "crates/symbiote-memory/src/lib.rs",
+      "bytes": 27109,
+      "sha256": "bdca42baab87fa440a9e603e29a1255407beaedd1e5c4d519e38fb0367b839ae"
+    },
+    {
+      "path": "crates/symbiote-memory/src/maintenance.rs",
+      "bytes": 58823,
+      "sha256": "5268059801d29ef2b3a4d81d6e55f3c35a12a30c50bd42961e174bb4a71c820a"
+    },
+    {
+      "path": "crates/symbiote-memory/src/operational.rs",
+      "bytes": 55894,
+      "sha256": "55140c832854baff81b92a83920a64da9970ceb399d0154ac370eb3859a7ec29"
+    },
+    {
+      "path": "crates/symbiote-memory/src/operational/tests.rs",
+      "bytes": 29689,
+      "sha256": "94860a58e8b584a17d3fe887fb60250ea63697fe49f1ef2fbe7785aa8f24275c"
+    },
+    {
+      "path": "crates/symbiote-memory/src/strategy.rs",
+      "bytes": 39888,
+      "sha256": "4fce4f2179daf5936e2667704fae4dad231311308a1e0ddc43a7a6aa59f63cf4"
+    },
+    {
+      "path": "crates/symbiote-memory/tests/lifecycle.rs",
+      "bytes": 16608,
+      "sha256": "2826c54db7f57a97fa03cc3b657d205db5c3e1e8ebb8ddd72e11cf6c2edc3880"
+    },
+    {
+      "path": "crates/symbiote-protocol/Cargo.toml",
+      "bytes": 482,
+      "sha256": "dcc43cbb972bc0eede01f8d989e720dab11f64cd9a8675c4cb3a5c0bcc9837ab"
+    },
+    {
+      "path": "crates/symbiote-protocol/src/lib.rs",
+      "bytes": 838,
+      "sha256": "0ef774584efdef4d625ca1b12dc8ece8c121cfe67828a48c1cc3acadb243ff0f"
+    },
+    {
+      "path": "crates/symbiote-protocol/src/secure.rs",
+      "bytes": 95044,
+      "sha256": "c8649dc636dfe3e9872a654f2d79a8a3821a2e893a30083bd1fbfb2b9fd468d6"
+    },
+    {
+      "path": "crates/symbiote-protocol/src/telemetry.rs",
+      "bytes": 5201,
+      "sha256": "b42d54ff331f4cfafb0e2fbc7222d6a0cc486f6e738122e3c9362d1cd4b2662c"
+    },
+    {
+      "path": "crates/symbiote-protocol/src/transport.rs",
+      "bytes": 43192,
+      "sha256": "f582b6bd07c8f802ecb046bb12513cb47d373d47969b720315fc8a4a7fdc67cb"
+    },
+    {
+      "path": "crates/symbiote-reasoning/Cargo.toml",
+      "bytes": 296,
+      "sha256": "085aedf9c7342eb5cc5a40db6c5d54812039cce02eab92ed8c817b3d978b12e3"
+    },
+    {
+      "path": "crates/symbiote-reasoning/examples/native.rs",
+      "bytes": 1019,
+      "sha256": "21d81a8c745c53daf141113e265162fad7e74505b819ad502b652f2616a8834a"
+    },
+    {
+      "path": "crates/symbiote-reasoning/src/bin/reasoning-fixture.rs",
+      "bytes": 2614,
+      "sha256": "114c78664eaab7252d10cb057f83518befcf30a67a02d200d64f046f1d0a6104"
+    },
+    {
+      "path": "crates/symbiote-reasoning/src/lib.rs",
+      "bytes": 10714,
+      "sha256": "9fa6f7f2fd3289a0e3f9c3ff327e4ce0bbefe3d6c0da7bfa4d82787720fb5c0c"
+    },
+    {
+      "path": "crates/symbiote-reasoning/src/planning.rs",
+      "bytes": 14378,
+      "sha256": "6546da39184c5504c95f8df2e5e499395841dc6db83557887648a41de2231bad"
+    },
+    {
+      "path": "crates/symbiote-reasoning/src/query_strategy.rs",
+      "bytes": 26058,
+      "sha256": "d814dd7b561973dd7edbb8b590bf5e57b120c72df5c8d7330ea5adf28504dce3"
+    },
+    {
+      "path": "crates/symbiote-reasoning/src/structural.rs",
+      "bytes": 28176,
+      "sha256": "488e660bf01bc4422502ba9766a1e4ffb48f15629f34730001f0c74a3aff6280"
+    },
+    {
+      "path": "crates/symbiote-runtime/Cargo.toml",
+      "bytes": 534,
+      "sha256": "b67c9436edc2b42139f20d963e49263cc9f5c456a4aba907793ae2e4d6446840"
+    },
+    {
+      "path": "crates/symbiote-runtime/examples/cognitive.rs",
+      "bytes": 850,
+      "sha256": "103764f21fbc21aac9ee60ecc23ed818a3299faeb8761219d719618ce32ef364"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research.rs",
+      "bytes": 3068,
+      "sha256": "fa2421a3b4b33123b72baf740c9ef57d66d51fdc3010d6cea4f2c1c0e4ac7d3c"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/actor.rs",
+      "bytes": 49573,
+      "sha256": "8582c80571a5b58069c4ad37a99a22412727abb9a7b3da051e5e437a7858ae00"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/actor_tests.rs",
+      "bytes": 21721,
+      "sha256": "4e86b20ffb36af49c08e466f8b3c3075653c4a6ba85cdc5de7d9d37776f52daa"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/admission.rs",
+      "bytes": 14643,
+      "sha256": "b5b86b6146d01edd65e8762b735d3371257fe207a9e5e8aa9647b7ff844db9a0"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/authority.rs",
+      "bytes": 50816,
+      "sha256": "e98ac2258fe559e84dc8ac3cd41f5305078d6f7be94ab5636c5016280f643f21"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/cohort.rs",
+      "bytes": 10091,
+      "sha256": "3ef699521fa4ee23caabbaba7ac8947c426414473d956780d5036757ce46fcd7"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/controller.rs",
+      "bytes": 59922,
+      "sha256": "9c398eb805692b79c2a246ef6a12cbe4f6c5e5f9471ec3c7da30f29bb29b71e0"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/evidence.rs",
+      "bytes": 6393,
+      "sha256": "4f2325c93766fa9d89ac48b9ac1d55ac9b8f4e67785838e304692ac125f29548"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/meter.rs",
+      "bytes": 5832,
+      "sha256": "96679921d8b5714f3de1b650d715ffd6cfaa4da093981e5de4b4a53b16875b76"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/metrics.rs",
+      "bytes": 11922,
+      "sha256": "072880a8831131287349ff37211d0316f5535aabf86950495367529fed949a2b"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/model.rs",
+      "bytes": 14228,
+      "sha256": "4ce16be9d8f7ec5a4b07210b033b26472668bdf516bf2f830acf19ec30585e07"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/policy.rs",
+      "bytes": 13662,
+      "sha256": "786b27c41eb70142c7ff842c843067753e6dbc3dd754afb14562bca896d7dd9e"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/process.rs",
+      "bytes": 30711,
+      "sha256": "3ec6299da836f09b5d91cb2a082b4f71732e23ab9a0b1fa620872d3395369684"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/profile_audit.rs",
+      "bytes": 10913,
+      "sha256": "4fcf5eb1be6e91ea7b913cfe3a3995ba1e4e46e14027181b34248e58c247873a"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/registration.rs",
+      "bytes": 10132,
+      "sha256": "2c305faafe78eb89bf8109d07d2507c9fc4fbe6bb0bf5a2c222899867590c83f"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/replay_setup.rs",
+      "bytes": 26402,
+      "sha256": "f0284dc4be30537632f56f6c2575e65154566d82610f7ad23f39b6b2c395dd9a"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/summary.rs",
+      "bytes": 9111,
+      "sha256": "a9eef6a0c93c6048e5440c3c4c064c94e46e5262b81782d93de7f8404a3a008d"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/adaptive_research/wire.rs",
+      "bytes": 8752,
+      "sha256": "2e04f8e672d6b0e73f0c9666541b040cc2acf9dc6162a2febbe8b3e6e03aeae9"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/exploration.rs",
+      "bytes": 24863,
+      "sha256": "428324a32cf3a2759421d33a593245b7dd5dc34a627e6e4afa1f275982983eb5"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/exploration_research.rs",
+      "bytes": 18761,
+      "sha256": "e89a16541860e3b23e4b3ff0aad85e244f4062136a53abfaed8f27e78df7a823"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/graph_research.rs",
+      "bytes": 60658,
+      "sha256": "0f30d2eeaa1f1ba802fc9a4c4d96e69d243b49eb62af0b47877075c44e274cee"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/lib.rs",
+      "bytes": 213,
+      "sha256": "61f652cd44fcceb29b88c06942bfaa17c74f7818e465bf196405dcebeffb53fd"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/main.rs",
+      "bytes": 78048,
+      "sha256": "86e7a90722ab17d477123c396d985d675a78d111e891c5f337a87e81ade21737"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/network.rs",
+      "bytes": 21102,
+      "sha256": "d1c317063e5cafa7b78795f151d8e4d64c47bf5d9de7b30d30798a63cd113864"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/research.rs",
+      "bytes": 30856,
+      "sha256": "19429465fe3714dab49b859b83d3df1a75eaf99c31217fae998859db70e12684"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/research/deployed.rs",
+      "bytes": 53504,
+      "sha256": "8a2bcd6388409d4b1e07cdbf83e866e89cb2dbe5b70e1e0a78dc49d9c9bc5819"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/research/deployed/tls.rs",
+      "bytes": 13176,
+      "sha256": "661a6e56bff5eaed116917d03c17c4a5a980da8481465fcadb638724650a08a2"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service.rs",
+      "bytes": 36118,
+      "sha256": "2e106bfc017a5fee0c5e8949a4fdc4ddd5defb5d613892310577a62ec6df6ed9"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service/cognitive.rs",
+      "bytes": 75430,
+      "sha256": "dbcfe37c4de69d0e209c433e2c2cdf8019a73ffa90c49d770588c327cf45383d"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service/config.rs",
+      "bytes": 15330,
+      "sha256": "052e9dc4ccc219cb71b4dfc9395b5f58567023ba8b5cc3980807e838c3160a74"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service/evaluation.rs",
+      "bytes": 12709,
+      "sha256": "185ec054fed67b9f6461170088abe6c50324b0cc3830bf1cf086daafa0d8a80b"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service/lifecycle.rs",
+      "bytes": 16662,
+      "sha256": "85dc27c01a46ab523f575a1f6b3df2e550c5715d5984e59d3a58a21780248542"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/service/wire.rs",
+      "bytes": 3952,
+      "sha256": "32ddaf53cdeb344b27adcf53270c3582c0f1404b00295883e61f6eabb6118b99"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/topology_research.rs",
+      "bytes": 93154,
+      "sha256": "767268d22372107d41c766dac6401f7e12195e6dbe895b1209b11bb02e39859a"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/transfer.rs",
+      "bytes": 14929,
+      "sha256": "59d153db4998bf93550e2149408cc38cb50e495d31b99527cef8ce5091db8e07"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/transfer/engine.rs",
+      "bytes": 29106,
+      "sha256": "61e20592fd50c59001f30caa119fb3d1a965b836a5fdc0d5f5f3eeed21200b38"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/transfer/fixtures.rs",
+      "bytes": 3364,
+      "sha256": "24e25d61731279eb08700f19d41c72d64396ccda88e57a64eec06eac352160bc"
+    },
+    {
+      "path": "crates/symbiote-runtime/src/transfer/retention.rs",
+      "bytes": 9273,
+      "sha256": "9aa95656a70dd42c758d2390a426bdc68b34f1806366d8f0dcd74015f516fa82"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/adaptive.rs",
+      "bytes": 1501,
+      "sha256": "c13f4e1c409264c0f82e04cc48d6a7f65c603ef27f8b9f1b676a9e7d7c5f581b"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/cli.rs",
+      "bytes": 21539,
+      "sha256": "ff57fb1883360994bacffaae79dcf45aae6b63841178551b41b9d3a8bb2a8372"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/deployed.rs",
+      "bytes": 15737,
+      "sha256": "b129f8f2b5f684a7c08ebb3898e751cbe716e6c3ac404937ad97ad4559dd7cdc"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/exploration.rs",
+      "bytes": 3551,
+      "sha256": "bf23631208bb9e396202513614eb171e9d70077143acdf16c5b44066bb2c04a5"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/graph.rs",
+      "bytes": 13435,
+      "sha256": "725639bc06581968e511949e1a6ecdbf3056026cdfebbf3702d674dff8d7faeb"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/queries.rs",
+      "bytes": 6261,
+      "sha256": "6b7d9826da785fa55e3f0a5124a688133b6aaf72547f2ddb0fa95aeb063d89cd"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/research.rs",
+      "bytes": 2969,
+      "sha256": "68ff93544e43556d829d8d8bfeab7c61493bd16f71899d1bde8d515227f63fdc"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/service.rs",
+      "bytes": 94862,
+      "sha256": "82129c22e770049a4b47a31b5a263c1a234e8eaa074503aa6339540f4bd7050c"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/service/cognitive.rs",
+      "bytes": 19966,
+      "sha256": "0951c5e3a7c67428622777edd73c689cbe39ce3022e8a8b845bf45efcc8d05fb"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/service/endurance.rs",
+      "bytes": 35570,
+      "sha256": "4ba1179b02631b226c4be2152fc9936551b4603a50747d658d8205fa903ed850"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/service/soak.rs",
+      "bytes": 52359,
+      "sha256": "a1465e428d4c35a1fe827a4254553ec8e2376047bb225326a425ace8c43b6995"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/tls_deployed.rs",
+      "bytes": 21361,
+      "sha256": "3bc2ffa60900f40e3d0d4b4cb6dd3f5915287a8919474879fba08043a67dd2dc"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/topology.rs",
+      "bytes": 8006,
+      "sha256": "1724d0eb4ba8e2e8896159f0f2907bb69531bf1e6cf2cf3ad079a4f7a531fab6"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/transfer.rs",
+      "bytes": 7623,
+      "sha256": "fa33bc4c1f47f5b947c3c7725b527ff6bc4b668758694c149edeea600601d92a"
+    },
+    {
+      "path": "crates/symbiote-runtime/tests/vertical_slice.rs",
+      "bytes": 4973,
+      "sha256": "bdd9c3a76e79d3081667ca720206684c122b0a4d5d46b5c7a02372ecd1c3c97c"
+    },
+    {
+      "path": "tools/audit_upstream.py",
+      "bytes": 4103,
+      "sha256": "aa3afc0a6062878fe0c7b2e75578093e432914c3b05e58183a27227062ec69e5"
+    },
+    {
+      "path": "tools/footprint.py",
+      "bytes": 1594,
+      "sha256": "422b8d0da98ae6e8c6378638d146a824c305fbbaffff5d71a06fdc77489660dc"
+    },
+    {
+      "path": "tools/install.ps1",
+      "bytes": 9069,
+      "sha256": "54355493bb3c2f497349e63f0cb9156d26bb6ae6db70b94f95c4dc8bbcd8ca3e"
+    },
+    {
+      "path": "tools/install.sh",
+      "bytes": 6106,
+      "sha256": "61a2b4e09e4c52b86d60c46596b861b7bf8a34e735a1d0a3ac9375c5867c2341"
+    },
+    {
+      "path": "tools/package_release.py",
+      "bytes": 10769,
+      "sha256": "e60862bc740dc1ec373259dc6295658f346b35e1ebd9022f1f8b01144bd70a03"
+    },
+    {
+      "path": "tools/parity.py",
+      "bytes": 7093,
+      "sha256": "68e8943a014148a0042819f41e467026031840669bf1624493eaa28b638e3825"
+    },
+    {
+      "path": "tools/soak_campaign.py",
+      "bytes": 45500,
+      "sha256": "4c94356d6c265db78a9111fe0acfa8505746a78376cd0124b57bdfb1eb6b93fc"
+    },
+    {
+      "path": "tools/source_fingerprint.py",
+      "bytes": 4554,
+      "sha256": "d5c76e57f521b6a020531d37e07554114bb52cc567d1aaf862aca6ba2aba5058"
+    },
+    {
+      "path": "tools/stability.py",
+      "bytes": 4784,
+      "sha256": "8cc02fcafa10093081111244699ebb10a22251b8dc0c6afc4759c127f882aa7d"
+    },
+    {
+      "path": "tools/stability_campaign.py",
+      "bytes": 80343,
+      "sha256": "11a4642df11621437d2fff109831f8c00506cd16f37e2440669f127e86662973"
+    },
+    {
+      "path": "tools/test_installers.py",
+      "bytes": 5867,
+      "sha256": "bb5b641e69760131b44ce333dc613cbeaf1ecdb678d930cd2ad804ee65264f07"
+    },
+    {
+      "path": "tools/test_package_release.py",
+      "bytes": 5241,
+      "sha256": "69309a29f4681cd0605dba038a9fc2298098eb1a773da0b717081aff64dc14fc"
+    },
+    {
+      "path": "tools/test_soak_campaign.py",
+      "bytes": 12676,
+      "sha256": "0c12b8a61fc4310d04094809f0b59acbd5baa40cde86faff71c45db580067118"
+    },
+    {
+      "path": "tools/test_source_fingerprint.py",
+      "bytes": 2404,
+      "sha256": "429a7c832c9cec7240660b502821266c090aacfa40efcef5b791a769cbd3285c"
+    },
+    {
+      "path": "tools/test_stability_campaign.py",
+      "bytes": 22822,
+      "sha256": "8d0579a6ed8f63c6a795dd924505d43a2c0672e43043f1ce1b22a568d91aa37d"
+    },
+    {
+      "path": "tools/test_transfer_campaign.py",
+      "bytes": 8084,
+      "sha256": "93839f5b265a977c5fc0f803d8f67bb00553dd85aa30f8851c07157e7fafdfc0"
+    },
+    {
+      "path": "tools/test_verification_gates.py",
+      "bytes": 3628,
+      "sha256": "da83d3f5816a26700382d0b80a5da1c38038fd48146b349c96f2a3b3a9b608ee"
+    },
+    {
+      "path": "tools/test_verify_adaptive.py",
+      "bytes": 30614,
+      "sha256": "c43fc59b50ed837ec98124235b0d42740f29d35679fcea12fec4b81dfa4045e7"
+    },
+    {
+      "path": "tools/test_verify_transfer.py",
+      "bytes": 14913,
+      "sha256": "20859fc972654f717812d9fae441a8341593ddae7b670d12218eaec77096ac90"
+    },
+    {
+      "path": "tools/transfer_campaign.py",
+      "bytes": 10416,
+      "sha256": "7338d4c07561f9f1f92a9bad6379abd95341e2a7710bf875a3c53e3af88cefa3"
+    },
+    {
+      "path": "tools/verify.py",
+      "bytes": 8975,
+      "sha256": "67c2f286e48a29f8b5a3974eb59e1663d0d0ea2ebe7ea33cf4af3a31bd1bbc00"
+    },
+    {
+      "path": "tools/verify_adaptive.py",
+      "bytes": 104972,
+      "sha256": "d4bfeb91ab7f20deb60b7aa5c3e14aafb168b67deb2cbbd491345e58c2329421"
+    },
+    {
+      "path": "tools/verify_deployed.py",
+      "bytes": 6226,
+      "sha256": "8cbdd2c0ecf3dc31a6a876a4109fae573f3085d756a0e0ef17472237eaa349f8"
+    },
+    {
+      "path": "tools/verify_graph.py",
+      "bytes": 9041,
+      "sha256": "9a97247253aa4db8791da8bfe7f6e5602606ef56c0289226be1df0655d9ff97c"
+    },
+    {
+      "path": "tools/verify_research.py",
+      "bytes": 6135,
+      "sha256": "fcbb18aeda17073e1603754f20ab1c460332031c7dcf7c19c7967c54f36d8777"
+    },
+    {
+      "path": "tools/verify_transfer.py",
+      "bytes": 69991,
+      "sha256": "33e0c4147621b6142bddd2cdd4b93a89dd72fa653bec0c1490e7ccb57cd4874d"
+    }
+  ],
+  "total_bytes": 2429977,
+  "sha256": "d8aa3040be45c2b1be54df905fe7039b8443adde102ca2515316b8b526e98ef2"
+}

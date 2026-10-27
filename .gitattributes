@@ -1,3 +1,7 @@
 * text=auto eol=lf
 *.ps1 text eol=lf
 docs/reference/brute/*.py -text
+
+# Preserve pinned handoff helper and raw checkpoint bytes.
+tools/release/** -text
+experiments/checkpoints/** -text

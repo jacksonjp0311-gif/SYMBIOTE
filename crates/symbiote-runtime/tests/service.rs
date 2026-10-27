@@ -31,6 +31,44 @@ mod endurance;
 mod soak;
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
+thread_local! {
+    static COGNITION_BINARY: std::cell::RefCell<Option<PathBuf>> = const { std::cell::RefCell::new(None) };
+}
+fn native_binary() -> PathBuf {
+    COGNITION_BINARY
+        .with(|selected| selected.borrow().clone())
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_symbiote")))
+}
+struct CognitionBinaryGuard(Option<PathBuf>);
+impl Drop for CognitionBinaryGuard {
+    fn drop(&mut self) {
+        COGNITION_BINARY.with(|selected| *selected.borrow_mut() = self.0.take());
+    }
+}
+fn cognition_binary_override() -> CognitionBinaryGuard {
+    let selected = std::env::var_os("SYMBIOTE_COGNITION_TEST_BINARY").map(|path| {
+        let path = fs::canonicalize(path).expect("explicit public cognition binary must exist");
+        assert!(
+            path.is_file(),
+            "public cognition binary must be a regular file"
+        );
+        path
+    });
+    CognitionBinaryGuard(COGNITION_BINARY.with(|current| current.replace(selected)))
+}
+#[test]
+fn cognition_binary_selection_cannot_change_another_fixture_thread() {
+    let original = native_binary();
+    let selected = original.with_file_name("thread-local-only-placeholder");
+    let guard = CognitionBinaryGuard(
+        COGNITION_BINARY.with(|current| current.replace(Some(selected.clone()))),
+    );
+    assert_eq!(native_binary(), selected);
+    let other = thread::spawn(native_binary).join().unwrap();
+    assert_eq!(other, PathBuf::from(env!("CARGO_BIN_EXE_symbiote")));
+    drop(guard);
+    assert_eq!(native_binary(), original);
+}
 const OPS: &[&str] = &[
     "capabilities",
     "knowledge.list",
@@ -193,7 +231,7 @@ impl Fixture {
         }
     }
     fn command(&self, command: &str, args: &[&str]) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        Command::new(native_binary())
             .args([command, "--json", "--config"])
             .arg(self.dir.0.join("server.json"))
             .args(args)
@@ -206,7 +244,7 @@ impl Fixture {
     fn call(&self, request: &Value) -> Output {
         let path = self.dir.0.join("request.json");
         fs::write(&path, serde_json::to_vec(request).unwrap()).unwrap();
-        Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        Command::new(native_binary())
             .args(["connect", "--json", "--config"])
             .arg(self.dir.0.join("client.json"))
             .args(["--peer", "partner", "--request"])
@@ -300,7 +338,7 @@ impl ServiceProcess {
         Self::start_config(&fixture.dir.0.join("server.json"))
     }
     fn start_config(path: &Path) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        let mut child = Command::new(native_binary())
             .args(["serve", "--json", "--config"])
             .arg(path)
             .stdin(Stdio::piped())
@@ -691,7 +729,7 @@ fn durable_peer_denial_overrides_configured_grants_in_both_directions() {
     );
     authorized.revoke().unwrap();
     restarted.stop();
-    let denied = Command::new(env!("CARGO_BIN_EXE_symbiote"))
+    let denied = Command::new(native_binary())
         .args(["peer-revoke", "--json", "--config"])
         .arg(fixture.dir.0.join("client.json"))
         .args(["--peer", "partner", "--reason", "outbound operator denial"])
@@ -706,7 +744,7 @@ fn durable_peer_denial_overrides_configured_grants_in_both_directions() {
         ))
         .status
         .success());
-    let listed = Command::new(env!("CARGO_BIN_EXE_symbiote"))
+    let listed = Command::new(native_binary())
         .args(["peers", "--json", "--config"])
         .arg(fixture.dir.0.join("client.json"))
         .output()
@@ -874,7 +912,7 @@ fn lost_reply_and_actual_service_crash_preserve_one_idempotent_quarantine_receip
     server.child.kill().unwrap();
     server.child.wait().unwrap();
     server.input.take();
-    let recovery = Command::new(env!("CARGO_BIN_EXE_symbiote"))
+    let recovery = Command::new(native_binary())
         .args(["recover", "--json", "--state"])
         .arg(fixture.dir.0.join("server-state"))
         .output()
@@ -1125,7 +1163,7 @@ fn completed_operational_history_allows_a_legitimate_later_knowledge_revocation(
 }
 
 fn configured_command(fixture: &Fixture, manifest: &str, command: &str, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_symbiote"))
+    Command::new(native_binary())
         .args([command, "--json", "--config"])
         .arg(fixture.dir.0.join(manifest))
         .args(args)
@@ -1680,7 +1718,7 @@ fn absolute_service_material(fixture: &mut Fixture) {
     fixture.save();
 }
 fn public_config_command(path: &Path, command: &str, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_symbiote"))
+    Command::new(native_binary())
         .args([command, "--json", "--config"])
         .arg(path)
         .args(args)

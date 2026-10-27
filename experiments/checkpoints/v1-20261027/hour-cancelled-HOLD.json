@@ -1,0 +1,38 @@
+{
+  "schema": "symbiote.local-soak-campaign/1",
+  "protocol": "SYMBIOTE-LOCAL-SOAK-001",
+  "status": "HOLD",
+  "mode": "HOUR_QUALIFICATION",
+  "registration_sha256": "261fcdee602dc2a5300091439d404f0f72ef03f71ccf7a0f1237fee73ea62e8d",
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "scientific_samples": 0,
+  "process": {
+    "label": "hour-soak",
+    "argv": [
+      "C:\\Users\\jacks\\.codex\\worktrees\\stable-lifecycle\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\release\\deps\\service-25665165513dacaa.exe",
+      "soak::hour_120_cycle_local_soak",
+      "--ignored",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "pid": 2276,
+    "exit_code": 125,
+    "outcome": "cancelled",
+    "elapsed_seconds": 2132.9070000000065,
+    "error": null,
+    "cleanup_verified": true,
+    "output_truncated": false,
+    "cleanup_elapsed_seconds": 0.0,
+    "containment": "windows-job-suspended-before-execution",
+    "process_receipt": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.process.json",
+    "stdout": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.stdout",
+    "stderr": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.stderr",
+    "stdout_sha256": "d015d978fb51f1549bbe36907d24e65e681d9f8d9e4dec9ebb6a93a9f509cfec",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 57,
+    "stderr_bytes": 0
+  },
+  "failure": "hour-soak failed its declared exit/timeout/cleanup gate: {'exit_code': 125, 'outcome': 'cancelled', 'cleanup_verified': True, 'error': None}",
+  "elapsed_seconds": 2133.1869999999763,
+  "source_watch_failures": []
+}

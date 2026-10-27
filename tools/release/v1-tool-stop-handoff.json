@@ -1,0 +1,83 @@
+{
+  "schema": "symbiote.external-tool-stop-handoff/1",
+  "status": "DRAFT_TOOLS_SCANNED_NO_PUBLICATION",
+  "minimal_bytes": 98263,
+  "all_selected_bytes": 141913,
+  "files": [
+    {
+      "name": "package_stability_evidence_v4.py",
+      "bytes": 30002,
+      "sha256": "9a2df3fc679ce154469013e02575551d9572e7cee4d2a0eca585e7fc3a780962",
+      "minimal_dependency": true,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "package_v1_evidence_v3.py",
+      "bytes": 23340,
+      "sha256": "74360bb33742fafab379df6efbcb1afdf60ccc47035605dbd2929c89d21612eb",
+      "minimal_dependency": true,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "release_v1_candidate.py",
+      "bytes": 44921,
+      "sha256": "5194fe957adbf4c7ba6afed8fac63de0f4f547d20390ab7c8cd73de076a5634b",
+      "minimal_dependency": true,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "V1_EVIDENCE_PACKAGING_PLAN_v3.md",
+      "bytes": 4761,
+      "sha256": "f61af5dd0be52e852f57b2856e3af5f7824cc668b31cbb8318751b55208ad5e0",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "RELEASE_V1_CANDIDATE_USAGE.md",
+      "bytes": 9400,
+      "sha256": "b9b8b1735338548ec517137a1642252ada2651e3ec0df6c91218cf3e2a7bf061",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "test_package_v1_membership_v3.py",
+      "bytes": 13207,
+      "sha256": "902fea9fc80128219967730260c5e016557f370ff28aba03f9045f4174d8a5f7",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "test_release_v1_candidate_static.py",
+      "bytes": 10359,
+      "sha256": "4b4ddefcf9e021722e9276610709feda3fb27263805bcda2710b05eda06422a8",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "packager-v1-byte-revalidation-v3.json",
+      "bytes": 2185,
+      "sha256": "3bed65a2916154f82f9168904304af3959c242a659622afd1bb11a3b313d5cf1",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "membership-v3-0fdf068e621b499cb66fa4cc4cef49de.log",
+      "bytes": 2510,
+      "sha256": "4ee743792aeaae3f7c847788d67772fa1e97cb9ea4e0442e988c709b9bb1d8a5",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    },
+    {
+      "name": "release-v1-static-c66962aabee0443eb2f1dddfc532e699.log",
+      "bytes": 1228,
+      "sha256": "4dadfdabf202272df84e780acc4aff48dacc7a7372d506d24b2243f87465a2f1",
+      "minimal_dependency": false,
+      "credential_scan": "PASS_KNOWN_PATTERN_AND_COMPLETE_PEM_SCAN"
+    }
+  ],
+  "repository_edits": false,
+  "real_network_or_native_execution": false,
+  "publisher_static_tests": 7,
+  "publisher_added_windows_alias_test": "NOT_RUN",
+  "packager_interface_tests": 14
+}

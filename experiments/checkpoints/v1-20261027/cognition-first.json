@@ -1,0 +1,79 @@
+{
+  "active_models": 2,
+  "bandwidth_basis": "JSON negotiation/RPC application plaintext; cryptographic handshake and TLS wire framing excluded",
+  "budget": {
+    "listener_plaintext_reserved": 8388608,
+    "model_work_reserved": 49304,
+    "outbound_plaintext_reserved": 3145728,
+    "rpc_attempts": 16
+  },
+  "episodes": 4,
+  "final_knowledge_anchor": {
+    "head_sha256": "b32108b2488e1274958b8faf583abeddfc09e1d2d69cffb968500273764e76ff",
+    "identity": "symbiote-fb4a78d609dd8c937788970e",
+    "records": 3
+  },
+  "fresh_promotions": 2,
+  "identity": "symbiote-fb4a78d609dd8c937788970e",
+  "inbound_plaintext_traffic": {
+    "connection_attempts": 0,
+    "negotiation_received_bytes": 0,
+    "negotiation_sent_bytes": 0,
+    "rpc_received_bytes": 0,
+    "rpc_sent_bytes": 0
+  },
+  "initial_knowledge_anchor": {
+    "head_sha256": "78ac03891b481ccf3aa2ecfb7aad5407f740f335d220631a61cc4a784833e4fb",
+    "identity": "symbiote-fb4a78d609dd8c937788970e",
+    "records": 1
+  },
+  "learning_basis": "fresh actual local model promotions, never peer PASS receipts; duplicate promoted receipts are reused",
+  "oracle_assumption": "operator-pinned local finite fixtures; no remote honesty or generalization claim",
+  "outbound_plaintext_traffic": {
+    "connection_attempts": 16,
+    "negotiation_received_bytes": 3824,
+    "negotiation_sent_bytes": 3824,
+    "rpc_received_bytes": 8939,
+    "rpc_sent_bytes": 8437
+  },
+  "partner_benefits_verified": 0,
+  "profiles": [
+    {
+      "failures": 0,
+      "peer": "symbiote-245b47355e94aa918d4d41c1",
+      "resource_units": 133,
+      "scope": "affine-context/v1",
+      "verified_novel": 1,
+      "visits": 1
+    },
+    {
+      "failures": 0,
+      "peer": "symbiote-cf3ba26dacc1bc503c26e57a",
+      "resource_units": 49182,
+      "scope": "graph-context/v1",
+      "verified_novel": 1,
+      "visits": 1
+    },
+    {
+      "failures": 0,
+      "peer": "symbiote-245b47355e94aa918d4d41c1",
+      "resource_units": 9,
+      "scope": "graph-context/v1",
+      "verified_novel": 0,
+      "visits": 1
+    },
+    {
+      "failures": 0,
+      "peer": "symbiote-cf3ba26dacc1bc503c26e57a",
+      "resource_units": 9,
+      "scope": "affine-context/v1",
+      "verified_novel": 0,
+      "visits": 1
+    }
+  ],
+  "protocol": "symbiote/2",
+  "quarantined_contributions": 2,
+  "reason": "episode-budget",
+  "schema": "symbiote.cognition-summary/1",
+  "status": "STOPPED"
+}
