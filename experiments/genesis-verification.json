@@ -1,0 +1,31 @@
+{
+  "schema": "symbiote.verification/1",
+  "status": "PASS",
+  "process_restart": true,
+  "stable_identity": true,
+  "first_promoted": 2,
+  "restart_reused": 2,
+  "rejected_wrong_transfer": true,
+  "failed_candidate_recovery": true,
+  "drift_revoked": true,
+  "drift_recovery_revision": 2,
+  "retained_network_requests": 0,
+  "symbiote": {
+    "isolated_correct": 32,
+    "exchanged_correct": 64,
+    "total": 64,
+    "matched_probe_control_correct": 64,
+    "verification_queries": 8
+  },
+  "partner": {
+    "baseline_resource_units_each": 176,
+    "strategy_resource_units_each_including_verification": 72
+  },
+  "limitations": [
+    "four-input deterministic laboratory tasks",
+    "repeated predictions are not independent samples",
+    "same-probe-budget control also achieves complete coverage",
+    "partner resource costs are declared simulation units",
+    "hidden-state reasoning parity is separate from finite-table learning"
+  ]
+}

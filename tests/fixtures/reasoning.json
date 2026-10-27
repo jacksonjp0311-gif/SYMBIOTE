@@ -1,0 +1,9 @@
+{
+  "cases": [
+    {"name":"masked","max_states":2,"max_prefixes":1000,"initial":[null,0],"steps":[{"action":0,"observation":[1,null]},{"action":1,"observation":[null,1]},{"action":0,"observation":[0,0]}]},
+    {"name":"constant","max_states":1,"max_prefixes":1000,"initial":[0,1],"steps":[{"action":0,"observation":[0,1]},{"action":1,"observation":[0,1]}]},
+    {"name":"contradiction-recovery","max_states":1,"max_prefixes":1000,"initial":[0,0],"steps":[{"action":0,"observation":[1,1]}],"reconstruct":{"max_states":2}},
+    {"name":"budget-recovery","max_states":4,"max_prefixes":4,"initial":[null,null],"steps":[{"action":0,"observation":[null,null]},{"action":1,"observation":[null,null]},{"action":0,"observation":[null,null]},{"action":1,"observation":[0,null]}],"reconstruct":{"max_prefixes":20000}},
+    {"name":"alternating","max_states":2,"max_prefixes":1000,"initial":[0,0],"steps":[{"action":0,"observation":[1,1]},{"action":0,"observation":[0,0]},{"action":0,"observation":[1,1]},{"action":1,"observation":[0,0]}]}
+  ]
+}

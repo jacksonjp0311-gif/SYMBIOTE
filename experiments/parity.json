@@ -1,0 +1,22 @@
+{
+  "schema": "symbiote.parity/1",
+  "passed": true,
+  "upstream": "jacksonjp0311-gif/Brute",
+  "commit": "9edbc035792ca75d3a3333b8454e5bf31c706eb1",
+  "reference_sha256": "878a0ee803dec0e5095b561b3110a1c8bc99f6c664f853b137e19fad0cde92eb",
+  "cases": 6093,
+  "checkpoints": 20843,
+  "complete_machine_cases": 5832,
+  "comparison": [
+    "status",
+    "model_rows",
+    "evidence_count",
+    "max_rows_seen",
+    "support",
+    "conditional",
+    "last_failure",
+    "reconstruction"
+  ],
+  "excluded_counter": "transitions_examined at budget interruption depends on set iteration order",
+  "scope": "Exact finite Moore prefix engine parity; full BRUTE certification policy is not ported."
+}

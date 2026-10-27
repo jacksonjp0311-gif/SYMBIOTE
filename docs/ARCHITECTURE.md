@@ -1,0 +1,83 @@
+# Intelligence architecture
+
+SYMBIOTE v0.1.0 is one independent Rust process with two local simulated services.
+The services communicate over real authenticated loopback TCP sockets; simulation
+does not replace the wire protocol with direct function calls. Discovery is a
+configured allowlist, not public network scanning. Server and client independently
+prove possession of a configured capability secret and agree on identity, version,
+scope, operations, frames and request budget before exchanging telemetry.
+
+## Cognitive representations
+
+**Known observations:** typed, sequence-checked partner telemetry and authorized
+probe responses, retained in a bounded FIFO during each cycle. Feedback is data.
+The v0.1 demo includes actions, tool use, task identity, success, resource units,
+confidence when published, errors/recovery fields and environmental feedback.
+
+**Conditional inference:** the exact Moore-machine version space inherited from
+BRUTE. Each observation removes incompatible canonical prefixes. Support is the
+union of all remaining completions; a singleton is conditional on the declared
+finite stationary family. Contradiction or work-budget failure cannot become a
+certificate. The v0.1 fixture's short trace still leaves every next output possible;
+the runtime reports that uncertainty. Hypothesis row count is not complete-world
+count. This representation models published behavior rather than reading partner
+internals.
+
+**Unverified candidate:** a versioned artifact received through `offer`, carrying
+identity, provenance, applicability, revision and a four-input prediction table.
+Neither source reputation nor agreement on the observed prefix establishes truth.
+
+**Evaluated knowledge:** independent probe responses check every input in the
+declared simulator domain. The evaluator binds raw observations, baseline and
+candidate digest. A promotion requires complete correctness, zero regression and
+strict improvement over the current prediction coverage. The immutable learning
+receipt becomes the source of future task predictions, including after restart.
+
+**Derived contribution:** SYMBIOTE searches a fixed five-expression Boolean grammar
+for a rule equivalent to the checked table. It can discover XOR, AND, OR, first-bit
+or second-bit structure within that grammar. The recipient reconstructs outputs
+and independently validates all four inputs before adoption. No arbitrary code or
+instruction is transferred or executed. This is bounded abstraction extraction,
+not invention of a general solver.
+
+## State and control
+
+The memory crate stores one bounded SHA256-linked JSONL ledger, including genesis
+identity, versioned promotion evidence and revocations. It holds an exclusive writer
+lock, validates the complete chain on load, and atomically replaces the ledger after
+syncing the proposed state. Failed writes do not mutate in-memory learned state.
+Identity is persistent and independent from the partner identities. Aliases cannot
+manufacture improvement by relabelling an existing source/scope artifact.
+
+Durable reasoning state consists of the verified finite task models and their
+evaluation evidence. The transient hidden-state prefix estimator is rebuilt from
+fresh telemetry each run; its entire hypothesis population is not checkpointed.
+The `predict` command uses only durable evaluated task models. A new demo rechecks
+the complete finite domain before using a retained artifact in a relationship.
+Drift invalidates the relevant artifact and emits a failure receipt; it cannot
+silently repair evidence or reactivate an older revoked revision.
+
+Sensing and hypothesis updates identify uncovered task inputs. That coverage gap
+triggers an exchange. Accepted knowledge changes persistent future predictions.
+The return strategy lowers the partner's simulated cost of resolving those inputs.
+Reassessment uses both descriptive telemetry drift and full finite counterexample
+checks; scalar similarity never changes trust or promotion criteria.
+
+## Budgets and failures
+
+The demo caps each server at 32 requests and 16,384 bytes per frame, uses two-second
+socket deadlines, keeps eight telemetry records and bounds the exact reasoner at
+4,096 prefixes. The ledger caps records at 4,096 and storage at 4 MiB. Trusted Rust
+handlers must terminate: socket timeouts cannot preempt native handler code. The
+service is sequential and designed for local simulation, not Internet deployment.
+
+Wrong identity, token, scope, sequence, API version, capability, format or resource
+proposal is denied. Connections are revocable and cancellation is exposed by the
+protocol client. Runtime failures exit nonzero and remain visible. Recovery never
+means resetting corrupted state or rewriting history. A privileged attacker with
+filesystem access can rewrite a complete hash chain; it is an audit integrity
+mechanism, not a signature or remote truth attestation.
+
+The four crates communicate through typed Rust interfaces, not language-model
+prompts. New sensors, transports, tasks and evaluators can be added independently,
+but each needs explicit authorization and a new applicability contract.

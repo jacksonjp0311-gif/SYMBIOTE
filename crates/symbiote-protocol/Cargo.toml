@@ -1,0 +1,11 @@
+[package]
+name = "symbiote-protocol"
+version = "0.1.0"
+edition = "2021"
+description = "Authorized bounded loopback exchanges and telemetry for SYMBIOTE"
+license-file = "../../LICENSE"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }

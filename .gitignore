@@ -1,0 +1,7 @@
+/target/
+/state/
+/experiments/local/
+__pycache__/
+*.pyc
+*.tmp
+*.lock.tmp

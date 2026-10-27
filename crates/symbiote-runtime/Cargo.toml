@@ -1,0 +1,16 @@
+[package]
+name = "symbiote-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "symbiote"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+symbiote-reasoning = { path = "../symbiote-reasoning" }
+symbiote-protocol = { path = "../symbiote-protocol" }
+symbiote-memory = { path = "../symbiote-memory" }
