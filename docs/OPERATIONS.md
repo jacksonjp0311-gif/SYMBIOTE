@@ -3,8 +3,8 @@
 ## Standalone installation and daily commands
 
 Native bundles run without Cargo, Python or an LLM. From a checkout, Windows:
-`./tools/install.ps1 -Version v0.4.0 -AddToPath`; Unix:
-`sh tools/install.sh --version v0.4.0`. Installers validate SHA256 and extract only
+`./tools/install.ps1 -Version v0.5.0 -AddToPath`; Unix:
+`sh tools/install.sh --version v0.5.0`. Installers validate SHA256 and extract only
 the expected flat executable. `-FromSource`/`--from-source` uses a local Cargo
 checkout explicitly. Install paths default to `%LOCALAPPDATA%/SYMBIOTE/bin` and
 `~/.local/bin`; no administrator permission is required. Checksums detect asset

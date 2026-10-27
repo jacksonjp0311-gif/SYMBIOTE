@@ -1,0 +1,561 @@
+{
+  "schema": "symbiote.adaptive-verification-summary/1",
+  "mode": "engineering-reproduction",
+  "integrity": "PASS",
+  "structural_integrity": "PASS",
+  "software_safety": "PASS",
+  "selection_vs_isolated": "DEMONSTRATED",
+  "better_partner_selection": "NOT_DEMONSTRATED",
+  "persistent_learning": "DEMONSTRATED",
+  "prospective_primary_prior_profile_use": {
+    "0": true,
+    "1": true
+  },
+  "world_count": 24,
+  "cases": 192,
+  "counterfactual_role_identities": 5,
+  "private_state_paths": 49,
+  "historical_promotions": 64,
+  "unverified_historical_records": 0,
+  "groups": [
+    {
+      "price": 100,
+      "arm": "isolated",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 100,
+      "arm": "fixed-peer",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 100,
+      "arm": "uniform-authorized",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 100,
+      "arm": "prospective-frontier",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 1,
+      "arm": "isolated",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 1,
+      "arm": "fixed-peer",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 1,
+      "arm": "uniform-authorized",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    },
+    {
+      "price": 1,
+      "arm": "prospective-frontier",
+      "status": "VERIFIED",
+      "authority": "VERIFIED",
+      "observations_are_authenticated": true,
+      "reasons": []
+    }
+  ],
+  "retained": [
+    {
+      "price": 100,
+      "arm": "isolated",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 100,
+      "arm": "fixed-peer",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 100,
+      "arm": "uniform-authorized",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 100,
+      "arm": "prospective-frontier",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 1,
+      "arm": "isolated",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 1,
+      "arm": "fixed-peer",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 1,
+      "arm": "uniform-authorized",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    },
+    {
+      "price": 1,
+      "arm": "prospective-frontier",
+      "validated_records": 8,
+      "offline_predictions": 84,
+      "demonstrated": true,
+      "participants": [
+        {
+          "role": 0,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 1,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 2,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        },
+        {
+          "role": 4,
+          "validated_models": 2,
+          "certified_offline_predictions": 21,
+          "learning_gate": "DEMONSTRATED"
+        }
+      ],
+      "A_B1_common_validated_contexts": 2
+    }
+  ],
+  "comparisons": {
+    "normal_policy_utility": "DEMONSTRATED",
+    "normal_better_partner_selection": "NOT_DEMONSTRATED",
+    "regimes": [
+      {
+        "observation_price": 100,
+        "role": "primary",
+        "prospective_vs_controls": [
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 18,
+            "A_B1_baseline_cost": 110119,
+            "A_B1_candidate_cost": 107380,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "fixed-peer",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 107176,
+            "A_B1_candidate_cost": 107380,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "uniform-authorized",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 108632,
+            "A_B1_candidate_cost": 107380,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          }
+        ],
+        "relationship_controls_vs_isolated": [
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "fixed-peer",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 18,
+            "A_B1_baseline_cost": 110119,
+            "A_B1_candidate_cost": 107176,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "uniform-authorized",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 4,
+            "A_B1_baseline_cost": 110119,
+            "A_B1_candidate_cost": 108632,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "DEMONSTRATED"
+          }
+        ]
+      },
+      {
+        "observation_price": 1,
+        "role": "negative-cost-control",
+        "prospective_vs_controls": [
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 83983,
+            "A_B1_candidate_cost": 84797,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "fixed-peer",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 84594,
+            "A_B1_candidate_cost": 84797,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "uniform-authorized",
+            "candidate_arm": "prospective-frontier",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 84802,
+            "A_B1_candidate_cost": 84797,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          }
+        ],
+        "relationship_controls_vs_isolated": [
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "fixed-peer",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 83983,
+            "A_B1_candidate_cost": 84594,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          },
+          {
+            "baseline_arm": "isolated",
+            "candidate_arm": "uniform-authorized",
+            "worlds_expected": 24,
+            "worlds_evaluable": 24,
+            "bilateral_benefit_worlds": 0,
+            "A_B1_baseline_cost": 83983,
+            "A_B1_candidate_cost": 84802,
+            "A_B1_baseline_correct": 286,
+            "A_B1_candidate_correct": 286,
+            "positive_utility_gate": "NOT_DEMONSTRATED"
+          }
+        ]
+      }
+    ],
+    "meaning": "software completion does not imply a positive scientific utility result; all losses and incomplete pairs remain shown"
+  },
+  "diagnostic_only": false,
+  "conditional_normal_arithmetic": {
+    "vs_isolated": "DEMONSTRATED",
+    "vs_all_controls": "NOT_DEMONSTRATED",
+    "qualification": "diagnostic arithmetic does not rescue incomplete authority, restart or operational evidence"
+  },
+  "failures": [],
+  "source_binding": "REGISTERED_BINARY_AND_SOURCE",
+  "setup_verification": {
+    "status": "VERIFIED",
+    "original_primary_status": "HOLD",
+    "original_primary_unchanged": true,
+    "setup_sha256": "024456d06065859c8d8602b65da4dbbf6a7921667dee551415c7ef5dc9b58c1d",
+    "original_primary": {
+      "run_id": "primary-004-0f40670e1d2a41e39488ecd5593ae886",
+      "registration_sha256": "0c4337529853a83ec7b85e4aa2ddf80c8b1b145d7114bf961639ea041318d7ae",
+      "report_sha256": "0215288f7e515e70b4d7359de81ac57e2fb6f8efd4db9475578c561ba59702b3",
+      "frozen_environments_sha256": "7dc6ae6637422427b06a0d2de8ee58039d6b9a8a6468c341a75b4a89c6f78014",
+      "candidate_source_commit": "31764625bedd4e58a828078b30b5dfa175218325",
+      "candidate_binary_sha256": "3277e52b8f811a0d0a6596476cd780eefb3661802af397bed4a4f0ae479957c9"
+    },
+    "interpretation": "engineering reproduction of a fixed observed cohort; not a new primary or an independent replication"
+  },
+  "parent_admission_overhead": {
+    "verified": {
+      "admission_calls": 23680,
+      "admitted": 23680,
+      "cancelled": 0,
+      "clock_range_rejected": 0,
+      "deadline_rejected": 0,
+      "max_admission_wait_ms": 5000,
+      "max_rate_per_second": 20,
+      "max_wait_ms": 49,
+      "max_wait_nanoseconds": 49227300,
+      "minimum_spacing_ms": 50,
+      "poisoned_rejected": 0,
+      "retry_policy": "none; a failed connection retains its consumed admission",
+      "schema": "symbiote.parent-session-admission/1",
+      "scope": "parent/controller owner and judge session admissions only; nested learner RPCs separately bounded",
+      "timing_limit": "10ms cancellation/deadline polling under a normally scheduled OS; measured descheduling overshoot is not clamped",
+      "wait_basis": "actual monotonic elapsed inside admit, including pacing and lock waits; excludes TCP/TLS",
+      "wait_cap_rejected": 0,
+      "wait_ms": 1082892,
+      "wait_nanoseconds": 1082892671400
+    },
+    "participant_logical_cost_adjustment": 0,
+    "scope": "actual parent session admissions and elapsed waiting only; excludes child-owned sessions and does not assert a global TCP rate"
+  },
+  "primitive_witness_scope": "native counters/registry assertions; no independent packet capture or remote-truth attestation",
+  "full_receipt_schema": "symbiote.adaptive-verification/1",
+  "full_receipt_sha256": "35fc07b35c3d0acc2fb305fd6e6d6d052065acdd6d5aaf0b7f5851c4e3a0efca",
+  "detail_policy": "Only repeated paired_worlds arrays omitted. All raw cases, complete verification and failed primary remain in the pinned evidence assets.",
+  "evidence_asset": {
+    "filename": "SYMBIOTE-v0.5-engineering-004.tar.gz",
+    "sha256": "b84e2a15a7bb0b6e113d2be752bab6971b0fb4da175ea3d33f41f115657bdb9a",
+    "bytes": 5594975,
+    "publication_status_at_recording": "pending release asset publication"
+  }
+}

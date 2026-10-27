@@ -19,12 +19,12 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Stable release gates](docs/STABLE_RELEASE_GATES.md)
 
-> **Research preview.** The latest public release is v0.4.0. This branch develops
-> the v0.5 candidate's configured knowledge service and adaptive relationship
-> experiment. Its [first registered study ended HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md)
-> after Windows socket exhaustion; a transport repair is in progress. The stable
-> v1.0 criteria remain open. Current experiments concern declared finite synthetic
-> environments; generalized intelligence and autonomous self-improvement are not established.
+> **Research preview — v0.5.** Native TLS peers, exact reasoning, evaluated
+> persistent knowledge and controlled partner selection. The
+> [first primary study remains HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md); a repaired
+> engineering reproduction completes all 192 control cases. The fixed-peer
+> control still performs better. Stable v1.0, general intelligence and broad
+> autonomous improvement are not established.
 
 ## Get started
 
@@ -37,7 +37,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v0.4.0 -AddToPath
+.\tools\install.ps1 -Version v0.5.0 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -45,7 +45,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v0.4.0
+sh tools/install.sh --version v0.5.0
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
@@ -69,7 +69,7 @@ You can also download a matching archive directly, extract it, and run
 symbiote demo       # Watch the original two-agent learning cycle
 symbiote research   # Run structural learning, exchange and isolated controls
 symbiote graph-research    # Learn route maps and measure every paired world
-symbiote adaptive-research --reproduce  # Compare partner policies in fresh state
+symbiote adaptive-research --reproduce  # Full, bounded study; allow about 20 minutes
 symbiote network-research  # Run two real native peer processes and restart them
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
@@ -90,6 +90,11 @@ or an explicit abstention. To run supervised peers over TLS, follow the
 [configured knowledge service](docs/SERVICE.md) supports explicitly granted
 queries and quarantined offers over operator-provisioned TLS. Local evaluation
 controls promotion. `symbiote --help` lists every command and option.
+
+Start with `demo`. The full adaptive study is optional and has a 30-minute cap.
+It owns its local peer processes, writes fresh temporary state and preserves all
+failed or unfinished cases. A recorded setup can be restored for reproducible
+control comparisons; it imports no learned knowledge or private keys.
 
 From a Windows checkout, the single entrypoint also supports:
 
@@ -154,6 +159,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
 | Native processes, retained prediction, recovery and migration | [v0.3 software gates](experiments/v0.3/software-verification.json), [deployment verification](experiments/v0.3/deployed-verification.json) and [native exchange receipt](experiments/v0.3/native-process-exchange.json) |
 | Complete graph cohort, conditional routes and durable graph learning | [v0.4 graph verification](experiments/v0.4/graph-verification.json), [raw paired cases](experiments/v0.4/graph-exchange.json), and [experiment protocol](docs/RESEARCH_V04_PROTOCOL.md) |
+| Native adaptive relationships, exact setup replay and honest controls | [v0.5 engineering verification](experiments/v0.5/engineering-verification.json), [preserved primary HOLD](experiments/v0.5/primary-verification.json), and [methods/results](docs/RESEARCH_V05.md) |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
 
@@ -188,6 +194,16 @@ Each regime includes 144 lower-cost and 18 higher-cost participant comparisons;
 are withheld. These are conditional results in one topology, with laboratory
 overhead excluded as declared. [Methods and limits](docs/RESEARCH_V04.md).
 
+The v0.5 engineering reproduction runs five native learner roles across four
+controls and two prices on the same 24 unfamiliar graphs. It retains two complete
+graph contexts and replays 21 predictions per active learner with zero evaluator
+requests. Its 64 stored promotions are repetitions across private control profiles.
+Normal A+B1 logical cost falls from 110,119 to 107,380 versus isolation; the fixed
+control costs 107,176. Cheap-observation exchange costs more than isolation.
+Partner scores change, but this trace shows no changed actions from those scores.
+The first primary remains HOLD; complete evidence and failed criteria are
+[published together](experiments/v0.5/README.md). No wall-clock speedup is claimed.
+
 Stable v1.0 requires broader independent environments, demonstrated reciprocal
 benefits after all costs, secure external connections, robust persistent memory
 and a documented failure envelope. Version numbers advance after the evidence.
@@ -204,8 +220,8 @@ behavior explicit without fragmenting the system into placeholder packages.
 | --- | --- |
 | `crates/symbiote-reasoning/` | Exact hidden-state and affine inference, conservative graph certificates, active queries and conditional prediction |
 | `crates/symbiote-protocol/` | Authorized local sessions, separate TLS 1.3 API, resource limits, sensors and revocation |
-| `crates/symbiote-memory/` | Private identity, versioned knowledge, promotion, audit integrity, rollback and safe lifecycle operations |
-| `crates/symbiote-runtime/` | Readable commands, supervised native peers, simulated services, experiments and controls |
+| `crates/symbiote-memory/` | Private identity, evaluated knowledge, operational journals, idempotency, rollback and lifecycle integrity |
+| `crates/symbiote-runtime/` | Native peers, configured knowledge service, active learning, experiments and isolated controls |
 | `docs/` | Architecture, mathematics, operations, provenance, research and version objectives |
 | `docs/assets/` | Original project artwork and its provenance |
 | `docs/reference/` | Preserved upstream algorithm used by developer parity checks |
@@ -246,6 +262,11 @@ All 983 upstream files are classified in the
 [migration manifest](docs/upstream-manifest.json). Original repositories,
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
+
+The active tracked tree is about 5.51 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 99.04% fewer bytes. [Footprint](experiments/footprint.json)
+excludes Git history, build caches and local state. Full study traces live in
+checksum-pinned release assets.
 
 New SYMBIOTE code uses the [MIT license](LICENSE). The retained BRUTE reference
 has an explicit exception because the inspected upstream supplied no license

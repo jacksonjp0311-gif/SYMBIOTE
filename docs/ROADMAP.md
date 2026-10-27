@@ -34,8 +34,16 @@ beneficial and harmful exchanges, withheld partial maps and actual offline repla
 See [v0.4 methods and results](RESEARCH_V04.md). Those results are conditional on
 one topology and a fixed pair; they do not automatically satisfy later gates.
 
-Next: evaluate partner choice prospectively on unfamiliar topologies and combine
-bounded experiment selection with configured deployment and failure campaigns.
-Predeclare compute budgets, rejection criteria and participant utility. The
-broader v0.4–v1.0 claims remain open; local software success does not automatically
-advance those versions.
+v0.5 implements the prospective relationship policy, configured native knowledge
+service and exact empty-setup restoration. Its first primary remains HOLD after
+port exhaustion. The repaired engineering reproduction completes all 192 cases
+on the same 24 unfamiliar graphs and demonstrates retained knowledge in two
+contexts. The fixed-peer control remains cheaper; learned scores change without
+changing selected actions. Unseen-partner generalization and a better-selection
+claim remain open. See [v0.5 findings](RESEARCH_V05.md).
+
+Next engineering gates are safe policy/certificate lifecycle, verified owner-state
+backup/restore and a bounded stability/deployment campaign. Next research needs
+newly declared transfer tests and unfamiliar partner identities; do not retune the
+completed cohort. The [stable release gates](STABLE_RELEASE_GATES.md) preserve
+the distinction between reliable bounded software and unresolved hypotheses.
