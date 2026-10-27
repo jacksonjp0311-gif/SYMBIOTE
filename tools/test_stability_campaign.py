@@ -23,7 +23,7 @@ class SafetyTests(unittest.TestCase):
             self.assertEqual(result["outcome"],"timeout")
             self.assertTrue(result["cleanup_verified"])
             self.assertGreater(json.loads(c.output(result,temp))["child"],0)
-            self.assertTrue((Path(temp)/"tree.process.json").is_file())
+            self.assertTrue((Path(temp)/result["process_receipt"]).is_file())
             self.assertLess(result["elapsed_seconds"],2+c.BOUNDS["cleanup_seconds"]+2)
 
     def test_real_cancellation_and_output_ceiling_preserve_failure_receipts(self):
@@ -43,8 +43,38 @@ class SafetyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="symbiote-campaign-start-test-") as temp:
             result=c.execute([str(Path(temp)/"missing")],Path(temp),"missing",timeout=1)
             self.assertEqual(result["outcome"],"execution-error")
-            self.assertTrue((Path(temp)/"missing.process.json").exists())
+            self.assertTrue((Path(temp)/result["process_receipt"]).exists())
             with self.assertRaises(RuntimeError):c.check_exit(result)
+
+    def test_actual_namespaced_unsafe_long_and_reserved_labels_use_safe_unique_artifacts(self):
+        labels=["65-endurance::mixed_family_24_cycle_local_campaign","CON","NUL.txt","../outside/\\unsafe:*?\"<>|. ",
+                "a/b","a:b","a\\b","same-prefix-"+"x"*1000+"A","same-prefix-"+"x"*1000+"B","\u03bb/\u5b9e\u9a8c"]
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-labels-") as temp:
+            root=Path(temp);names=set()
+            code="import json,sys;print(json.dumps(sys.argv[1:]));print('captured-stderr',file=sys.stderr)"
+            for label in labels:
+                arguments=[sys.executable,"-c",code,"original::argument",label]
+                result=c.execute(arguments,root,label,timeout=10)
+                c.check_exit(result)
+                self.assertEqual(result["label"],label)
+                self.assertEqual(result["argv"],arguments)
+                self.assertEqual(json.loads(c.output(result,root)),arguments[3:])
+                self.assertEqual((root/result["stderr"]).read_text(encoding="utf-8").strip(),"captured-stderr")
+                self.assertEqual(c.load(root/result["process_receipt"]),result)
+                for field in ("stdout","stderr","process_receipt"):
+                    name=result[field]
+                    self.assertRegex(name,r"^p-[A-Za-z0-9_-]{1,12}-[0-9a-f]{64}\.(stdout|stderr|process\.json)$")
+                    self.assertLessEqual(len(name),92)
+                    self.assertEqual((root/name).resolve().parent,root.resolve())
+                    self.assertNotIn(name,names)
+                    names.add(name)
+                    self.assertTrue(name.startswith(c.artifact_stem(label)+"."))
+            self.assertEqual(len(names),3*len(labels))
+            self.assertEqual({path.name for path in root.iterdir()},names)
+            self.assertEqual(c.artifact_stem(labels[0]),c.artifact_stem(labels[0]))
+            self.assertNotEqual(c.artifact_stem("a/b"),c.artifact_stem("a:b"))
+            # Equal readable prefixes still retain the full original-label hash.
+            self.assertNotEqual(c.artifact_stem(labels[-3]),c.artifact_stem(labels[-2]))
 
     def test_exact_regression_cannot_accept_zero_tests_or_failed_tests(self):
         c.check_native_test("running 1 test\ntest result: ok. 1 passed; 0 failed; 80 filtered out;")

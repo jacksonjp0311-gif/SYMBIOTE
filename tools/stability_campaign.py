@@ -226,10 +226,19 @@ def group_alive(pid):
         return False
 
 
+def artifact_stem(label):
+    """Encode only filesystem names; retain the exact label in the receipt."""
+    require(isinstance(label,str) and bool(label),"process evidence needs a nonempty text label")
+    readable=re.sub(r"[^A-Za-z0-9_-]+","-",label).strip("-_")[:12] or "label"
+    return "p-"+readable+"-"+hashlib.sha256(label.encode("utf-8")).hexdigest()
+
+
 def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environment=None):
     """Bound captured bytes, terminate the owned tree, and preserve failures."""
     directory = Path(directory)
-    stdout_path, stderr_path = directory / (label + ".stdout"), directory / (label + ".stderr")
+    stem=artifact_stem(label)
+    stdout_path, stderr_path = directory / (stem + ".stdout"), directory / (stem + ".stderr")
+    receipt_path=directory/(stem+".process.json")
     process, job, outcome, error = None, None, "completed", None
     start = time.monotonic()
     limit = BOUNDS["output_bytes_per_process"]
@@ -350,12 +359,13 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                   error=error,cleanup_verified=cleanup_verified,output_truncated=output_budget.is_set(),
                   cleanup_elapsed_seconds=cleanup_elapsed,
                   containment="windows-job-suspended-before-execution" if os.name == "nt" else "owned-posix-session",
+                  process_receipt=receipt_path.name,
                   stdout=stdout_path.name, stderr=stderr_path.name,
                   stdout_sha256=sha(stdout_path), stderr_sha256=sha(stderr_path),
                   stdout_bytes=stdout_path.stat().st_size, stderr_bytes=stderr_path.stat().st_size)
     if record["stdout_bytes"] + record["stderr_bytes"] > BOUNDS["output_bytes_per_process"]:
         record["outcome"] = "output-budget"
-    write_new(directory / (label + ".process.json"), record)
+    write_new(receipt_path, record)
     return record
 
 
@@ -999,7 +1009,7 @@ class Campaign:
             for case in cases:
                 record=self.call(case,[case,"--exact","--test-threads=1"],binary=self.registration["binaries"][name]["path"])
                 check_native_test(output(record,self.directory))
-                results.append(dict(name=case,status="PASS",classification="REGRESSION_REPEAT",process_receipt=record["label"]+".process.json"))
+                results.append(dict(name=case,status="PASS",classification="REGRESSION_REPEAT",process_receipt=record["process_receipt"]))
         return results
 
     def endurance(self):
