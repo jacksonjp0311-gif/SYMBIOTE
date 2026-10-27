@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.0 candidate — Adaptive Relationships
+## v0.5.0 — Adaptive Relationships — 2026-10-27
 
 - Operator-configured native TLS knowledge service with exact grants, durable
   quarantine, local fixture evaluation, persistent denial and idempotent replies.
@@ -16,8 +16,10 @@
 - Fresh temporary study command, configured service guide and explicit stable
   release gates. The first registered 24-world primary ended HOLD after Windows
   socket exhaustion: 136 completed, one failed and 55 not-run cases remain intact.
-  A paced engineering reproduction with the original setup is being prepared;
-  it cannot replace that primary. See [the failure report](docs/RESEARCH_V05_PRIMARY_HOLD.md).
+  A paced engineering reproduction restores the original setup and completes all
+  192 cases with independently verified retained learning. It cannot replace that
+  primary. Fixed-peer control is still cheaper and cheap-price exchange is harmful;
+  no better-selection or speed claim is made. See [the results](docs/RESEARCH_V05.md).
 
 ## v0.4.0 — Reciprocal Improvement — 2026-10-27
 

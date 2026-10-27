@@ -140,7 +140,7 @@ preempt native handlers or roll back completed or in-flight application mutation
 The release dependency audit used cargo-audit 0.22.2 and RustSec database commit
 `3279c99911354c400e1d41e47c7d60e39258b147` (2026-10-26). It reported zero known
 vulnerabilities and no advisory warnings for this lockfile. The
-[machine-readable audit](../experiments/v0.3/dependency-audit.json) is a dated
+[machine-readable audit](../experiments/v0.5/dependency-audit.json) is a dated
 check of published advisories, not proof that dependencies contain no defects.
 
 The production addition is `rustls` 0.23.46 with default features disabled and

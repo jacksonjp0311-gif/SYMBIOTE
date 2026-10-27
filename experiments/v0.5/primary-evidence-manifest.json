@@ -29,13 +29,13 @@
     "files": 185,
     "private_key_scan": "PASS",
     "byte_exact_archive_check": "PASS",
-    "publication_status": "pending release asset publication",
-    "scope": "Original primary and first frozen-checker diagnostics; later analysis is separate."
+    "scope": "Original primary and first frozen-checker diagnostics; later analysis is separate.",
+    "publication_status_at_recording": "pending release asset publication"
   },
   "post_primary_analysis": {
     "filename": "SYMBIOTE-v0.5-primary-004-HOLD-analysis.json.gz",
     "sha256": "3b1dee18bce1a7a8965de8c587a097d3060042391f464db8783d5b569f1e5526",
     "bytes": 13100,
-    "publication_status": "pending release asset publication"
+    "publication_status_at_recording": "pending release asset publication"
   }
 }

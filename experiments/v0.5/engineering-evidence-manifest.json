@@ -1,0 +1,37 @@
+{
+  "schema": "symbiote.engineering-evidence-manifest/1",
+  "mode": "engineering-reproduction",
+  "status": "PASS",
+  "original_primary_status": "HOLD",
+  "same_original_worlds": 24,
+  "source_commit": "fc67f2ba74f7fefbf843084579f599b13cd9f7b9",
+  "source_code_sha256": "e22420df5c6978f6961c382eacc8892880f000f0653b2300b2e7bdf9b73d3a4c",
+  "candidate_binary_sha256": "8cecd947cafafaebd3fdb9f29e480a399f36b67b806b83afb15b49d55c7cf1d6",
+  "registration_sha256": "046585594109d8abae449a900912afc41f661b3e1e8d8dae562a14d898543758",
+  "report_sha256": "5af95cd14cf2e421c5eb4719690b99c0c40ecf4d99107eabaf23f3bd329fc031",
+  "case_receipts_sha256": "41975bdc6177137b138c6548c3ff9c4d8ab470d0f4147833ce3c4d902b807372",
+  "frozen_environments_sha256": "7dc6ae6637422427b06a0d2de8ee58039d6b9a8a6468c341a75b4a89c6f78014",
+  "initial_simulation_genesis_sha256": "2348e511cfa26c146f9ffdeae6bbd5c4cc71efe9023d2cbff7cd278ac666300f",
+  "setup_sha256": "024456d06065859c8d8602b65da4dbbf6a7921667dee551415c7ef5dc9b58c1d",
+  "independent_verification_sha256": "35fc07b35c3d0acc2fb305fd6e6d6d052065acdd6d5aaf0b7f5851c4e3a0efca",
+  "original_completed_case_comparison_sha256": "a597518d54957765f20e7ac94938d2cdc231486c377a2912532a86bcf4d3dbaa",
+  "cases": {
+    "completed": 192,
+    "failed": 0,
+    "not_run": 0
+  },
+  "elapsed_ms": 1206891,
+  "actual_parent_admission_wait_ms": 1082892,
+  "archive": {
+    "filename": "SYMBIOTE-v0.5-engineering-004.tar.gz",
+    "sha256": "b84e2a15a7bb0b6e113d2be752bab6971b0fb4da175ea3d33f41f115657bdb9a",
+    "bytes": 5594975,
+    "publication_status_at_recording": "pending release asset publication"
+  },
+  "archive_uncompressed_bytes": 44107765,
+  "archive_files": 185,
+  "credential_scan": "PASS",
+  "byte_exact_archive_check": "PASS",
+  "primary_replaced": false,
+  "independent_new_environment_sample": false
+}
