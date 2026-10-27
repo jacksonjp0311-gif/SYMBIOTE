@@ -383,6 +383,11 @@ struct Cli {
     from: Option<usize>,
     to: Option<usize>,
     config: Option<PathBuf>,
+    previous_config: Option<PathBuf>,
+    expected_policy: Option<String>,
+    expected_head: Option<String>,
+    reviewed_permission_change: bool,
+    review_relocation: bool,
     peer: Option<String>,
     request: Option<PathBuf>,
     candidate: Option<String>,
@@ -390,6 +395,10 @@ struct Cli {
     registration: Option<PathBuf>,
     setup_catalogue: Option<PathBuf>,
     setup_sha256: Option<String>,
+    backup: Option<PathBuf>,
+    manifest_sha256: Option<String>,
+    graph_context_registry: Option<PathBuf>,
+    graph_context_sha256: Option<String>,
     reproduce: bool,
     automatic_artifact_paths: bool,
     json: bool,
@@ -401,6 +410,8 @@ impl Cli {
         let mut options = std::collections::BTreeMap::new();
         let mut json = false;
         let mut reproduce = false;
+        let mut reviewed_permission_change = false;
+        let mut review_relocation = false;
         let mut index = 0;
         while index < args.len() {
             let arg = &args[index];
@@ -409,6 +420,22 @@ impl Cli {
                     return Err("--json was supplied more than once".into());
                 }
                 json = true;
+                index += 1;
+                continue;
+            }
+            if arg == "--review-relocation" {
+                if review_relocation {
+                    return Err("--review-relocation was supplied more than once".into());
+                }
+                review_relocation = true;
+                index += 1;
+                continue;
+            }
+            if arg == "--review-permission-change" {
+                if reviewed_permission_change {
+                    return Err("--review-permission-change was supplied more than once".into());
+                }
+                reviewed_permission_change = true;
                 index += 1;
                 continue;
             }
@@ -440,6 +467,9 @@ impl Cli {
                 "--from",
                 "--to",
                 "--config",
+                "--previous-config",
+                "--expected-policy",
+                "--expected-head",
                 "--peer",
                 "--request",
                 "--candidate",
@@ -447,6 +477,10 @@ impl Cli {
                 "--registration",
                 "--setup-catalogue",
                 "--setup-sha256",
+                "--backup",
+                "--manifest-sha256",
+                "--graph-context-registry",
+                "--graph-context-sha256",
             ]
             .contains(&arg.as_str())
             {
@@ -489,6 +523,9 @@ impl Cli {
             "connect",
             "evaluate",
             "peer-revoke",
+            "peer-regrant",
+            "policy-status",
+            "policy-transition",
             "predict",
             "verify-memory",
             "status",
@@ -497,6 +534,9 @@ impl Cli {
             "inspect-state",
             "recover",
             "migrate",
+            "backup-state",
+            "verify-backup",
+            "restore-state",
         ]
         .contains(&command.as_str())
         {
@@ -512,6 +552,10 @@ impl Cli {
                     "connect",
                     "evaluate",
                     "peer-revoke",
+                    "peer-regrant",
+                    "policy-status",
+                    "policy-transition",
+                    "verify-backup",
                 ]
                 .contains(&command.as_str()),
                 "--receipts" => [
@@ -528,18 +572,83 @@ impl Cli {
                 "--tls-config" => command == "network-research",
                 "--input" => command == "predict",
                 "--from" | "--to" => command == "route",
-                "--config" => ["serve", "peers", "connect", "evaluate", "peer-revoke"]
-                    .contains(&command.as_str()),
-                "--peer" => ["connect", "peer-revoke"].contains(&command.as_str()),
+                "--config" => [
+                    "serve",
+                    "peers",
+                    "connect",
+                    "evaluate",
+                    "peer-revoke",
+                    "peer-regrant",
+                    "policy-status",
+                    "policy-transition",
+                ]
+                .contains(&command.as_str()),
+                "--peer" => ["connect", "peer-revoke", "peer-regrant"].contains(&command.as_str()),
                 "--request" => command == "connect",
                 "--candidate" => command == "evaluate",
-                "--reason" => command == "peer-revoke",
+                "--reason" => {
+                    ["peer-revoke", "peer-regrant", "policy-transition"].contains(&command.as_str())
+                }
+                "--previous-config" => command == "policy-transition",
+                "--expected-policy" | "--expected-head" => {
+                    ["policy-transition", "peer-regrant"].contains(&command.as_str())
+                }
                 "--registration" => command == "adaptive-research",
                 "--setup-catalogue" | "--setup-sha256" => command == "adaptive-research",
+                "--backup" => {
+                    ["backup-state", "verify-backup", "restore-state"].contains(&command.as_str())
+                }
+                "--manifest-sha256" => {
+                    ["verify-backup", "restore-state"].contains(&command.as_str())
+                }
+                "--graph-context-registry" | "--graph-context-sha256" => command == "backup-state",
                 _ => false,
             };
             if !allowed {
                 return Err(format!("{option} does not apply to {command}"));
+            }
+        }
+        if review_relocation && command != "policy-transition" {
+            return Err("--review-relocation applies only to local policy-transition".into());
+        }
+        if reviewed_permission_change
+            && !["policy-transition", "peer-regrant"].contains(&command.as_str())
+        {
+            return Err("--review-permission-change applies only to local policy-transition or peer-regrant".into());
+        }
+        let backup = options.remove("--backup").map(PathBuf::from);
+        let manifest_sha256 = options.remove("--manifest-sha256");
+        let graph_context_registry = options
+            .remove("--graph-context-registry")
+            .map(PathBuf::from);
+        let graph_context_sha256 = options.remove("--graph-context-sha256");
+        if ["backup-state", "verify-backup", "restore-state"].contains(&command.as_str()) {
+            if backup.is_none() {
+                return Err(format!("{command} requires --backup DIR"));
+            }
+            if command != "verify-backup" && !options.contains_key("--state") {
+                return Err(format!("{command} requires an explicit --state DIR"));
+            }
+            if command != "backup-state" && manifest_sha256.is_none() {
+                return Err(format!("{command} requires --manifest-sha256 SHA256 retained independently from the snapshot"));
+            }
+        }
+        if graph_context_registry.is_some() != graph_context_sha256.is_some() {
+            return Err("graph registry backup requires both --graph-context-registry FILE and --graph-context-sha256 SHA256".into());
+        }
+        for (name, value) in [
+            ("--manifest-sha256", &manifest_sha256),
+            ("--graph-context-sha256", &graph_context_sha256),
+        ] {
+            if value.as_ref().is_some_and(|value| {
+                value.len() != 64
+                    || !value
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            }) {
+                return Err(format!(
+                    "{name} requires 64 lowercase hexadecimal characters"
+                ));
             }
         }
         let fault = options.remove("--fault").unwrap_or_else(|| "none".into());
@@ -598,6 +707,32 @@ impl Cli {
             return Err("route requires --from NODE and --to NODE".into());
         }
         let config = options.remove("--config").map(PathBuf::from);
+        let previous_config = options.remove("--previous-config").map(PathBuf::from);
+        let expected_policy = options.remove("--expected-policy");
+        let expected_head = options.remove("--expected-head");
+        if ["policy-transition", "peer-regrant"].contains(&command.as_str()) {
+            for (name, value) in [
+                ("--expected-policy", &expected_policy),
+                ("--expected-head", &expected_head),
+            ] {
+                if !value.as_ref().is_some_and(|value| {
+                    value.len() == 64
+                        && value
+                            .bytes()
+                            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+                }) {
+                    return Err(format!(
+                        "{command} requires {name} with 64 lowercase hexadecimal characters"
+                    ));
+                }
+            }
+            if command == "policy-transition" && previous_config.is_none() {
+                return Err("policy-transition requires --previous-config FILE".into());
+            }
+            if command == "peer-regrant" && !reviewed_permission_change {
+                return Err("peer-regrant requires explicit --review-permission-change".into());
+            }
+        }
         let peer = options.remove("--peer");
         let request = options.remove("--request").map(PathBuf::from);
         let candidate = options.remove("--candidate");
@@ -638,12 +773,23 @@ impl Cli {
                 return Err("registered or custom adaptive experiments require both --state DIR and --receipts FILE".into());
             }
         }
-        if ["serve", "peers", "connect", "evaluate", "peer-revoke"].contains(&command.as_str())
+        if [
+            "serve",
+            "peers",
+            "connect",
+            "evaluate",
+            "peer-revoke",
+            "peer-regrant",
+            "policy-status",
+            "policy-transition",
+        ]
+        .contains(&command.as_str())
             && config.is_none()
         {
             return Err(format!("{command} requires --config FILE"));
         }
-        if ["connect", "peer-revoke"].contains(&command.as_str()) && peer.is_none() {
+        if ["connect", "peer-revoke", "peer-regrant"].contains(&command.as_str()) && peer.is_none()
+        {
             return Err(format!("{command} requires --peer ID"));
         }
         if command == "connect" && request.is_none() {
@@ -652,7 +798,9 @@ impl Cli {
         if command == "evaluate" && candidate.is_none() {
             return Err("evaluate requires --candidate SHA256".into());
         }
-        if command == "peer-revoke" && reason.is_none() {
+        if ["peer-revoke", "peer-regrant", "policy-transition"].contains(&command.as_str())
+            && reason.is_none()
+        {
             return Err("peer-revoke requires --reason TEXT".into());
         }
         let default_receipt = if command == "graph-research" {
@@ -703,6 +851,11 @@ impl Cli {
             from,
             to,
             config,
+            previous_config,
+            expected_policy,
+            expected_head,
+            reviewed_permission_change,
+            review_relocation,
             peer,
             request,
             candidate,
@@ -710,6 +863,10 @@ impl Cli {
             registration,
             setup_catalogue,
             setup_sha256,
+            backup,
+            manifest_sha256,
+            graph_context_registry,
+            graph_context_sha256,
             reproduce,
             automatic_artifact_paths,
             json,
@@ -729,6 +886,43 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     let command = cli.command.as_str();
     let state = &cli.state;
     let receipts = &cli.receipts;
+    if command == "backup-state" {
+        let options = symbiote_memory::backup::BackupOptions {
+            graph_context_registry: cli
+                .graph_context_registry
+                .as_ref()
+                .zip(cli.graph_context_sha256.as_ref())
+                .map(|(path, pin)| symbiote_memory::backup::RegistryDependency {
+                    path: path.clone(),
+                    expected_sha256: pin.clone(),
+                }),
+        };
+        return serde_json::to_value(symbiote_memory::backup::create(
+            state,
+            cli.backup.as_deref().ok_or("--backup required")?,
+            &options,
+        )?)
+        .map_err(|_| "cannot encode backup receipt".into());
+    }
+    if command == "verify-backup" {
+        return serde_json::to_value(symbiote_memory::backup::verify(
+            cli.backup.as_deref().ok_or("--backup required")?,
+            cli.manifest_sha256
+                .as_deref()
+                .ok_or("--manifest-sha256 required")?,
+        )?)
+        .map_err(|_| "cannot encode verified backup receipt".into());
+    }
+    if command == "restore-state" {
+        return serde_json::to_value(symbiote_memory::backup::restore(
+            cli.backup.as_deref().ok_or("--backup required")?,
+            cli.manifest_sha256
+                .as_deref()
+                .ok_or("--manifest-sha256 required")?,
+            state,
+        )?)
+        .map_err(|_| "cannot encode restore receipt".into());
+    }
     if command == "adaptive-research" {
         if cli.automatic_artifact_paths {
             let parent = state.parent().ok_or("automatic artifact parent missing")?;
@@ -756,9 +950,48 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     if command == "prepare-service" {
         return service::prepare(state);
     }
-    if ["serve", "peers", "connect", "evaluate", "peer-revoke"].contains(&command) {
+    if [
+        "serve",
+        "peers",
+        "connect",
+        "evaluate",
+        "peer-revoke",
+        "peer-regrant",
+        "policy-status",
+        "policy-transition",
+    ]
+    .contains(&command)
+    {
         let config = cli.config.as_deref().ok_or("--config required")?;
         return match command {
+            "policy-status" => service::policy_status(config),
+            "policy-transition" => service::policy_transition(
+                cli.previous_config
+                    .as_deref()
+                    .ok_or("--previous-config required")?,
+                config,
+                cli.expected_policy
+                    .as_deref()
+                    .ok_or("--expected-policy required")?,
+                cli.expected_head
+                    .as_deref()
+                    .ok_or("--expected-head required")?,
+                cli.reason.as_deref().ok_or("--reason required")?,
+                cli.reviewed_permission_change,
+                cli.review_relocation,
+            ),
+            "peer-regrant" => service::peer_regrant(
+                config,
+                cli.peer.as_deref().ok_or("--peer required")?,
+                cli.expected_policy
+                    .as_deref()
+                    .ok_or("--expected-policy required")?,
+                cli.expected_head
+                    .as_deref()
+                    .ok_or("--expected-head required")?,
+                cli.reason.as_deref().ok_or("--reason required")?,
+                cli.reviewed_permission_change,
+            ),
             "serve" => service::serve(config),
             "peers" => service::peers(config),
             "connect" => service::connect(
@@ -940,7 +1173,7 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","policy-status --config FILE","policy-transition --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT [--review-permission-change] [--review-relocation]","peer-regrant --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","backup-state --state DIR --backup NEW_DIR [--graph-context-registry FILE --graph-context-sha256 SHA256]","verify-backup --backup DIR --manifest-sha256 SHA256","restore-state --backup DIR --manifest-sha256 SHA256 --state NEW_DIR","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
@@ -955,6 +1188,9 @@ fn display(report: &Value, cli: &Cli) -> String {
         "connect",
         "evaluate",
         "peer-revoke",
+        "peer-regrant",
+        "policy-status",
+        "policy-transition",
         "prepare-service",
     ]
     .contains(&cli.command.as_str())
@@ -964,12 +1200,27 @@ fn display(report: &Value, cli: &Cli) -> String {
     if cli.json {
         return serde_json::to_string_pretty(report).expect("serializable report");
     }
+    if ["backup-state", "verify-backup", "restore-state"].contains(&cli.command.as_str()) {
+        let action = match cli.command.as_str() {
+            "backup-state" => "Backup created",
+            "verify-backup" => "Backup verified",
+            _ => "State restored; activation is still required",
+        };
+        let identity = report["identity"].as_str().unwrap_or("unavailable");
+        let pin = report["manifest_sha256"].as_str().unwrap_or("unavailable");
+        let mut text = format!("{action}\nIdentity: {identity}\nManifest SHA256: {pin}\nKeep the manifest digest separately from the backup.\nNetwork started: false");
+        if cli.command == "restore-state" {
+            text.push_str(&format!("\nRestored state: {}", cli.state.display()));
+        }
+        text.push_str("\nUse --json for complete receipts and activation dependencies.");
+        return text;
+    }
     let version = env!("CARGO_PKG_VERSION");
     if cli.command == "version" {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  policy-status  Inspect policy/head without old private keys\n  policy-transition  Offline rotation: --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT\n  peer-regrant   Offline regrant: --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change\n  backup-state   Snapshot one offline owner: --state DIR --backup NEW_DIR\n  verify-backup  Check an archive: --backup DIR --manifest-sha256 SHA256\n  restore-state  Restore stopped state: --backup DIR --manifest-sha256 SHA256 --state NEW_DIR\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];

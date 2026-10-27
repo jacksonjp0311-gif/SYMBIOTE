@@ -2,6 +2,7 @@
 //! authority endpoints, expected labels or permission to promote local knowledge.
 mod config;
 mod evaluation;
+mod lifecycle;
 mod wire;
 
 use config::Config;
@@ -84,6 +85,7 @@ struct State {
 impl State {
     fn open(config: Config) -> Result<Self, String> {
         let mut state = Self::load(config)?;
+        state.require_activated_restore()?;
         state.recover_evaluations()?;
         Ok(state)
     }
@@ -99,6 +101,12 @@ impl State {
                 .join("operations.jsonl")
                 .try_exists()
                 .map_err(|_| "cannot inspect service journal")?;
+        if !registered
+            && !symbiote_memory::backup::restore_mappings(&config.state, &config.identity)?
+                .is_empty()
+        {
+            return Err("HOLD: restored owner has no registered service baseline; no knowledge or policy history was initialized".into());
+        }
         if registered
             && !config
                 .state
@@ -122,6 +130,8 @@ impl State {
         Ok(state)
     }
     fn validate_replay(&self) -> Result<(), String> {
+        lifecycle::check_context_history(&self.config, &self.journal, None)?;
+        let mut policy = lifecycle::initial_policy(&self.config, &self.journal)?;
         for event in self.journal.events() {
             match event {
                 OperationalEvent::Quarantined {
@@ -133,8 +143,8 @@ impl State {
                 } => {
                     let request: Request = serde_json::from_value(body.clone())
                         .map_err(|_| "quarantine replay contains an unsupported request")?;
-                    request.validate(&self.config)?;
-                    self.authorize(&key.peer_id, &request)?;
+                    request.validate(&policy)?;
+                    Self::authorize_policy(&policy, &key.peer_id, &request)?;
                     if key.operation != "candidate.submit"
                         || request.body.name() != key.operation
                         || request.scope != key.scope
@@ -162,7 +172,7 @@ impl State {
                         || record.source != peer
                         || record.scope != offer.record.scope
                         || record.payload != offer.record.payload
-                        || self.config.context(&record.scope)?.truth_sha256.as_ref()
+                        || policy.context(&record.scope)?.truth_sha256.as_ref()
                             != Some(fixture_sha256)
                     {
                         return Err("evaluation intent does not match its authenticated candidate and pinned fixture".into());
@@ -193,7 +203,35 @@ impl State {
                     }
                 }
                 OperationalEvent::PeerDenied { peer_id, .. } => {
-                    self.config.peer(peer_id)?;
+                    policy.peer(peer_id)?;
+                }
+                OperationalEvent::LifecycleStarted { .. } => {}
+                OperationalEvent::PeerRestored { peer_id, .. } => {
+                    policy.peer(peer_id)?;
+                }
+                OperationalEvent::PolicyTransitioned {
+                    previous_policy_digest,
+                    policy_digest,
+                    previous_policy,
+                    policy: next,
+                    reviewed_permission_change,
+                    ..
+                } => {
+                    if *previous_policy_digest != policy.policy_digest
+                        || Config::historical(previous_policy)?.policy_digest
+                            != policy.policy_digest
+                    {
+                        return Err("HOLD: service policy history is discontinuous".into());
+                    }
+                    let next = Config::historical(next)?;
+                    if next.policy_digest != *policy_digest
+                        || next.identity != self.config.identity
+                        || (!lifecycle::widened(&policy, &next).is_empty()
+                            && !reviewed_permission_change)
+                    {
+                        return Err("HOLD: historical policy transition has an unauthorized owner or permission expansion".into());
+                    }
+                    policy = next;
                 }
                 OperationalEvent::PartnerOutcomeRecorded { .. }
                 | OperationalEvent::PartnerDecisionRecorded { .. }
@@ -204,11 +242,23 @@ impl State {
                 _ => {}
             }
         }
+        lifecycle::restore_inspection(self)?;
+        if policy.policy_digest != self.config.policy_digest {
+            return Err("HOLD: configured policy differs from the latest approved epoch".into());
+        }
+        Ok(())
+    }
+    fn require_activated_restore(&self) -> Result<(), String> {
+        if !lifecycle::restore_inspection(self)?.pending.is_empty() {
+            return Err("HOLD: unreviewed restore cannot activate or mutate service state; inspect policy-status and explicitly review verified relocation".into());
+        }
         Ok(())
     }
     fn authorize(&self, peer_id: &str, request: &Request) -> Result<(), String> {
-        let access = self
-            .config
+        Self::authorize_policy(&self.config, peer_id, request)
+    }
+    fn authorize_policy(policy: &Config, peer_id: &str, request: &Request) -> Result<(), String> {
+        let access = policy
             .peer(peer_id)?
             .access(&request.scope, request.body.name())?;
         if request
@@ -692,7 +742,7 @@ pub(crate) fn peers(path: &Path) -> Result<Value, String> {
     let denied = state.journal.denied_peers();
     let peers:Vec<_>=state.config.peers.iter().map(|peer|json!({"alias":peer.alias,"id":peer.id,"address":peer.address,"server_name":peer.server_name,"access":peer.access,"denied":denied.contains(&peer.id)})).collect();
     Ok(
-        json!({"schema":"symbiote.service-peers/1","identity":state.config.identity,"peers":peers,"network_requests":0,"discovery":"explicit operator registry only"}),
+        json!({"schema":"symbiote.service-peers/1","identity":state.config.identity,"peers":peers,"network_requests":0,"policy_sha256":state.journal.policy_digest(),"journal_head_sha256":state.journal.head_sha256(),"discovery":"explicit operator registry only"}),
     )
 }
 pub(crate) fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Result<Value, String> {
@@ -701,11 +751,7 @@ pub(crate) fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Res
     let request: Request = serde_json::from_slice(&config::read_bounded(request_path, 65_536)?)
         .map_err(|_| "typed service request rejected")?;
     request.validate(config)?;
-    let peer = config
-        .peers
-        .iter()
-        .find(|peer| peer.alias == peer_alias)
-        .ok_or("unknown explicitly configured peer alias")?;
+    let peer = config.peer_alias(peer_alias)?;
     if state.journal.denied_peers().contains(&peer.id) {
         return Err("outbound peer is durably denied".into());
     }
@@ -737,15 +783,9 @@ pub(crate) fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value
     }
     // Denial must commit before replay can admit a pending candidate. A generic
     // startup recovery here would promote first and defeat the owner's action.
-    let mut state = State::load(Config::load(path)?)?;
-    let peer = state
-        .config
-        .peers
-        .iter()
-        .find(|entry| entry.alias == peer || entry.id == peer)
-        .ok_or("cannot deny an unknown configured peer")?
-        .id
-        .clone();
+    let mut state = State::load(Config::load_public(path)?)?;
+    state.require_activated_restore()?;
+    let peer = state.config.resolve_peer(peer)?.id.clone();
     let existing = state.journal.denied_peers().contains(&peer);
     if !existing {
         state.journal.append(OperationalEvent::PeerDenied {
@@ -758,3 +798,6 @@ pub(crate) fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value
         json!({"schema":"symbiote.service-peer-denial/1","identity":state.config.identity,"peer":peer,"denied":true,"already_denied":existing,"persistent":true}),
     )
 }
+
+// Offline operator entry points. No remote request variant calls these.
+pub(crate) use lifecycle::{peer_regrant, policy_status, policy_transition};

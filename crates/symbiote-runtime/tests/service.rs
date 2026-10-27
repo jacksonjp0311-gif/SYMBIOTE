@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Output, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -270,8 +270,9 @@ impl Fixture {
 fn success(output: Output) -> Value {
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+        "stderr: {}\nstdout: {}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
     );
     serde_json::from_slice(&output.stdout).unwrap()
 }
@@ -289,9 +290,12 @@ struct ServiceProcess {
 }
 impl ServiceProcess {
     fn start(fixture: &Fixture) -> Self {
+        Self::start_config(&fixture.dir.0.join("server.json"))
+    }
+    fn start_config(path: &Path) -> Self {
         let mut child = Command::new(env!("CARGO_BIN_EXE_symbiote"))
             .args(["serve", "--json", "--config"])
-            .arg(fixture.dir.0.join("server.json"))
+            .arg(path)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -1111,4 +1115,1291 @@ fn completed_operational_history_allows_a_legitimate_later_knowledge_revocation(
         completed,
         "past acknowledgement remains historical, without relearning revoked knowledge"
     );
+}
+
+fn configured_command(fixture: &Fixture, manifest: &str, command: &str, args: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        .args([command, "--json", "--config"])
+        .arg(fixture.dir.0.join(manifest))
+        .args(args)
+        .output()
+        .unwrap()
+}
+fn save_old_policy(fixture: &Fixture) -> PathBuf {
+    let path = fixture.dir.0.join("previous.json");
+    fs::write(&path, serde_json::to_vec_pretty(&fixture.server).unwrap()).unwrap();
+    path
+}
+fn transition(fixture: &Fixture, old: &Path, anchor: &Value, reviewed: bool) -> Output {
+    let mut args = vec![
+        "--previous-config",
+        old.to_str().unwrap(),
+        "--expected-policy",
+        anchor["policy_sha256"].as_str().unwrap(),
+        "--expected-head",
+        anchor["journal_head_sha256"].as_str().unwrap(),
+        "--reason",
+        "explicit offline test policy",
+    ];
+    if reviewed {
+        args.push("--review-permission-change");
+    }
+    fixture.command("policy-transition", &args)
+}
+fn assert_service_prefixes(fixture: &Fixture, ledger: &[u8], marker: &[u8], operations: &[u8]) {
+    let state = fixture.dir.0.join("server-state");
+    assert_eq!(fs::read(state.join("ledger.jsonl")).unwrap(), ledger);
+    assert_eq!(
+        fs::read(state.join("operations-owner.json")).unwrap(),
+        marker
+    );
+    assert!(fs::read(state.join("operations.jsonl"))
+        .unwrap()
+        .starts_with(operations));
+}
+
+#[test]
+fn offline_rotation_after_lost_private_key_preserves_identity_and_rejects_old_tls_pin() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    success(fixture.command("peers", &[]));
+    let anchor = success(fixture.command("policy-status", &[]));
+    let previous = save_old_policy(&fixture);
+    let state = fixture.dir.0.join("server-state");
+    let ledger = fs::read(state.join("ledger.jsonl")).unwrap();
+    let marker = fs::read(state.join("operations-owner.json")).unwrap();
+    let operations = fs::read(state.join("operations.jsonl")).unwrap();
+    let knowledge = fs::read(state.join("knowledge.jsonl")).unwrap();
+    let old_pin = fixture.server["certificate_sha256"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let replacement = TlsIdentity::from_pem_files(
+        &fixture.dir.0.join("observer.pem"),
+        &fixture.dir.0.join("observer.key"),
+    )
+    .unwrap();
+    fixture.server["certificate"] = json!("observer.pem");
+    fixture.server["private_key"] = json!("observer.key");
+    fixture.server["certificate_sha256"] = json!(replacement.certificate_sha256());
+    fixture.save();
+    fs::remove_file(fixture.dir.0.join("server.key")).unwrap();
+    assert_eq!(
+        success(configured_command(
+            &fixture,
+            "previous.json",
+            "policy-status",
+            &[]
+        ))["identity"],
+        fixture.ids[0]
+    );
+    let changed = success(transition(&fixture, &previous, &anchor, false));
+    assert_eq!(changed["learning_promotions"], 0);
+    assert_ne!(changed["policy_sha256"], anchor["policy_sha256"]);
+    assert_service_prefixes(&fixture, &ledger, &marker, &operations);
+    assert_eq!(fs::read(state.join("knowledge.jsonl")).unwrap(), knowledge);
+    assert!(
+        !configured_command(&fixture, "previous.json", "policy-status", &[])
+            .status
+            .success()
+    );
+    for _ in 0..2 {
+        let mut service = ServiceProcess::start(&fixture);
+        let mut endpoint = fixture.endpoint("affine-context/v1", "capabilities");
+        endpoint.server_name = "observer.symbiote.test".into();
+        let client = fixture.direct_client(&fixture.ids[1]);
+        let mut old_endpoint = endpoint.clone();
+        old_endpoint.server_certificate_sha256 = old_pin.clone();
+        assert!(SecureClient::connect(&old_endpoint, &client).is_err());
+        let mut connection = SecureClient::connect(&endpoint, &client).unwrap();
+        let reply = connection
+            .call(
+                "capabilities",
+                &fixture.request(
+                    "affine-context/v1",
+                    "new-certificate",
+                    json!({"operation":"capabilities"}),
+                ),
+            )
+            .unwrap();
+        assert_eq!(reply["identity"], fixture.ids[0]);
+        connection.revoke().unwrap();
+        service.stop();
+    }
+    let raw = fs::read_to_string(state.join("operations.jsonl")).unwrap();
+    assert!(!raw.contains("PRIVATE KEY"));
+    assert!(!raw.contains("BEGIN CERTIFICATE"));
+}
+
+#[test]
+fn policy_expansion_requires_review_and_stale_or_foreign_anchors_do_not_write() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    success(fixture.command("peers", &[]));
+    let anchor = success(fixture.command("policy-status", &[]));
+    let previous = save_old_policy(&fixture);
+    let path = fixture.dir.0.join("server-state/operations.jsonl");
+    let original = fs::read(&path).unwrap();
+    fixture.server["limits"]["max_requests"] = json!(65);
+    fixture.save();
+    assert!(!transition(&fixture, &previous, &anchor, false)
+        .status
+        .success());
+    assert_eq!(fs::read(&path).unwrap(), original);
+    let mut stale = anchor.clone();
+    stale["journal_head_sha256"] = json!("0".repeat(64));
+    assert!(!transition(&fixture, &previous, &stale, true)
+        .status
+        .success());
+    assert_eq!(fs::read(&path).unwrap(), original);
+    stale = anchor.clone();
+    stale["policy_sha256"] = json!("f".repeat(64));
+    assert!(!transition(&fixture, &previous, &stale, true)
+        .status
+        .success());
+    assert_eq!(fs::read(&path).unwrap(), original);
+    let accepted = success(transition(&fixture, &previous, &anchor, true));
+    assert_eq!(
+        accepted["reviewed_permission_changes"],
+        json!(["budget:max_requests"])
+    );
+    let committed = fs::read(&path).unwrap();
+    assert!(!transition(&fixture, &previous, &anchor, true)
+        .status
+        .success());
+    assert_eq!(fs::read(&path).unwrap(), committed);
+    let mut foreign = fixture.server.clone();
+    foreign["identity"] = json!("symbiote-aaaaaaaaaaaaaaaaaaaaaaaa");
+    fs::write(
+        fixture.dir.0.join("foreign.json"),
+        serde_json::to_vec(&foreign).unwrap(),
+    )
+    .unwrap();
+    assert!(
+        !configured_command(&fixture, "foreign.json", "policy-status", &[])
+            .status
+            .success()
+    );
+    assert_eq!(fs::read(&path).unwrap(), committed);
+}
+
+#[test]
+fn rotation_retains_denial_and_reviewed_regrant_never_resurrects_old_candidates() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    let mut service = ServiceProcess::start(&fixture);
+    let candidate = success(fixture.call(&fixture.offer(false)))["candidate"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    service.stop();
+    success(fixture.command(
+        "peer-revoke",
+        &["--peer", "partner", "--reason", "operator denied"],
+    ));
+    let anchor = success(fixture.command("policy-status", &[]));
+    let previous = save_old_policy(&fixture);
+    fixture.server["limits"]["per_peer_requests"] = json!(63);
+    fixture.save();
+    success(transition(&fixture, &previous, &anchor, false));
+    let status = success(fixture.command("policy-status", &[]));
+    assert_eq!(status["denied_peers"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        success(fixture.command("serve", &[]))["listener_opened"],
+        false
+    );
+    let old_result = rejected(fixture.command("evaluate", &["--candidate", &candidate]));
+    assert_eq!(old_result["status"], "REJECTED");
+    let args = [
+        "--peer",
+        "partner",
+        "--expected-policy",
+        status["policy_sha256"].as_str().unwrap(),
+        "--expected-head",
+        status["journal_head_sha256"].as_str().unwrap(),
+        "--reason",
+        "reviewed operator regrant",
+    ];
+    assert!(!fixture.command("peer-regrant", &args).status.success());
+    let mut approved = args.to_vec();
+    approved.push("--review-permission-change");
+    success(fixture.command("peer-regrant", &approved));
+    assert!(!fixture.command("peer-regrant", &approved).status.success());
+    let mut service = ServiceProcess::start(&fixture);
+    assert_eq!(
+        success(fixture.call(&fixture.request(
+            "affine-context/v1",
+            "regranted-capabilities",
+            json!({"operation":"capabilities"})
+        )))["identity"],
+        fixture.ids[0]
+    );
+    service.stop();
+    assert_eq!(
+        rejected(fixture.command("evaluate", &["--candidate", &candidate])),
+        old_result
+    );
+    let owner = Store::open(&fixture.dir.0.join("server-state")).unwrap();
+    assert!(
+        KnowledgeStore::open(&fixture.dir.0.join("server-state"), owner.identity())
+            .unwrap()
+            .active()
+            .is_empty()
+    );
+}
+
+fn seed_pending_local_evaluation(fixture: &Fixture, candidate: &str, committed: bool) -> Value {
+    use symbiote_memory::knowledge::{assess, TrialCase, TrialCosts, TrialEvidence};
+    use symbiote_memory::operational::{OperationalEvent, OperationalJournal};
+    let anchor = success(fixture.command("policy-status", &[]));
+    let owner = Arc::new(Store::open(&fixture.dir.0.join("server-state")).unwrap());
+    let mut knowledge =
+        KnowledgeStore::open(&fixture.dir.0.join("server-state"), owner.identity()).unwrap();
+    let mut journal = OperationalJournal::open(
+        Arc::clone(&owner),
+        "configured-service/v1",
+        anchor["policy_sha256"].as_str().unwrap(),
+    )
+    .unwrap();
+    let offer = fixture.offer(false);
+    let original: KnowledgeRecord =
+        serde_json::from_value(offer["body"]["offer"]["record"].clone()).unwrap();
+    let pin = fixture.server["contexts"][0]["truth_sha256"]
+        .as_str()
+        .unwrap();
+    let namespace=hash(&serde_json::to_vec(&json!({"peer":fixture.ids[1],"scope":original.scope,"schema":original.schema_fingerprint})).unwrap());
+    let record=KnowledgeRecord{id:format!("service-{}",&namespace[..32]),revision:1,source:fixture.ids[1].clone(),scope:original.scope.clone(),schema_fingerprint:original.schema_fingerprint.clone(),payload:original.payload.clone(),provenance:format!("Authenticated sender {}; original inert record {} revision {} SHA256 {}; claimed source {} is preserved as untrusted provenance. Locally checked against fixture SHA256 {pin}.",fixture.ids[1],original.id,original.revision,original.digest().unwrap(),original.source)};
+    let response = json!({"schema":"symbiote.service-evaluation/1","status":"PROMOTED","promoted":true,"artifact":record.id,"revision":1,"record_sha256":record.digest().unwrap(),"fixture_sha256":pin,"validated_cases":4,"model_work_units":8,"truth_basis":"operator-pinned local finite fixture; no remote truth or generalization claim"});
+    journal
+        .append(OperationalEvent::EvaluationPrepared {
+            candidate_id: candidate.into(),
+            record: record.clone(),
+            fixture_sha256: pin.into(),
+            response: response.clone(),
+        })
+        .unwrap();
+    if committed {
+        let evidence = TrialEvidence {
+            evaluator: format!("local-fixture/{}", &pin[..24]),
+            training_case_ids: [0, 1, 2, 4]
+                .map(|input| format!("declared-training-{input}"))
+                .to_vec(),
+            training_inputs: vec![0, 1, 2, 4],
+            cases: [3, 5, 6, 7]
+                .map(|input| {
+                    let expected = ((input & 3u16).count_ones() % 2) as u8;
+                    TrialCase {
+                        id: format!("fixture-case-{input}"),
+                        input,
+                        expected,
+                        baseline: None,
+                        candidate: expected,
+                    }
+                })
+                .to_vec(),
+            costs: TrialCosts {
+                acquisition: 0,
+                verification: 8,
+                adoption: 1,
+                baseline: 0,
+                candidate: 9,
+            },
+        };
+        knowledge
+            .promote(record.clone(), assess(&record, &evidence).unwrap())
+            .unwrap();
+    }
+    response
+}
+
+#[test]
+fn restrictive_policy_transition_closes_both_learning_commit_cutpoints_before_recovery() {
+    for committed in [false, true] {
+        let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+        let mut server = ServiceProcess::start(&fixture);
+        let candidate = success(fixture.call(&fixture.offer(false)))["candidate"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        server.stop();
+        let expected_response = seed_pending_local_evaluation(&fixture, &candidate, committed);
+        let anchor = success(fixture.command("policy-status", &[])); // must not recover before restriction
+        let previous = save_old_policy(&fixture);
+        let state = fixture.dir.0.join("server-state");
+        let knowledge = fs::read(state.join("knowledge.jsonl")).unwrap();
+        let ops = fs::read(state.join("operations.jsonl")).unwrap();
+        let marker = fs::read(state.join("operations-owner.json")).unwrap();
+        let ledger = fs::read(state.join("ledger.jsonl")).unwrap();
+        fixture.server["contexts"].as_array_mut().unwrap().remove(0);
+        fixture.server["peers"][0]["access"]
+            .as_array_mut()
+            .unwrap()
+            .remove(0);
+        fixture.save();
+        success(transition(&fixture, &previous, &anchor, false));
+        assert_service_prefixes(&fixture, &ledger, &marker, &ops);
+        assert_eq!(
+            fs::read(state.join("knowledge.jsonl")).unwrap(),
+            knowledge,
+            "restriction performs no new learning commit"
+        );
+        let evaluated = fixture.command("evaluate", &["--candidate", &candidate]);
+        let reply = if committed {
+            success(evaluated)
+        } else {
+            rejected(evaluated)
+        };
+        if committed {
+            assert_eq!(reply, expected_response);
+        } else {
+            assert_eq!(reply["status"], "REJECTED");
+            assert_eq!(reply["promoted"], false);
+        }
+        let mut server = ServiceProcess::start(&fixture);
+        assert_eq!(
+            success(fixture.call(&fixture.request(
+                "graph-context/v1",
+                "surviving-context",
+                json!({"operation":"capabilities"})
+            )))["identity"],
+            fixture.ids[0]
+        );
+        assert!(!fixture
+            .call(&fixture.request(
+                "affine-context/v1",
+                "removed-context",
+                json!({"operation":"capabilities"})
+            ))
+            .status
+            .success());
+        server.stop();
+        assert_eq!(fs::read(state.join("knowledge.jsonl")).unwrap(), knowledge);
+    }
+}
+
+#[test]
+fn a_scope_cannot_be_redefined_even_after_removal_and_reviewed_readdition() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    success(fixture.command("peers", &[]));
+    let original = fixture.server.clone();
+    let previous = save_old_policy(&fixture);
+    let anchor = success(fixture.command("policy-status", &[]));
+    let path = fixture.dir.0.join("server-state/operations.jsonl");
+    let before = fs::read(&path).unwrap();
+    fixture.server["contexts"][0]["truth_sha256"] = json!("a".repeat(64));
+    fixture.save();
+    assert!(!transition(&fixture, &previous, &anchor, true)
+        .status
+        .success());
+    assert_eq!(fs::read(&path).unwrap(), before);
+    fixture.server = original.clone();
+    fixture.server["contexts"].as_array_mut().unwrap().remove(0);
+    fixture.server["peers"][0]["access"]
+        .as_array_mut()
+        .unwrap()
+        .remove(0);
+    fixture.save();
+    success(transition(&fixture, &previous, &anchor, false));
+    let current = success(fixture.command("policy-status", &[]));
+    save_old_policy(&fixture);
+    fixture.server = original;
+    fixture.server["contexts"][0]["truth_sha256"] = json!("b".repeat(64));
+    fixture.save();
+    let before = fs::read(&path).unwrap();
+    assert!(!transition(&fixture, &previous, &current, true)
+        .status
+        .success());
+    assert_eq!(
+        fs::read(&path).unwrap(),
+        before,
+        "removed contexts retain their original meaning in policy history"
+    );
+}
+
+#[test]
+fn remote_json_cannot_open_a_local_policy_transaction() {
+    let fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    let mut server = ServiceProcess::start(&fixture);
+    let state = fixture.dir.0.join("server-state");
+    let before = fs::read(state.join("operations.jsonl")).unwrap();
+    let client = fixture.direct_client(&fixture.ids[1]);
+    let mut session = SecureClient::connect(
+        &fixture.endpoint("affine-context/v1", "candidate.submit"),
+        &client,
+    )
+    .unwrap();
+    let body=fixture.request("affine-context/v1","remote-policy-attempt",json!({"operation":"policy-transition","reviewed_permission_change":true,"new_policy":{"grants":"*"}}));
+    assert!(session.call("candidate.submit", &body).is_err());
+    drop(session);
+    server.stop();
+    assert_eq!(fs::read(state.join("operations.jsonl")).unwrap(), before);
+    assert!(
+        success(fixture.command("policy-status", &[]))["denied_peers"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[test]
+fn reviewed_verified_restore_relocation_uses_only_destination_when_source_and_old_key_are_gone() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    success(fixture.command("peers", &[]));
+    let anchor = success(fixture.command("policy-status", &[]));
+    let previous = save_old_policy(&fixture);
+    let source = fixture.dir.0.join("server-state");
+    let snapshot = fixture.dir.0.join("verified-backup");
+    let report = symbiote_memory::backup::create(
+        &source,
+        &snapshot,
+        &symbiote_memory::backup::BackupOptions::default(),
+    )
+    .unwrap();
+    let restored = fixture.dir.0.join("restored-state");
+    let mapping =
+        symbiote_memory::backup::restore(&snapshot, &report.manifest_sha256, &restored).unwrap();
+    let prior_bytes = fs::read(restored.join("operations.jsonl")).unwrap();
+    let marker = fs::read(restored.join("operations-owner.json")).unwrap();
+    let ledger = fs::read(restored.join("ledger.jsonl")).unwrap();
+    fixture.server["state"] = json!(restored);
+    let replacement = TlsIdentity::from_pem_files(
+        &fixture.dir.0.join("observer.pem"),
+        &fixture.dir.0.join("observer.key"),
+    )
+    .unwrap();
+    fixture.server["certificate"] = json!("observer.pem");
+    fixture.server["private_key"] = json!("observer.key");
+    fixture.server["certificate_sha256"] = json!(replacement.certificate_sha256());
+    fixture.save();
+    fs::remove_file(fixture.dir.0.join("server.key")).unwrap();
+    assert!(source.starts_with(&fixture.dir.0));
+    fs::remove_dir_all(&source).unwrap();
+    assert!(
+        !transition(&fixture, &previous, &anchor, false)
+            .status
+            .success(),
+        "ordinary rotation cannot silently relocate"
+    );
+    assert_eq!(
+        fs::read(restored.join("operations.jsonl")).unwrap(),
+        prior_bytes
+    );
+    let changed = success(fixture.command(
+        "policy-transition",
+        &[
+            "--previous-config",
+            previous.to_str().unwrap(),
+            "--expected-policy",
+            anchor["policy_sha256"].as_str().unwrap(),
+            "--expected-head",
+            anchor["journal_head_sha256"].as_str().unwrap(),
+            "--reason",
+            "reviewed verified restore relocation",
+            "--review-relocation",
+        ],
+    ));
+    assert_eq!(
+        changed["relocation"]["restore_mapping_sha256"],
+        mapping.restore_mapping_sha256
+    );
+    assert_eq!(
+        fs::read(restored.join("operations-owner.json")).unwrap(),
+        marker
+    );
+    assert_eq!(fs::read(restored.join("ledger.jsonl")).unwrap(), ledger);
+    assert!(fs::read(restored.join("operations.jsonl"))
+        .unwrap()
+        .starts_with(&prior_bytes));
+    assert!(
+        !source.exists(),
+        "relocation must not reopen or recreate original source state"
+    );
+    let mut server = ServiceProcess::start(&fixture);
+    let mut endpoint = fixture.endpoint("affine-context/v1", "capabilities");
+    endpoint.server_name = "observer.symbiote.test".into();
+    let mut session =
+        SecureClient::connect(&endpoint, &fixture.direct_client(&fixture.ids[1])).unwrap();
+    assert_eq!(
+        session
+            .call(
+                "capabilities",
+                &fixture.request(
+                    "affine-context/v1",
+                    "restored-live",
+                    json!({"operation":"capabilities"})
+                )
+            )
+            .unwrap()["identity"],
+        fixture.ids[0]
+    );
+    session.revoke().unwrap();
+    server.stop();
+    assert!(!source.exists());
+}
+
+#[test]
+fn offline_denial_does_not_require_a_working_local_private_key() {
+    let fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    success(fixture.command("peers", &[]));
+    fs::remove_file(fixture.dir.0.join("server.key")).unwrap();
+    assert_eq!(
+        success(fixture.command(
+            "peer-revoke",
+            &[
+                "--peer",
+                "partner",
+                "--reason",
+                "lost key incident containment"
+            ]
+        ))["denied"],
+        true
+    );
+    assert_eq!(
+        success(fixture.command("policy-status", &[]))["denied_peers"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
+fn absolute_service_material(fixture: &mut Fixture) {
+    for field in ["certificate", "private_key", "ca_certificate"] {
+        fixture.server[field] = json!(fixture.dir.0.join(fixture.server[field].as_str().unwrap()));
+    }
+    for context in fixture.server["contexts"].as_array_mut().unwrap() {
+        context["truth_fixture"] = json!(fixture
+            .dir
+            .0
+            .join(context["truth_fixture"].as_str().unwrap()));
+    }
+    fixture.save();
+}
+fn public_config_command(path: &Path, command: &str, args: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_symbiote"))
+        .args([command, "--json", "--config"])
+        .arg(path)
+        .args(args)
+        .output()
+        .unwrap()
+}
+fn assert_unreviewed_service_inactive(path: &Path, fixture: &Fixture) {
+    let request = fixture.dir.0.join("unreviewed-request.json");
+    fs::write(
+        &request,
+        serde_json::to_vec(&fixture.request(
+            "affine-context/v1",
+            "unreviewed-request",
+            json!({"operation":"capabilities"}),
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    for (command, args) in [
+        ("peers", vec![]),
+        ("serve", vec![]),
+        (
+            "evaluate",
+            vec![
+                "--candidate",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            ],
+        ),
+        (
+            "peer-revoke",
+            vec![
+                "--peer",
+                "partner",
+                "--reason",
+                "must not mutate unreviewed restore",
+            ],
+        ),
+        (
+            "connect",
+            vec!["--peer", "partner", "--request", request.to_str().unwrap()],
+        ),
+    ] {
+        let result = public_config_command(path, command, &args);
+        assert!(
+            !result.status.success(),
+            "unreviewed restore must reject {command}; stdout={}",
+            String::from_utf8_lossy(&result.stdout)
+        );
+        assert!(
+            format!(
+                "{} {}",
+                String::from_utf8_lossy(&result.stdout),
+                String::from_utf8_lossy(&result.stderr)
+            )
+            .to_ascii_lowercase()
+            .contains("restore"),
+            "{command} must fail specifically at restored activation guard"
+        );
+    }
+    let inspected = success(public_config_command(path, "policy-status", &[]));
+    let denied = public_config_command(
+        path,
+        "peer-regrant",
+        &[
+            "--peer",
+            "partner",
+            "--expected-policy",
+            inspected["policy_sha256"].as_str().unwrap(),
+            "--expected-head",
+            inspected["journal_head_sha256"].as_str().unwrap(),
+            "--reason",
+            "must not regrant unreviewed restore",
+            "--review-permission-change",
+        ],
+    );
+    assert!(!denied.status.success());
+    assert!(String::from_utf8_lossy(&denied.stderr)
+        .to_ascii_lowercase()
+        .contains("restore"));
+    let mut proposed: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    proposed["limits"]["per_peer_requests"] = json!(63);
+    let ordinary = path.with_file_name("unreviewed-ordinary-policy.json");
+    fs::write(&ordinary, serde_json::to_vec(&proposed).unwrap()).unwrap();
+    let rejected = public_config_command(
+        &ordinary,
+        "policy-transition",
+        &[
+            "--previous-config",
+            path.to_str().unwrap(),
+            "--expected-policy",
+            inspected["policy_sha256"].as_str().unwrap(),
+            "--expected-head",
+            inspected["journal_head_sha256"].as_str().unwrap(),
+            "--reason",
+            "ordinary rotation cannot activate a restored owner",
+        ],
+    );
+    assert!(!rejected.status.success());
+    assert!(String::from_utf8_lossy(&rejected.stderr)
+        .to_ascii_lowercase()
+        .contains("restore"));
+}
+
+#[test]
+fn restored_relative_manifest_requires_review_for_each_restore_even_when_policy_digest_is_unchanged(
+) {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    absolute_service_material(&mut fixture);
+    success(fixture.command("peers", &[]));
+    let original_state = fixture.dir.0.join("server-state");
+    let mut previous_config = fixture.dir.0.join("server.json");
+    let mut previous_state = original_state.clone();
+    let first_parent = fixture.dir.0.join("relative-restored-1");
+    for round in 1..=3 {
+        let next_parent = if round == 3 {
+            first_parent.clone()
+        } else {
+            fixture.dir.0.join(format!("relative-restored-{round}"))
+        };
+        fs::create_dir_all(&next_parent).unwrap();
+        let target = next_parent.join("server-state");
+        if target.exists() {
+            assert!(target.starts_with(&fixture.dir.0));
+            fs::remove_dir_all(&target).unwrap();
+        }
+        let snapshot = fixture.dir.0.join(format!("relative-backup-{round}"));
+        let saved = symbiote_memory::backup::create(
+            &previous_state,
+            &snapshot,
+            &symbiote_memory::backup::BackupOptions::default(),
+        )
+        .unwrap();
+        let restored =
+            symbiote_memory::backup::restore(&snapshot, &saved.manifest_sha256, &target).unwrap();
+        let next_config = next_parent.join("server.json");
+        fs::copy(&previous_config, &next_config).unwrap();
+        assert_eq!(
+            fs::read(&previous_config).unwrap(),
+            fs::read(&next_config).unwrap(),
+            "same public manifest bytes must not imply approved relocation"
+        );
+        let original_ops = fs::read(target.join("operations.jsonl")).unwrap();
+        let original_knowledge = fs::read(target.join("knowledge.jsonl")).unwrap();
+        assert_unreviewed_service_inactive(&next_config, &fixture);
+        let status = success(public_config_command(&next_config, "policy-status", &[]));
+        assert_eq!(status["activation_required"], true);
+        assert_eq!(
+            status["unconsumed_restore_mappings"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            fs::read(target.join("operations.jsonl")).unwrap(),
+            original_ops
+        );
+        assert_eq!(
+            fs::read(target.join("knowledge.jsonl")).unwrap(),
+            original_knowledge
+        );
+        if round == 1 {
+            assert!(previous_state.starts_with(&fixture.dir.0));
+            fs::remove_dir_all(&previous_state).unwrap();
+        }
+        let approved = success(public_config_command(
+            &next_config,
+            "policy-transition",
+            &[
+                "--previous-config",
+                previous_config.to_str().unwrap(),
+                "--expected-policy",
+                status["policy_sha256"].as_str().unwrap(),
+                "--expected-head",
+                status["journal_head_sha256"].as_str().unwrap(),
+                "--reason",
+                "explicit same-policy restored activation review",
+                "--review-relocation",
+            ],
+        ));
+        assert_eq!(
+            approved["previous_policy_sha256"], approved["policy_sha256"],
+            "relocation is meaningful even with identical policy bytes"
+        );
+        assert_eq!(
+            approved["relocation"]["restore_mapping_sha256"],
+            restored.restore_mapping_sha256
+        );
+        let activated = success(public_config_command(&next_config, "policy-status", &[]));
+        assert_eq!(activated["activation_required"], false);
+        success(public_config_command(&next_config, "peers", &[]));
+        assert!(fs::read(target.join("operations.jsonl"))
+            .unwrap()
+            .starts_with(&original_ops));
+        if round == 1 || round == 3 {
+            let mut server = ServiceProcess::start_config(&next_config);
+            assert_eq!(
+                success(fixture.call(&fixture.request(
+                    "affine-context/v1",
+                    &format!("reviewed-round-{round}"),
+                    json!({"operation":"capabilities"})
+                )))["identity"],
+                fixture.ids[0]
+            );
+            server.stop();
+        }
+        previous_config = next_config;
+        previous_state = target;
+    }
+    assert!(
+        !original_state.exists(),
+        "review never recreated original missing source state"
+    );
+}
+
+#[test]
+fn moved_unreviewed_restore_cannot_activate_under_original_config_or_consume_foreign_destination() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    absolute_service_material(&mut fixture);
+    success(fixture.command("peers", &[]));
+    let source = fixture.dir.0.join("server-state");
+    let snapshot = fixture.dir.0.join("moved-backup");
+    let saved = symbiote_memory::backup::create(
+        &source,
+        &snapshot,
+        &symbiote_memory::backup::BackupOptions::default(),
+    )
+    .unwrap();
+    let staging = fixture.dir.0.join("restored-staging");
+    symbiote_memory::backup::restore(&snapshot, &saved.manifest_sha256, &staging).unwrap();
+    let preserved = fixture.dir.0.join("preserved-original");
+    fs::rename(&source, &preserved).unwrap();
+    fs::rename(&staging, &source).unwrap();
+    let operations = fs::read(source.join("operations.jsonl")).unwrap();
+    let knowledge = fs::read(source.join("knowledge.jsonl")).unwrap();
+    let config = fixture.dir.0.join("server.json");
+    assert_unreviewed_service_inactive(&config, &fixture);
+    let status = success(fixture.command("policy-status", &[]));
+    assert_eq!(status["activation_required"], true);
+    assert!(!fixture
+        .command(
+            "policy-transition",
+            &[
+                "--previous-config",
+                config.to_str().unwrap(),
+                "--expected-policy",
+                status["policy_sha256"].as_str().unwrap(),
+                "--expected-head",
+                status["journal_head_sha256"].as_str().unwrap(),
+                "--reason",
+                "renamed tree cannot bypass destination proof",
+                "--review-relocation"
+            ]
+        )
+        .status
+        .success());
+    assert_eq!(
+        fs::read(source.join("operations.jsonl")).unwrap(),
+        operations
+    );
+    assert_eq!(fs::read(source.join("knowledge.jsonl")).unwrap(), knowledge);
+    assert_eq!(
+        fs::read(preserved.join("operations.jsonl")).unwrap(),
+        operations
+    );
+}
+
+#[test]
+fn maximum_service_manifest_rotates_maximum_public_snapshots_then_narrows_without_rewriting_history(
+) {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    let template = fixture.server["peers"][0].clone();
+    for index in 1..32 {
+        let mut peer = template.clone();
+        peer["alias"] = json!(format!("operator-peer-{index}"));
+        peer["id"] = json!(format!("operator-peer-identity-{index}"));
+        peer["certificate_sha256"] = json!(format!("{:064x}", index + 100));
+        peer["access"].as_array_mut().unwrap().truncate(1);
+        peer["access"][0]["artifacts"] = json!((0..32)
+            .map(|item| format!("artifact-{index}-{item}"))
+            .collect::<Vec<_>>());
+        fixture.server["peers"].as_array_mut().unwrap().push(peer);
+    }
+    for peer in 1..32 {
+        for artifact in 0..32 {
+            let length = serde_json::to_vec(&fixture.server).unwrap().len();
+            if length == 65_536 {
+                break;
+            }
+            let value = fixture.server["peers"][peer]["access"][0]["artifacts"][artifact]
+                .as_str()
+                .unwrap()
+                .to_string();
+            let extra = (65_536 - length).min(128 - value.len());
+            fixture.server["peers"][peer]["access"][0]["artifacts"][artifact] =
+                json!(format!("{value}{}", "x".repeat(extra)));
+        }
+    }
+    let raw = serde_json::to_vec(&fixture.server).unwrap();
+    assert_eq!(
+        raw.len(),
+        65_536,
+        "exact original maximum manifest admission"
+    );
+    fs::write(fixture.dir.0.join("server.json"), &raw).unwrap();
+    success(fixture.command("peers", &[]));
+    let state = fixture.dir.0.join("server-state");
+    let marker = fs::read(state.join("operations-owner.json")).unwrap();
+    let anchor = success(fixture.command("policy-status", &[]));
+    assert!(serde_json::to_vec(&anchor["public_policy"]).unwrap().len() > 65_536);
+    let previous = save_old_policy(&fixture); // use compact bytes: the 64KiB limit applies to input bytes, not pretty printing.
+    fs::write(&previous, &raw).unwrap();
+    let prefix = fs::read(state.join("operations.jsonl")).unwrap();
+    fixture.server["limits"]["per_peer_requests"] = json!(63);
+    fs::write(
+        fixture.dir.0.join("server.json"),
+        serde_json::to_vec(&fixture.server).unwrap(),
+    )
+    .unwrap();
+    success(transition(&fixture, &previous, &anchor, false));
+    assert!(fs::read(state.join("operations.jsonl"))
+        .unwrap()
+        .starts_with(&prefix));
+    assert_eq!(
+        fs::read(state.join("operations-owner.json")).unwrap(),
+        marker
+    );
+    let anchor = success(fixture.command("policy-status", &[]));
+    fs::write(&previous, serde_json::to_vec(&fixture.server).unwrap()).unwrap();
+    fixture.server["peers"].as_array_mut().unwrap().truncate(1);
+    fixture.save();
+    success(transition(&fixture, &previous, &anchor, false));
+    success(fixture.command("peers", &[]));
+    let mut server = ServiceProcess::start(&fixture);
+    assert_eq!(
+        success(fixture.call(&fixture.request(
+            "affine-context/v1",
+            "after-large-policy",
+            json!({"operation":"capabilities"})
+        )))["identity"],
+        fixture.ids[0]
+    );
+    server.stop();
+}
+
+#[test]
+fn operator_peer_ids_win_alias_collisions_without_changing_authenticated_artifact_grants() {
+    use symbiote_memory::knowledge::{assess, TrialCase, TrialCosts, TrialEvidence};
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    let mut peer_b = fixture.server["peers"][0].clone();
+    for access in peer_b["access"].as_array_mut().unwrap() {
+        access["artifacts"] = json!(["b-allowed-only"]);
+    }
+    let mut peer_a = peer_b.clone();
+    peer_a["id"] = json!("operator-peer-A");
+    peer_a["alias"] = json!(fixture.ids[1]);
+    peer_a["certificate_sha256"] = json!(TlsIdentity::from_pem_files(
+        &fixture.dir.0.join("observer.pem"),
+        &fixture.dir.0.join("observer.key")
+    )
+    .unwrap()
+    .certificate_sha256());
+    peer_a["server_name"] = json!("observer.symbiote.test");
+    for access in peer_a["access"].as_array_mut().unwrap() {
+        access["artifacts"] = json!(["*"]);
+    }
+    fixture.server["peers"] = json!([peer_a, peer_b]);
+    fixture.save();
+    {
+        let owner = Store::open(&fixture.dir.0.join("server-state")).unwrap();
+        let record = KnowledgeRecord {
+            id: "b-forbidden".into(),
+            revision: 1,
+            source: "manual-lab-source".into(),
+            scope: "affine-context/v1".into(),
+            schema_fingerprint: affine_schema_fingerprint(3).unwrap(),
+            payload: json!({"kind":"affine","width":3,"coefficients":3,"bias":false}),
+            provenance: "Manual finite native artifact grant fixture".into(),
+        };
+        let evidence = TrialEvidence {
+            evaluator: "manual-local-lab".into(),
+            training_case_ids: vec!["train-zero".into()],
+            training_inputs: vec![0],
+            cases: (1u16..8)
+                .map(|input| {
+                    let expected = ((input & 3).count_ones() % 2) as u8;
+                    TrialCase {
+                        id: format!("case-{input}"),
+                        input,
+                        expected,
+                        baseline: None,
+                        candidate: expected,
+                    }
+                })
+                .collect(),
+            costs: TrialCosts {
+                acquisition: 0,
+                verification: 7,
+                adoption: 1,
+                baseline: 20,
+                candidate: 8,
+            },
+        };
+        KnowledgeStore::open(&fixture.dir.0.join("server-state"), owner.identity())
+            .unwrap()
+            .promote(record.clone(), assess(&record, &evidence).unwrap())
+            .unwrap();
+    }
+    let mut service = ServiceProcess::start(&fixture);
+    let mut a = SecureClient::connect(
+        &fixture.endpoint("affine-context/v1", "knowledge.read"),
+        &TlsClientConfig::new(
+            "operator-peer-A".into(),
+            TlsIdentity::from_pem_files(
+                &fixture.dir.0.join("observer.pem"),
+                &fixture.dir.0.join("observer.key"),
+            )
+            .unwrap(),
+            &fs::read(fixture.dir.0.join("ca.pem")).unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let request = fixture.request(
+        "affine-context/v1",
+        "a-broad-read",
+        json!({"operation":"knowledge.read","artifact":"b-forbidden"}),
+    );
+    assert_eq!(
+        a.call("knowledge.read", &request).unwrap()["record"]["id"],
+        "b-forbidden"
+    );
+    a.revoke().unwrap();
+    let mut b = SecureClient::connect(
+        &fixture.endpoint("affine-context/v1", "knowledge.read"),
+        &fixture.direct_client(&fixture.ids[1]),
+    )
+    .unwrap();
+    assert!(
+        b.call(
+            "knowledge.read",
+            &fixture.request(
+                "affine-context/v1",
+                "b-narrow-read",
+                json!({"operation":"knowledge.read","artifact":"b-forbidden"})
+            )
+        )
+        .is_err(),
+        "authenticated B must not inherit A's broad alias-colliding grant"
+    );
+    drop(b);
+    service.stop();
+    let denial = success(fixture.command(
+        "peer-revoke",
+        &[
+            "--peer",
+            &fixture.ids[1],
+            "--reason",
+            "exact identity target",
+        ],
+    ));
+    assert_eq!(denial["peer"], fixture.ids[1]);
+    let peers = success(fixture.command("peers", &[]));
+    assert_eq!(peers["peers"][0]["denied"], false);
+    assert_eq!(peers["peers"][1]["denied"], true);
+    let status = success(fixture.command("policy-status", &[]));
+    let regrant = success(fixture.command(
+        "peer-regrant",
+        &[
+            "--peer",
+            &fixture.ids[1],
+            "--expected-policy",
+            status["policy_sha256"].as_str().unwrap(),
+            "--expected-head",
+            status["journal_head_sha256"].as_str().unwrap(),
+            "--reason",
+            "reviewed exact identity target",
+            "--review-permission-change",
+        ],
+    ));
+    assert_eq!(regrant["peer"], fixture.ids[1]);
+
+    let request_path = fixture.dir.0.join("alias-contract-request.json");
+    fs::write(
+        &request_path,
+        serde_json::to_vec(&fixture.request(
+            "affine-context/v1",
+            "alias-contract-connect",
+            json!({"operation":"capabilities"}),
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    for (index, certificate, key, expected, selector) in [
+        (
+            0,
+            "observer.pem",
+            "observer.key",
+            "A",
+            fixture.ids[1].as_str(),
+        ),
+        (1, "client.pem", "client.key", "B", "partner"),
+    ] {
+        let address = fixture.server["peers"][index]["address"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let remote_id = fixture.server["peers"][index]["id"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let config = SecureServerConfig::new(
+            address,
+            remote_id,
+            TlsIdentity::from_pem_files(&fixture.dir.0.join(certificate), &fixture.dir.0.join(key))
+                .unwrap(),
+            &fs::read(fixture.dir.0.join("ca.pem")).unwrap(),
+            vec![SecurePeerGrant {
+                id: fixture.ids[0].clone(),
+                certificate_sha256: fixture.server["certificate_sha256"]
+                    .as_str()
+                    .unwrap()
+                    .into(),
+                scopes: std::collections::BTreeMap::from([(
+                    "affine-context/v1".into(),
+                    vec!["capabilities".into()],
+                )]),
+            }],
+            SecureLimits {
+                max_requests: 4,
+                max_connections: 4,
+                max_frame_bytes: 32768,
+                timeout: Duration::from_millis(500),
+            },
+        )
+        .unwrap();
+        let mut partner = spawn_secure_server(config, move |session, _, _| {
+            Ok(json!({"selected":expected,"authenticated_peer":session.peer_id}))
+        })
+        .unwrap();
+        assert_eq!(success(fixture.command("connect",&["--peer",selector,"--request",request_path.to_str().unwrap()]))["selected"],expected,
+            "connect preserves its alias-only selection contract even when an alias equals another peer ID");
+        partner.shutdown().unwrap();
+    }
+}
+
+#[test]
+fn consumed_restore_metadata_cannot_be_deleted_or_rehashed_into_different_paths() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    absolute_service_material(&mut fixture);
+    success(fixture.command("peers", &[]));
+    let source = fixture.dir.0.join("server-state");
+    let snapshot = fixture.dir.0.join("metadata-backup");
+    let saved = symbiote_memory::backup::create(
+        &source,
+        &snapshot,
+        &symbiote_memory::backup::BackupOptions::default(),
+    )
+    .unwrap();
+    let parent = fixture.dir.0.join("metadata-restored");
+    fs::create_dir(&parent).unwrap();
+    let restored = parent.join("server-state");
+    let mapping =
+        symbiote_memory::backup::restore(&snapshot, &saved.manifest_sha256, &restored).unwrap();
+    let config = parent.join("server.json");
+    fs::copy(fixture.dir.0.join("server.json"), &config).unwrap();
+    let status = success(public_config_command(&config, "policy-status", &[]));
+    success(public_config_command(
+        &config,
+        "policy-transition",
+        &[
+            "--previous-config",
+            fixture.dir.0.join("server.json").to_str().unwrap(),
+            "--expected-policy",
+            status["policy_sha256"].as_str().unwrap(),
+            "--expected-head",
+            status["journal_head_sha256"].as_str().unwrap(),
+            "--reason",
+            "approved metadata fixture restore",
+            "--review-relocation",
+        ],
+    ));
+    let marker = restored.join(format!(
+        "restored-owner-{}.json",
+        mapping.restore_mapping_sha256
+    ));
+    let original = fs::read(&marker).unwrap();
+    let operations = fs::read(restored.join("operations.jsonl")).unwrap();
+    let knowledge = fs::read(restored.join("knowledge.jsonl")).unwrap();
+    fs::remove_file(&marker).unwrap();
+    assert!(
+        !public_config_command(&config, "peers", &[])
+            .status
+            .success(),
+        "consumed marker loss must not erase its activation binding"
+    );
+    let mut forged: Value = serde_json::from_slice(&original).unwrap();
+    forged["restored_state"] = json!(symbiote_memory::backup::normalize_state_location(
+        &fixture.dir.0.join("different-restored-destination")
+    )
+    .unwrap());
+    let bytes = serde_json::to_vec(&forged).unwrap();
+    let renamed = restored.join(format!("restored-owner-{}.json", hash(&bytes)));
+    fs::write(&renamed, &bytes).unwrap();
+    assert_eq!(
+        symbiote_memory::backup::restore_mappings(&restored, &fixture.ids[0])
+            .unwrap()
+            .len(),
+        1,
+        "forged metadata is structurally valid and fully rehashed"
+    );
+    assert!(
+        !public_config_command(&config, "peers", &[])
+            .status
+            .success(),
+        "the original consumed digest/path binding still must match"
+    );
+    assert_eq!(
+        fs::read(restored.join("operations.jsonl")).unwrap(),
+        operations
+    );
+    assert_eq!(
+        fs::read(restored.join("knowledge.jsonl")).unwrap(),
+        knowledge
+    );
+    fs::remove_file(renamed).unwrap();
+    fs::write(&marker, &original).unwrap();
+    success(public_config_command(&config, "peers", &[]));
+}
+
+#[test]
+fn nested_unactivated_restores_hold_without_implicitly_approving_ancestor_mappings() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    absolute_service_material(&mut fixture);
+    success(fixture.command("peers", &[]));
+    let mut source = fixture.dir.0.join("server-state");
+    let mut previous = fixture.dir.0.join("server.json");
+    for index in 0..2 {
+        let snapshot = fixture.dir.0.join(format!("unactivated-backup-{index}"));
+        let saved = symbiote_memory::backup::create(
+            &source,
+            &snapshot,
+            &symbiote_memory::backup::BackupOptions::default(),
+        )
+        .unwrap();
+        let parent = fixture.dir.0.join(format!("unactivated-restore-{index}"));
+        fs::create_dir(&parent).unwrap();
+        let destination = parent.join("server-state");
+        symbiote_memory::backup::restore(&snapshot, &saved.manifest_sha256, &destination).unwrap();
+        let config = parent.join("server.json");
+        fs::copy(&previous, &config).unwrap();
+        if index == 1 {
+            let status = success(public_config_command(&config, "policy-status", &[]));
+            assert_eq!(
+                status["unconsumed_restore_mappings"]
+                    .as_array()
+                    .unwrap()
+                    .len(),
+                2
+            );
+            let operations = fs::read(destination.join("operations.jsonl")).unwrap();
+            assert_unreviewed_service_inactive(&config, &fixture);
+            let rejected = public_config_command(
+                &config,
+                "policy-transition",
+                &[
+                    "--previous-config",
+                    previous.to_str().unwrap(),
+                    "--expected-policy",
+                    status["policy_sha256"].as_str().unwrap(),
+                    "--expected-head",
+                    status["journal_head_sha256"].as_str().unwrap(),
+                    "--reason",
+                    "cannot approve unreviewed ancestor implicitly",
+                    "--review-relocation",
+                ],
+            );
+            assert!(!rejected.status.success());
+            assert!(String::from_utf8_lossy(&rejected.stderr).contains("nested unactivated"));
+            assert_eq!(
+                fs::read(destination.join("operations.jsonl")).unwrap(),
+                operations
+            );
+        }
+        source = destination;
+        previous = config;
+    }
+}
+
+#[test]
+fn unregistered_restored_owner_cannot_initialize_service_history_before_review() {
+    let mut fixture = Fixture::new(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    absolute_service_material(&mut fixture);
+    let source = fixture.dir.0.join("server-state");
+    assert!(!source.join("operations.jsonl").exists());
+    assert!(!source.join("knowledge.jsonl").exists());
+    let snapshot = fixture.dir.0.join("unregistered-owner-backup");
+    let saved = symbiote_memory::backup::create(
+        &source,
+        &snapshot,
+        &symbiote_memory::backup::BackupOptions::default(),
+    )
+    .unwrap();
+    let parent = fixture.dir.0.join("unregistered-owner-restored");
+    fs::create_dir(&parent).unwrap();
+    let restored = parent.join("server-state");
+    symbiote_memory::backup::restore(&snapshot, &saved.manifest_sha256, &restored).unwrap();
+    let config = parent.join("server.json");
+    fs::copy(fixture.dir.0.join("server.json"), &config).unwrap();
+    let ledger = fs::read(restored.join("ledger.jsonl")).unwrap();
+    assert!(!public_config_command(&config, "peers", &[])
+        .status
+        .success());
+    assert!(!public_config_command(&config, "serve", &[])
+        .status
+        .success());
+    for name in [
+        "knowledge.jsonl",
+        "operations.jsonl",
+        "operations-owner.json",
+    ] {
+        assert!(
+            !restored.join(name).exists(),
+            "unreviewed startup must not initialize {name}"
+        );
+    }
+    assert_eq!(fs::read(restored.join("ledger.jsonl")).unwrap(), ledger);
 }

@@ -16,6 +16,9 @@ const FILE_NAME: &str = "operations.jsonl";
 pub(crate) const OWNER_FILE: &str = "operations-owner.json";
 pub(crate) const MAX_OWNER_BYTES: usize = 4096;
 const MAX_RECORD_BYTES: usize = 64 * 1024;
+/// A complete original 64KiB manifest plus its public CA-digest wrapper.
+pub const MAX_SERVICE_POLICY_BYTES: usize = 68 * 1024;
+const MAX_POLICY_RECORD_BYTES: usize = 160 * 1024;
 const MAX_BODY_BYTES: usize = 32 * 1024;
 const MAX_RESPONSE_BYTES: usize = 8 * 1024;
 const MAX_PREPARED_BYTES: usize = 16 * 1024;
@@ -49,6 +52,14 @@ fn bounded(value: &Value, maximum: usize) -> Result<(), String> {
         return Err("operational value exceeds its byte budget".into());
     }
     Ok(())
+}
+
+fn record_limit(payload: &Value) -> usize {
+    if payload.get("event").and_then(Value::as_str) == Some("policy_transitioned") {
+        MAX_POLICY_RECORD_BYTES
+    } else {
+        MAX_RECORD_BYTES
+    }
 }
 
 /// Canonical JSON Value digest used for the complete quarantined request body.
@@ -145,6 +156,15 @@ pub struct PartnerInteractionRecord {
     pub subsequently_used: bool,
 }
 
+/// Public audit of an explicitly reviewed verified restore relocation.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PolicyRelocation {
+    pub restore_mapping_sha256: String,
+    pub prior_state: String,
+    pub restored_state: String,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "event", rename_all = "snake_case", deny_unknown_fields)]
 pub enum OperationalEvent {
@@ -172,6 +192,31 @@ pub enum OperationalEvent {
     },
     PeerDenied {
         peer_id: String,
+        reason: String,
+    },
+    /// Local operator-only policy epoch. The service validates both public
+    /// manifests; these inert snapshots contain paths/pins, never key bytes.
+    LifecycleStarted {
+        operation: String,
+        expected_head: String,
+        intent_sha256: String,
+    },
+    PolicyTransitioned {
+        previous_policy_digest: String,
+        policy_digest: String,
+        expected_head: String,
+        previous_policy: Value,
+        policy: Value,
+        reviewed_permission_change: bool,
+        relocation: Option<PolicyRelocation>,
+        reason: String,
+    },
+    PeerRestored {
+        peer_id: String,
+        denial_sha256: String,
+        reviewed_permission_change: bool,
+        policy_digest: String,
+        expected_head: String,
         reason: String,
     },
     PartnerOutcomeRecorded {
@@ -271,9 +316,36 @@ enum Stage {
     Completed,
     Rejected,
 }
+#[derive(Clone)]
+struct LifecycleIntent {
+    operation: String,
+    expected_head: String,
+    intent_sha256: String,
+    settlements: usize,
+}
+fn lifecycle_anchor(event: &OperationalEvent) -> Option<(&'static str, &str)> {
+    match event {
+        OperationalEvent::PolicyTransitioned { expected_head, .. } => {
+            Some(("policy-transition", expected_head))
+        }
+        OperationalEvent::PeerRestored { expected_head, .. } => {
+            Some(("peer-regrant", expected_head))
+        }
+        _ => None,
+    }
+}
+fn event_digest(event: &OperationalEvent) -> Result<String, String> {
+    digest(&serde_json::to_value(event).map_err(|e| e.to_string())?)
+}
+
 #[derive(Clone, Default)]
 struct State {
     owner_identity: String,
+    service_id: String,
+    policy_digest: String,
+    policy_transitions: usize,
+    lifecycle: Option<LifecycleIntent>,
+    denial_heads: BTreeMap<String, String>,
     requests: BTreeSet<IdempotencyKey>,
     candidates: BTreeMap<String, (IdempotencyKey, Stage)>,
     denied: BTreeSet<String>,
@@ -285,7 +357,36 @@ struct State {
 }
 impl State {
     fn validate(&self, event: &OperationalEvent) -> Result<(), String> {
+        if let Some(intent) = &self.lifecycle {
+            match event {
+                OperationalEvent::EvaluationCompleted { .. }
+                | OperationalEvent::EvaluationRejected { .. }
+                    if intent.settlements < 128 => {}
+                _ if lifecycle_anchor(event).is_some_and(|(operation, head)| {
+                    operation == intent.operation && head == intent.expected_head
+                }) && event_digest(event)? == intent.intent_sha256 => {}
+                _ => return Err(
+                    "HOLD: lifecycle transaction differs from its exact bounded committed intent"
+                        .into(),
+                ),
+            }
+        } else if lifecycle_anchor(event).is_some() {
+            return Err("HOLD: lifecycle completion has no exact transaction boundary".into());
+        }
         match event {
+            OperationalEvent::LifecycleStarted {
+                operation,
+                expected_head,
+                intent_sha256,
+            } => {
+                if self.service_id != "configured-service/v1"
+                    || !["policy-transition", "peer-regrant"].contains(&operation.as_str())
+                    || !sha256(expected_head)
+                    || !sha256(intent_sha256)
+                {
+                    return Err("lifecycle boundary needs an exact local service operation, head and intent".into());
+                }
+            }
             OperationalEvent::Quarantined {
                 key,
                 candidate_id,
@@ -372,6 +473,65 @@ impl State {
                     || (!self.denied.contains(peer_id) && self.denied.len() >= MAX_IDENTITIES)
                 {
                     return Err("operational denial requires a bounded known-peer label, reason and available deny budget".into());
+                }
+            }
+            OperationalEvent::PolicyTransitioned {
+                previous_policy_digest,
+                policy_digest,
+                expected_head,
+                previous_policy,
+                policy,
+                reason: message,
+                relocation,
+                ..
+            } => {
+                if relocation.as_ref().is_some_and(|proof| {
+                    !sha256(&proof.restore_mapping_sha256)
+                        || proof.prior_state.is_empty()
+                        || proof.prior_state.len() > 4096
+                        || proof.restored_state.is_empty()
+                        || proof.restored_state.len() > 4096
+                }) {
+                    return Err("policy relocation needs a bounded verified restore mapping".into());
+                }
+                bounded(previous_policy, MAX_SERVICE_POLICY_BYTES)?;
+                bounded(policy, MAX_SERVICE_POLICY_BYTES)?;
+                if self.service_id != "configured-service/v1"
+                    || self.policy_transitions >= 16
+                    || previous_policy_digest != &self.policy_digest
+                    || (previous_policy_digest == policy_digest && relocation.is_none())
+                    || !sha256(expected_head)
+                    || digest(previous_policy)? != *previous_policy_digest
+                    || digest(policy)? != *policy_digest
+                    || !reason(message)
+                    || self.candidates.values().any(|(_, stage)| {
+                        matches!(stage, Stage::Quarantined | Stage::Prepared { .. })
+                    })
+                {
+                    return Err("policy transition needs the current policy, validated public snapshots, settled candidates and bounded local intent".into());
+                }
+            }
+            OperationalEvent::PeerRestored {
+                peer_id,
+                denial_sha256,
+                reviewed_permission_change,
+                policy_digest,
+                expected_head,
+                reason: message,
+            } => {
+                if self.service_id != "configured-service/v1"
+                    || !reviewed_permission_change
+                    || self.candidates.values().any(|(key, stage)| {
+                        key.peer_id == *peer_id
+                            && matches!(stage, Stage::Quarantined | Stage::Prepared { .. })
+                    })
+                    || !self.denied.contains(peer_id)
+                    || self.denial_heads.get(peer_id) != Some(denial_sha256)
+                    || policy_digest != &self.policy_digest
+                    || !sha256(expected_head)
+                    || !reason(message)
+                {
+                    return Err("peer regrant needs its current policy, exact latest denial and explicit bounded local intent".into());
                 }
             }
             OperationalEvent::PartnerOutcomeRecorded { outcome } => {
@@ -469,8 +629,29 @@ impl State {
         }
         Ok(())
     }
-    fn apply(&mut self, event: &OperationalEvent) -> Result<(), String> {
+    fn apply(&mut self, event: &OperationalEvent, receipt_sha256: &str) -> Result<(), String> {
+        if let Some(intent) = &mut self.lifecycle {
+            if matches!(
+                event,
+                OperationalEvent::EvaluationCompleted { .. }
+                    | OperationalEvent::EvaluationRejected { .. }
+            ) {
+                intent.settlements += 1;
+            }
+        }
         match event {
+            OperationalEvent::LifecycleStarted {
+                operation,
+                expected_head,
+                intent_sha256,
+            } => {
+                self.lifecycle = Some(LifecycleIntent {
+                    operation: operation.clone(),
+                    expected_head: expected_head.clone(),
+                    intent_sha256: intent_sha256.clone(),
+                    settlements: 0,
+                });
+            }
             OperationalEvent::Quarantined {
                 key, candidate_id, ..
             } => {
@@ -506,6 +687,17 @@ impl State {
             }
             OperationalEvent::PeerDenied { peer_id, .. } => {
                 self.denied.insert(peer_id.clone());
+                self.denial_heads
+                    .insert(peer_id.clone(), receipt_sha256.into());
+            }
+            OperationalEvent::PolicyTransitioned { policy_digest, .. } => {
+                self.policy_digest.clone_from(policy_digest);
+                self.policy_transitions += 1;
+                self.lifecycle = None;
+            }
+            OperationalEvent::PeerRestored { peer_id, .. } => {
+                self.denied.remove(peer_id);
+                self.lifecycle = None;
             }
             OperationalEvent::PartnerOutcomeRecorded { outcome } => {
                 self.outcomes.insert(outcome.interaction_id.clone());
@@ -549,11 +741,15 @@ fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
     let raw = std::str::from_utf8(bytes).map_err(|error| error.to_string())?;
     let mut count = 0;
     for (sequence, line) in raw.lines().enumerate() {
-        if sequence >= crate::MAX_RECORDS || line.is_empty() || line.len() > MAX_RECORD_BYTES {
+        if sequence >= crate::MAX_RECORDS || line.is_empty() || line.len() > MAX_POLICY_RECORD_BYTES
+        {
             return Err("operational journal record exceeds count/byte limits or is empty".into());
         }
         let row: Receipt = serde_json::from_str(line)
             .map_err(|error| format!("invalid operational receipt {sequence}: {error}"))?;
+        if line.len() > record_limit(&row.payload) {
+            return Err("operational record exceeds its event-specific byte limit".into());
+        }
         if row.sequence != sequence || row.previous != last_hash || row.sha256 != row.hash()? {
             return Err(format!(
                 "operational journal hash chain mismatch at receipt {sequence}"
@@ -575,16 +771,30 @@ fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
             }
             genesis = Some(first);
             state.owner_identity = owner.into();
+            state
+                .service_id
+                .clone_from(&genesis.as_ref().unwrap().service_id);
+            state
+                .policy_digest
+                .clone_from(&genesis.as_ref().unwrap().policy_digest);
             genesis_sha256 = row.sha256.clone();
         } else {
             let event: OperationalEvent = serde_json::from_value(row.payload.clone())
                 .map_err(|error| format!("unsupported operational event: {error}"))?;
+            if let OperationalEvent::LifecycleStarted { expected_head, .. } = &event {
+                if expected_head != &last_hash {
+                    return Err("HOLD: lifecycle boundary does not bind its immediately preceding journal head".into());
+                }
+            }
             state.validate(&event)?;
-            state.apply(&event)?;
+            state.apply(&event, &row.sha256)?;
             events.push(event);
         }
         last_hash = row.sha256;
         count += 1;
+    }
+    if state.lifecycle.is_some() {
+        return Err("HOLD: incomplete lifecycle transaction; preserve and restore the complete atomic journal".into());
     }
     Ok(Replay {
         genesis: genesis.ok_or("operational genesis missing")?,
@@ -642,9 +852,16 @@ impl OperationalJournal {
     pub fn open(owner: Arc<Store>, service_id: &str, policy_digest: &str) -> Result<Self, String> {
         Self::open_with_initialization_hook(owner, service_id, policy_digest, || Ok(()))
     }
-
     // A private supervised test boundary; never controlled by service requests.
     fn open_with_initialization_hook(
+        owner: Arc<Store>,
+        service_id: &str,
+        policy_digest: &str,
+        before_genesis: impl FnOnce() -> Result<(), String>,
+    ) -> Result<Self, String> {
+        Self::open_internal(owner, service_id, policy_digest, before_genesis)
+    }
+    fn open_internal(
         owner: Arc<Store>,
         service_id: &str,
         policy_digest: &str,
@@ -673,7 +890,7 @@ impl OperationalJournal {
                 &replay,
             )?;
             if replay.genesis.service_id != service_id
-                || replay.genesis.policy_digest != policy_digest
+                || replay.state.policy_digest != policy_digest
             {
                 return Err("HOLD: operational service/policy changed; preserve deny and idempotency history and use an explicit supported policy revision".into());
             }
@@ -720,6 +937,8 @@ impl OperationalJournal {
         maintenance::atomic_replace(directory, FILE_NAME, &committed)?;
         let state = State {
             owner_identity: genesis.owner_identity.clone(),
+            service_id: genesis.service_id.clone(),
+            policy_digest: genesis.policy_digest.clone(),
             ..State::default()
         };
         Ok(Self {
@@ -748,7 +967,16 @@ impl OperationalJournal {
         &self.genesis.service_id
     }
     pub fn policy_digest(&self) -> &str {
+        &self.state.policy_digest
+    }
+    pub fn genesis_policy_digest(&self) -> &str {
         &self.genesis.policy_digest
+    }
+    pub fn head_sha256(&self) -> &str {
+        &self.last_hash
+    }
+    pub fn latest_denial_sha256(&self, peer: &str) -> Option<&str> {
+        self.state.denial_heads.get(peer).map(String::as_str)
     }
     pub fn denied_peers(&self) -> BTreeSet<String> {
         self.state.denied.clone()
@@ -759,38 +987,441 @@ impl OperationalJournal {
         )
     }
     pub fn append(&mut self, event: OperationalEvent) -> Result<(), String> {
-        self.state.validate(&event)?;
-        if self.count >= crate::MAX_RECORDS {
-            return Err("operational journal record budget exhausted".into());
+        self.append_checked_batch(&self.last_hash.clone(), vec![event])
+    }
+    /// Atomically append a bounded operator transaction against one exact head.
+    /// All rows are validated before the sole durable replacement. Existing
+    /// bytes remain an exact prefix; a crash leaves the old or complete new
+    /// journal, never a policy change separated from candidate cancellation.
+    pub fn append_checked_batch(
+        &mut self,
+        expected_head: &str,
+        events: Vec<OperationalEvent>,
+    ) -> Result<(), String> {
+        self.append_checked_batch_with_hooks(expected_head, events, || Ok(()), || {})
+    }
+    fn append_checked_batch_with_hooks(
+        &mut self,
+        expected_head: &str,
+        mut events: Vec<OperationalEvent>,
+        before_publish: impl FnOnce() -> Result<(), String>,
+        after_publish: impl FnOnce(),
+    ) -> Result<(), String> {
+        if expected_head != self.last_hash || events.is_empty() || events.len() > 129 {
+            return Err(
+                "HOLD: stale journal head or unsupported operational transaction size".into(),
+            );
         }
-        let mut row = Receipt {
-            sequence: self.count,
-            previous: self.last_hash.clone(),
-            payload: serde_json::to_value(&event).map_err(|error| error.to_string())?,
-            sha256: String::new(),
-        };
-        row.sha256 = row.hash()?;
-        let line = serde_json::to_vec(&row).map_err(|error| error.to_string())?;
-        if line.len() > MAX_RECORD_BYTES {
-            return Err("operational record byte budget exhausted".into());
+        if events
+            .iter()
+            .any(|event| matches!(event, OperationalEvent::LifecycleStarted { .. }))
+        {
+            return Err("caller-supplied lifecycle boundaries are forbidden".into());
         }
-        let mut bytes = self.committed.clone();
-        bytes.extend_from_slice(&line);
-        bytes.push(b'\n');
-        if bytes.len() > crate::MAX_LEDGER_BYTES {
-            return Err("operational journal byte budget exhausted".into());
+        let boundary = events
+            .last()
+            .and_then(lifecycle_anchor)
+            .map(|(operation, head)| (operation.to_string(), head.to_string()));
+        if let Some((operation, anchor)) = boundary {
+            if anchor != expected_head
+                || events[..events.len() - 1].iter().any(|event| {
+                    !matches!(
+                        event,
+                        OperationalEvent::EvaluationCompleted { .. }
+                            | OperationalEvent::EvaluationRejected { .. }
+                    )
+                })
+            {
+                return Err("lifecycle batch must contain only terminal settlements followed by its exact final intent".into());
+            }
+            let intent_sha256 = event_digest(events.last().ok_or("missing lifecycle intent")?)?;
+            events.insert(
+                0,
+                OperationalEvent::LifecycleStarted {
+                    operation,
+                    expected_head: anchor,
+                    intent_sha256,
+                },
+            );
+        } else if events.iter().any(|event| lifecycle_anchor(event).is_some()) {
+            return Err("lifecycle intent must terminate its atomic batch".into());
         }
-        // Derive the post-commit state before writing, so no fallible operation
-        // remains between a successful replacement and in-memory application.
         let mut state = self.state.clone();
-        state.apply(&event)?;
+        let mut bytes = self.committed.clone();
+        let mut last_hash = self.last_hash.clone();
+        let mut count = self.count;
+        for event in &events {
+            if let OperationalEvent::PolicyTransitioned {
+                expected_head: anchor,
+                ..
+            }
+            | OperationalEvent::PeerRestored {
+                expected_head: anchor,
+                ..
+            } = event
+            {
+                if anchor != expected_head {
+                    return Err(
+                        "HOLD: lifecycle intent does not bind this exact transaction head".into(),
+                    );
+                }
+            }
+            state.validate(event)?;
+            if count >= crate::MAX_RECORDS {
+                return Err("operational journal record budget exhausted".into());
+            }
+            let mut row = Receipt {
+                sequence: count,
+                previous: last_hash,
+                payload: serde_json::to_value(event).map_err(|error| error.to_string())?,
+                sha256: String::new(),
+            };
+            row.sha256 = row.hash()?;
+            let line = serde_json::to_vec(&row).map_err(|error| error.to_string())?;
+            if line.len() > record_limit(&row.payload) {
+                return Err("operational record byte budget exhausted".into());
+            }
+            bytes.extend_from_slice(&line);
+            bytes.push(b'\n');
+            if bytes.len() > crate::MAX_LEDGER_BYTES {
+                return Err("operational journal byte budget exhausted".into());
+            }
+            state.apply(event, &row.sha256)?;
+            last_hash = row.sha256;
+            count += 1;
+        }
+        if state.lifecycle.is_some() {
+            return Err("HOLD: incomplete lifecycle batch cannot be published".into());
+        }
+        before_publish()?;
         maintenance::atomic_replace(&self.lease.owner.directory, FILE_NAME, &bytes)?;
+        after_publish();
         self.committed = bytes;
-        self.last_hash = row.sha256;
-        self.count += 1;
+        self.last_hash = last_hash;
+        self.count = count;
         self.state = state;
-        self.events.push(event);
+        self.events.extend(events);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod policy_lifecycle_tests {
+    use super::*;
+    use serde_json::json;
+    use std::fs;
+    struct Directory(PathBuf);
+    impl Directory {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "symbiote-policy-unit-{}-{}",
+                std::process::id(),
+                crate::TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Directory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn policy(index: u64) -> Value {
+        json!({"manifest":{"public_policy_fixture":index},"ca_sha256":"a".repeat(64)})
+    }
+    fn transition(old: &Value, new: &Value, head: &str) -> OperationalEvent {
+        OperationalEvent::PolicyTransitioned {
+            previous_policy_digest: digest(old).unwrap(),
+            policy_digest: digest(new).unwrap(),
+            expected_head: head.into(),
+            previous_policy: old.clone(),
+            policy: new.clone(),
+            reviewed_permission_change: false,
+            relocation: None,
+            reason: "explicit native unit operator".into(),
+        }
+    }
+    fn quarantine() -> OperationalEvent {
+        let body = json!({"inert":"pending fixture"});
+        OperationalEvent::Quarantined {
+            key: IdempotencyKey {
+                peer_id: "peer".into(),
+                operation: "submit".into(),
+                scope: "scope".into(),
+                request_id: "request".into(),
+            },
+            candidate_id: "candidate".into(),
+            body_sha256: digest(&body).unwrap(),
+            body,
+            response: json!({"pending":true}),
+        }
+    }
+    #[test]
+    fn checked_policy_batch_preserves_genesis_marker_and_prefix_or_changes_nothing() {
+        let dir = Directory::new();
+        let owner = Arc::new(Store::open(&dir.0).unwrap());
+        let old = policy(0);
+        let new = policy(1);
+        let mut journal = OperationalJournal::open(
+            Arc::clone(&owner),
+            "configured-service/v1",
+            &digest(&old).unwrap(),
+        )
+        .unwrap();
+        journal.append(quarantine()).unwrap();
+        let original = fs::read(journal.ledger_path()).unwrap();
+        let marker = fs::read(dir.0.join(OWNER_FILE)).unwrap();
+        let head = journal.head_sha256().to_string();
+        assert!(journal
+            .append_checked_batch(&"f".repeat(64), vec![transition(&old, &new, &head)])
+            .is_err());
+        assert!(
+            journal
+                .append_checked_batch(&head, vec![transition(&old, &new, &head)])
+                .is_err(),
+            "unsettled candidate forbids policy change"
+        );
+        assert_eq!(fs::read(journal.ledger_path()).unwrap(), original);
+        let events = vec![
+            OperationalEvent::EvaluationRejected {
+                candidate_id: "candidate".into(),
+                reason: "operator transition canceled pending intent".into(),
+            },
+            transition(&old, &new, &head),
+        ];
+        journal.append_checked_batch(&head, events).unwrap();
+        assert!(fs::read(journal.ledger_path())
+            .unwrap()
+            .starts_with(&original));
+        assert_eq!(fs::read(dir.0.join(OWNER_FILE)).unwrap(), marker);
+        drop(journal);
+        assert!(OperationalJournal::open(
+            Arc::clone(&owner),
+            "configured-service/v1",
+            &digest(&old).unwrap()
+        )
+        .is_err());
+        let reopened = OperationalJournal::open(
+            Arc::clone(&owner),
+            "configured-service/v1",
+            &digest(&new).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(reopened.genesis_policy_digest(), digest(&old).unwrap());
+        assert_eq!(reopened.policy_digest(), digest(&new).unwrap());
+    }
+    #[test]
+    fn policy_publication_cutpoints_reopen_old_or_complete_new_without_partial_settlement() {
+        for after_publication in [false, true] {
+            let dir = Directory::new();
+            let owner = Arc::new(Store::open(&dir.0).unwrap());
+            let old = policy(0);
+            let new = policy(1);
+            let mut journal = OperationalJournal::open(
+                Arc::clone(&owner),
+                "configured-service/v1",
+                &digest(&old).unwrap(),
+            )
+            .unwrap();
+            journal.append(quarantine()).unwrap();
+            let original = fs::read(journal.ledger_path()).unwrap();
+            let marker = fs::read(dir.0.join(OWNER_FILE)).unwrap();
+            let head = journal.head_sha256().to_string();
+            let events = vec![
+                OperationalEvent::EvaluationRejected {
+                    candidate_id: "candidate".into(),
+                    reason: "cancel at atomic policy boundary".into(),
+                },
+                transition(&old, &new, &head),
+            ];
+            if after_publication {
+                let interrupted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    journal.append_checked_batch_with_hooks(
+                        &head,
+                        events,
+                        || Ok(()),
+                        || panic!("modeled process interruption after publication"),
+                    )
+                }));
+                assert!(interrupted.is_err());
+            } else {
+                assert!(journal
+                    .append_checked_batch_with_hooks(
+                        &head,
+                        events,
+                        || Err("modeled interruption before publication".into()),
+                        || {}
+                    )
+                    .is_err());
+            }
+            drop(journal);
+            let approved = if after_publication { &new } else { &old };
+            let reopened = OperationalJournal::open(
+                Arc::clone(&owner),
+                "configured-service/v1",
+                &digest(approved).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(
+                reopened.events().len(),
+                if after_publication { 4 } else { 1 }
+            );
+            let recovered = fs::read(reopened.ledger_path()).unwrap();
+            if after_publication {
+                assert!(recovered.starts_with(&original));
+            } else {
+                assert_eq!(recovered, original);
+            }
+            assert_eq!(fs::read(dir.0.join(OWNER_FILE)).unwrap(), marker);
+        }
+    }
+    #[test]
+    fn regrant_requires_exact_latest_denial_current_policy_and_head() {
+        let dir = Directory::new();
+        let owner = Arc::new(Store::open(&dir.0).unwrap());
+        let public = policy(0);
+        let policy = digest(&public).unwrap();
+        let mut journal =
+            OperationalJournal::open(owner, "configured-service/v1", &policy).unwrap();
+        journal
+            .append(OperationalEvent::PeerDenied {
+                peer_id: "peer".into(),
+                reason: "first denial".into(),
+            })
+            .unwrap();
+        let first = journal.latest_denial_sha256("peer").unwrap().to_string();
+        journal
+            .append(OperationalEvent::PeerDenied {
+                peer_id: "peer".into(),
+                reason: "latest denial".into(),
+            })
+            .unwrap();
+        let head = journal.head_sha256().to_string();
+        let event = |denial: String| OperationalEvent::PeerRestored {
+            peer_id: "peer".into(),
+            denial_sha256: denial,
+            reviewed_permission_change: true,
+            policy_digest: policy.clone(),
+            expected_head: head.clone(),
+            reason: "explicit reviewed regrant".into(),
+        };
+        let original = fs::read(journal.ledger_path()).unwrap();
+        assert!(journal.append(event(first)).is_err());
+        assert_eq!(fs::read(journal.ledger_path()).unwrap(), original);
+        journal
+            .append(event(
+                journal.latest_denial_sha256("peer").unwrap().to_string(),
+            ))
+            .unwrap();
+        assert!(!journal.denied_peers().contains("peer"));
+    }
+}
+
+#[cfg(test)]
+mod lifecycle_anchor_tests {
+    use super::*;
+    use serde_json::json;
+    #[test]
+    fn rehashed_final_intent_cannot_move_to_an_older_known_head_with_or_without_settlements() {
+        for settlements in [false, true] {
+            let dir = std::env::temp_dir().join(format!(
+                "symbiote-policy-anchor-{}-{}",
+                std::process::id(),
+                crate::TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            let owner = Arc::new(Store::open(&dir).unwrap());
+            let identity = owner.identity().to_string();
+            let old = json!({"public":0});
+            let new = json!({"public":1});
+            let mut journal = OperationalJournal::open(
+                Arc::clone(&owner),
+                "configured-service/v1",
+                &digest(&old).unwrap(),
+            )
+            .unwrap();
+            let genesis_head = journal.head_sha256().to_string();
+            let mut rows = Vec::new();
+            if settlements {
+                let body = json!({"inert":true});
+                journal
+                    .append(OperationalEvent::Quarantined {
+                        key: IdempotencyKey {
+                            peer_id: "peer".into(),
+                            operation: "submit".into(),
+                            scope: "scope".into(),
+                            request_id: "request".into(),
+                        },
+                        candidate_id: "candidate".into(),
+                        body_sha256: digest(&body).unwrap(),
+                        body,
+                        response: json!({}),
+                    })
+                    .unwrap();
+                rows.push(OperationalEvent::EvaluationRejected {
+                    candidate_id: "candidate".into(),
+                    reason: "explicit transition cancellation".into(),
+                });
+            } else {
+                journal
+                    .append(OperationalEvent::PeerDenied {
+                        peer_id: "peer".into(),
+                        reason: "record before the transition".into(),
+                    })
+                    .unwrap();
+            }
+            let head = journal.head_sha256().to_string();
+            rows.push(OperationalEvent::PolicyTransitioned {
+                previous_policy_digest: digest(&old).unwrap(),
+                policy_digest: digest(&new).unwrap(),
+                expected_head: head.clone(),
+                previous_policy: old,
+                policy: new,
+                reviewed_permission_change: false,
+                relocation: None,
+                reason: "operator intent".into(),
+            });
+            journal.append_checked_batch(&head, rows).unwrap();
+            let committed = std::fs::read(journal.ledger_path()).unwrap();
+            let mut receipts = String::from_utf8(committed.clone())
+                .unwrap()
+                .lines()
+                .map(|line| serde_json::from_str::<Receipt>(line).unwrap())
+                .collect::<Vec<_>>();
+            let last = receipts.last_mut().unwrap();
+            last.payload["expected_head"] = json!(genesis_head);
+            last.sha256 = last.hash().unwrap();
+            let mutated = receipts
+                .iter()
+                .flat_map(|row| {
+                    let mut bytes = serde_json::to_vec(row).unwrap();
+                    bytes.push(b'\n');
+                    bytes
+                })
+                .collect::<Vec<_>>();
+            assert!(
+                replay(&mutated, &identity).is_err(),
+                "rehashing the final row cannot replace its recorded exact intent"
+            );
+            let boundary = receipts
+                .iter()
+                .position(|row| row.payload["event"] == "lifecycle_started")
+                .unwrap();
+            let incomplete = String::from_utf8(committed)
+                .unwrap()
+                .lines()
+                .take(boundary + 1)
+                .map(|line| format!("{line}\n"))
+                .collect::<String>();
+            assert!(
+                replay(incomplete.as_bytes(), &identity).is_err(),
+                "a valid hash prefix ending in a transaction boundary remains HOLD"
+            );
+            drop(journal);
+            drop(owner);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
     }
 }
 

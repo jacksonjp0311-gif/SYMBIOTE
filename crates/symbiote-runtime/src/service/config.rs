@@ -91,7 +91,7 @@ pub(super) struct Context {
     pub truth_fixture: Option<PathBuf>,
     pub truth_sha256: Option<String>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Manifest {
     schema: String,
@@ -119,102 +119,45 @@ pub(super) struct Config {
     key: Vec<u8>,
     ca: Vec<u8>,
     directory: PathBuf,
+    public_policy: serde_json::Value,
 }
 impl Config {
     pub fn load(path: &Path) -> Result<Self, String> {
+        Self::load_inner(path, true)
+    }
+    /// Public policy loading never opens the old private key or certificate.
+    pub fn load_public(path: &Path) -> Result<Self, String> {
+        Self::load_inner(path, false)
+    }
+    fn load_inner(path: &Path, credentials: bool) -> Result<Self, String> {
         let manifest: Manifest = serde_json::from_slice(&read_bounded(path, 65_536)?)
             .map_err(|_| "service configuration rejected")?;
-        if manifest.schema != "symbiote.service-config/1"
-            || !label(&manifest.identity)
-            || manifest.bind_address.ip().is_unspecified()
-            || manifest.bind_address.ip().is_multicast()
-            || manifest.peers.is_empty()
-            || manifest.peers.len() > 32
-            || manifest.contexts.is_empty()
-            || manifest.contexts.len() > 8
-        {
-            return Err(
-                "service identity, explicit unicast address or registry bounds rejected".into(),
-            );
-        }
-        manifest.limits.validate()?;
-        let mut scopes = BTreeSet::new();
-        for context in &manifest.contexts {
-            if !label(&context.scope)
-                || !scopes.insert(&context.scope)
-                || !sha(&context.schema_fingerprint)
-                || context.truth_fixture.is_some() != context.truth_sha256.is_some()
-                || context
-                    .truth_sha256
-                    .as_ref()
-                    .is_some_and(|value| !sha(value))
-            {
-                return Err(
-                    "service contexts need unique scopes and explicit schema/truth bindings".into(),
-                );
-            }
-        }
-        let mut ids = BTreeSet::from([manifest.identity.as_str()]);
-        let mut aliases = BTreeSet::new();
-        let mut pins = BTreeSet::from([manifest.certificate_sha256.to_ascii_lowercase()]);
-        for peer in &manifest.peers {
-            if !label(&peer.id)
-                || !label(&peer.alias)
-                || !ids.insert(&peer.id)
-                || !aliases.insert(&peer.alias)
-                || !sha(&peer.certificate_sha256)
-                || !pins.insert(peer.certificate_sha256.to_ascii_lowercase())
-                || peer.address.port() == 0
-                || peer.address.ip().is_unspecified()
-                || peer.address.ip().is_multicast()
-                || peer.server_name.is_empty()
-                || peer.server_name.len() > 253
-                || !peer.server_name.is_ascii()
-                || peer.access.is_empty()
-                || peer.access.len() > 8
-            {
-                return Err("service registry requires distinct explicit bounded peer identities, aliases, pins and endpoints".into());
-            }
-            let mut peer_scopes = BTreeSet::new();
-            for access in &peer.access {
-                if !scopes.contains(&access.scope)
-                    || !peer_scopes.insert(&access.scope)
-                    || access.operations.is_empty()
-                    || access.operations.len() > OPERATIONS.len()
-                    || access
-                        .operations
-                        .iter()
-                        .any(|operation| !OPERATIONS.contains(&operation.as_str()))
-                    || access.operations.iter().collect::<BTreeSet<_>>().len()
-                        != access.operations.len()
-                    || access.artifacts.is_empty()
-                    || access.artifacts.len() > 32
-                    || access.artifacts.iter().any(|id| id != "*" && !label(id))
-                {
-                    return Err(
-                        "service grant has an unsupported operation, context or artifact allowlist"
-                            .into(),
-                    );
-                }
-            }
-        }
-        let directory = path
-            .parent()
-            .unwrap_or_else(|| Path::new("."))
-            .to_path_buf();
-        let certificate = read_bounded(&directory.join(&manifest.certificate), 65_536)?;
-        let key = read_bounded(&directory.join(&manifest.private_key), 16_384)?;
+        validate_manifest(&manifest)?;
+        let directory = std::fs::canonicalize(
+            path.parent()
+                .filter(|parent| !parent.as_os_str().is_empty())
+                .unwrap_or_else(|| Path::new(".")),
+        )
+        .map_err(|_| "service manifest parent directory unavailable")?;
         let ca = read_bounded(&directory.join(&manifest.ca_certificate), 65_536)?;
-        let identity = TlsIdentity::from_pem(&certificate, &key)?;
-        if !identity
-            .certificate_sha256()
-            .eq_ignore_ascii_case(&manifest.certificate_sha256)
-        {
-            return Err("service credential differs from the provisioned leaf pin".into());
-        }
-        TlsClientConfig::new(manifest.identity.clone(), identity, &ca)?;
-        let policy_digest =
-            digest(&serde_json::json!({"manifest":manifest,"ca_sha256":hash_bytes(&ca)}))?;
+        let (certificate, key) = if credentials {
+            let certificate = read_bounded(&directory.join(&manifest.certificate), 65_536)?;
+            let key = read_bounded(&directory.join(&manifest.private_key), 16_384)?;
+            let identity = TlsIdentity::from_pem(&certificate, &key)?;
+            if !identity
+                .certificate_sha256()
+                .eq_ignore_ascii_case(&manifest.certificate_sha256)
+            {
+                return Err("service credential differs from the provisioned leaf pin".into());
+            }
+            TlsClientConfig::new(manifest.identity.clone(), identity, &ca)?;
+            (certificate, key)
+        } else {
+            (Vec::new(), Vec::new())
+        };
+        let public_policy = serde_json::json!({"manifest":manifest,"ca_sha256":hash_bytes(&ca)});
+        validate_public_size(&public_policy)?;
+        let policy_digest = digest(&public_policy)?;
         Ok(Self {
             state: directory.join(manifest.state),
             identity: manifest.identity,
@@ -227,6 +170,42 @@ impl Config {
             key,
             ca,
             directory,
+            public_policy,
+        })
+    }
+    pub fn public_snapshot(&self) -> serde_json::Value {
+        self.public_policy.clone()
+    }
+    /// Historical replay uses only public grants/context/budget data. These
+    /// views cannot open TLS sessions or read a prior private key.
+    pub fn historical(value: &serde_json::Value) -> Result<Self, String> {
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct Public {
+            manifest: Manifest,
+            ca_sha256: String,
+        }
+        let public: Public = serde_json::from_value(value.clone())
+            .map_err(|_| "historical public policy schema rejected")?;
+        validate_manifest(&public.manifest)?;
+        if !sha(&public.ca_sha256) {
+            return Err("historical public policy digest rejected".into());
+        }
+        validate_public_size(value)?;
+        let manifest = public.manifest;
+        Ok(Self {
+            state: manifest.state,
+            identity: manifest.identity,
+            policy_digest: digest(value)?,
+            bind_address: manifest.bind_address,
+            peers: manifest.peers,
+            contexts: manifest.contexts,
+            limits: manifest.limits,
+            certificate: Vec::new(),
+            key: Vec::new(),
+            ca: Vec::new(),
+            directory: PathBuf::new(),
+            public_policy: value.clone(),
         })
     }
     pub fn context(&self, scope: &str) -> Result<&Context, String> {
@@ -234,6 +213,22 @@ impl Config {
             .iter()
             .find(|context| context.scope == scope)
             .ok_or_else(|| "context is not configured".into())
+    }
+    /// Local denial/regrant arguments prefer an exact identity over aliases.
+    /// Authenticated sessions use `peer`; outbound connect keeps alias-only
+    /// selection so existing colliding aliases never silently change targets.
+    pub fn resolve_peer(&self, target: &str) -> Result<&Peer, String> {
+        self.peers
+            .iter()
+            .find(|peer| peer.id == target)
+            .or_else(|| self.peers.iter().find(|peer| peer.alias == target))
+            .ok_or_else(|| "unknown explicitly configured peer identity or alias".into())
+    }
+    pub fn peer_alias(&self, alias: &str) -> Result<&Peer, String> {
+        self.peers
+            .iter()
+            .find(|peer| peer.alias == alias)
+            .ok_or_else(|| "unknown explicitly configured peer alias".into())
     }
     pub fn peer(&self, id: &str) -> Result<&Peer, String> {
         self.peers
@@ -323,4 +318,98 @@ pub(super) fn sha(value: &str) -> bool {
 pub(super) fn hash_bytes(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn validate_manifest(manifest: &Manifest) -> Result<(), String> {
+    if manifest.schema != "symbiote.service-config/1"
+        || !label(&manifest.identity)
+        || manifest.bind_address.ip().is_unspecified()
+        || manifest.bind_address.ip().is_multicast()
+        || manifest.peers.is_empty()
+        || manifest.peers.len() > 32
+        || manifest.contexts.is_empty()
+        || manifest.contexts.len() > 8
+    {
+        return Err(
+            "service identity, explicit unicast address or registry bounds rejected".into(),
+        );
+    }
+    manifest.limits.validate()?;
+    let mut scopes = BTreeSet::new();
+    for context in &manifest.contexts {
+        if !label(&context.scope)
+            || !scopes.insert(&context.scope)
+            || !sha(&context.schema_fingerprint)
+            || context.truth_fixture.is_some() != context.truth_sha256.is_some()
+            || context
+                .truth_sha256
+                .as_ref()
+                .is_some_and(|value| !sha(value))
+        {
+            return Err(
+                "service contexts need unique scopes and explicit schema/truth bindings".into(),
+            );
+        }
+    }
+    let mut ids = BTreeSet::from([manifest.identity.as_str()]);
+    let mut aliases = BTreeSet::new();
+    let mut pins = BTreeSet::from([manifest.certificate_sha256.to_ascii_lowercase()]);
+    for peer in &manifest.peers {
+        if !label(&peer.id)
+            || !label(&peer.alias)
+            || !ids.insert(&peer.id)
+            || !aliases.insert(&peer.alias)
+            || !sha(&peer.certificate_sha256)
+            || !pins.insert(peer.certificate_sha256.to_ascii_lowercase())
+            || peer.address.port() == 0
+            || peer.address.ip().is_unspecified()
+            || peer.address.ip().is_multicast()
+            || peer.server_name.is_empty()
+            || peer.server_name.len() > 253
+            || !peer.server_name.is_ascii()
+            || peer.access.is_empty()
+            || peer.access.len() > 8
+        {
+            return Err("service registry requires distinct explicit bounded peer identities, aliases, pins and endpoints".into());
+        }
+        let mut peer_scopes = BTreeSet::new();
+        for access in &peer.access {
+            if !scopes.contains(&access.scope)
+                || !peer_scopes.insert(&access.scope)
+                || access.operations.is_empty()
+                || access.operations.len() > OPERATIONS.len()
+                || access
+                    .operations
+                    .iter()
+                    .any(|operation| !OPERATIONS.contains(&operation.as_str()))
+                || access.operations.iter().collect::<BTreeSet<_>>().len()
+                    != access.operations.len()
+                || access.artifacts.is_empty()
+                || access.artifacts.len() > 32
+                || access.artifacts.iter().any(|id| id != "*" && !label(id))
+            {
+                return Err(
+                    "service grant has an unsupported operation, context or artifact allowlist"
+                        .into(),
+                );
+            }
+        }
+    }
+    if !sha(&manifest.certificate_sha256) {
+        return Err("local certificate pin rejected".into());
+    }
+    Ok(())
+}
+
+fn validate_public_size(value: &serde_json::Value) -> Result<(), String> {
+    if serde_json::to_vec(value)
+        .map_err(|_| "public policy encoding failed")?
+        .len()
+        > symbiote_memory::operational::MAX_SERVICE_POLICY_BYTES
+    {
+        return Err(
+            "public service policy exceeds the supported 68KiB lifecycle snapshot bound".into(),
+        );
+    }
+    Ok(())
 }

@@ -128,6 +128,57 @@ def verify_directory(directory, version, *, write_manifest=False, require_target
     return dict(version=version, targets=targets, bundles=len(bundles), checksums="verified", signatures="not provided")
 
 
+def native_readme(version):
+    """A flat native archive needs instructions independent of checkout files."""
+    project = f"https://github.com/jacksonjp0311-gif/SYMBIOTE/tree/{version}"
+    return f"""# SYMBIOTE {version}
+
+Symbiotic Adaptive Intelligence — native Rust reasoning and evaluated persistent
+knowledge. The local demonstrations need no language model, API key, Rust or
+Python installation.
+
+Extract all three files into a writable folder. Open a terminal in that folder.
+
+**Windows PowerShell**
+
+```powershell
+.\\symbiote.exe doctor
+.\\symbiote.exe demo
+.\\symbiote.exe predict
+```
+
+**Linux or macOS**
+
+```sh
+chmod +x ./symbiote
+./symbiote doctor
+./symbiote demo
+./symbiote predict
+```
+
+Run `demo` again to observe retained knowledge being reused. Keep the same working
+folder: default state is `state/demo` beneath it. Use `--state PATH` to select a
+persistent location explicitly. `predict` uses retained knowledge without network
+requests. `--help` lists commands; `--json` provides machine-readable receipts.
+`network-research` runs separately supervised local peers.
+
+This is bounded research software. A passing demonstration does not establish
+general intelligence, better partner selection or universal transfer efficiency.
+External connections require explicit operator-provisioned identities, TLS
+credentials, pins and permissions.
+
+[Full project README and original graphic]({project}#readme) ·
+[Installation, operations and recovery]({project}/docs/OPERATIONS.md) ·
+[Security and trust boundary]({project}/docs/SECURITY.md) ·
+[Research roadmap]({project}/docs/ROADMAP.md)
+
+The original release archive is covered by `SHA256SUMS` on the
+[release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/{version}).
+Keep the included LICENSE. BRUTE ancestry, exact upstream references and the
+retained-reference licensing exception are documented in the full repository.
+""".encode("utf-8")
+
+
 def package(binary, target, version, out):
     validate_version(version)
     if target not in TARGETS:
@@ -144,7 +195,7 @@ def package(binary, target, version, out):
         raise ValueError("binary version does not match the release tag")
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"symbiote-{version}-{target}.zip"
-    files = [(TARGETS[target][2], data, 0o100755), ("LICENSE", (ROOT / "LICENSE").read_bytes(), 0o100644), ("README.md", (ROOT / "README.md").read_bytes(), 0o100644)]
+    files = [(TARGETS[target][2], data, 0o100755), ("LICENSE", (ROOT / "LICENSE").read_bytes(), 0o100644), ("README.md", native_readme(version), 0o100644)]
     # Exclusive creation prevents a mislabeled or previously published asset
     # from being overwritten by a repeat invocation.
     with path.open("xb") as destination:

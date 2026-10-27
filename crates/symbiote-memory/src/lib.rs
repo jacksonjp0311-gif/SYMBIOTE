@@ -3,6 +3,7 @@
 //! A hash chain detects accidental corruption; it does not authenticate a ledger
 //! against an adversary capable of rewriting its complete contents. Evaluation
 //! receives a privileged simulator oracle. It is not a universal truth verifier.
+pub mod backup;
 pub mod knowledge;
 pub mod maintenance;
 pub mod operational;

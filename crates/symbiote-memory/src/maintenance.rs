@@ -267,10 +267,36 @@ pub(crate) fn writer_lock(
     if !WRITERS.contains(&name) {
         return Err("unsupported writer lock name".into());
     }
+    super::backup::writer_admission(directory)?;
     let initialization_gate = gate(directory)?;
+    super::backup::writer_admission(directory)?;
     read_layout(directory)?;
     let writer = owned_lock(directory.join(name))?;
     Ok((writer, initialization_gate))
+}
+
+/// A backup/restore caller retains this guard while copying a coherent owner
+/// snapshot. No stale or uncertain writer is silently recovered here.
+pub(crate) fn offline_guard(directory: &Path) -> Result<WriterLock, String> {
+    let guard = gate(directory)?;
+    quiescent_locks(directory, false)?;
+    Ok(guard)
+}
+
+/// Pure typed replay of all registered owner state and immutable migration
+/// evidence. The caller holds `offline_guard` when coherence is required.
+pub(crate) fn validate_offline_state(directory: &Path) -> Result<String, String> {
+    ensure_directory(directory)?;
+    let layout = read_layout(directory)?;
+    audit_rows(directory)?;
+    let (identity, _) = validated_snapshots(directory)?;
+    if let Some(layout) = layout {
+        if layout.identity != identity {
+            return Err("backup layout identity differs from typed owner ledgers".into());
+        }
+        backup_matches(directory, &layout)?;
+    }
+    Ok(identity)
 }
 
 fn parse_pid(bytes: &[u8]) -> Result<u32, String> {

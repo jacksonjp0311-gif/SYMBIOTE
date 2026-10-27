@@ -117,8 +117,10 @@ preempt native handlers or roll back completed or in-flight application mutation
   or silent pin replacement.
 - The transport library's peer revocation lasts for its server instance. The
   [configured native service](SERVICE.md) adds durable denial and operation
-  journaling. Its registered policy is immutable: edits, certificate rotation
-  and regrant require a future explicit migration, and currently fail HOLD.
+  journaling. Unapproved manifest edits fail HOLD. Its [offline policy lifecycle](SERVICE_LIFECYCLE.md)
+  supports checked certificate rotation and explicit reviewed regrant, preserving
+  the original owner/genesis and denials. Remote JSON cannot authorize a change.
+  Historical context meaning stays fixed; changed schema/truth requires a new scope.
 - Trusted Rust handlers execute synchronously and must terminate under their own
   application budget. TLS/socket deadlines cannot preempt arbitrary native handler
   code. Process isolation or a suitable controlled worker boundary is needed for

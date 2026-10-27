@@ -96,14 +96,19 @@ Each peer entry is an operator-owned pin-to-ID mapping and an explicit endpoint.
 It permits only its listed operations in exact contexts. `artifacts` accepts exact
 IDs; `"*"` explicitly authorizes all artifacts in that context. There are no partial
 globs. The access entries constrain inbound requests and outbound calls to that
-peer. Registry entries are never contacted automatically.
+peer. Registry entries are never contacted automatically. `connect --peer` selects an
+exact alias, preserving the existing outbound contract. Local `peer-revoke` and
+`peer-regrant` accept an ID or alias and prefer an exact ID on collision.
+Authenticated sessions use exact IDs and their own artifact grants only.
 
-The first configured service/client command registers an immutable policy digest,
+The first configured service/client command registers the original policy digest,
 bound to the prepared identity, canonical manifest and CA bytes. It may initialize
-the knowledge and operational ledgers. Subsequent policy edits fail HOLD. Durable
-peer denial is an additional override that survives restart. This version has no
-policy migration, peer restoration, automatic certificate rotation or silent trust
-replacement; do not delete journals to change policy.
+the knowledge and operational ledgers. Unapproved manifest edits fail HOLD. Durable
+peer denial is an additional override that survives restart and certificate
+rotation. [Offline lifecycle commands](SERVICE_LIFECYCLE.md) append checked policy
+history and explicit reviewed regrants while preserving the original owner marker
+and receipt bytes. There is no automatic renewal or silent trust replacement; do
+not delete journals to change policy.
 
 For query/export-only contexts, set both `truth_fixture` and `truth_sha256` to
 `null`. Such a context cannot promote an offered artifact through evaluation.
@@ -288,3 +293,9 @@ recovered, and retry returns the same durable receipt. Separate controlled durab
 cutpoints before and after knowledge commit check promotion-intent reconciliation
 and preservation of the original lost-acknowledgement result. No result establishes
 general intelligence, arbitrary remote truth or production security certification.
+
+
+Offline certificate rotation, policy restrictions and reviewed peer regrant are
+documented in [Service lifecycle](SERVICE_LIFECYCLE.md). They preserve the
+original owner/genesis and append policy history; manual manifest replacement
+without a matching local transition continues to fail closed.

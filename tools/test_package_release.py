@@ -49,6 +49,13 @@ class ReleasePackagingTests(unittest.TestCase):
             with patch.object(release.subprocess, "run", return_value=result):
                 path = release.package(binary, "x86_64-pc-windows-msvc", "v0.2.0", base / "release")
                 self.assertEqual(release.verify_directory(path.parent, "v0.2.0")["bundles"], 1)
+                with zipfile.ZipFile(path) as archive:
+                    readme = archive.read("README.md").decode("utf-8")
+                    self.assertIn(".\\symbiote.exe demo", readme)
+                    self.assertIn("./symbiote demo", readme)
+                    self.assertIn("https://github.com/jacksonjp0311-gif/SYMBIOTE/tree/v0.2.0/docs/OPERATIONS.md", readme)
+                    self.assertNotIn('src="docs/', readme)
+                    self.assertNotIn("](docs/", readme)
                 with self.assertRaises(FileExistsError):
                     release.package(binary, "x86_64-pc-windows-msvc", "v0.2.0", base / "release")
             bad_version = subprocess.CompletedProcess([], 0, "SYMBIOTE 9.9.9\n", "")

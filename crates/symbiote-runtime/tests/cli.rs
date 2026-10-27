@@ -56,6 +56,99 @@ fn help_and_version_are_readable_and_do_not_create_state() {
 fn invalid_arguments_fail_before_touching_state() {
     let sandbox = Sandbox::new();
     for args in [
+        vec!["backup-state"],
+        vec!["backup-state", "--backup", "archive"],
+        vec!["backup-state", "--state", "owner"],
+        vec!["verify-backup", "--backup", "archive"],
+        vec![
+            "restore-state",
+            "--backup",
+            "archive",
+            "--manifest-sha256",
+            "abcd",
+            "--state",
+            "restored",
+        ],
+        vec![
+            "restore-state",
+            "--backup",
+            "archive",
+            "--manifest-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ],
+        vec![
+            "verify-backup",
+            "--backup",
+            "archive",
+            "--manifest-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "--state",
+            "override",
+        ],
+        vec![
+            "backup-state",
+            "--state",
+            "owner",
+            "--backup",
+            "archive",
+            "--backup",
+            "duplicate",
+        ],
+        vec![
+            "backup-state",
+            "--state",
+            "owner",
+            "--backup",
+            "archive",
+            "--graph-context-registry",
+            "registry.json",
+        ],
+        vec![
+            "backup-state",
+            "--state",
+            "owner",
+            "--backup",
+            "archive",
+            "--graph-context-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ],
+        vec!["demo", "--backup", "archive"],
+        vec![
+            "backup-state",
+            "--state",
+            "owner",
+            "--backup",
+            "archive",
+            "--manifest-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ],
+        vec!["demo", "--review-permission-change"],
+        vec!["demo", "--review-relocation"],
+        vec!["peer-regrant", "--review-relocation"],
+        vec!["policy-transition", "--config", "next.json"],
+        vec![
+            "policy-status",
+            "--config",
+            "service.json",
+            "--state",
+            "override",
+        ],
+        vec![
+            "peer-regrant",
+            "--config",
+            "service.json",
+            "--peer",
+            "partner",
+        ],
+        vec![
+            "policy-transition",
+            "--config",
+            "next.json",
+            "--expected-policy",
+            "abcd",
+            "--expected-head",
+            "abcd",
+        ],
         vec!["demo", "--state"],
         vec!["demo", "--surprise"],
         vec!["demo", "--fault", "typo"],
@@ -287,4 +380,235 @@ fn retained_structural_models_are_read_and_used_without_ledger_mutation() {
     let again = sandbox.run(&["status", "--state", "models", "--json"]);
     let result: Value = serde_json::from_slice(&again.stdout).unwrap();
     assert_eq!(result["structural_artifacts"], 0);
+}
+
+fn backup_fixture(sandbox: &Sandbox) -> (PathBuf, String, String) {
+    let state = sandbox.0.join("owner");
+    let owner = Store::open(&state).unwrap();
+    let record = KnowledgeRecord {
+        id: "backup-retained-xor".into(),
+        revision: 1,
+        source: "manual-partner".into(),
+        scope: "manual-backup-context/v1".into(),
+        schema_fingerprint: affine_schema_fingerprint(2).unwrap(),
+        payload: serde_json::json!({"kind":"affine","width":2,"coefficients":3,"bias":false}),
+        provenance: "Finite independently evaluated native CLI backup fixture".into(),
+    };
+    let evidence = TrialEvidence {
+        evaluator: "manual-finite-evaluator".into(),
+        training_case_ids: vec!["training-zero".into()],
+        training_inputs: vec![0],
+        cases: (1u16..4)
+            .map(|input| {
+                let output = (input.count_ones() % 2) as u8;
+                TrialCase {
+                    id: format!("heldout-{input}"),
+                    input,
+                    expected: output,
+                    baseline: None,
+                    candidate: output,
+                }
+            })
+            .collect(),
+        costs: TrialCosts {
+            acquisition: 0,
+            verification: 3,
+            adoption: 1,
+            baseline: 20,
+            candidate: 4,
+        },
+    };
+    KnowledgeStore::open(&state, owner.identity())
+        .unwrap()
+        .promote(record.clone(), assess(&record, &evidence).unwrap())
+        .unwrap();
+    (state, owner.identity().into(), record.id)
+}
+fn successful_json(output: Output) -> Value {
+    assert!(
+        output.status.success(),
+        "stderr: {}\nstdout: {}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
+    );
+    serde_json::from_slice(&output.stdout).unwrap()
+}
+
+#[test]
+fn native_backup_cli_restores_identity_bytes_and_offline_predictions_without_activation() {
+    let sandbox = Sandbox::new();
+    let (source, identity, artifact) = backup_fixture(&sandbox);
+    let original = fs::read(source.join("knowledge.jsonl")).unwrap();
+    let ledger = fs::read(source.join("ledger.jsonl")).unwrap();
+    let backup = sandbox.0.join("owner-backup");
+    let restored = sandbox.0.join("restored-owner");
+    let saved = successful_json(sandbox.run(&[
+        "backup-state",
+        "--state",
+        source.to_str().unwrap(),
+        "--backup",
+        backup.to_str().unwrap(),
+        "--json",
+    ]));
+    assert_eq!(saved["identity"], identity);
+    assert_eq!(saved["network_started"], false);
+    let pin = saved["manifest_sha256"].as_str().unwrap();
+    let checked = successful_json(sandbox.run(&[
+        "verify-backup",
+        "--backup",
+        backup.to_str().unwrap(),
+        "--manifest-sha256",
+        pin,
+        "--json",
+    ]));
+    assert_eq!(checked["manifest_sha256"], pin);
+    let plain = sandbox.run(&[
+        "verify-backup",
+        "--backup",
+        backup.to_str().unwrap(),
+        "--manifest-sha256",
+        pin,
+    ]);
+    assert!(plain.status.success());
+    assert!(String::from_utf8(plain.stdout)
+        .unwrap()
+        .contains("Backup verified"));
+    let receipt = successful_json(sandbox.run(&[
+        "restore-state",
+        "--backup",
+        backup.to_str().unwrap(),
+        "--manifest-sha256",
+        pin,
+        "--state",
+        restored.to_str().unwrap(),
+        "--json",
+    ]));
+    assert_eq!(receipt["identity"], identity);
+    assert_eq!(receipt["network_started"], false);
+    assert_eq!(receipt["requires_activation"], true);
+    assert_eq!(
+        fs::read(restored.join("knowledge.jsonl")).unwrap(),
+        original
+    );
+    assert_eq!(fs::read(restored.join("ledger.jsonl")).unwrap(), ledger);
+    assert!(!restored.join("writer.lock").exists());
+    assert!(!restored.join("knowledge.writer.lock").exists());
+    let predicted = successful_json(sandbox.run(&[
+        "predict",
+        "--state",
+        restored.to_str().unwrap(),
+        "--artifact",
+        &artifact,
+        "--input",
+        "3",
+        "--json",
+    ]));
+    assert_eq!(predicted["prediction"], 0);
+    assert_eq!(predicted["prediction_status"], "conditional-inference");
+    assert_eq!(
+        fs::read(restored.join("knowledge.jsonl")).unwrap(),
+        original
+    );
+    assert_eq!(fs::read(source.join("ledger.jsonl")).unwrap(), ledger);
+}
+
+#[test]
+fn native_backup_cli_rejects_live_writer_tampered_manifest_occupied_target_and_registry_pin() {
+    let sandbox = Sandbox::new();
+    let (source, _, _) = backup_fixture(&sandbox);
+    let original = fs::read(source.join("knowledge.jsonl")).unwrap();
+    let backup = sandbox.0.join("owner-backup");
+    let live = Store::open(&source).unwrap();
+    assert!(!sandbox
+        .run(&[
+            "backup-state",
+            "--state",
+            source.to_str().unwrap(),
+            "--backup",
+            backup.to_str().unwrap(),
+            "--json"
+        ])
+        .status
+        .success());
+    assert!(!backup.exists());
+    assert!(source.join("writer.lock").exists());
+    drop(live);
+    let registry = sandbox.0.join("registry.json");
+    fs::write(&registry, b"{}").unwrap();
+    assert!(!sandbox
+        .run(&[
+            "backup-state",
+            "--state",
+            source.to_str().unwrap(),
+            "--backup",
+            backup.to_str().unwrap(),
+            "--graph-context-registry",
+            registry.to_str().unwrap(),
+            "--graph-context-sha256",
+            &"a".repeat(64),
+            "--json"
+        ])
+        .status
+        .success());
+    assert!(
+        !backup.exists(),
+        "explicit registry pin is checked before archive publication"
+    );
+    let receipt = successful_json(sandbox.run(&[
+        "backup-state",
+        "--state",
+        source.to_str().unwrap(),
+        "--backup",
+        backup.to_str().unwrap(),
+        "--json",
+    ]));
+    let pin = receipt["manifest_sha256"].as_str().unwrap();
+    let occupied = sandbox.0.join("occupied");
+    fs::create_dir(&occupied).unwrap();
+    fs::write(occupied.join("sentinel"), b"preserve").unwrap();
+    assert!(!sandbox
+        .run(&[
+            "restore-state",
+            "--backup",
+            backup.to_str().unwrap(),
+            "--manifest-sha256",
+            pin,
+            "--state",
+            occupied.to_str().unwrap(),
+            "--json"
+        ])
+        .status
+        .success());
+    assert_eq!(fs::read(occupied.join("sentinel")).unwrap(), b"preserve");
+    let manifest = backup.join("backup-manifest.json");
+    let mut altered = fs::read(&manifest).unwrap();
+    altered.push(b' ');
+    fs::write(&manifest, &altered).unwrap();
+    assert!(!sandbox
+        .run(&[
+            "verify-backup",
+            "--backup",
+            backup.to_str().unwrap(),
+            "--manifest-sha256",
+            pin,
+            "--json"
+        ])
+        .status
+        .success());
+    let target = sandbox.0.join("tampered-restoration");
+    assert!(!sandbox
+        .run(&[
+            "restore-state",
+            "--backup",
+            backup.to_str().unwrap(),
+            "--manifest-sha256",
+            pin,
+            "--state",
+            target.to_str().unwrap(),
+            "--json"
+        ])
+        .status
+        .success());
+    assert!(!target.exists());
+    assert_eq!(fs::read(source.join("knowledge.jsonl")).unwrap(), original);
 }
