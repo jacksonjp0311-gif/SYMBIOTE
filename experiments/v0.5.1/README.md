@@ -7,6 +7,14 @@ and the frozen [local protocol](../../docs/STABILITY_CAMPAIGN_PROTOCOL.md).
 
 ## Recorded result
 
+Public delivery is separately recorded in [download/install verification](publication-verification.json)
+and [release CI](release-ci.json). All seven assets passed public download checks;
+all four ZIP architectures were inspected. The actual Windows installation
+passed ten native commands, including retained reuse, separate peers and verified
+backup/restore. [Platform fingerprint ordering](source-fingerprints.json)
+explains the different Windows/POSIX software-gate digests without changing
+the original S5 or CI receipts.
+
 | Item | S5 |
 | --- | --- |
 | Candidate source | `cd792651d77765532cf39f9d8307ca3bcbb7e0fb` |

@@ -172,6 +172,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Complete graph cohort, conditional routes and durable graph learning | [v0.4 graph verification](experiments/v0.4/graph-verification.json), [raw paired cases](experiments/v0.4/graph-exchange.json), and [experiment protocol](docs/RESEARCH_V04_PROTOCOL.md) |
 | Native adaptive relationships, exact setup replay and honest controls | [v0.5 engineering verification](experiments/v0.5/engineering-verification.json), [preserved primary HOLD](experiments/v0.5/primary-verification.json), and [methods/results](docs/RESEARCH_V05.md) |
 | v0.5.1 local maintenance and continuity | [S5 qualification](docs/LOCAL_QUALIFICATION_V051.md) and [evidence index](experiments/v0.5.1/README.md): 24 TLS cycles, reviewed rotation, denial/regrant, lost reply, owned crash and verified relocation |
+| Public v0.5.1 installation and native delivery | [Download/install receipt](experiments/v0.5.1/publication-verification.json): all seven assets verified, four ZIP architectures inspected, actual Windows restart and backup/restore passed |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
 
@@ -272,8 +273,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 5.94 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.97% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 5.95 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.96% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

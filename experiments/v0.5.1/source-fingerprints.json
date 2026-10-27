@@ -1,0 +1,21 @@
+{
+  "schema": "symbiote.source-fingerprint-order/1",
+  "source_commit": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+  "normalized_source_files": 83,
+  "windows_Path_sort": "1b1d2e23dd930ef1b7101409ae5c82bb3277992abe2855d82a50955ab3e4157b",
+  "posix_Path_sort": "55dff46aa76aeb80cffeb78d0eb90a1f8dd927ebdb0ba6ba5ea4f976f83157ce",
+  "same_normalized_bytes_verified_against_git_blobs": true,
+  "cause": "Current verifier sorts native Path objects; Windows compares case-insensitive components and POSIX compares case-sensitive components",
+  "initial_plain_string_sort_diagnostic": {
+    "status": "MISMATCH",
+    "observed": "a04b33e0b70e9cc294533f9208fb675a488b8492828fe6adfa2f567ec5412840",
+    "reason": "String sorting is a third algorithm: component boundaries sort differently; this hypothesis was rejected"
+  },
+  "exact_Path_emulation_diagnostic": "PASS; reproduced both platform values from identical files",
+  "ubuntu_source_job": 122208039908,
+  "observed_ubuntu_native_tests": 294,
+  "observed_ubuntu_python_tests": 53,
+  "observed_ubuntu_rustc": "1.99.1",
+  "qualified_windows_native_tests": 292,
+  "interpretation": "Platform-scoped source-gate fingerprints; Git commits and per-file manifests remain independent byte bindings. No runtime or evidence regrading."
+}

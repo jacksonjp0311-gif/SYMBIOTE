@@ -1,0 +1,228 @@
+{
+  "schema": "symbiote.public-release-verification/1",
+  "tag": "v0.5.1",
+  "source_commit": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+  "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v0.5.1",
+  "draft": false,
+  "published_at": "2026-10-27T13:17:27Z",
+  "checked_at_unix": 1793107180.2733734,
+  "assets": [
+    {
+      "name": "EVIDENCE_SHA256SUMS",
+      "bytes": 109,
+      "sha256": "0ac7ad6af1dd2d58be4b703839f225850fdc3b9ab43f06fecca9a3d36f2ac35b",
+      "public_download": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 433,
+      "sha256": "bc3a584244ad92bd07a56a05689fc6b146ee096195f55595a21d8afada62eedd",
+      "public_download": true
+    },
+    {
+      "name": "SYMBIOTE-v0.5.1-local-qualification.tar.gz",
+      "bytes": 18093152,
+      "sha256": "52fca539bac260bbeae30f87168cea9b3d899e3afc12a9de12f64ae58dfe7de0",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.1-aarch64-apple-darwin.zip",
+      "bytes": 3019802,
+      "sha256": "d03376d8e6000e775cb3c180bfc086fe3187c314b1008461064b9ca380ee5c17",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.1-x86_64-apple-darwin.zip",
+      "bytes": 3230491,
+      "sha256": "7509d8f4e8bbd3fde4718d0821cdb93cb8b79e8cd72836a62a82d0fecb2118c2",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.1-x86_64-pc-windows-msvc.zip",
+      "bytes": 3061914,
+      "sha256": "1324595072731fd18a572d47d243c1784689ee620f3f4006a4c97cc42c8772c0",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.1-x86_64-unknown-linux-gnu.zip",
+      "bytes": 3342591,
+      "sha256": "5cb572ba392fd33bf26026fa6f07630114947498ac26a4c785a069d16e2c77d7",
+      "public_download": true
+    }
+  ],
+  "manifest_sets_exact": true,
+  "native_installation": {
+    "schema": "symbiote.public-native-smoke/1",
+    "status": "PASS",
+    "version": {
+      "build_source_commit": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+      "name": "SYMBIOTE",
+      "version": "0.5.1"
+    },
+    "os": "windows",
+    "architecture": "x86_64",
+    "source_commit": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+    "binary": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-installed\\symbiote.exe",
+    "binary_sha256": "c82b3ef5cc6822b6306eab1ce3d5adba6f854a0b8f7cab651d08c6fa4091e87b",
+    "calls": [
+      {
+        "command": "--version",
+        "arguments": [
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "2fa03ea57a208e70748e4184492f4f08ed5ca5b2c197d6e7a873f8ed2d3da5e4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "doctor",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\demo",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "9f127def63ff6f36f302c66fa413be2cdd5b233627627e1924dd6fc63dcc6169",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "demo",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\demo",
+          "--json",
+          "--receipts",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\first.json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "4d5a2f737f5042e2e0a292a2d2afe911254fc56985327f7feb9b5e8df9ff8247",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "predict",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\demo",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "d5992d8994c5d67beb98fdaa0d10429f8d169a944d145a9971fd32c4f3830f77",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "demo",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\demo",
+          "--json",
+          "--receipts",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\second.json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "f098c7e5538dbb954c7f34c04d32781c495e9d7c95f3935defe308f4fa79833e",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "network-research",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\network",
+          "--json",
+          "--receipts",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\native-exchange.json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "38be2bd872f3d77c0104894855f69a937953425b621033559055502bebd23863",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "backup-state",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\demo",
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\owner-backup",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "71976c7e0d1a4829aa14279179bfc6ac68b77e1b6262ced15c235840a3a1a5ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "verify-backup",
+        "arguments": [
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\owner-backup",
+          "--manifest-sha256",
+          "29a178e1bca68149953f6d810fd2bf857ce70ed182fcd193070b406f88e50c37",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "71976c7e0d1a4829aa14279179bfc6ac68b77e1b6262ced15c235840a3a1a5ba",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "restore-state",
+        "arguments": [
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\owner-backup",
+          "--manifest-sha256",
+          "29a178e1bca68149953f6d810fd2bf857ce70ed182fcd193070b406f88e50c37",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\restored-owner",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "dd31f4d228df39426ff236b40cc0493075467b1b5ef020b4fe9bc6ad82f50d1f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": "predict",
+        "arguments": [
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v051-smoke\\restored-owner",
+          "--json"
+        ],
+        "exit": 0,
+        "stdout_sha256": "d5992d8994c5d67beb98fdaa0d10429f8d169a944d145a9971fd32c4f3830f77",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "nonmutating_doctor": true,
+    "retained_identity": "symbiote-a0bce626c5f86b35f96f8ffa",
+    "first_promoted": 2,
+    "restart_promoted": 0,
+    "restart_reused": 2,
+    "offline_network_requests": 0,
+    "distinct_native_processes_and_owners": 3,
+    "native_peer_restart_zero_oracle_calls": true,
+    "offline_backup_verify_restore_retains_exact_history": true,
+    "restored_offline_predictions_match": true,
+    "backup_manifest_sha256": "29a178e1bca68149953f6d810fd2bf857ce70ed182fcd193070b406f88e50c37",
+    "completed_at_unix": 1793107237.60996,
+    "claim": "public Windows asset installation and bounded smoke; no new learning-efficiency study or two-host evidence"
+  },
+  "platform_bundle_inspection": {
+    "version": "v0.5.1",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu"
+    ],
+    "bundles": 4,
+    "checksums": "verified",
+    "signatures": "not provided"
+  },
+  "raw_download_receipt_sha256": "8a5a625dcdcab6762ee075cb0ee07d4a78be7ccffb00513a30b9e6d4a530421a",
+  "raw_smoke_receipt_sha256": "2976998c5bb85d045565830f567ee59e8381e4e1d726d5550d9ae368f3545ca4",
+  "online_installer_log_sha256": "c18143dd50960085ae6e46edcf3444f3b97e15d62b77aaf12ba4f1e62b5de478",
+  "initial_public_listing": {
+    "result": "REJECTED_INCOMPLETE_LIST",
+    "assets_seen": 5,
+    "cause": "Cached pre-evidence-upload public API response",
+    "original_output_directory_preserved": true,
+    "correction": "Fresh unauthenticated API request with no-cache and unique query; exact seven-asset check unchanged"
+  },
+  "scope": "Public asset checks and one-PC Windows execution; no new scientific sample or two-host deployment evidence"
+}

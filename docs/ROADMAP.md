@@ -53,9 +53,11 @@ repeats; the two fixed fixtures add no new scientific samples. S3 and S4 checker
 HOLDs remain preserved. [Local qualification](LOCAL_QUALIFICATION_V051.md) and
 [evidence](../experiments/v0.5.1/README.md) record the exact boundaries.
 
-The next operational work is a predeclared longer-duration local campaign and
-verification of published installation assets. Independent two-host deployment
-remains `OPEN_UNAVAILABLE`; the current accepted scope is this PC. Stable v1.0
+The public v0.5.1 assets now pass download/checksum and architecture checks; the
+Windows binary passes online installation, restart and verified backup/restore.
+The next operational work is a predeclared longer-duration local campaign.
+Independent two-host deployment remains `OPEN_UNAVAILABLE`; the accepted scope
+is this PC. Stable v1.0
 also needs its broader scientific criteria, compatibility window and documented
 failure envelope. No v0.6 research milestone is inferred from maintenance tests.
 

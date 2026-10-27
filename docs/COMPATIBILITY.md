@@ -10,18 +10,21 @@ an arbitrary partner, environment, or transferred claim.
 
 | Surface | Current evidence | Boundary |
 | --- | --- | --- |
-| Windows binary | v0.5.1 S5 debug candidate, x86-64 MSVC on one Windows PC; v0.5.0 public release installation/restart smoke | A new release archive needs its own public-asset check; Windows ARM binaries are not supplied |
-| Linux binary | v0.5.0 release: x86-64 GNU, built and tested on Ubuntu 22.04 | This Windows campaign does not qualify v0.5.1 on Linux; other distributions/libcs need separate checks |
-| macOS binaries | v0.5.0 release: macOS 15, Apple Silicon and Intel build/test jobs | This Windows campaign does not qualify v0.5.1 on macOS or earlier macOS releases |
-| Rust | S5 local Windows checks with 1.98.1; v0.5.0 release CI with stable 1.99.1 | A lower minimum compiler version has not been established |
+| Windows binary | v0.5.1 public x86-64 MSVC ZIP downloaded, installed online and used for restart and backup/restore checks on this PC; S5 debug continuity qualified separately | Windows ARM binaries are not supplied; the public executable is distinct from the archived S5 binary |
+| Linux binary | v0.5.1 x86-64 GNU bundle built on Ubuntu 22.04 with passing software gates; public ZIP downloaded and inspected | No Linux public-binary execution on this PC; other distributions/libcs and Linux continuity need separate checks |
+| macOS binaries | v0.5.1 macOS 15 Apple Silicon and Intel build/test jobs passed; both public ZIPs downloaded and inspected | No macOS public-binary execution on this PC; earlier macOS versions and continuity need separate checks |
+| Rust | S5 local Windows checks with 1.98.1; v0.5.1 Ubuntu CI log confirms stable 1.99.1 | A lower minimum compiler version has not been established |
 | Python | Development verification and packaging only | Native demos, retained predictions and configured services do not require Python |
 | Rust libraries | Four workspace crates, with exact reasoning and explicit scoped interfaces | The v0.x Rust API is not a stable 1.0 API promise; no crates.io publication is implied |
 
-Every release ZIP has its own architecture check and checksum. The public
-v0.5.0 Windows binary was installed from its actual download, then used for the
-two-agent demo, retained offline predictions, repeat reuse and separate native
-peer processes. CI results for another operating system do not establish a
-two-machine private-network deployment.
+All seven v0.5.1 assets were downloaded publicly and matched their declared
+checksums. All four ZIP architectures and their exact native manifest set passed
+inspection. The actual Windows binary passed ten commands: version, doctor,
+demo, retained prediction, repeat reuse, separate native peers, backup, verify,
+restore and restored prediction. Identity and original history bytes survived.
+See [public verification](../experiments/v0.5.1/publication-verification.json) and
+[release CI](../experiments/v0.5.1/release-ci.json). CI results for another
+operating system do not establish a two-machine private-network deployment.
 
 The v0.5.1 default software gate records 292 native test executions, 53 Python
 tests and 6,093 parity cases. One ignored test was separately selected for the
@@ -30,6 +33,15 @@ new tests. The [qualification account](LOCAL_QUALIFICATION_V051.md) and
 [evidence index](../experiments/v0.5.1/README.md) pin the exact studied source and
 executables. Release executables may have different hashes and must not silently
 replace them in an audit. S3/S4 checker HOLDs remain part of the record.
+
+The current software-gate digest sorts native `Path` objects. Windows and POSIX
+therefore report different fingerprints for the same 83 normalized source files.
+The [ordering receipt](../experiments/v0.5.1/source-fingerprints.json) reproduces
+both values and records the initially rejected plain-string sorting hypothesis.
+Use the declared platform and algorithm when comparing them; Git source commits
+and per-file evidence manifests remain independent byte bindings. Platform test
+counts also differ: the observed Ubuntu gate ran 294 native tests and 53 Python
+tests; the S5 Windows default gate ran 292 native tests and 53 Python tests.
 
 ## Protocol and trust
 

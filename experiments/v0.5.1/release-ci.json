@@ -1,0 +1,157 @@
+{
+  "raw_receipt_sha256": "3f8078d3298f98c8f13d9439f639b8eecd4de8f37526cdb20c917dc573cd7fa7",
+  "schema": "symbiote.github-workflow-monitor/1",
+  "status": "PASS_ALL_REQUESTED_WORKFLOWS_COMPLETED",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "source_commit": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+  "checked_at": "2026-10-27T13:20:13.994Z",
+  "monitor_started_at": "2026-10-27T13:11:26.438Z",
+  "last_api_poll_at": "2026-10-27T13:18:01.317Z",
+  "api_monitor_limit_seconds": 600,
+  "polls": 4,
+  "read_only_github_tools": true,
+  "workflow_count": 3,
+  "job_count": 12,
+  "failed_jobs": [],
+  "failed_logs_collected": [],
+  "runs": [
+    {
+      "id": 40509701700,
+      "name": "Genesis verification",
+      "branch": "main",
+      "head_sha": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+      "status": "completed",
+      "conclusion": "success",
+      "attempt": 1,
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40509701700",
+      "jobs": [
+        {
+          "id": 122208039618,
+          "name": "verify (ubuntu-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208039684,
+          "name": "verify (macos-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208039716,
+          "name": "verify (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 40509701513,
+      "name": "Verified release bundles",
+      "branch": "v0.5.1",
+      "head_sha": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+      "status": "completed",
+      "conclusion": "success",
+      "attempt": 1,
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40509701513",
+      "jobs": [
+        {
+          "id": 122208039891,
+          "name": "prepare",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208099929,
+          "name": "build (windows-latest, x86_64-pc-windows-msvc, symbiote.exe)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208099988,
+          "name": "build (macos-15-intel, x86_64-apple-darwin, symbiote)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208100169,
+          "name": "build (macos-15, aarch64-apple-darwin, symbiote)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208100404,
+          "name": "build (ubuntu-22.04, x86_64-unknown-linux-gnu, symbiote)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122211458308,
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 40509701643,
+      "name": "Genesis verification",
+      "branch": "v0.5.1",
+      "head_sha": "d11c4018ec20df97cd891a8af12ddb0d8018187a",
+      "status": "completed",
+      "conclusion": "success",
+      "attempt": 1,
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40509701643",
+      "jobs": [
+        {
+          "id": 122208039298,
+          "name": "verify (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208039840,
+          "name": "verify (macos-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 122208039908,
+          "name": "verify (ubuntu-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "public_release_observation": {
+    "id": 425485767,
+    "tag": "v0.5.1",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v0.5.1",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-10-27T13:17:27Z",
+    "asset_names_at_observation": [
+      "SHA256SUMS",
+      "symbiote-v0.5.1-aarch64-apple-darwin.zip",
+      "symbiote-v0.5.1-x86_64-apple-darwin.zip",
+      "symbiote-v0.5.1-x86_64-pc-windows-msvc.zip",
+      "symbiote-v0.5.1-x86_64-unknown-linux-gnu.zip"
+    ],
+    "scope": "API metadata only. Five CI assets observed before root uploaded evidence; this monitor did not download or execute assets."
+  },
+  "fingerprint_order_explanation": {
+    "same_normalized_source_files": 83,
+    "windows_Path_sort": "1b1d2e23dd930ef1b7101409ae5c82bb3277992abe2855d82a50955ab3e4157b",
+    "PurePosixPath_sort": "55dff46aa76aeb80cffeb78d0eb90a1f8dd927ebdb0ba6ba5ea4f976f83157ce",
+    "matches_parent_observed_ubuntu": true,
+    "note": "Recomputed locally: Path component ordering differs by platform; plain as_posix string sort is a third order."
+  },
+  "actions": {
+    "workflow_reruns": 0,
+    "publishing": 0,
+    "repository_edits": 0,
+    "native_executions": 0
+  },
+  "scope": "Remote build/test runners do not establish a second agent deployment host, long-term reliability or stable-v1 readiness."
+}

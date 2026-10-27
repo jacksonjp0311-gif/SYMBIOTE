@@ -14,6 +14,7 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 | Fixed local continuity campaign | PASS, S5 | One separately executed ignored test; 24 cycles, one PC, two fixed fixtures |
 | Reviewed policy/credential lifecycle | PASS within local checks | Explicit offline transitions, old-pin rejection, denial retention and reviewed regrant |
 | Verified owner portability | PASS within local checks | One stopped owner, same OS, new destination and explicit service relocation review |
+| Public v0.5.1 delivery | PASS within recorded checks | Seven assets downloaded and checked; four ZIP architectures inspected; actual Windows online install/restart/backup/restore passed |
 | Earlier local attempts | S3 and S4 remain HOLD | Their checker failures and original bytes are retained; no posthoc regrading |
 | v0.5 research primary | HOLD | Engineering reproduction of the same worlds does not replace the failed primary |
 | Independent two-host deployment | OPEN_UNAVAILABLE | Same-host TLS and private-IP tests do not close this gate |
@@ -88,11 +89,14 @@ regressions additionally exercise drift, negative transfers and resource bounds.
 The pending third quarantine is rejected during relocation; it does not become
 a new learned model. No generic claim of autonomous repair follows.
 
+The actual public Windows installation, restart and verified backup/restore
+checks now pass; all four platform bundles and seven published asset hashes were
+inspected. [Public verification](../experiments/v0.5.1/publication-verification.json)
+records this separately from S5 and from the cross-platform build/test jobs.
 Before declaring stable v1.0, preserve a separately declared longer-duration
-failure/recovery envelope, qualify the supported API/format/platform window and
-verify installation/restart from the actual published assets. The v0.5.1 local
-campaign is one completed bounded gate, not a substitute for these remaining
-checks or the scientific criteria above.
+failure/recovery envelope and qualify the supported API/format/platform window.
+These completed bounded checks do not replace the remaining deployment and
+scientific criteria above.
 
 Secure configured APIs on one host are distinct from independent multi-host
 deployment evidence. Missing deployment evidence remains an open gate rather
