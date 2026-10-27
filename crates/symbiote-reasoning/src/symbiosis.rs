@@ -9,10 +9,15 @@
 use crate::structural::{AffineLearner, AffineStrategy, CandidateAssessment};
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA: &str = "symbiote.value-of-symbiosis/1";
+pub const SCHEMA: &str = "symbiote.value-of-symbiosis/2";
+pub const RECONCILIATION_SCHEMA: &str = "symbiote.value-reconciliation/1";
 const REPEATED_NEGATIVE_LIMIT: u64 = 3;
 
 /// Costs and a prospective gain already expressed in one participant's units.
+///
+/// `gain_qualified` is false when `expected_gain` was not measured or explicitly
+/// qualified. That state is not a utility of zero. `utility` is only the
+/// arithmetic; decisions use `assess`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExchangeTerms {
@@ -20,9 +25,20 @@ pub struct ExchangeTerms {
     pub transfer_cost: u64,
     pub verification_cost: u64,
     pub regression_risk: u64,
+    pub gain_qualified: bool,
+}
+
+/// A qualified number, or an estimate the caller has not measured.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UtilityAssessment {
+    Uncertain,
+    Qualified(i128),
 }
 
 impl ExchangeTerms {
+    /// Arithmetic on the stored integers. This does not decide whether the gain
+    /// was qualified.
     pub fn utility(self) -> Result<i128, String> {
         let gain = i128::from(self.expected_gain);
         let cost = i128::from(self.transfer_cost)
@@ -32,6 +48,76 @@ impl ExchangeTerms {
         gain.checked_sub(cost)
             .ok_or_else(|| "exchange utility overflow".into())
     }
+
+    pub fn assess(self) -> Result<UtilityAssessment, String> {
+        if !self.gain_qualified {
+            return Ok(UtilityAssessment::Uncertain);
+        }
+        Ok(UtilityAssessment::Qualified(self.utility()?))
+    }
+}
+
+/// Check counts already converted into one participant's units.
+///
+/// `isolated_checks: None` means the isolated bound was not measured. It is not
+/// a claim that the isolated work is zero.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TransferMeasurement {
+    pub isolated_checks: Option<u64>,
+    pub verification_checks: u64,
+    pub transfer_checks: u64,
+    pub regression_checks: u64,
+}
+
+impl TransferMeasurement {
+    pub fn terms(self) -> Result<ExchangeTerms, String> {
+        Ok(ExchangeTerms {
+            expected_gain: self.isolated_checks.unwrap_or(0),
+            transfer_cost: self.transfer_checks,
+            verification_cost: self.verification_checks,
+            regression_risk: self.regression_checks,
+            gain_qualified: self.isolated_checks.is_some(),
+        })
+    }
+}
+
+/// Full-fixture affine verification checks every domain row. Isolated
+/// identification still needs `width + 1` queries. Those are the same unit
+/// only as check counts; this is not a claim that a hint beats the bound.
+pub fn affine_full_fixture_transfer(width: u8) -> Result<ExchangeTerms, String> {
+    if !(1..=8).contains(&width) {
+        return Err("affine transfer width must be 1..=8".into());
+    }
+    let verification = 1_u64
+        .checked_shl(u32::from(width))
+        .ok_or("affine verification domain overflow")?;
+    TransferMeasurement {
+        isolated_checks: Some(u64::from(width) + 1),
+        verification_checks: verification,
+        transfer_checks: 1,
+        regression_checks: 0,
+    }
+    .terms()
+}
+
+/// Observing each edge once is the isolated lower bound used here. The
+/// cognitive evaluator still rechecks every ordered pair, which is a larger
+/// check count. This does not certify a graph transfer as beneficial.
+pub fn graph_fixture_transfer(nodes: u64, edges: u64) -> Result<ExchangeTerms, String> {
+    if !(2..=64).contains(&nodes) || !(1..=256).contains(&edges) {
+        return Err("graph transfer bounds must match the supported schema".into());
+    }
+    let routes = nodes
+        .checked_sub(1)
+        .and_then(|others| nodes.checked_mul(others))
+        .ok_or("graph route check count overflow")?;
+    TransferMeasurement {
+        isolated_checks: Some(edges),
+        verification_checks: routes,
+        transfer_checks: 1,
+        regression_checks: 0,
+    }
+    .terms()
 }
 
 /// Constrained choices. None of these grants network access or trust.
@@ -49,14 +135,18 @@ pub enum SymbiosisDecision {
 }
 
 impl SymbiosisDecision {
-    /// Knowledge leaves the caller only for a reciprocal, request, or offer choice.
-    /// An experiment stays local. Abstention, deferral, observation and
-    /// disconnection do not transfer a payload.
+    /// A payload leaves the caller only for a request or an offer.
+    /// `Connect` recommends an authorized relationship. It does not transfer
+    /// knowledge. An experiment stays local. Abstention, deferral, observation
+    /// and disconnection do not transfer a payload.
     pub fn exchanges_knowledge(self) -> bool {
-        matches!(
-            self,
-            Self::Connect | Self::RequestKnowledge | Self::OfferKnowledge
-        )
+        matches!(self, Self::RequestKnowledge | Self::OfferKnowledge)
+    }
+
+    /// Relationship recommendation. This is not a knowledge payload and it does
+    /// not create an operator grant.
+    pub fn opens_connection(self) -> bool {
+        matches!(self, Self::Connect)
     }
 }
 
@@ -76,6 +166,10 @@ pub struct ParticipantView {
 }
 
 /// Choose the next constrained action from measured participant-specific terms.
+///
+/// An unqualified gain is not zero. A missing remote measurement is not a
+/// request. `Connect` requires authorization on both views and still does not
+/// send a payload.
 pub fn decide(
     local: ParticipantView,
     remote: Option<ParticipantView>,
@@ -83,7 +177,7 @@ pub fn decide(
     if !local.authorization_present {
         return Ok(SymbiosisDecision::Abstain);
     }
-    if !local.evidence_complete {
+    if !local.evidence_complete || !local.terms.gain_qualified {
         if local.prior_negative_exchanges >= REPEATED_NEGATIVE_LIMIT {
             return Ok(SymbiosisDecision::Disconnect);
         }
@@ -93,49 +187,221 @@ pub fn decide(
             SymbiosisDecision::Observe
         });
     }
-    let local_utility = local.terms.utility()?;
+    let local_utility = match local.terms.assess()? {
+        UtilityAssessment::Uncertain => {
+            return Err("qualified gain flag disagreed with the utility assessment".into())
+        }
+        UtilityAssessment::Qualified(value) => value,
+    };
     if local_utility < 0 {
-        return Ok(
-            if local.prior_negative_exchanges + 1 >= REPEATED_NEGATIVE_LIMIT {
-                SymbiosisDecision::Disconnect
-            } else {
-                SymbiosisDecision::Defer
-            },
-        );
+        let repeated = local.prior_negative_exchanges.saturating_add(1) >= REPEATED_NEGATIVE_LIMIT;
+        return Ok(if repeated {
+            SymbiosisDecision::Disconnect
+        } else {
+            SymbiosisDecision::Defer
+        });
     }
     if local_utility == 0 {
         return Ok(SymbiosisDecision::Defer);
     }
     let Some(remote) = remote.filter(|remote| remote.evidence_complete) else {
-        return Ok(
-            if local.remote_has_unshared_evidence && !local.local_has_unshared_evidence {
-                SymbiosisDecision::RequestKnowledge
-            } else {
-                SymbiosisDecision::Observe
-            },
-        );
+        return Ok(SymbiosisDecision::Observe);
     };
-    let remote_utility = remote.terms.utility()?;
+    if !remote.terms.gain_qualified {
+        return Ok(SymbiosisDecision::Observe);
+    }
+    let remote_utility = match remote.terms.assess()? {
+        UtilityAssessment::Uncertain => {
+            return Err("qualified remote gain flag disagreed with the utility assessment".into())
+        }
+        UtilityAssessment::Qualified(value) => value,
+    };
     if remote_utility < 0 {
         return Ok(SymbiosisDecision::Defer);
     }
     if remote_utility > 0 && local.local_has_unshared_evidence && local.remote_has_unshared_evidence
     {
-        return Ok(SymbiosisDecision::Connect);
+        return Ok(if remote.authorization_present {
+            SymbiosisDecision::Connect
+        } else {
+            SymbiosisDecision::Observe
+        });
     }
-    if local.local_has_unshared_evidence && !local.remote_has_unshared_evidence {
+    if remote_utility > 0
+        && remote.authorization_present
+        && local.local_has_unshared_evidence
+        && !local.remote_has_unshared_evidence
+    {
         return Ok(SymbiosisDecision::OfferKnowledge);
     }
     if remote_utility > 0
+        && remote.authorization_present
         && local.remote_has_unshared_evidence
         && !local.local_has_unshared_evidence
     {
         return Ok(SymbiosisDecision::RequestKnowledge);
     }
+    if !remote.authorization_present
+        && (local.local_has_unshared_evidence || local.remote_has_unshared_evidence)
+    {
+        return Ok(SymbiosisDecision::Observe);
+    }
     if local.discriminating_experiment_available {
         return Ok(SymbiosisDecision::Experiment);
     }
     Ok(SymbiosisDecision::Defer)
+}
+
+/// Evidence the caller measured before an outbound offer. Flags do not create
+/// grants. Family terms are ignored when the schema is incompatible or the
+/// partner already holds the scope; those cases use an explicit qualified zero.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OutboundEvidence {
+    pub schema_compatible: bool,
+    pub partner_holds_scope: bool,
+    pub local_authorized: bool,
+    pub remote_authorized: bool,
+    pub prior_negative_exchanges: u64,
+    pub family_terms: ExchangeTerms,
+}
+
+pub fn outbound_views(evidence: OutboundEvidence) -> (ParticipantView, Option<ParticipantView>) {
+    let terms = if !evidence.schema_compatible {
+        ExchangeTerms {
+            expected_gain: 0,
+            transfer_cost: 1,
+            verification_cost: 1,
+            regression_risk: 1,
+            gain_qualified: true,
+        }
+    } else if evidence.partner_holds_scope {
+        ExchangeTerms {
+            expected_gain: 0,
+            transfer_cost: 1,
+            verification_cost: 0,
+            regression_risk: 0,
+            gain_qualified: true,
+        }
+    } else {
+        evidence.family_terms
+    };
+    let useful = evidence.schema_compatible && !evidence.partner_holds_scope;
+    let local = ParticipantView {
+        terms,
+        evidence_complete: true,
+        prior_negative_exchanges: evidence.prior_negative_exchanges,
+        authorization_present: evidence.local_authorized,
+        local_has_unshared_evidence: useful,
+        remote_has_unshared_evidence: false,
+        discriminating_experiment_available: false,
+    };
+    let remote = ParticipantView {
+        authorization_present: evidence.remote_authorized,
+        prior_negative_exchanges: 0,
+        local_has_unshared_evidence: false,
+        remote_has_unshared_evidence: false,
+        ..local
+    };
+    (local, Some(remote))
+}
+
+/// The decision and the estimates that produced it. Utility is absent when the
+/// gain was not qualified or the evidence was incomplete. Absence is not zero.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExchangePlan {
+    pub schema: String,
+    pub decision: SymbiosisDecision,
+    pub local_utility: Option<i128>,
+    pub remote_utility: Option<i128>,
+    pub local_gain_qualified: bool,
+    pub remote_gain_qualified: bool,
+    pub bilateral_authorization: bool,
+    pub exchanges_knowledge: bool,
+    pub opens_connection: bool,
+}
+
+pub fn plan(
+    local: ParticipantView,
+    remote: Option<ParticipantView>,
+) -> Result<ExchangePlan, String> {
+    let decision = decide(local, remote)?;
+    let local_utility = if local.evidence_complete {
+        match local.terms.assess()? {
+            UtilityAssessment::Uncertain => None,
+            UtilityAssessment::Qualified(value) => Some(value),
+        }
+    } else {
+        None
+    };
+    let (remote_utility, remote_gain_qualified, remote_authorized) = match remote {
+        Some(remote) if remote.evidence_complete => {
+            let utility = match remote.terms.assess()? {
+                UtilityAssessment::Uncertain => None,
+                UtilityAssessment::Qualified(value) => Some(value),
+            };
+            (
+                utility,
+                remote.terms.gain_qualified,
+                remote.authorization_present,
+            )
+        }
+        Some(remote) => (
+            None,
+            remote.terms.gain_qualified,
+            remote.authorization_present,
+        ),
+        None => (None, false, false),
+    };
+    Ok(ExchangePlan {
+        schema: SCHEMA.into(),
+        decision,
+        local_utility,
+        remote_utility,
+        local_gain_qualified: local.terms.gain_qualified,
+        remote_gain_qualified,
+        bilateral_authorization: local.authorization_present && remote_authorized,
+        exchanges_knowledge: decision.exchanges_knowledge(),
+        opens_connection: decision.opens_connection(),
+    })
+}
+
+/// Predicted action against what the runtime actually did.
+///
+/// `benefit_verified` stays false. A caller-supplied net is a measurement input
+/// for the mismatch record; it is not a benefit flag.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValueReconciliation {
+    pub schema: String,
+    pub predicted_decision: SymbiosisDecision,
+    pub predicted_local_utility: Option<i128>,
+    pub payload_sent: bool,
+    pub measured_local_net: Option<i128>,
+    pub action_matched: bool,
+    pub benefit_verified: bool,
+    pub utility_matched: Option<bool>,
+}
+
+pub fn reconcile(
+    exchange_plan: &ExchangePlan,
+    payload_sent: bool,
+    measured_local_net: Option<i128>,
+) -> ValueReconciliation {
+    let utility_matched = match (exchange_plan.local_utility, measured_local_net) {
+        (Some(predicted), Some(measured)) => Some(predicted.signum() == measured.signum()),
+        _ => None,
+    };
+    ValueReconciliation {
+        schema: RECONCILIATION_SCHEMA.into(),
+        predicted_decision: exchange_plan.decision,
+        predicted_local_utility: exchange_plan.local_utility,
+        payload_sent,
+        measured_local_net,
+        action_matched: payload_sent == exchange_plan.exchanges_knowledge,
+        benefit_verified: false,
+        utility_matched,
+    }
 }
 
 /// Mutual-benefit floor. Zero is nonnegative and is not research success.
@@ -314,6 +580,7 @@ mod tests {
                 transfer_cost: 1,
                 verification_cost: 1,
                 regression_risk: 1,
+                gain_qualified: true,
             },
             evidence_complete: true,
             prior_negative_exchanges: negative,
@@ -331,14 +598,20 @@ mod tests {
             transfer_cost: 2,
             verification_cost: 3,
             regression_risk: 4,
+            gain_qualified: true,
         };
         assert_eq!(terms.utility().unwrap(), 1);
+        assert!(matches!(
+            terms.assess().unwrap(),
+            UtilityAssessment::Qualified(1)
+        ));
         assert!(
             ExchangeTerms {
                 expected_gain: 0,
                 transfer_cost: u64::MAX,
                 verification_cost: u64::MAX,
                 regression_risk: u64::MAX,
+                gain_qualified: true,
             }
             .utility()
             .unwrap()
@@ -394,9 +667,22 @@ mod tests {
             decide(good, Some(good)).unwrap(),
             SymbiosisDecision::Connect
         );
-        assert!(SymbiosisDecision::Connect.exchanges_knowledge());
+        assert!(!SymbiosisDecision::Connect.exchanges_knowledge());
+        assert!(SymbiosisDecision::Connect.opens_connection());
+        assert!(SymbiosisDecision::OfferKnowledge.exchanges_knowledge());
+        assert!(!SymbiosisDecision::OfferKnowledge.opens_connection());
         assert!(!SymbiosisDecision::Defer.exchanges_knowledge());
         assert!(!SymbiosisDecision::Experiment.exchanges_knowledge());
+        let mut unilateral = good;
+        unilateral.authorization_present = false;
+        assert_eq!(
+            decide(good, Some(unilateral)).unwrap(),
+            SymbiosisDecision::Observe,
+            "a connection recommendation requires both authorizations and sends no payload"
+        );
+        assert!(!decide(good, Some(unilateral))
+            .unwrap()
+            .exchanges_knowledge());
 
         let mut offer = good;
         offer.remote_has_unshared_evidence = false;
@@ -417,7 +703,8 @@ mod tests {
         );
         assert_eq!(
             decide(request, None).unwrap(),
-            SymbiosisDecision::RequestKnowledge
+            SymbiosisDecision::Observe,
+            "an unmeasured partner is not sent a knowledge request"
         );
 
         let mut harmful = good;
@@ -459,6 +746,7 @@ mod tests {
             transfer_cost: u64::try_from(measured.strategies).unwrap(),
             verification_cost: u64::try_from(measured.strategies).unwrap(),
             regression_risk: 0,
+            gain_qualified: true,
         };
         assert!(terms.utility().unwrap() < 0);
         let mut local = view(0, 0, true);
@@ -468,5 +756,166 @@ mod tests {
             SymbiosisDecision::Defer
         );
         assert!(!decide(local, Some(local)).unwrap().exchanges_knowledge());
+    }
+
+    #[test]
+    fn uncertain_gain_is_not_zero_and_negative_counters_do_not_overflow() {
+        let mut uncertain = view(0, 0, true);
+        uncertain.terms = ExchangeTerms {
+            expected_gain: 0,
+            transfer_cost: 0,
+            verification_cost: 0,
+            regression_risk: 0,
+            gain_qualified: false,
+        };
+        assert_eq!(uncertain.terms.utility().unwrap(), 0);
+        assert_eq!(
+            uncertain.terms.assess().unwrap(),
+            UtilityAssessment::Uncertain
+        );
+        assert_eq!(
+            decide(uncertain, Some(uncertain)).unwrap(),
+            SymbiosisDecision::Observe
+        );
+        let planned = plan(uncertain, Some(uncertain)).unwrap();
+        assert_eq!(planned.local_utility, None);
+        assert!(!planned.exchanges_knowledge);
+
+        let mut known_zero = uncertain;
+        known_zero.terms.gain_qualified = true;
+        assert_eq!(
+            decide(known_zero, Some(known_zero)).unwrap(),
+            SymbiosisDecision::Defer
+        );
+        assert_eq!(
+            plan(known_zero, Some(known_zero)).unwrap().local_utility,
+            Some(0)
+        );
+
+        let mut saturated = view(0, u64::MAX, true);
+        saturated.terms.expected_gain = 0;
+        assert_eq!(
+            decide(saturated, Some(saturated)).unwrap(),
+            SymbiosisDecision::Disconnect
+        );
+    }
+
+    #[test]
+    fn policy_declines_unnecessary_transfer_and_selects_a_qualified_candidate() {
+        let affine = affine_full_fixture_transfer(3).unwrap();
+        assert!(affine.utility().unwrap() < 0);
+        let (local, remote) = outbound_views(OutboundEvidence {
+            schema_compatible: true,
+            partner_holds_scope: false,
+            local_authorized: true,
+            remote_authorized: true,
+            prior_negative_exchanges: 0,
+            family_terms: affine,
+        });
+        let declined = plan(local, remote).unwrap();
+        assert_eq!(declined.decision, SymbiosisDecision::Defer);
+        assert!(!declined.exchanges_knowledge);
+        assert!(!declined.opens_connection);
+        let declined_reconciliation = reconcile(&declined, false, None);
+        assert!(declined_reconciliation.action_matched);
+        assert!(!declined_reconciliation.benefit_verified);
+        assert_eq!(declined_reconciliation.utility_matched, None);
+
+        let redundant = outbound_views(OutboundEvidence {
+            schema_compatible: true,
+            partner_holds_scope: true,
+            local_authorized: true,
+            remote_authorized: true,
+            prior_negative_exchanges: 0,
+            family_terms: affine,
+        });
+        let redundant = plan(redundant.0, redundant.1).unwrap();
+        assert_eq!(redundant.decision, SymbiosisDecision::Defer);
+        assert_eq!(redundant.local_utility, Some(-1));
+        assert!(!reconcile(&redundant, true, Some(4)).action_matched);
+        assert!(!reconcile(&redundant, true, Some(4)).benefit_verified);
+        assert_eq!(
+            reconcile(&redundant, true, Some(4)).utility_matched,
+            Some(false)
+        );
+
+        let graph = graph_fixture_transfer(3, 3).unwrap();
+        assert!(graph.utility().unwrap() < 0);
+        let graph_plan = plan(
+            outbound_views(OutboundEvidence {
+                schema_compatible: true,
+                partner_holds_scope: false,
+                local_authorized: true,
+                remote_authorized: true,
+                prior_negative_exchanges: 0,
+                family_terms: graph,
+            })
+            .0,
+            outbound_views(OutboundEvidence {
+                schema_compatible: true,
+                partner_holds_scope: false,
+                local_authorized: true,
+                remote_authorized: true,
+                prior_negative_exchanges: 0,
+                family_terms: graph,
+            })
+            .1,
+        )
+        .unwrap();
+        assert_eq!(graph_plan.decision, SymbiosisDecision::Defer);
+
+        let saved = TransferMeasurement {
+            isolated_checks: Some(8),
+            verification_checks: 1,
+            transfer_checks: 1,
+            regression_checks: 0,
+        }
+        .terms()
+        .unwrap();
+        assert_eq!(saved.utility().unwrap(), 6);
+        let (local, remote) = outbound_views(OutboundEvidence {
+            schema_compatible: true,
+            partner_holds_scope: false,
+            local_authorized: true,
+            remote_authorized: true,
+            prior_negative_exchanges: 0,
+            family_terms: saved,
+        });
+        let selected = plan(local, remote).unwrap();
+        assert_eq!(selected.decision, SymbiosisDecision::OfferKnowledge);
+        assert!(selected.exchanges_knowledge);
+        assert!(!selected.opens_connection);
+        assert_eq!(selected.local_utility, Some(6));
+        assert!(selected.bilateral_authorization);
+        let selected_reconciliation = reconcile(&selected, true, None);
+        assert!(selected_reconciliation.action_matched);
+        assert!(!selected_reconciliation.benefit_verified);
+
+        let (local, remote) = outbound_views(OutboundEvidence {
+            schema_compatible: true,
+            partner_holds_scope: false,
+            local_authorized: false,
+            remote_authorized: true,
+            prior_negative_exchanges: 0,
+            family_terms: saved,
+        });
+        let denied = plan(local, remote).unwrap();
+        assert_eq!(denied.decision, SymbiosisDecision::Abstain);
+        assert!(!denied.exchanges_knowledge);
+        assert!(!denied.bilateral_authorization);
+        assert!(!reconcile(&denied, false, Some(6)).benefit_verified);
+
+        let (local, remote) = outbound_views(OutboundEvidence {
+            schema_compatible: true,
+            partner_holds_scope: false,
+            local_authorized: true,
+            remote_authorized: false,
+            prior_negative_exchanges: 0,
+            family_terms: saved,
+        });
+        let remote_denied = plan(local, remote).unwrap();
+        assert_eq!(remote_denied.decision, SymbiosisDecision::Observe);
+        assert!(!remote_denied.exchanges_knowledge);
+        assert!(!remote_denied.opens_connection);
     }
 }

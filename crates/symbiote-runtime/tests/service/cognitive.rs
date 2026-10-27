@@ -199,8 +199,31 @@ fn native_cognition_learns_two_families_cross_contributes_and_restarts_without_r
     let report = fixture.run("native-first", false);
     assert_eq!(report["fresh_promotions"], 2);
     assert_eq!(report["active_models"], 2);
-    assert_eq!(report["quarantined_contributions"], 2);
+    assert_eq!(report["quarantined_contributions"], 0);
     assert_eq!(report["partner_benefits_verified"], 0);
+    let declines: Vec<_> = fixture
+        .events("native-first")
+        .into_iter()
+        .filter(|event| event["phase"] == "VALUE")
+        .collect();
+    assert!(
+        declines.len() >= 2,
+        "each retained model is valued before any outbound payload"
+    );
+    assert!(declines.iter().all(|event| {
+        event["details"]["value"]["exchanges_knowledge"] == false
+            && event["details"]["value"]["opens_connection"] == false
+            && event["details"]["reconciliation"]["payload_sent"] == false
+            && event["details"]["reconciliation"]["action_matched"] == true
+            && event["details"]["reconciliation"]["benefit_verified"] == false
+            && event["details"]["partner_benefit_verified"] == false
+            && event["details"]["value"]["local_gain_qualified"] == true
+            && event["details"]["value"]["decision"] == "DEFER"
+            && event["details"]["value"]["local_utility"].as_i64().unwrap() < 0
+    }));
+    assert!(!fixture.events("native-first").iter().any(|event| {
+        event["phase"] == "CONTRIBUTE" && event["details"]["quarantined_offer"] == true
+    }));
     let again = fixture.run("native-restart", false);
     assert_eq!(again["fresh_promotions"], 0);
     assert_eq!(again["active_models"], 2);
@@ -215,40 +238,17 @@ fn native_cognition_learns_two_families_cross_contributes_and_restarts_without_r
         .any(|event| event["phase"] == "LEARN" && event["details"]["status"] == "REUSED"));
     first.stop();
     second.stop();
-    for event in fixture.events("native-first").iter().filter(|event| {
-        event["phase"] == "CONTRIBUTE" && event["details"]["quarantined_offer"] == true
-    }) {
-        let details = &event["details"];
-        let target = details["peer"].as_str().unwrap();
-        let candidate = details["response"]["candidate"].as_str().unwrap();
-        let manifest = if target == fixture.fixture.ids[0] {
-            "server"
-        } else {
-            "client"
-        };
-        let result = success(configured_command(
-            &fixture.fixture,
-            &format!("{manifest}.json"),
-            "evaluate",
-            &["--candidate", candidate],
-        ));
-        assert_eq!(result["status"], "PROMOTED");
-        fs::write(
-            fixture
-                .fixture
-                .dir
-                .0
-                .join(format!("peer-evaluation-{manifest}.json")),
-            serde_json::to_vec_pretty(&result).unwrap(),
-        )
-        .unwrap();
-        let identity = &fixture.fixture.ids[usize::from(manifest == "client")];
+    for (manifest, identity_index) in [("server", 0), ("client", 1)] {
         let knowledge = KnowledgeStore::open(
             &fixture.fixture.dir.0.join(format!("{manifest}-state")),
-            identity,
+            &fixture.fixture.ids[identity_index],
         )
         .unwrap();
-        assert_eq!(knowledge.active().len(), 2);
+        assert_eq!(
+            knowledge.active().len(),
+            1,
+            "a declined exchange does not add the sender's other family"
+        );
     }
     assert!(!fixture.fixture.dir.0.join("MUST-NOT-EXECUTE").exists());
     let operations =
@@ -474,8 +474,6 @@ fn retain_public_artifacts(fixture: &CognitiveFixture) {
         "server.pem",
         "client.pem",
         "observer.pem",
-        "peer-evaluation-server.json",
-        "peer-evaluation-client.json",
         "native-first-stdout.jsonl",
         "native-restart-stdout.jsonl",
         "native-first-stderr.txt",

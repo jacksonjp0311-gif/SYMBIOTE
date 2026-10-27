@@ -111,9 +111,12 @@ the number of observations alone is not a learning or reasoning improvement.
 
 `symbiosis::decide` answers whether a proposed exchange is worth more than
 continuing alone, in one participant's declared units. It does not authorize a
-connection. `measure_affine_exchange` counts oracle queries for every canonical
+connection. An unqualified gain stays `Uncertain` and is not stored as utility
+zero. `Connect` requires both participants' existing grants and does not move a
+payload. `measure_affine_exchange` counts oracle queries for every canonical
 truth of a small width. On width 3 the true hint, the wrong hint, independent
 maximin and the fixed basis each use 4 queries for every truth. That is the
-information bound `width + 1`. The extra transfer and verification units make
-utility negative, so the decision is Defer. Wrong hints are not certified.
-This enumeration is a mechanism check, not a transferable-knowledge study.
+information bound `width + 1`. Checking a transferred affine row against the
+full fixture costs `2^width` checks, so the cognitive offer is deferred.
+Wrong hints are not certified. This enumeration is a mechanism check, not a
+transferable-knowledge study.

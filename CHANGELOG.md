@@ -2,6 +2,12 @@
 
 ## v1 candidate — unreleased
 
+- Pre-exchange value decisions. Unqualified gain is not utility zero. Connect
+  requires both existing authorizations and does not send knowledge. Negative
+  exchange counts saturate. The cognitive runtime records the plan and
+  reconciles it before `candidate.submit`. Full-fixture affine and graph
+  transfers are deferred; that decline is not a reciprocal-efficiency gain.
+  `partner_benefits_verified` stays 0.
 - Value-of-symbiosis decisions and receiver-originated reciprocal receipts.
   Benefit requires local evidence, adoption, a behavior change, a strictly
   lower declared cost than the equal-resource isolated control, and no
@@ -12,12 +18,13 @@
   Hints do not shrink support. Incorrect certificates: 0. The value function
   returns DEFER. This is not query-transfer protocol 001 and not the
   preregistered protocol 002 cohort.
-- Configured cognitive episodes emit a MEASURE record when no receiver receipt
-  is present. `partner_benefits_verified` stays 0. Inert offers are unchanged.
+- Configured cognitive episodes emit VALUE and MEASURE records.
+  `partner_benefits_verified` stays 0. A non-positive plan does not submit.
 - CI run 40545912958 at `4da99383` passed Ubuntu, Windows and macOS.
   CI run 40557119693 at `b7f46a6` also passed all three platforms, including
-  `tools/verify.py`. The cancelled hour remains HOLD. Documentation commits
-  after `b7f46a6` need their own run.
+  `tools/verify.py`. CI run 40558477313 at `b957548` passed the following
+  documentation commit on all three platforms. The cancelled hour remains HOLD.
+  Later commits need their own run.
 - Configured native cognitive episodes with bounded authorized sensing,
   independent local evaluation, persistent learning and reciprocal inert offers.
 - Exact graph query-policy transfer, held-out graph facts, durable strategy

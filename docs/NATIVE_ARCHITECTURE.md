@@ -90,9 +90,13 @@ reported separately; a negative total cost result stays negative.
 The eight decisions are Connect, Observe, RequestKnowledge, OfferKnowledge,
 Experiment, Defer, Abstain and Disconnect. Abstain is the result when no
 operator grant is present. A decision never creates a grant. Knowledge is
-offered, requested or exchanged only for Connect, RequestKnowledge and
-OfferKnowledge. Zero utility defers. A remote participant with negative utility
-also defers, even when the local score is positive.
+requested or offered only for RequestKnowledge and OfferKnowledge. Connect
+recommends a relationship and requires authorization on both views; it does not
+send a payload. An unqualified gain is observation, not a utility of zero.
+Qualified zero defers. A remote participant with negative utility also defers,
+even when the local score is positive. The cognitive runtime plans this before
+`candidate.submit`. The current affine and graph fixtures do not beat their
+isolated check bounds, so those submissions are not sent.
 
 `symbiote_memory::reciprocal` seals a receiver-originated receipt. The binding
 is SHA-256 over the canonical body, including both identities and the knowledge
@@ -103,10 +107,10 @@ was not bypassed. Durable benefit also requires `persisted_after_restart` to
 be true. Mutual research success requires the sender's return net to be
 strictly positive as well. Missing restart evidence is not durability.
 
-The configured cognitive episode emits `MEASURE` with decision `OBSERVE` while
-no such receipt exists. Its summary still reports `partner_benefits_verified`
-as 0. The qualified offer path is unchanged: an inert quarantine is delivery,
-not benefit.
+The configured cognitive episode emits `VALUE` before any contribution payload
+and reconciles that prediction with whether a payload was sent. Its summary
+still reports `partner_benefits_verified` as 0. A quarantine is delivery, not
+benefit. A caller-supplied net cannot flip `benefit_verified`.
 
 A width-3 enumeration of all 16 affine truths finds that a true hint and a
 wrong hint both take the same 4 oracle queries as independent maximin and the

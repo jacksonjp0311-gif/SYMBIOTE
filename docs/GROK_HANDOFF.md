@@ -27,9 +27,11 @@ commit is not covered by `40557119693`.
 
 What is incomplete: the hour campaign, independent two-host deployment, public
 v1 assets, and any reciprocal-efficiency gain. Protocol 002 is preregistered
-and not run. The configured `run` path still delivers inert offers; it does not
-yet let the value function suppress them. `partner_benefits_verified` remains 0
-because no receiver receipt is produced by those peers during the episode.
+and not run. The configured `run` path now plans a value decision before
+`candidate.submit`. Full-fixture affine and graph transfers are deferred, so
+those episodes send no contribution payload. `partner_benefits_verified`
+remains 0. CI run `40558477313` passed Ubuntu, Windows and macOS at
+`b957548`, including `tools/verify.py`. That run does not cover later commits.
 
 The next bottleneck is not more message delivery. Transferred query guidance
 on the frozen cohort, and affine hints in the new mechanism check, match cheap
@@ -42,11 +44,11 @@ place to test that. It is not a license to rerun protocol 001.
 
 Highest-value next work, in order:
 
-1. Run the fresh source-frozen hour campaign on a commit whose software gate
+1. Close reciprocal evidence so a content digest cannot stand in for an
+   independent receiver evaluation. Keep benefit false unless both sides have
+   separately checked positive nets.
+2. Run the fresh source-frozen hour campaign on a commit whose software gate
    has passed, with a new registration. Do not resume the cancelled run.
-2. Keep the qualified offer path honest: wire `exchanges_knowledge` into
-   `contribute` only under a new policy revision that old cognition receipts
-   do not have to replay.
 3. Execute protocol 002 only after a registration pin. Report a negative net
    as negative.
 

@@ -47,6 +47,7 @@ pub fn redundant_affine_exchange(width: u8) -> Result<ExchangeCycleReport, Strin
         verification_cost: strategies * VERIFICATION_UNIT,
         regression_risk: u64::try_from(measurement.incorrect_certificates)
             .map_err(|_| "incorrect certificate count overflow")?,
+        gain_qualified: true,
     };
     let view = ParticipantView {
         terms,

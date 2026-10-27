@@ -581,10 +581,25 @@ def check_cognition_artifacts(root, binary, binary_sha, safety):
     need(all(row["schema"] == "symbiote.cognition-summary/1" and row["status"] == "STOPPED"
              and all(type(row[field]) is int for field in ("active_models", "partner_benefits_verified", "fresh_promotions", "quarantined_contributions"))
              and row["active_models"] == 2 and row["partner_benefits_verified"] == 0 for row in summaries), "actual cognition summaries/model counts missing")
-    need(first["fresh_promotions"] == 2 and first["quarantined_contributions"] == 2
+    need(first["fresh_promotions"] == 2 and first["quarantined_contributions"] == 0
          and again["fresh_promotions"] == 0 and again["quarantined_contributions"] == 0
          and first["identity"] == again["identity"]
          and again["initial_knowledge_anchor"] == again["final_knowledge_anchor"], "actual cognition first/restart behavior mismatch")
+    first_events = [parse(line) for line in read_bounded(root / "native-first" / "events.jsonl", 64 * 1024**2).splitlines()]
+    declines = [event for event in first_events if event.get("phase") == "VALUE"]
+    need(len(declines) >= 2 and all(
+        event["details"]["value"]["exchanges_knowledge"] is False
+        and event["details"]["value"]["opens_connection"] is False
+        and event["details"]["value"]["decision"] == "DEFER"
+        and event["details"]["value"]["local_gain_qualified"] is True
+        and type(event["details"]["value"]["local_utility"]) is int
+        and event["details"]["value"]["local_utility"] < 0
+        and event["details"]["reconciliation"]["payload_sent"] is False
+        and event["details"]["reconciliation"]["action_matched"] is True
+        and event["details"]["reconciliation"]["benefit_verified"] is False
+        for event in declines), "pre-exchange value decline evidence missing")
+    need(not any(event.get("phase") == "CONTRIBUTE" and event["details"].get("quarantined_offer") is True for event in first_events),
+         "a non-positive value decision must not send a quarantined payload")
     for name, summary in zip(("native-first", "native-restart"), summaries):
         output = read_bounded(root / (name + "-stdout.jsonl"), 64 * 1024**2).splitlines()
         need(output and all(len(line) <= LIMITS["text_bytes"] for line in output), "bounded actual native cognition stdout required")
@@ -598,25 +613,26 @@ def check_cognition_artifacts(root, binary, binary_sha, safety):
         owner = identity[0]["payload"]["identity"]
         need(knowledge[0]["payload"]["identity"] == owner, "cognition private owner/knowledge genesis mismatch")
         models = [row["payload"]["record"] for row in knowledge if row["payload"]["event"] in {"promote", "promote_graph"}]
-        need(len(models) == 2 and len(knowledge) == 3 and len({row["id"] for row in models}) == 2,
-             "cognition retained nonempty two-model history required")
-        need({row["payload"]["kind"] for row in models} == {"affine", "graph-map"}
-             and {row["scope"] for row in models} == {"affine-context/v1", "graph-context/v1"},
-             "actual retained affine and graph families required")
         if role == "actor":
+            need(len(models) == 2 and len(knowledge) == 3 and len({row["id"] for row in models}) == 2,
+                 "cognition actor retained nonempty two-model history required")
+            need({row["payload"]["kind"] for row in models} == {"affine", "graph-map"}
+                 and {row["scope"] for row in models} == {"affine-context/v1", "graph-context/v1"},
+                 "actual retained affine and graph families required")
             need(owner == first["identity"], "cognition reported identity differs from retained actor")
         else:
-            evaluation = parse(read_bounded(root / ("peer-evaluation-" + role + ".json"), LIMITS["json_bytes"]))
-            need(evaluation["schema"] == "symbiote.service-evaluation/1" and evaluation["status"] == "PROMOTED"
-                 and evaluation["promoted"] is True
-                 and evaluation["record_sha256"] in {safety.record_digest(model) for model in models},
-                 "partner independently promoted receipt is not bound to actual retained history")
+            need(len(models) == 1 and len(knowledge) == 2,
+                 "declined outbound exchange must leave the peer on its seeded model")
+            need({row["payload"]["kind"] for row in models} <= {"affine", "graph-map"}
+                 and {row["scope"] for row in models} <= {"affine-context/v1", "graph-context/v1"},
+                 "peer seed is not an affine or graph record")
         role_models[role] = dict(identity=owner, model_count=len(models), model_sha256=[safety.record_digest(model) for model in models])
     need(len({row["identity"] for row in role_models.values()}) == 3, "three private cognition owners required")
     return dict(status="PASS_INSTALLED_PUBLIC_BINARY_CONFIGURED_COGNITION", manifest_sha256=sha(manifest_path),
                 native_binary_sha256=binary_sha, roles=role_models, first_fresh_promotions=2,
-                restart_fresh_promotions=0, active_models=2, partner_evaluations="two independently PROMOTED local receipts",
-                interpretation="bounded operational integration, not a new scientific cohort or learning-efficiency claim")
+                restart_fresh_promotions=0, active_models=2, quarantined_contributions=0,
+                partner_evaluations="none; pre-exchange value declined non-positive transfers",
+                interpretation="bounded operational integration; declined exchanges are not a reciprocal-efficiency gain")
 
 
 def check_predictions(value):

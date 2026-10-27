@@ -65,11 +65,12 @@ evaluation budget or count recovered old learning as a new result.
   independent local fixture, and count only fresh durable promotions as learning.
 - **Contribute:** offer a useful already-validated model to another permitted
   participant. An accepted quarantine is not proof that the partner adopted it.
-- **Measure:** record whether a receiver-originated reciprocal receipt verified
-  a strict improvement over an equal-resource isolated control. With no receipt,
-  the episode's decision is `OBSERVE` and partner benefit stays unverified.
-  The value function can decline a redundant proposal; this episode does not
-  use that decline to suppress an already qualified inert offer.
+- **Measure:** before a contribution payload, record a value decision from the
+  observed schema, inventory, authorizations and family check counts. An
+  unqualified gain is not utility zero. `Connect` does not send knowledge.
+  Full-fixture affine and graph checks cost more than their isolated lower
+  bounds, so those offers are deferred and no payload is sent. Quarantine and
+  promotion remain delivery, not benefit. `partner_benefits_verified` stays 0.
 - **Reassess:** retain decisions, transport/application outcomes, failures and
   learning receipts. Later choices can use this history without resetting identity.
 

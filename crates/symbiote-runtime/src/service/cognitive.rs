@@ -5,12 +5,16 @@ use std::collections::BTreeSet;
 use std::fs::{self, File, OpenOptions};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
-use symbiote_memory::knowledge::{KnowledgeAnchor, KnowledgePayload};
+use symbiote_memory::knowledge::{KnowledgeAnchor, KnowledgePayload, KnowledgeRecord};
 use symbiote_memory::operational::{
     PartnerDecisionRecord, PartnerInteractionOutcome, PartnerInteractionRecord, PartnerOutcomeKind,
     PartnerOutcomeRecord,
 };
 use symbiote_protocol::{SecureTraffic, SecureTrafficSnapshot};
+use symbiote_reasoning::symbiosis::{
+    self, affine_full_fixture_transfer, graph_fixture_transfer, outbound_views, plan, reconcile,
+    ExchangePlan, ExchangeTerms, OutboundEvidence, ParticipantView, ValueReconciliation,
+};
 
 const DETAILS: &str = "symbiote.cognition-decision/1";
 #[derive(Clone, Serialize, Deserialize)]
@@ -688,6 +692,71 @@ fn rpc(cycle: &Cycle<'_>, peer: &str, request: &Request) -> Result<Value, String
     }
     Ok(value)
 }
+fn family_terms(record: &KnowledgeRecord) -> Result<symbiosis::ExchangeTerms, String> {
+    match record.typed_payload()? {
+        KnowledgePayload::Affine { width, .. } => affine_full_fixture_transfer(width),
+        KnowledgePayload::GraphMap(map) => {
+            let nodes = u64::try_from(map.schema.nodes).map_err(|_| "graph node count overflow")?;
+            let edges =
+                u64::try_from(map.schema.edges.len()).map_err(|_| "graph edge count overflow")?;
+            graph_fixture_transfer(nodes, edges)
+        }
+    }
+}
+
+fn prior_negative_exchanges(
+    events: &[OperationalEvent],
+    peer: &str,
+    scope: &str,
+) -> Result<u64, String> {
+    let count = events
+        .iter()
+        .filter(|event| {
+            matches!(event, OperationalEvent::PartnerOutcomeRecorded { outcome }
+                if outcome.peer_id == peer
+                    && outcome.scope == scope
+                    && matches!(outcome.kind, PartnerOutcomeKind::Failed | PartnerOutcomeKind::Rejected))
+        })
+        .count();
+    Ok(u64::try_from(count).unwrap_or(u64::MAX))
+}
+
+fn plan_value(exchange_plan: &ExchangePlan) -> Result<Value, String> {
+    Ok(json!({
+        "schema": exchange_plan.schema,
+        "decision": exchange_plan.decision,
+        "local_utility": utility_value(exchange_plan.local_utility)?,
+        "remote_utility": utility_value(exchange_plan.remote_utility)?,
+        "local_gain_qualified": exchange_plan.local_gain_qualified,
+        "remote_gain_qualified": exchange_plan.remote_gain_qualified,
+        "bilateral_authorization": exchange_plan.bilateral_authorization,
+        "exchanges_knowledge": exchange_plan.exchanges_knowledge,
+        "opens_connection": exchange_plan.opens_connection
+    }))
+}
+
+fn reconciliation_value(reconciliation: &ValueReconciliation) -> Result<Value, String> {
+    Ok(json!({
+        "schema": reconciliation.schema,
+        "predicted_decision": reconciliation.predicted_decision,
+        "predicted_local_utility": utility_value(reconciliation.predicted_local_utility)?,
+        "payload_sent": reconciliation.payload_sent,
+        "measured_local_net": utility_value(reconciliation.measured_local_net)?,
+        "action_matched": reconciliation.action_matched,
+        "benefit_verified": reconciliation.benefit_verified,
+        "utility_matched": reconciliation.utility_matched
+    }))
+}
+
+fn utility_value(value: Option<i128>) -> Result<Value, String> {
+    match value {
+        None => Ok(Value::Null),
+        Some(value) => i64::try_from(value)
+            .map(|value| json!(value))
+            .map_err(|_| "value-of-symbiosis utility does not fit the receipt integer".into()),
+    }
+}
+
 fn model_quote(record: &KnowledgeRecord) -> Result<usize, String> {
     match record.typed_payload()? {
         KnowledgePayload::Affine { width, .. } => Ok((1_usize << width) * 16),
@@ -1056,20 +1125,7 @@ impl Cycle<'_> {
                 if count >= self.policy.max_contributions_per_episode {
                     return Ok(count);
                 }
-                let offer = Offer {
-                    record: model.clone(),
-                    training_inputs: Vec::new(),
-                };
-                let request = request(
-                    &model.scope,
-                    format!(
-                        "cognition-contribute-{}",
-                        &digest(&json!({"target":target.peer,"record":model.digest()?}))?[..32]
-                    ),
-                    Operation::Submit {
-                        offer: Box::new(offer),
-                    },
-                );
+                let record_sha = model.digest()?;
                 let repeated = {
                     let owner = self
                         .state
@@ -1077,53 +1133,173 @@ impl Cycle<'_> {
                         .map_err(|_| "native owner lock poisoned")?;
                     owner.journal.events().iter().any(|event|if let OperationalEvent::PartnerDecisionRecorded {decision}=event {
                         decision.details["schema"]==DETAILS&&decision.details["phase"]=="contribute"&&decision.selected_peer.as_deref()==Some(&target.peer)
-                            &&decision.details["source_record_sha256"]==model.digest().unwrap_or_default()
+                            &&decision.details["source_record_sha256"]==record_sha
                             &&owner.journal.events().iter().any(|event|matches!(event,OperationalEvent::PartnerOutcomeRecorded {outcome} if outcome.interaction_id==decision.decision_id&&outcome.kind==PartnerOutcomeKind::Received))
                     }else{false})
                 };
                 if repeated {
                     continue;
                 }
+                let (local_authorized, prior_negative) = {
+                    let owner = self
+                        .state
+                        .lock()
+                        .map_err(|_| "native owner lock poisoned")?;
+                    let authorized = owner
+                        .config
+                        .peer(&target.peer)?
+                        .access(&model.scope, "candidate.submit")
+                        .is_ok()
+                        && !owner.journal.denied_peers().contains(&target.peer);
+                    (
+                        authorized,
+                        prior_negative_exchanges(
+                            owner.journal.events(),
+                            &target.peer,
+                            &model.scope,
+                        )?,
+                    )
+                };
+                if !local_authorized {
+                    let exchange_plan = plan(
+                        ParticipantView {
+                            terms: ExchangeTerms {
+                                expected_gain: 0,
+                                transfer_cost: 0,
+                                verification_cost: 0,
+                                regression_risk: 0,
+                                gain_qualified: false,
+                            },
+                            evidence_complete: false,
+                            prior_negative_exchanges: prior_negative,
+                            authorization_present: false,
+                            local_has_unshared_evidence: false,
+                            remote_has_unshared_evidence: false,
+                            discriminating_experiment_available: false,
+                        },
+                        None,
+                    )?;
+                    self.record_value(ValueReceipt {
+                        exchange_plan: &exchange_plan,
+                        peer: &target.peer,
+                        scope: &model.scope,
+                        record_sha: &record_sha,
+                        partner_holds_scope: false,
+                        schema_compatible: None,
+                        reason: "local authorization absent",
+                    })?;
+                    continue;
+                }
+                let observation_id =
+                    &digest(&json!({"target":target.peer,"record":record_sha}))?[..32];
+                let before = self.traffic.snapshot();
+                let observed = (|| -> Result<(bool, bool, bool), String> {
+                    let capabilities = self.call(
+                        &target.peer,
+                        &request(
+                            &model.scope,
+                            format!("cognition-cap-{observation_id}"),
+                            Operation::Capabilities,
+                        ),
+                    )?;
+                    let schema_compatible = capabilities["identity"] == target.peer
+                        && capabilities["context"] == model.scope
+                        && capabilities["schema_fingerprint"] == model.schema_fingerprint;
+                    let remote_authorized =
+                        capabilities["operations"].as_array().is_some_and(|ops| {
+                            ops.iter().any(|operation| operation == "candidate.submit")
+                        });
+                    let inventory = self.call(
+                        &target.peer,
+                        &request(
+                            &model.scope,
+                            format!("cognition-inventory-{observation_id}"),
+                            Operation::List { after: None },
+                        ),
+                    )?;
+                    let holds_scope = !inventory["artifacts"]
+                        .as_array()
+                        .ok_or("contribution inventory schema rejected")?
+                        .is_empty();
+                    Ok((schema_compatible, remote_authorized, holds_scope))
+                })();
+                let (schema_compatible, remote_authorized, partner_holds_scope) = match observed {
+                    Ok(observed) => observed,
+                    Err(error) => {
+                        let exchange_plan = plan(
+                            ParticipantView {
+                                terms: ExchangeTerms {
+                                    expected_gain: 0,
+                                    transfer_cost: 0,
+                                    verification_cost: 0,
+                                    regression_risk: 0,
+                                    gain_qualified: false,
+                                },
+                                evidence_complete: false,
+                                prior_negative_exchanges: prior_negative,
+                                authorization_present: true,
+                                local_has_unshared_evidence: false,
+                                remote_has_unshared_evidence: false,
+                                discriminating_experiment_available: false,
+                            },
+                            None,
+                        )?;
+                        self.record_value(ValueReceipt {
+                            exchange_plan: &exchange_plan,
+                            peer: &target.peer,
+                            scope: &model.scope,
+                            record_sha: &record_sha,
+                            partner_holds_scope: false,
+                            schema_compatible: None,
+                            reason: &error,
+                        })?;
+                        if error.starts_with("budget:") || error.starts_with("cancelled:") {
+                            return Err(error);
+                        }
+                        continue;
+                    }
+                };
+                let family_terms = family_terms(&model)?;
+                let (local, remote) = outbound_views(OutboundEvidence {
+                    schema_compatible,
+                    partner_holds_scope,
+                    local_authorized: true,
+                    remote_authorized,
+                    prior_negative_exchanges: prior_negative,
+                    family_terms,
+                });
+                let exchange_plan = plan(local, remote)?;
+                if !exchange_plan.exchanges_knowledge {
+                    self.record_value(ValueReceipt {
+                        exchange_plan: &exchange_plan,
+                        peer: &target.peer,
+                        scope: &model.scope,
+                        record_sha: &record_sha,
+                        partner_holds_scope,
+                        schema_compatible: Some(schema_compatible),
+                        reason: "pre-exchange value declined a payload",
+                    })?;
+                    continue;
+                }
+                let offer = Offer {
+                    record: model.clone(),
+                    training_inputs: Vec::new(),
+                };
+                let submit = request(
+                    &model.scope,
+                    format!("cognition-contribute-{observation_id}"),
+                    Operation::Submit {
+                        offer: Box::new(offer),
+                    },
+                );
                 let decision = self.intent(
                     "contribute",
                     &target.peer,
                     &model.scope,
-                    Some(request.clone()),
+                    Some(submit.clone()),
                     Some(model.source.clone()),
                 )?;
-                let before = self.traffic.snapshot();
-                let result = (|| -> Result<Value, String> {
-                    let capabilities = self.call(
-                        &target.peer,
-                        &super::cognitive::request(
-                            &model.scope,
-                            format!("{}-cap", decision.decision_id),
-                            Operation::Capabilities,
-                        ),
-                    )?;
-                    if capabilities["identity"] != target.peer
-                        || capabilities["context"] != model.scope
-                        || capabilities["schema_fingerprint"] != model.schema_fingerprint
-                    {
-                        return Ok(json!({"status":"PARTNER_CONTEXT_INCOMPATIBLE"}));
-                    }
-                    let inventory = self.call(
-                        &target.peer,
-                        &super::cognitive::request(
-                            &model.scope,
-                            format!("{}-inventory", decision.decision_id),
-                            Operation::List { after: None },
-                        ),
-                    )?;
-                    if !inventory["artifacts"]
-                        .as_array()
-                        .ok_or("contribution inventory schema rejected")?
-                        .is_empty()
-                    {
-                        return Ok(json!({"status":"PARTNER_ALREADY_HAS_CONTEXT"}));
-                    }
-                    self.call(&target.peer, &request)
-                })();
+                let result = self.call(&target.peer, &submit);
                 let (sent, received) = delta(&before, &self.traffic.snapshot());
                 match result {
                     Ok(response) => {
@@ -1139,7 +1315,21 @@ impl Cycle<'_> {
                             Some(digest(&response)?),
                             sent.div_ceil(1024) + received.div_ceil(1024),
                         )?;
-                        self.recorder.emit("CONTRIBUTE",json!({"peer":target.peer,"scope":model.scope,"origin_peer":model.source,"source_record_sha256":model.digest()?,"quarantined_offer":quarantined,"partner_benefit_verified":false,"response":response}))?;
+                        let reconciliation = reconcile(&exchange_plan, true, None);
+                        self.recorder.emit(
+                            "CONTRIBUTE",
+                            json!({
+                                "peer": target.peer,
+                                "scope": model.scope,
+                                "origin_peer": model.source,
+                                "source_record_sha256": record_sha,
+                                "quarantined_offer": quarantined,
+                                "partner_benefit_verified": false,
+                                "value": plan_value(&exchange_plan)?,
+                                "reconciliation": reconciliation_value(&reconciliation)?,
+                                "response": response
+                            }),
+                        )?;
                         count += usize::from(quarantined);
                     }
                     Err(error) => {
@@ -1149,7 +1339,18 @@ impl Cycle<'_> {
                             None,
                             sent.div_ceil(1024) + received.div_ceil(1024),
                         )?;
-                        self.recorder.emit("CONTRIBUTE",json!({"peer":target.peer,"status":"FAILED","error":error,"partner_benefit_verified":false}))?;
+                        let reconciliation = reconcile(&exchange_plan, true, None);
+                        self.recorder.emit(
+                            "CONTRIBUTE",
+                            json!({
+                                "peer": target.peer,
+                                "status": "FAILED",
+                                "error": error,
+                                "partner_benefit_verified": false,
+                                "value": plan_value(&exchange_plan)?,
+                                "reconciliation": reconciliation_value(&reconciliation)?
+                            }),
+                        )?;
                         if error.starts_with("budget:") || error.starts_with("cancelled:") {
                             return Err(error);
                         }
@@ -1159,6 +1360,34 @@ impl Cycle<'_> {
         }
         Ok(count)
     }
+
+    fn record_value(&mut self, receipt: ValueReceipt<'_>) -> Result<(), String> {
+        let reconciliation = reconcile(receipt.exchange_plan, false, None);
+        self.recorder.emit(
+            "VALUE",
+            json!({
+                "peer": receipt.peer,
+                "scope": receipt.scope,
+                "source_record_sha256": receipt.record_sha,
+                "partner_holds_scope": receipt.partner_holds_scope,
+                "schema_compatible": receipt.schema_compatible,
+                "reason": receipt.reason,
+                "value": plan_value(receipt.exchange_plan)?,
+                "reconciliation": reconciliation_value(&reconciliation)?,
+                "partner_benefit_verified": false
+            }),
+        )
+    }
+}
+
+struct ValueReceipt<'a> {
+    exchange_plan: &'a ExchangePlan,
+    peer: &'a str,
+    scope: &'a str,
+    record_sha: &'a str,
+    partner_holds_scope: bool,
+    schema_compatible: Option<bool>,
+    reason: &'a str,
 }
 fn owner_control(cancelled: Arc<AtomicBool>) -> mpsc::Receiver<String> {
     let (send, receive) = mpsc::sync_channel(1);
@@ -1360,37 +1589,14 @@ fn run_controlled(
                 }
             }
             contributions += cycle.contribute()?;
-            // Benefit evidence is incomplete in this episode: no receiver-originated
-            // receipt has been checked against an isolated control. Observation is
-            // the constrained decision. Inert quarantine still runs because the
-            // qualified offer path counts delivery separately from benefit.
-            let prospective = symbiote_reasoning::symbiosis::decide(
-                symbiote_reasoning::symbiosis::ParticipantView {
-                    terms: symbiote_reasoning::symbiosis::ExchangeTerms {
-                        expected_gain: 0,
-                        transfer_cost: 0,
-                        verification_cost: 0,
-                        regression_risk: 0,
-                    },
-                    evidence_complete: false,
-                    prior_negative_exchanges: 0,
-                    authorization_present: true,
-                    local_has_unshared_evidence: false,
-                    remote_has_unshared_evidence: false,
-                    discriminating_experiment_available: false,
-                },
-                None,
-            )?;
+            // VALUE events already recorded the pre-exchange decision. This row
+            // only states that delivery and promotion are not benefit.
             cycle.recorder.emit("MEASURE", json!({
                 "schema": "symbiote.reciprocal-measure/1",
-                "decision": prospective,
-                "utility": Value::Null,
-                "evidence_complete": false,
                 "partner_benefit_verified": false,
-                "exchanges_knowledge": prospective.exchanges_knowledge(),
-                "reason": "no receiver-originated reciprocal receipt; quarantine and promotion are not benefit",
                 "quarantine_is_benefit": false,
-                "promotion_is_benefit": false
+                "promotion_is_benefit": false,
+                "reason": "VALUE events are the pre-exchange decisions; quarantine and promotion are not benefit"
             }))?;
             cycle.recorder.emit("REASSESS",json!({"episode":episodes,"fresh_promotions":novel,"quarantined_contributions":contributions,"budget":budget.lock().map_err(|_|"native resource lock poisoned")?.clone()}))?;
             let until = (Instant::now() + Duration::from_millis(policy.interval_ms)).min(deadline);

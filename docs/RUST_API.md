@@ -23,9 +23,11 @@ not reset identity, relax grants or initialize a replacement for corrupt state.
 | `policy_status`, `policy_transition` | Inspect or explicitly advance an offline policy epoch |
 
 The reusable reasoning, protocol and memory types are documented in their Rust
-sources. `symbiote_reasoning::symbiosis` and `symbiote_memory::reciprocal` are
-part of that surface. `symbiote_runtime::reciprocal::redundant_affine_exchange`
-runs the width-bounded mechanism check. Build the documentation with
+sources. `symbiote_reasoning::symbiosis` (`decide`, `plan`, `reconcile`) and
+`symbiote_memory::reciprocal` are part of that surface.
+`symbiote_runtime::reciprocal::redundant_affine_exchange` runs the width-bounded
+mechanism check. A plan does not grant access, and reconciliation does not
+treat a caller-supplied net as verified benefit. Build the documentation with
 `cargo doc --workspace --no-deps --locked`.
 Research controllers such as `transfer`, `topology_research` and
 `exploration_research` are experimental, versioned receipt producers; they are
