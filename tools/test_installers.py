@@ -4,11 +4,13 @@ Build the native executable first. No release, network, PATH or administrator
 changes are needed: bundles and installed binaries stay in a temporary fixture.
 """
 import hashlib
+import os
 import platform
 import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 import zipfile
 from pathlib import Path
@@ -27,11 +29,14 @@ class NativeInstallerTests(unittest.TestCase):
         if not cls.target:
             raise unittest.SkipTest("native release bundle is unsupported on this test host")
         cls.executable_name = release.TARGETS[cls.target][2]
-        cls.binary = ROOT / "target" / "debug" / cls.executable_name
+        cls.binary = Path(os.environ.get("SYMBIOTE_INSTALLER_TEST_BINARY", ROOT / "target" / "release" / cls.executable_name))
         if not cls.binary.is_file():
-            raise unittest.SkipTest("cargo build --workspace is required before native installer tests")
+            raise unittest.SkipTest("cargo build --release --locked -p symbiote-runtime --bin symbiote is required before native installer tests")
         output = subprocess.check_output([str(cls.binary), "--version"], text=True).strip()
         cls.version = "v" + output.removeprefix("SYMBIOTE ")
+        expected = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
+        if cls.version != "v" + expected:
+            raise AssertionError("installer fixture binary differs from the workspace version")
         release.validate_version(cls.version)
         cls.shell = shutil.which("pwsh") or shutil.which("powershell") if sys.platform == "win32" else shutil.which("sh")
         if not cls.shell:

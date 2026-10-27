@@ -227,6 +227,16 @@ def group_alive(pid):
         return False
 
 
+def signal_owned_group(pid, signum):
+    """An owned group can exit between a liveness probe and its signal."""
+    try:
+        os.killpg(pid, signum)
+    except ProcessLookupError:
+        # Absence is idempotent; permission and other signalling errors remain
+        # failures. The caller still verifies quiescence before accepting cleanup.
+        pass
+
+
 def artifact_stem(label):
     """Encode only filesystem names; retain the exact label in the receipt."""
     require(isinstance(label,str) and bool(label),"process evidence needs a nonempty text label")
@@ -295,14 +305,14 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                 if job:
                     job.terminate()
                 else:
-                    os.killpg(process.pid, signal.SIGTERM)
+                    signal_owned_group(process.pid, signal.SIGTERM)
             try:
                 process.wait(timeout=max(0.001,min(BOUNDS["cleanup_seconds"]/2,cleanup_deadline-time.monotonic())))
             except subprocess.TimeoutExpired:
                 if job:
                     job.terminate()
                 else:
-                    os.killpg(process.pid, signal.SIGKILL)
+                    signal_owned_group(process.pid, signal.SIGKILL)
                 process.wait(timeout=max(0.001,cleanup_deadline-time.monotonic()))
             # Job accounting can lag a signalled/reaped root by a scheduler
             # turn. Observe bounded quiescence before declaring a leaked child.
@@ -318,7 +328,7 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
             else:
                 leaked = group_alive(process.pid)
                 if leaked:
-                    os.killpg(process.pid, signal.SIGKILL)
+                    signal_owned_group(process.pid, signal.SIGKILL)
             if leaked and outcome == "completed":
                 outcome = "descendant-leak"
             while time.monotonic()<cleanup_deadline:
@@ -332,7 +342,7 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
                 if process is not None:
                     if job and job.attached: job.terminate()
                     elif job and process.poll() is None: process.kill()
-                    elif not job and group_alive(process.pid): os.killpg(process.pid,signal.SIGKILL)
+                    elif not job and group_alive(process.pid): signal_owned_group(process.pid,signal.SIGKILL)
                     process.wait(timeout=max(0.001,cleanup_deadline-time.monotonic()))
                     cleanup_verified = job.active()==0 if job and job.attached else (not group_alive(process.pid) if not job else True)
             except BaseException as cleanup_failure:

@@ -1,6 +1,8 @@
 """Campaign safety tests; no campaign or research cohort is started here."""
 import importlib.util
 import copy
+import errno
+import io
 import json
 import os
 from pathlib import Path
@@ -9,6 +11,8 @@ import tempfile
 import time
 import tomllib
 import unittest
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 ROOT=Path(__file__).resolve().parents[1]
 SPEC=importlib.util.spec_from_file_location("campaign",ROOT/"tools/stability_campaign.py")
@@ -21,11 +25,42 @@ class SafetyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="symbiote-campaign-tree-test-") as temp:
             code="import subprocess,sys,json,time;p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);print(json.dumps({'child':p.pid}),flush=True);time.sleep(30)"
             result=c.execute([sys.executable,"-c",code],Path(temp),"tree",timeout=2)
-            self.assertEqual(result["outcome"],"timeout")
-            self.assertTrue(result["cleanup_verified"])
+            self.assertEqual(result["outcome"],"timeout",result)
+            self.assertTrue(result["cleanup_verified"],result)
             self.assertGreater(json.loads(c.output(result,temp))["child"],0)
             self.assertTrue((Path(temp)/result["process_receipt"]).is_file())
             self.assertLess(result["elapsed_seconds"],2+c.BOUNDS["cleanup_seconds"]+2)
+
+    def raced_posix_cleanup(self, failure):
+        """Deterministically reproduce disappearance after a positive group probe."""
+        process = SimpleNamespace(pid=43210, returncode=-15, stdout=io.BytesIO(), stderr=io.BytesIO(),
+                                  poll=Mock(return_value=None), wait=Mock(return_value=-15))
+        killpg = Mock(side_effect=[None, failure])
+        ticks = iter([0, 0, 0, 0, 0, 0.3])
+        with tempfile.TemporaryDirectory(prefix="symbiote-posix-race-test-") as temp:
+            with patch.object(c, "os", SimpleNamespace(name="posix", killpg=killpg)), \
+                    patch.object(c, "signal", SimpleNamespace(SIGTERM=15, SIGKILL=9)), \
+                    patch.object(c, "group_alive", side_effect=[True, False, False]), \
+                    patch.object(c.time, "monotonic", side_effect=lambda: next(ticks, 0.3)), \
+                    patch.object(c.subprocess, "Popen", return_value=process) as launch:
+                result = c.execute(["manual-owned-child"], Path(temp), "posix-race", timeout=0)
+            self.assertTrue(launch.call_args.kwargs["start_new_session"])
+            self.assertEqual(killpg.call_args_list, [((43210, 15),), ((43210, 9),)])
+            self.assertEqual(c.load(Path(temp) / result["process_receipt"]), result)
+        return result
+
+    def test_posix_group_disappearance_after_liveness_probe_preserves_timeout_and_cleanup(self):
+        result = self.raced_posix_cleanup(ProcessLookupError(errno.ESRCH, "No such process"))
+        self.assertEqual(result["outcome"], "timeout", result)
+        self.assertTrue(result["cleanup_verified"], result)
+        self.assertIsNone(result["error"], result)
+
+    def test_posix_group_permission_error_remains_a_failure(self):
+        result = self.raced_posix_cleanup(PermissionError(errno.EPERM, "Operation not permitted"))
+        self.assertEqual(result["outcome"], "execution-error", result)
+        self.assertIn("Operation not permitted", result["error"])
+        with self.assertRaises(RuntimeError):
+            c.check_exit(result)
 
     def test_real_cancellation_and_output_ceiling_preserve_failure_receipts(self):
         with tempfile.TemporaryDirectory(prefix="symbiote-campaign-cancel-test-") as temp:

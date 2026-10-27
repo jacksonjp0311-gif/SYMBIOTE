@@ -136,7 +136,7 @@ class IndependentVerifierManualTests(unittest.TestCase):
 
     def test_typed_strategy_hash_owner_and_recomputed_raw_assessment(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp)
+            path = Path(tmp).resolve()
             identity, genesis = write_strategy(path)
             result = v.verify_strategy(path, path, identity, genesis)
             self.assertEqual(result["selected"]["id"], "manual-source-policy")
@@ -146,14 +146,14 @@ class IndependentVerifierManualTests(unittest.TestCase):
 
     def test_rehashed_false_metrics_still_fail_independent_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp)
+            path = Path(tmp).resolve()
             identity, genesis = write_strategy(path, lambda a: a.update(candidate_queries=0))
             with self.assertRaisesRegex(v.Hold, "assessment"):
                 v.verify_strategy(path, path, identity, genesis)
 
     def test_chain_truncation_changed_previous_and_unknown_fields_hold(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp)
+            path = Path(tmp).resolve()
             identity, genesis = write_strategy(path)
             journal = path / "strategy.jsonl"
             raw = journal.read_bytes()
@@ -198,7 +198,7 @@ class IndependentVerifierManualTests(unittest.TestCase):
     def test_graph_typed_ledger_hash_and_rehashed_false_envelope(self):
         payload, task, result, owner, authority, price = manual_graph_promotion()
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             genesis = {"event": "genesis", "version": 1, "identity": owner}
             rows, previous = [], v.ZERO
             for sequence, event in enumerate((genesis, payload)):
@@ -219,7 +219,7 @@ class IndependentVerifierManualTests(unittest.TestCase):
 
     def test_registration_binds_actual_executable_and_protocol_document(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             native, document = v.sha(b"manual executable bytes; never run"), v.sha(b"manual protocol")
             protocol = {"id": v.PROTOCOL, "family": v.FAMILY, "controls": list(v.ARMS),
                         "targets_used_for_policy_promotion": False, "source_calibration_target_contexts_disjoint": True,
@@ -261,7 +261,7 @@ class IndependentVerifierManualTests(unittest.TestCase):
 
     def test_unavailable_or_escaping_raw_files_hold(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp).resolve()
             with self.assertRaises(v.Hold):
                 v.read(root.parent / "unrelated-file.json", root)
 

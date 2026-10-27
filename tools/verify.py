@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
     native_tests = None
     if not args.skip_cargo:
-        for command in [["cargo", "fmt", "--all", "--", "--check"], ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["cargo", "test", "--workspace", "--locked"], ["cargo", "build", "--workspace", "--locked"]]:
+        for command in [["cargo", "fmt", "--all", "--", "--check"], ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["cargo", "test", "--workspace", "--locked"], ["cargo", "build", "--workspace", "--locked"], ["cargo", "build", "--release", "--locked", "-p", "symbiote-runtime", "--bin", "symbiote"]]:
             checked = execute(command)
             if command[1] == "test":
                 native_tests = count_native_tests(checked.stdout)
