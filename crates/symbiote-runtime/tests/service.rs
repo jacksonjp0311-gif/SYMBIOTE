@@ -23,6 +23,9 @@ use symbiote_protocol::{
 };
 use symbiote_reasoning::planning::{Edge, GraphSchema};
 
+#[path = "service/endurance.rs"]
+mod endurance;
+
 static NEXT: AtomicU64 = AtomicU64::new(0);
 const OPS: &[&str] = &[
     "capabilities",

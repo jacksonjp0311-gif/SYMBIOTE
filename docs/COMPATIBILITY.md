@@ -1,8 +1,8 @@
 # Compatibility and release boundary
 
-The current public release is **v0.5.0, a research preview**. The owner-backup and
-offline policy-lifecycle changes on this development branch are not part of that
-release. Stable 1.0 qualification remains open. A software version does not certify
+**v0.5.1 remains a research preview.** It adds owner backups and an offline
+policy lifecycle to v0.5.0's configured services. Stable 1.0 qualification remains
+open. A software version does not certify
 an arbitrary partner, environment, or transferred claim.
 
 ## Tested software window
@@ -49,10 +49,10 @@ reassessment and revocation; old observations must not be silently edited.
 | Knowledge ledger | JSONL v1, typed model events | Preserve promotion, supersession and revocation history; reject unsupported events |
 | Operational ledger | JSONL v1, typed service events | Preserve its owner marker, Genesis and exact prior receipt prefix |
 | Registered layout | `symbiote.state-layout/1` | Explicit byte-preserving registration; no silent migration |
-| Owner backup, development branch | `symbiote.owner-backup/1` | New destination only; external manifest digest required; same operating system |
-| Restore mapping, development branch | `symbiote.restored-owner/1` | Immutable copied-history mapping; configured activation requires explicit reviewed relocation |
+| Owner backup, v0.5.1 | `symbiote.owner-backup/1` | New destination only; external manifest digest required; same operating system |
+| Restore mapping, v0.5.1 | `symbiote.restored-owner/1` | Immutable copied-history mapping; configured activation requires explicit reviewed relocation |
 
-Format version 1 is not permission to ignore unfamiliar events. The development
+Format version 1 is not permission to ignore unfamiliar events. The v0.5.1
 policy lifecycle adds typed operational events that older v0.5 software does not
 understand. After such a transition, downgrade of that owner store is unsupported
 and must fail closed. Do not remove rows or change version fields to make an old
@@ -66,7 +66,7 @@ byte-preserving layout registration. Migration neither relabels evidence nor
 promises that an old binary can read new typed graph or operational events.
 The public v0.5 configured service has an immutable owner and policy; deleting
 `operations.jsonl` or `operations-owner.json` is not an upgrade, rotation or
-regrant procedure. The development lifecycle preserves that owner registration
+regrant procedure. The v0.5.1 lifecycle preserves that owner registration
 and advances only the audited policy history.
 
 Readers reject unsupported versions, corrupt chains, missing registered files,

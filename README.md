@@ -19,8 +19,8 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Stable release gates](docs/STABLE_RELEASE_GATES.md)
 
-> **Research preview — v0.5.** Native TLS peers, exact reasoning, evaluated
-> persistent knowledge and controlled partner selection. The
+> **Research preview — v0.5.1.** Native TLS peers, exact reasoning, evaluated
+> persistent knowledge, verified owner backups and reviewed offline policy rotation. The
 > [first primary study remains HOLD](docs/RESEARCH_V05_PRIMARY_HOLD.md); a repaired
 > engineering reproduction completes all 192 control cases. The fixed-peer
 > control still performs better. Stable v1.0, general intelligence and broad
@@ -37,7 +37,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v0.5.0 -AddToPath
+.\tools\install.ps1 -Version v0.5.1 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -45,7 +45,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v0.5.0
+sh tools/install.sh --version v0.5.1
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
@@ -95,6 +95,13 @@ Start with `demo`. The full adaptive study is optional and has a 30-minute cap.
 It owns its local peer processes, writes fresh temporary state and preserves all
 failed or unfinished cases. A recorded setup can be restored for reproducible
 control comparisons; it imports no learned knowledge or private keys.
+
+To preserve a stopped owner, use `backup-state`, `verify-backup` and
+`restore-state` with its separately saved manifest checksum. The
+[backup recipe](docs/OWNER_BACKUPS.md) keeps identity, evaluated knowledge and
+receipts together. A configured service additionally needs explicit
+[restore approval or certificate rotation](docs/SERVICE_LIFECYCLE.md); copying a
+configuration does not activate restored state.
 
 From a Windows checkout, the single entrypoint also supports:
 

@@ -3,8 +3,8 @@
 ## Standalone installation and daily commands
 
 Native bundles run without Cargo, Python or an LLM. From a checkout, Windows:
-`./tools/install.ps1 -Version v0.5.0 -AddToPath`; Unix:
-`sh tools/install.sh --version v0.5.0`. Installers validate SHA256 and extract only
+`./tools/install.ps1 -Version v0.5.1 -AddToPath`; Unix:
+`sh tools/install.sh --version v0.5.1`. Installers validate SHA256 and extract only
 the expected flat executable. `-FromSource`/`--from-source` uses a local Cargo
 checkout explicitly. Install paths default to `%LOCALAPPDATA%/SYMBIOTE/bin` and
 `~/.local/bin`; no administrator permission is required. Checksums detect asset
@@ -18,6 +18,13 @@ default state is `state/demo` relative to the current directory; use an explicit
 network-research. Invalid flags fail before
 state changes. Structural knowledge lives in `knowledge.jsonl` and has a separate
 `knowledge.writer.lock`, with the same stale-lock precautions described below.
+
+For stopped owners, follow [verified backup and restore](OWNER_BACKUPS.md).
+Keep the manifest checksum independently; restore never overwrites an existing
+destination. Configured services additionally use the
+[offline policy lifecycle](SERVICE_LIFECYCLE.md) for certificate rotation,
+reviewed relocation and explicit regrant. Private credentials are provisioned
+separately, and old public manifests remain audit evidence.
 
 `research` evaluates the predefined cohort from fresh learners; repeat runs report
 matching records as `already_retained`. `predict` is the command that actually

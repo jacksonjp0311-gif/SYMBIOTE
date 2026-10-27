@@ -42,8 +42,12 @@ contexts. The fixed-peer control remains cheaper; learned scores change without
 changing selected actions. Unseen-partner generalization and a better-selection
 claim remain open. See [v0.5 findings](RESEARCH_V05.md).
 
-Next engineering gates are safe policy/certificate lifecycle, verified owner-state
-backup/restore and a bounded stability/deployment campaign. Next research needs
+v0.5.1 adds reviewed offline policy/certificate lifecycle and verified owner-state
+backup/restore. Its local qualification remains separate from independent
+two-host deployment, which stays open. No later research milestone is inferred
+from these operational additions.
+
+Next research needs
 newly declared transfer tests and unfamiliar partner identities; do not retune the
 completed cohort. The [stable release gates](STABLE_RELEASE_GATES.md) preserve
 the distinction between reliable bounded software and unresolved hypotheses.

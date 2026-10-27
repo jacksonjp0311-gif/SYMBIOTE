@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.1 — Durable Operations — 2026-10-27
+
+- Verified offline single-owner backup and restore with external manifest pins,
+  byte-preserved identity/history, explicit activation dependencies and protected
+  incomplete destinations. Native commands retain actual offline predictions.
+- Reviewed offline certificate/policy transitions and peer regrant anchored to
+  the exact prior policy and journal head. Denials and historical receipts remain
+  intact; pending old-policy evaluations cannot acquire new trust during recovery.
+- Independent review reproduced and corrected restore activation through copied
+  relative configurations, lifecycle capacity below the accepted configuration
+  size, and alias/identity ambiguity in local denial and regrant. Authenticated
+  artifact grants remain identity-specific; outbound connections remain alias-only.
+- Native ZIPs now contain concise platform instructions and versioned absolute
+  documentation links, with the same three-file integrity contract.
+- The v0.5 scientific results are unchanged. This hardening release does not
+  establish better partner selection or qualify stable v1.0. Independent
+  two-host deployment remains open.
+
 ## v0.5.0 — Adaptive Relationships — 2026-10-27
 
 - Operator-configured native TLS knowledge service with exact grants, durable

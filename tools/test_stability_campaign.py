@@ -1,0 +1,199 @@
+"""Campaign safety tests; no campaign or research cohort is started here."""
+import importlib.util
+import copy
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import time
+import unittest
+
+ROOT=Path(__file__).resolve().parents[1]
+SPEC=importlib.util.spec_from_file_location("campaign",ROOT/"tools/stability_campaign.py")
+c=importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(c)
+
+
+class SafetyTests(unittest.TestCase):
+    def test_real_timeout_contains_and_terminates_an_actual_descendant(self):
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-tree-test-") as temp:
+            code="import subprocess,sys,json,time;p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);print(json.dumps({'child':p.pid}),flush=True);time.sleep(30)"
+            result=c.execute([sys.executable,"-c",code],Path(temp),"tree",timeout=2)
+            self.assertEqual(result["outcome"],"timeout")
+            self.assertTrue(result["cleanup_verified"])
+            self.assertGreater(json.loads(c.output(result,temp))["child"],0)
+            self.assertTrue((Path(temp)/"tree.process.json").is_file())
+            self.assertLess(result["elapsed_seconds"],2+c.BOUNDS["cleanup_seconds"]+2)
+
+    def test_real_cancellation_and_output_ceiling_preserve_failure_receipts(self):
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-cancel-test-") as temp:
+            start=time.monotonic()
+            cancelled=c.execute([sys.executable,"-c","import time;time.sleep(30)"],Path(temp),"cancel",timeout=5,cancelled=lambda:time.monotonic()-start>0.2)
+            self.assertEqual(cancelled["outcome"],"cancelled")
+            self.assertTrue(cancelled["cleanup_verified"])
+            code="import sys,time;sys.stdout.buffer.write(b'x'*3000000);sys.stdout.flush();time.sleep(30)"
+            overflow=c.execute([sys.executable,"-c",code],Path(temp),"overflow",timeout=5)
+            self.assertEqual(overflow["outcome"],"output-budget")
+            self.assertTrue(overflow["output_truncated"])
+            self.assertLessEqual(overflow["stdout_bytes"]+overflow["stderr_bytes"],c.BOUNDS["output_bytes_per_process"])
+            self.assertTrue(overflow["cleanup_verified"])
+
+    def test_missing_executable_failure_is_recorded_and_never_counts_as_pass(self):
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-start-test-") as temp:
+            result=c.execute([str(Path(temp)/"missing")],Path(temp),"missing",timeout=1)
+            self.assertEqual(result["outcome"],"execution-error")
+            self.assertTrue((Path(temp)/"missing.process.json").exists())
+            with self.assertRaises(RuntimeError):c.check_exit(result)
+
+    def test_exact_regression_cannot_accept_zero_tests_or_failed_tests(self):
+        c.check_native_test("running 1 test\ntest result: ok. 1 passed; 0 failed; 80 filtered out;")
+        for text in ("test result: ok. 0 passed; 0 failed;", "test result: FAILED. 0 passed; 1 failed;", "1 passed"):
+            with self.assertRaises(RuntimeError):c.check_native_test(text)
+
+    def test_prediction_schema_and_duplicate_artifacts_fail_closed(self):
+        self.assertEqual(c.prediction_revisions(dict(predictions=[dict(artifact="alpha-table",revision=2)]))["alpha-table"]["revision"],2)
+        for rows in ([dict(id="alpha-table",revision=2)],[dict(artifact="alpha-table",revision=True)],[dict(artifact="a",revision=1),dict(artifact="a",revision=2)]):
+            with self.assertRaises(RuntimeError):c.prediction_revisions(dict(predictions=rows))
+        with self.assertRaises(RuntimeError):c.assert_predictions(dict(identity="owner",active_artifacts=True,network_requests=0),"owner",1)
+
+    def test_complete_genesis_tables_not_just_counts_and_revisions_are_required(self):
+        expected={"alpha-table":1,"beta-table":1}
+        valid=dict(schema="symbiote.retained/1",status="PASS",identity="owner",active_artifacts=2,network_requests=0,
+                   genesis_artifacts=2,structural_artifacts=0,structural_knowledge=[],predictions=[
+                       dict(artifact="alpha-table",partner="alpha",scope="finite-boolean-v1",revision=1,predictions=[0,1,1,0]),
+                       dict(artifact="beta-table",partner="beta",scope="finite-boolean-v1",revision=1,predictions=[0,1,0,1])])
+        c.genesis_predictions(valid,"owner",expected)
+        import copy
+        for kind in ("missing","empty","wrong","bool","source","scope"):
+            invalid=copy.deepcopy(valid)
+            if kind=="missing":del invalid["predictions"]
+            elif kind=="source":invalid["predictions"][0]["partner"]="other"
+            elif kind=="scope":invalid["predictions"][0]["scope"]="other"
+            else:invalid["predictions"][0]["predictions"]={"empty":[],"wrong":[1,1,1,0],"bool":[False,1,1,0]}[kind]
+            with self.assertRaises((RuntimeError,KeyError),msg=kind):c.genesis_predictions(invalid,"owner",expected)
+
+    def test_final_cancel_deadline_and_report_space_cannot_become_pass(self):
+        c.final_acceptance(False,1,100,100)
+        for args in ((True,1,0,0),(False,601,0,0),(False,1,c.BOUNDS["evidence_bytes"],1),
+                     (False,1,0,c.BOUNDS["final_report_reserve_bytes"]+1)):
+            with self.assertRaises(RuntimeError):c.final_acceptance(*args)
+
+    def test_actual_affine_outputs_must_match_the_committed_strategy(self):
+        record=dict(id="model",source="peer",scope="manual/v1",revision=1,schema_fingerprint="a"*64,
+                    payload=dict(kind="affine",width=4,coefficients=3,bias=False))
+        model={key:record[key] for key in ("id","source","scope","revision","schema_fingerprint")}
+        model.update(model=record["payload"],sample_predictions=[dict(input=i,output=(i&3).bit_count()%2) for i in range(8)])
+        report=dict(identity="owner",network_requests=0,active_artifacts=1,genesis_artifacts=0,predictions=[],structural_artifacts=1,structural_knowledge=[model])
+        c.structural_affine_predictions(report,"owner",record)
+        for value in (None,2,True):
+            model["sample_predictions"][0]["output"]=value
+            with self.assertRaises(RuntimeError):c.structural_affine_predictions(report,"owner",record)
+
+    def test_started_marker_is_exclusive_and_original_receipt_survives(self):
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-once-test-") as temp:
+            path=Path(temp)/"campaign-started.json"
+            c.write_new(path,dict(registration_sha256="first"))
+            with self.assertRaises(FileExistsError):c.write_new(path,dict(registration_sha256="replacement"))
+            self.assertEqual(c.load(path)["registration_sha256"],"first")
+
+    def test_endurance_tls_math_receipts_must_equal_preserved_native_stdout(self):
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-wire-binding-") as temp:
+            root=Path(temp)
+            request=dict(scope="affine-context/v1",request_id="manual",body=dict(operation="knowledge.predict",artifact="manual-affine",input=0))
+            response=dict(prediction=0,conditional=True,physical_certificate_authorized=False)
+            c.write_new(root/"reply.stdout",response)
+            (root/"reply.stderr").write_bytes(b"")
+            native=dict(label="cycle-1-0-predict",success=True,exit_code=0,stdout="reply.stdout",stdout_sha256=c.sha(root/"reply.stdout"),stderr="reply.stderr",stderr_sha256=c.sha(root/"reply.stderr"))
+            events=[dict(kind="native-command",data=native),
+                    dict(kind="tls-request",data=dict(label=native["label"],request=request,explicit_duplicate=False)),
+                    dict(kind="tls-response",data=dict(label=native["label"],response=response))]
+            _,parsed,requests,responses=c.endurance_outputs(root,events)
+            c.bound_tls_pair(parsed,requests,responses,native["label"],request,response)
+            changed=copy.deepcopy(response);changed["prediction"]=1
+            with self.assertRaises(RuntimeError):c.bound_tls_pair(parsed,requests,responses,native["label"],request,changed)
+            altered=copy.deepcopy(events);altered[-1]["data"]["response"]=changed
+            with self.assertRaises(RuntimeError):c.endurance_outputs(root,altered)
+            with self.assertRaises(RuntimeError):c.endurance_outputs(root,events+[events[0]])
+            with self.assertRaises(RuntimeError):c.endurance_outputs(root,events[:-1])
+            changed_request=copy.deepcopy(request);changed_request["body"]["input"]=1
+            with self.assertRaises(RuntimeError):c.bound_tls_pair(parsed,requests,responses,native["label"],changed_request,response)
+            with self.assertRaises(RuntimeError):c.bound_tls_pair(parsed,requests,responses,native["label"],request,response,True)
+            (root/"reply.stdout").write_text('{"prediction":1}',encoding="utf-8")
+            with self.assertRaises(RuntimeError):c.endurance_outputs(root,events)
+
+    def test_lost_reply_is_bound_to_actual_quarantine_body_owner_key_and_response(self):
+        request=dict(schema="symbiote.service-request/1",scope="affine-context/v1",request_id="manual-lost",body=dict(operation="candidate.submit",offer=dict(inert="manual-fixture")))
+        body=c.digest(request)
+        candidate=c.digest(dict(authenticated_sender="client",canonical_body_sha256=body))
+        response=dict(schema="symbiote.service-quarantine/1",status="QUARANTINED",candidate=candidate,promoted=False)
+        row=dict(key=dict(peer_id="client",operation="candidate.submit",scope=request["scope"],request_id=request["request_id"]),
+                 candidate_id=candidate,body_sha256=body,body=request,response=response)
+        c.bound_quarantine(row,request,response,"client")
+        for field in ("body","body_sha256","key","response","candidate_id"):
+            changed=copy.deepcopy(row)
+            if field=="body":changed[field]["request_id"]="other"
+            elif field=="key":changed[field]["peer_id"]="other"
+            elif field=="response":changed[field]["promoted"]=True
+            else:changed[field]="0"*64
+            with self.assertRaises(RuntimeError,msg=field):c.bound_quarantine(changed,request,response,"client")
+        with self.assertRaises(RuntimeError):c.bound_quarantine(row,request,response,"foreign-owner")
+        numeric=copy.deepcopy(response);numeric["promoted"]=0
+        with self.assertRaises(RuntimeError):c.bound_quarantine(row,request,numeric,"client")
+
+    def test_registration_rejects_non_temp_destination_before_creating_or_launching(self):
+        destination=ROOT/"uncreated-campaign-registration-contract"
+        self.assertFalse(destination.exists())
+        with self.assertRaisesRegex(RuntimeError,"OS temporary"):
+            c.register("missing-native","missing-cli","missing-service",destination,"a"*40)
+        self.assertFalse(destination.exists())
+
+    def test_frozen_plan_has_one_host_and_no_research_cohort_entry_points(self):
+        plan=c.plan_descriptor()
+        self.assertEqual(plan["two_host_validation"],"OPEN_UNAVAILABLE")
+        self.assertEqual(c.BOUNDS["root_launches"],96)
+        self.assertEqual(c.BOUNDS["campaign_seconds"],600)
+        for case in c.SERVICE_CASES+c.CLI_CASES:
+            self.assertNotIn("cohort",case)
+        sources=c.source_files(ROOT)
+        self.assertIn("tools/stability_campaign.py",sources)
+        self.assertIn(c.PROTOCOL_FILE,sources)
+
+
+class NativeContractTests(unittest.TestCase):
+    def test_actual_demo_prediction_fields_and_dead_lock_inspection_exit(self):
+        binary=Path(os.environ.get("SYMBIOTE_TEST_BINARY",ROOT/"target/debug"/("symbiote.exe" if os.name=="nt" else "symbiote")))
+        if not binary.is_file():self.skipTest("build native candidate before running the actual contract calibration")
+        with tempfile.TemporaryDirectory(prefix="symbiote-campaign-native-contract-") as temp:
+            root=Path(temp);state=root/"owner"
+            version=c.execute([binary,"version","--json"],root,"version",timeout=10)
+            c.check_exit(version)
+            metadata=json.loads(c.output(version,root))
+            self.assertEqual(metadata["name"],"SYMBIOTE")
+            self.assertEqual(metadata["version"],"0.5.1")
+            self.assertIsInstance(metadata["build_source_commit"],str)
+            first=c.execute([binary,"demo","--state",state,"--receipts",root/"demo.json","--json"],root,"demo",timeout=30)
+            c.check_exit(first)
+            learned=json.loads(c.output(first,root))
+            prediction=c.execute([binary,"predict","--state",state,"--json"],root,"predict",timeout=10)
+            c.check_exit(prediction)
+            actual=json.loads(c.output(prediction,root))
+            c.genesis_predictions(actual,learned["identity"],{"alpha-table":1,"beta-table":1})
+            self.assertEqual(set(c.prediction_revisions(actual)),{"alpha-table","beta-table"})
+            _,raw=c.identity_chain(state/"ledger.jsonl")
+            self.assertEqual(raw[0]["payload"]["identity"],learned["identity"])
+            # The child was positively waited/reaped by execute. Only its PID
+            # is written to our own temporary state; no process is killed here.
+            (state/"writer.lock").write_text(f"process={prediction['pid']}\n")
+            inspection=c.execute([binary,"inspect-state","--state",state,"--json"],root,"inspect",timeout=10)
+            c.check_exit(inspection)
+            report=json.loads(c.output(inspection,root))
+            self.assertEqual(report["status"],"ATTENTION")
+            self.assertEqual(next(lock for lock in report["locks"] if lock["name"]=="writer.lock")["process"],prediction["pid"])
+            self.assertIn(next(lock for lock in report["locks"] if lock["name"]=="writer.lock")["state"],("dead","live"))
+            # PID reuse may make this conservative liveness check live, but it
+            # must never silently initialize/reset or remove that lock.
+            self.assertTrue((state/"writer.lock").is_file())
+
+
+if __name__=="__main__":unittest.main()

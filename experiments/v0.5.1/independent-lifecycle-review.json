@@ -1,0 +1,108 @@
+{
+  "schema": "symbiote.independent-lifecycle-patch-review/1",
+  "status": "PASS",
+  "scope": "This Windows PC only; loopback fixtures; no two-host qualification",
+  "binary_sha256": "e0c24f4ee3542f91ccb112e8fe69d28a41d5a98bdf4c9853dda970d4b554a82e",
+  "rust_only_source_sha256": "1827ccba891314942003d4bda55b0e94f578e14de270cf3dc8cd2bde5b213366",
+  "native_source_unchanged_during_reproduction": true,
+  "prior_red_receipts": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-review-relative-relocation-9a288bd3c4e4496d984854593016e5f5",
+  "checks": [
+    {
+      "check": "restore_activation",
+      "status": "PASS",
+      "detail": {
+        "guarded_commands": [
+          "peers",
+          "serve",
+          "evaluate",
+          "connect",
+          "revoke",
+          "regrant"
+        ],
+        "same_digest_consumptions": 2,
+        "old_sources_absent": true,
+        "historical_and_new_markers": 2,
+        "first_live": {
+          "ready": {
+            "address": "127.0.0.1:55015",
+            "identity": "symbiote-d0982a08896f3705e6d790e3",
+            "lifetime_ms": 15000,
+            "pid": 44012,
+            "policy_sha256": "850398c619c604ca354f96ab794629cf746a16ab191f6c639eb75035654c1902",
+            "protocol": "symbiote/2",
+            "schema": "symbiote.service-ready/1"
+          },
+          "stop": {
+            "active_knowledge": 0,
+            "connections": 0,
+            "failed_sessions": 0,
+            "identity": "symbiote-d0982a08896f3705e6d790e3",
+            "model_work_units": 0,
+            "operational_records": 3,
+            "reason": "owner-shutdown",
+            "requests": 0,
+            "schema": "symbiote.service-stop/1",
+            "status": "STOPPED"
+          },
+          "exit_code": 0
+        },
+        "second_live": {
+          "ready": {
+            "address": "127.0.0.1:55016",
+            "identity": "symbiote-d0982a08896f3705e6d790e3",
+            "lifetime_ms": 15000,
+            "pid": 7068,
+            "policy_sha256": "850398c619c604ca354f96ab794629cf746a16ab191f6c639eb75035654c1902",
+            "protocol": "symbiote/2",
+            "schema": "symbiote.service-ready/1"
+          },
+          "stop": {
+            "active_knowledge": 0,
+            "connections": 0,
+            "failed_sessions": 0,
+            "identity": "symbiote-d0982a08896f3705e6d790e3",
+            "model_work_units": 0,
+            "operational_records": 5,
+            "reason": "owner-shutdown",
+            "requests": 0,
+            "schema": "symbiote.service-stop/1",
+            "status": "STOPPED"
+          },
+          "exit_code": 0
+        },
+        "lexical_aliases_tested": true
+      }
+    },
+    {
+      "check": "moved_restore",
+      "status": "PASS",
+      "detail": {
+        "same_original_config_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-review-patched-lifecycle-2d4d9bf892fa43f5a2ea866ac8eb9e4c\\moved-tree\\original\\service.json",
+        "destination_mismatch_detected": true,
+        "activation_and_review_refused": true,
+        "copied_state_bytes_unchanged": true
+      }
+    },
+    {
+      "check": "large_policy",
+      "status": "PASS",
+      "detail": {
+        "accepted_config_bytes": 49643,
+        "largest_policy_record_bytes": 100087,
+        "large_to_large_and_narrow_succeeded": true,
+        "original_journal_prefix_preserved": true
+      }
+    },
+    {
+      "check": "peer_resolution",
+      "status": "PASS",
+      "detail": {
+        "revoke_target": "peer-B",
+        "regrant_target": "peer-B",
+        "A_denied_B_active": true,
+        "connect_remains_alias_only_and_denied_A": true,
+        "actual_dummy_listener_contacts": 0
+      }
+    }
+  ]
+}

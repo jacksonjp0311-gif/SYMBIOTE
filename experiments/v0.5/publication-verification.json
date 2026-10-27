@@ -1,0 +1,105 @@
+{
+  "schema": "symbiote.public-release-verification/1",
+  "tag": "v0.5.0",
+  "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v0.5.0",
+  "draft": false,
+  "published_at": "2026-10-27T09:55:29Z",
+  "checked_at_unix": 1793095033.3168054,
+  "assets": [
+    {
+      "name": "RESEARCH_SHA256SUMS",
+      "bytes": 324,
+      "sha256": "d3f4446142c5bfd4b18c6180f8248c20022195e778cce9d126103d5029521eaa",
+      "public_download": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 433,
+      "sha256": "9f045643f1333fba03a1230b9205225d9a5477c5a8f9c75d5837fb7d3d2c71fa",
+      "public_download": true
+    },
+    {
+      "name": "SYMBIOTE-v0.5-engineering-004.tar.gz",
+      "bytes": 5594975,
+      "sha256": "b84e2a15a7bb0b6e113d2be752bab6971b0fb4da175ea3d33f41f115657bdb9a",
+      "public_download": true
+    },
+    {
+      "name": "SYMBIOTE-v0.5-primary-004-HOLD-analysis.json.gz",
+      "bytes": 13100,
+      "sha256": "3b1dee18bce1a7a8965de8c587a097d3060042391f464db8783d5b569f1e5526",
+      "public_download": true
+    },
+    {
+      "name": "SYMBIOTE-v0.5-primary-004-HOLD.tar.gz",
+      "bytes": 4614922,
+      "sha256": "d5a5a507398c7359af0def08f26cb8b25287f4525c1c64024c2868fd05d7c0cc",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.0-aarch64-apple-darwin.zip",
+      "bytes": 2854914,
+      "sha256": "b78f234e904103c33c529cab88db4773bf9cf7c40b3e64f2c4a87785546ca6fd",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.0-x86_64-apple-darwin.zip",
+      "bytes": 3052358,
+      "sha256": "d4acd475dc916d7a5a083b4d768463c9863486283bcabbd9ce154e81e05def51",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.0-x86_64-pc-windows-msvc.zip",
+      "bytes": 2873916,
+      "sha256": "0647b785c7caff2463a62603c49d78fbaf979e25d1f8787a6b7216f5df8d7521",
+      "public_download": true
+    },
+    {
+      "name": "symbiote-v0.5.0-x86_64-unknown-linux-gnu.zip",
+      "bytes": 3165767,
+      "sha256": "a8fee80e310364fc32dead9e85e57f03807d6dd3ddf5e26b2f70a66bd4daad36",
+      "public_download": true
+    }
+  ],
+  "manifest_sets_exact": true,
+  "native_installation": {
+    "status": "PASS",
+    "os": "windows",
+    "architecture": "x86_64",
+    "binary_sha256": "582820951ae6bbc04783b5e38ccb999788c60e36abff1317bdb91596b232108c",
+    "temporary_installation": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v05-installed\\symbiote.exe",
+    "state": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-audit-20261026\\public-v05-smoke-1ebfb3d1fe83463c98ce6934b9739e94",
+    "calls": [
+      {
+        "command": "doctor",
+        "exit": 0
+      },
+      {
+        "command": "demo",
+        "exit": 0
+      },
+      {
+        "command": "predict",
+        "exit": 0
+      },
+      {
+        "command": "demo",
+        "exit": 0
+      },
+      {
+        "command": "network-research",
+        "exit": 0
+      }
+    ],
+    "nonmutating_doctor": true,
+    "retained_identity": "symbiote-938d9e4a5ca6e01bb31de13f",
+    "first_promoted": 2,
+    "restart_promoted": 0,
+    "restart_reused": 2,
+    "offline_network_requests": 0,
+    "distinct_native_processes_and_owners": 3,
+    "native_peer_restart_zero_oracle_calls": true,
+    "completed_at_unix": 1793095102.7506847,
+    "claim": "public asset installation and bounded smoke; no new learning-efficiency study"
+  }
+}
