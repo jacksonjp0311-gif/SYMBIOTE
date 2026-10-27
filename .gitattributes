@@ -3,5 +3,5 @@
 docs/reference/brute/*.py -text
 
 # Preserve pinned handoff helper and raw checkpoint bytes.
-tools/release/** -text
-experiments/checkpoints/** -text
+tools/release/** -text whitespace=cr-at-eol
+experiments/checkpoints/** -text whitespace=cr-at-eol

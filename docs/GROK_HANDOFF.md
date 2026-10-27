@@ -132,3 +132,14 @@ BRUTE is untouched and pinned at `9edbc035792ca75d3a3333b8454e5bf31c706eb1`.
 Keep authorship, original reference bytes, licences and historical scientific
 evidence intact. No general intelligence, universal certification, autonomous
 self-improvement or transfer-performance breakthrough is established.
+
+## Final preservation note
+
+Full raw roots, both exact qualified executables, failed CI logs and archive-plan
+diagnostics were copied into the ignored local directory
+`experiments/local/grok-handoff/` before stopping. No checkpoint archive was
+created: strict packaging correctly HOLDs because `release-tests.jsonl` is a
+mixed Cargo JSON/test transcript rather than pure JSONL. Preserve its original
+bytes and SHA; add an explicit reviewed transcript classification instead of
+bypassing credential scanning. The failed plan and scanner diagnostic are in
+the local handoff directory. Compact receipts and all source are public in Git.
