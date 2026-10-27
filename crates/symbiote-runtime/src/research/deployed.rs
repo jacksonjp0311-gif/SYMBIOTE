@@ -2,10 +2,12 @@
 //!
 //! The controller owns the laboratory oracle and judge. Child processes receive
 //! only authenticated observation/verifier grants, never hidden function laws.
+mod tls;
+
 use super::{
-    affine_schema_fingerprint, assess, fit, parameters, AffineStrategy, Authority, Environment,
-    Judge, KnowledgeRecord, KnowledgeStore, Learner, ObservationReceipt, Store, TrialCase,
-    TrialCosts, TrialEvidence, SCOPE,
+    affine_schema_fingerprint, assess, parameters, AffineStrategy, Authority, Environment, Judge,
+    KnowledgeRecord, KnowledgeStore, Learner, ObservationReceipt, Store, TrialCase, TrialCosts,
+    TrialEvidence, SCOPE,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -20,7 +22,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-use symbiote_protocol::{fresh_capability, spawn_scoped_server, Client, Endpoint, ServerConfig};
+use symbiote_protocol::{
+    fresh_capability, spawn_scoped_server, spawn_secure_server, Client, Endpoint, SecureClient,
+    SecureServerHandle, ServerConfig, ServerHandle,
+};
 
 const CONFIG_LIMIT: usize = 4096;
 const READY_LIMIT: usize = 4096;
@@ -31,6 +36,82 @@ const AGENT_OPS: &[&str] = &[
     "next", "observe", "bundle", "adopt", "promote", "forecast", "status",
 ];
 const ORACLE_OPS: &[&str] = &["observe", "verify", "assess"];
+
+enum AgentClient {
+    Legacy(Client),
+    Tls(Box<SecureClient>),
+}
+impl AgentClient {
+    fn call(&mut self, operation: &str, payload: &Value) -> Result<Value, String> {
+        match self {
+            Self::Legacy(client) => client.call(operation, payload),
+            Self::Tls(client) => client.call(operation, payload),
+        }
+    }
+    fn revoke(&mut self) -> Result<(), String> {
+        match self {
+            Self::Legacy(client) => client.revoke(),
+            Self::Tls(client) => client.revoke(),
+        }
+    }
+}
+
+enum NativeServer {
+    Legacy(ServerHandle),
+    Tls(SecureServerHandle),
+}
+impl NativeServer {
+    fn address(&self) -> SocketAddr {
+        match self {
+            Self::Legacy(server) => server.endpoint().address,
+            Self::Tls(server) => server.address(),
+        }
+    }
+    fn grant(&self) -> Grant {
+        match self {
+            Self::Legacy(server) => {
+                let endpoint = server.endpoint();
+                Grant {
+                    id: endpoint.id,
+                    address: endpoint.address,
+                    token: endpoint.token,
+                }
+            }
+            Self::Tls(server) => Grant {
+                id: server.server_id().into(),
+                address: server.address(),
+                token: String::new(),
+            },
+        }
+    }
+    fn shutdown(&mut self) -> Result<(), String> {
+        match self {
+            Self::Legacy(server) => server.shutdown(),
+            Self::Tls(server) => server.shutdown(),
+        }
+    }
+    fn revoke_peer(&self, id: &str) -> Result<(), String> {
+        match self {
+            Self::Tls(server) => server.revoke_peer(id),
+            Self::Legacy(_) => Err("certificate revocation requires TLS".into()),
+        }
+    }
+}
+
+fn fit_native(client: &mut AgentClient, width: u8) -> Result<Vec<ObservationReceipt>, String> {
+    for _ in 0..=width {
+        let next = client.call("next", &json!({}))?;
+        let Some(input) = next["input"].as_u64() else {
+            break;
+        };
+        client.call("observe", &json!({"input":input}))?;
+    }
+    if !client.call("next", &json!({}))?["input"].is_null() {
+        return Err("source model did not converge within declared query bound".into());
+    }
+    serde_json::from_value(client.call("bundle", &json!({}))?)
+        .map_err(|_| "native peer returned an invalid observation bundle".into())
+}
 
 // These values contain capability secrets. Deliberately do not implement Debug.
 #[derive(Clone, Serialize, Deserialize)]
@@ -67,6 +148,8 @@ struct ChildConfig {
     lease_ms: u64,
     #[serde(default)]
     fault: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    tls: Option<tls::Bootstrap>,
 }
 impl ChildConfig {
     fn validate(&self) -> Result<(), String> {
@@ -76,7 +159,7 @@ impl ChildConfig {
                 && x.bytes()
                     .all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
         };
-        if self.version != 1
+        if !matches!((self.version, self.tls.is_some()), (1, false) | (2, true))
             || !label(&self.id)
             || !label(&self.controller)
             || !label(&self.peer)
@@ -84,8 +167,10 @@ impl ChildConfig {
             || !label(&self.target_domain)
             || !(3..=8).contains(&self.width)
             || !(1000..=60_000).contains(&self.lease_ms)
-            || !(16..=256).contains(&self.token.len())
-            || !(16..=256).contains(&self.oracle.token.len())
+            || (self.tls.is_none()
+                && (!(16..=256).contains(&self.token.len())
+                    || !(16..=256).contains(&self.oracle.token.len())))
+            || (self.tls.is_some() && (!self.token.is_empty() || !self.oracle.token.is_empty()))
             || !self.oracle.address.ip().is_loopback()
             || !label(&self.oracle.id)
             || ![
@@ -97,6 +182,9 @@ impl ChildConfig {
             .contains(&self.fault.as_str())
         {
             return Err("child configuration rejected".into());
+        }
+        if let Some(tls) = &self.tls {
+            tls.validate()?;
         }
         Ok(())
     }
@@ -172,6 +260,8 @@ struct SupervisedChild {
     stderr: Option<JoinHandle<Result<Vec<u8>, String>>>,
     ready: Ready,
     token: String,
+    tls: bool,
+    controls: mpsc::Receiver<()>,
 }
 impl SupervisedChild {
     fn spawn(config: &ChildConfig) -> Result<Self, String> {
@@ -186,7 +276,12 @@ impl SupervisedChild {
         let mut frame =
             serde_json::to_vec(config).map_err(|_| "cannot encode child configuration")?;
         frame.push(b'\n');
-        if frame.len() > CONFIG_LIMIT {
+        let frame_limit = if config.tls.is_some() {
+            tls::BOOTSTRAP_LIMIT
+        } else {
+            CONFIG_LIMIT
+        };
+        if frame.len() > frame_limit {
             return Err("child configuration exceeds startup budget".into());
         }
         let executable = std::env::current_exe().map_err(|_| "cannot locate native executable")?;
@@ -218,6 +313,8 @@ impl SupervisedChild {
             );
         });
         let (ready_tx, ready_rx) = mpsc::channel();
+        let (control_tx, control_rx) = mpsc::sync_channel(1);
+        let tls_controls = config.tls.is_some();
         let stdout = thread::spawn(move || {
             let mut reader = BufReader::new(output);
             let result = bounded_line(&mut reader, READY_LIMIT).and_then(|raw| {
@@ -226,12 +323,40 @@ impl SupervisedChild {
             });
             let _ = ready_tx.send(result);
             let mut trailing = Vec::new();
-            reader
-                .take((LOG_LIMIT + 1) as u64)
-                .read_to_end(&mut trailing)
-                .map_err(|_| "child stdout failed")?;
-            if trailing.len() > LOG_LIMIT {
-                return Err("child stdout exceeded budget".into());
+            if tls_controls {
+                let mut consumed = 0;
+                loop {
+                    if reader
+                        .fill_buf()
+                        .map_err(|_| "child stdout failed")?
+                        .is_empty()
+                    {
+                        break;
+                    }
+                    let line = bounded_line(&mut reader, 256)?;
+                    consumed += line.len();
+                    if consumed > LOG_LIMIT {
+                        return Err("child control acknowledgements exceeded budget".into());
+                    }
+                    if serde_json::from_slice::<Value>(&line).ok()
+                        != Some(
+                            json!({"schema":"symbiote.partner-control/1","event":"controller-revoked"}),
+                        )
+                    {
+                        return Err("invalid child control acknowledgement".into());
+                    }
+                    control_tx
+                        .try_send(())
+                        .map_err(|_| "unexpected repeated child acknowledgement")?;
+                }
+            } else {
+                reader
+                    .take((LOG_LIMIT + 1) as u64)
+                    .read_to_end(&mut trailing)
+                    .map_err(|_| "child stdout failed")?;
+                if trailing.len() > LOG_LIMIT {
+                    return Err("child stdout exceeded budget".into());
+                }
             }
             Ok(trailing)
         });
@@ -266,11 +391,14 @@ impl SupervisedChild {
                 || ready.identity.len() != 33
                 || !ready.identity.starts_with("symbiote-")
                 || ready.active_models > 4096
+                || (config.tls.is_some() && ready.identity != config.id)
             {
                 return Err("child identity/readiness validation failed".to_string());
             }
             let readiness = serde_json::to_string(&ready).map_err(|_| "cannot audit readiness")?;
-            if readiness.contains(&config.token) || readiness.contains(&config.oracle.token) {
+            if (!config.token.is_empty() && readiness.contains(&config.token))
+                || (!config.oracle.token.is_empty() && readiness.contains(&config.oracle.token))
+            {
                 return Err("child readiness exposed a capability".into());
             }
             Ok((stdin, ready))
@@ -285,6 +413,8 @@ impl SupervisedChild {
                     stderr: Some(stderr),
                     ready,
                     token: config.token.clone(),
+                    tls: config.tls.is_some(),
+                    controls: control_rx,
                 })
             }
             Err(error) => {
@@ -300,8 +430,25 @@ impl SupervisedChild {
         }
     }
 
-    fn connect(&self, controller: &str) -> Result<Client, String> {
-        Client::connect_scoped(
+    fn connect(
+        &self,
+        controller: &str,
+        deployment: Option<&tls::Deployment>,
+        linear: bool,
+    ) -> Result<AgentClient, String> {
+        if let Some(deployment) = deployment {
+            if !self.tls {
+                return Err("TLS deployment cannot fall back to the legacy transport".into());
+            }
+            return Ok(AgentClient::Tls(Box::new(SecureClient::connect(
+                &deployment.agent_endpoint(linear, self.ready.address)?,
+                &deployment.controller,
+            )?)));
+        }
+        if self.tls {
+            return Err("TLS partner requires a provisioned TLS client".into());
+        }
+        Ok(AgentClient::Legacy(Client::connect_scoped(
             &Endpoint {
                 id: self.ready.id.clone(),
                 address: self.ready.address,
@@ -310,7 +457,24 @@ impl SupervisedChild {
             controller,
             AGENT_OPS,
             SCOPE,
-        )
+        )?))
+    }
+
+    fn revoke_controller(&mut self) -> Result<(), String> {
+        if !self.tls {
+            return Err("certificate revocation requires TLS".into());
+        }
+        let input = self
+            .stdin
+            .as_mut()
+            .ok_or("partner control pipe unavailable")?;
+        input
+            .write_all(b"{\"command\":\"revoke-controller\"}\n")
+            .and_then(|()| input.flush())
+            .map_err(|_| "cannot send bounded owner revocation".to_string())?;
+        self.controls
+            .recv_timeout(STOP_TIMEOUT)
+            .map_err(|_| "child certificate revocation acknowledgement deadline exceeded".into())
     }
 
     fn shutdown(&mut self) -> Result<(), String> {
@@ -496,12 +660,19 @@ impl NativeAgent {
     fn oracle(&self, operation: &str, payload: &Value) -> Result<Value, String> {
         // The local transport serves one session at a time. Never keep an idle
         // oracle connection open while another child needs the listener.
-        let mut client = Client::connect_scoped(
-            &self.config.oracle.endpoint(),
-            &self.config.id,
-            ORACLE_OPS,
-            SCOPE,
-        )?;
+        let mut client = if let Some(tls) = &self.config.tls {
+            AgentClient::Tls(Box::new(SecureClient::connect(
+                &tls.oracle_endpoint(&self.config.oracle.id, self.config.oracle.address)?,
+                &tls.client(&self.config.id)?,
+            )?))
+        } else {
+            AgentClient::Legacy(Client::connect_scoped(
+                &self.config.oracle.endpoint(),
+                &self.config.id,
+                ORACLE_OPS,
+                SCOPE,
+            )?)
+        };
         let result = client.call(operation, payload)?;
         client.revoke()?;
         Ok(result)
@@ -649,9 +820,12 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
         }
     });
     let mut input = BufReader::new(std::io::stdin().lock());
-    let raw = bounded_line(&mut input, CONFIG_LIMIT)?;
+    let raw = bounded_line(&mut input, tls::BOOTSTRAP_LIMIT)?;
     let config: ChildConfig =
         serde_json::from_slice(&raw).map_err(|_| "child configuration rejected")?;
+    if config.tls.is_none() && raw.len() > CONFIG_LIMIT {
+        return Err("legacy child configuration exceeds startup budget".into());
+    }
     config.validate()?;
     let _ = configured_tx.send(());
     let _ = startup_watchdog.join();
@@ -669,6 +843,9 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
     if identity.identity() == config.controller {
         return Err("native partner identity aliases the controller".into());
     }
+    if config.tls.is_some() && identity.identity() != config.id {
+        return Err("TLS partner identity does not match the provisioned certificate role".into());
+    }
     let knowledge = KnowledgeStore::open(&config.state, identity.identity())?;
     let private_identity = identity.identity().to_string();
     let active_models = knowledge.active().len();
@@ -683,6 +860,12 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
     };
     let fault = config.fault.clone();
     let id = config.id.clone();
+    let tls_config = config
+        .tls
+        .as_ref()
+        .map(|tls| tls.server(&config.id, &config.controller))
+        .transpose()?;
+    let controller_id = config.controller.clone();
     let agent = NativeAgent {
         source: Learner::new(config.width, config.linear)?,
         config,
@@ -695,12 +878,19 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
     agent.retained()?;
     let shared = Arc::new(Mutex::new(agent));
     let handler = Arc::clone(&shared);
-    let mut server = spawn_scoped_server(server_config, SCOPE, move |op, payload| {
+    let handle = move |op: &str, payload: Value| {
         handler
             .lock()
             .map_err(|_| "native agent state unavailable")?
             .handle(op, payload)
-    })?;
+    };
+    let mut server = if let Some(config) = tls_config {
+        NativeServer::Tls(spawn_secure_server(config, move |_, op, payload| {
+            handle(op, payload)
+        })?)
+    } else {
+        NativeServer::Legacy(spawn_scoped_server(server_config, SCOPE, handle)?)
+    };
     if fault == "stall-before-ready" {
         thread::sleep(lease + Duration::from_secs(1));
     }
@@ -710,7 +900,7 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
         identity: private_identity,
         pid: std::process::id(),
         instance_nonce: fresh_capability()?,
-        address: server.endpoint().address,
+        address: server.address(),
         active_models,
     };
     println!(
@@ -724,11 +914,35 @@ pub(crate) fn serve_from_stdin() -> Result<(), String> {
         std::process::exit(73);
     }
     // Child lifecycle commands are owner-controlled enums on stdin, never code.
-    let control = bounded_line(&mut input, 128);
-    let normal = match control {
-        Ok(raw) => serde_json::from_slice::<Value>(&raw)
-            .is_ok_and(|value| value == json!({"command":"shutdown"})),
-        Err(_) => false,
+    let mut commands = 0;
+    let normal = loop {
+        commands += 1;
+        if commands > 8 {
+            break false;
+        }
+        let Ok(raw) = bounded_line(&mut input, 128) else {
+            break false;
+        };
+        let Ok(command) = serde_json::from_slice::<Value>(&raw) else {
+            break false;
+        };
+        if command == json!({"command":"shutdown"}) {
+            break true;
+        }
+        if command == json!({"command":"revoke-controller"})
+            && matches!(server, NativeServer::Tls(_))
+        {
+            server.revoke_peer(&controller_id)?;
+            println!(
+                "{}",
+                json!({"schema":"symbiote.partner-control/1","event":"controller-revoked"})
+            );
+            std::io::stdout()
+                .flush()
+                .map_err(|_| "cannot acknowledge owner revocation")?;
+            continue;
+        }
+        break false;
     };
     server.shutdown()?;
     drop(shared);
@@ -767,6 +981,7 @@ fn private_config(
         linear,
         lease_ms: 30_000,
         fault: String::new(),
+        tls: None,
     })
 }
 
@@ -775,8 +990,67 @@ pub(crate) fn run(state: &Path, receipts: &Path) -> Result<Value, String> {
 }
 
 pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Result<Value, String> {
+    run_configured(state, receipts, fault, None)
+}
+
+/// Prepare durable role identities only. This explicitly provisions no trust,
+/// certificates, network sessions, observations or learning artifacts.
+pub(crate) fn initialize_tls_state(state: &Path) -> Result<Value, String> {
+    let paths = [
+        state.to_path_buf(),
+        state.join("network-tls/exact"),
+        state.join("network-tls/linear"),
+    ];
+    let mut existing = BTreeSet::new();
+    for path in &paths {
+        let inspection = symbiote_memory::maintenance::inspect(path)?;
+        if let Some(id) = inspection.identity {
+            if !existing.insert(id) {
+                return Err(
+                    "prepared TLS role identities alias each other; existing state was preserved"
+                        .into(),
+                );
+            }
+        } else if path.join("knowledge.jsonl").exists() {
+            return Err("structural knowledge exists without its TLS role identity".into());
+        }
+    }
+    let controller = Store::open(&paths[0])?;
+    let exact = Store::open(&paths[1])?;
+    let linear = Store::open(&paths[2])?;
+    if [controller.identity(), exact.identity(), linear.identity()]
+        .into_iter()
+        .collect::<BTreeSet<_>>()
+        .len()
+        != 3
+    {
+        return Err("prepared TLS roles require three distinct persistent identities".into());
+    }
+    Ok(
+        json!({"schema":"symbiote.tls-preparation/1","status":"PREPARED","roles":{
+        "controller":{"id":controller.identity(),"state":paths[0]},
+        "exact":{"id":exact.identity(),"state":paths[1]},
+        "linear":{"id":linear.identity(),"state":paths[2]}},
+        "network_requests":0,"learning_artifacts_created":0,"certificates_created":0}),
+    )
+}
+
+pub(crate) fn run_tls(state: &Path, receipts: &Path, config_path: &Path) -> Result<Value, String> {
+    let deployment = tls::Deployment::load(state, config_path)?;
+    run_configured(state, receipts, "none", Some(&deployment))
+}
+
+fn run_configured(
+    state: &Path,
+    receipts: &Path,
+    fault: &str,
+    deployment: Option<&tls::Deployment>,
+) -> Result<Value, String> {
     let identity = Store::open(state)?;
     let controller = identity.identity().to_string();
+    if deployment.is_some_and(|tls| tls.controller_id != controller) {
+        return Err("controller persistent identity changed after TLS provisioning".into());
+    }
     let width = 4;
     let domain_a = "deployed-alpha-context-a";
     let domain_b = "deployed-beta-context-b";
@@ -824,23 +1098,44 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
         authority,
         counters: Arc::clone(&counters_b),
     };
-    let mut oracle_a = spawn_scoped_server(
-        oracle_config("deployed-oracle-alpha", "network-exact")?,
-        SCOPE,
-        move |op, payload| view_a.handle(op, payload),
-    )?;
-    let mut oracle_b = spawn_scoped_server(
-        oracle_config("deployed-oracle-beta", "network-linear")?,
-        SCOPE,
-        move |op, payload| view_b.handle(op, payload),
-    )?;
+    let mut oracle_a = if let Some(tls) = deployment {
+        NativeServer::Tls(spawn_secure_server(
+            tls.oracle_server(false)?,
+            move |_, op, payload| view_a.handle(op, payload),
+        )?)
+    } else {
+        NativeServer::Legacy(spawn_scoped_server(
+            oracle_config("deployed-oracle-alpha", "network-exact")?,
+            SCOPE,
+            move |op, payload| view_a.handle(op, payload),
+        )?)
+    };
+    let mut oracle_b = if let Some(tls) = deployment {
+        NativeServer::Tls(spawn_secure_server(
+            tls.oracle_server(true)?,
+            move |_, op, payload| view_b.handle(op, payload),
+        )?)
+    } else {
+        NativeServer::Legacy(spawn_scoped_server(
+            oracle_config("deployed-oracle-beta", "network-linear")?,
+            SCOPE,
+            move |op, payload| view_b.handle(op, payload),
+        )?)
+    };
+    let id_a = deployment.map_or("network-exact", |tls| tls.exact.id.as_str());
+    let id_b = deployment.map_or("network-linear", |tls| tls.linear.id.as_str());
+    let child_root = if deployment.is_some() {
+        "network-tls"
+    } else {
+        "network"
+    };
     let mut config_a = private_config(
-        "network-exact",
-        "network-linear",
+        id_a,
+        id_b,
         &controller,
-        state.join("network/exact"),
+        state.join(child_root).join("exact"),
         (domain_a, domain_b),
-        oracle_a.endpoint(),
+        oracle_a.grant().endpoint(),
         false,
     )?;
     config_a.fault = match fault {
@@ -851,15 +1146,23 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
         _ => return Err("unsupported deployment laboratory fault".into()),
     }
     .into();
-    let config_b = private_config(
-        "network-linear",
-        "network-exact",
+    let mut config_b = private_config(
+        id_b,
+        id_a,
         &controller,
-        state.join("network/linear"),
+        state.join(child_root).join("linear"),
         (domain_b, domain_a),
-        oracle_b.endpoint(),
+        oracle_b.grant().endpoint(),
         true,
     )?;
+    if let Some(tls) = deployment {
+        for (config, linear) in [(&mut config_a, false), (&mut config_b, true)] {
+            config.version = 2;
+            config.token.clear();
+            config.oracle.token.clear();
+            config.tls = Some(tls.bootstrap(linear));
+        }
+    }
     let mut child_a = SupervisedChild::spawn(&config_a)?;
     let previous_b = symbiote_memory::maintenance::inspect(&config_b.state)?;
     if previous_b.identity.as_deref() == Some(child_a.ready.identity.as_str()) {
@@ -879,25 +1182,25 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
     }
     let ready_a = child_a.ready.clone();
     let ready_b = child_b.ready.clone();
-    let mut client_a = child_a.connect(&controller)?;
-    let mut client_b = child_b.connect(&controller)?;
-    let bundle_a = fit(&mut client_a, width)?;
-    let bundle_b = fit(&mut client_b, width)?;
+    let mut client_a = child_a.connect(&controller, deployment, false)?;
+    let mut client_b = child_b.connect(&controller, deployment, true)?;
+    let bundle_a = fit_native(&mut client_a, width)?;
+    let bundle_b = fit_native(&mut client_b, width)?;
     let mut forged = bundle_b.clone();
     forged[0].output ^= 1;
     let forged_rejected = client_a.call("adopt", &json!(forged)).is_err();
     // A rejected request closes the client by design; reconnect with the same
     // explicitly authorized capability before the valid exchange.
     drop(client_a);
-    client_a = child_a.connect(&controller)?;
+    client_a = child_a.connect(&controller, deployment, false)?;
     let cross_domain_rejected = client_a.call("adopt", &json!(bundle_a)).is_err();
     drop(client_a);
-    client_a = child_a.connect(&controller)?;
+    client_a = child_a.connect(&controller, deployment, false)?;
     let mut repeated = bundle_b.clone();
     repeated[1] = repeated[0].clone();
     let duplicate_rejected = client_a.call("adopt", &json!(repeated)).is_err();
     drop(client_a);
-    client_a = child_a.connect(&controller)?;
+    client_a = child_a.connect(&controller, deployment, false)?;
     client_a.call("adopt", &json!(bundle_b))?;
     client_b.call("adopt", &json!(bundle_a))?;
     let promoted_a = client_a.call("promote", &json!({}))?;
@@ -907,6 +1210,8 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
     let predictions_b = client_b.call("forecast", &json!({"inputs":inputs}))?;
     client_a.revoke()?;
     client_b.revoke()?;
+    let revoked_session_rejected =
+        deployment.is_none() || client_a.call("status", &json!({})).is_err();
     child_a.shutdown()?;
     child_b.shutdown()?;
     let before_restart_a = counters_a.snapshot();
@@ -921,8 +1226,8 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
     {
         return Err("restarted native identities are not independent".into());
     }
-    let mut retained_a = restart_a.connect(&controller)?;
-    let mut retained_b = restart_b.connect(&controller)?;
+    let mut retained_a = restart_a.connect(&controller, deployment, false)?;
+    let mut retained_b = restart_b.connect(&controller, deployment, true)?;
     let after_a = retained_a.call("forecast", &json!({"inputs":inputs}))?;
     let after_b = retained_b.call("forecast", &json!({"inputs":inputs}))?;
     let after_restart_a = counters_a.snapshot();
@@ -956,10 +1261,37 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
         && restart_a.ready.instance_nonce != ready_a.instance_nonce
         && restart_b.ready.instance_nonce != ready_b.instance_nonce
         && restart_requests.iter().all(|count| *count == 0);
-    if !retained || !forged_rejected || !cross_domain_rejected || !duplicate_rejected {
+    if !retained
+        || !forged_rejected
+        || !cross_domain_rejected
+        || !duplicate_rejected
+        || !revoked_session_rejected
+    {
         return Err("deployed evidence/persistence gate failed".into());
     }
-    let report = json!({
+    retained_a.revoke()?;
+    retained_b.revoke()?;
+    let mut certificate_revocation_rejected = false;
+    if deployment.is_some() {
+        restart_a.revoke_controller()?;
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while Instant::now() < deadline {
+            match restart_a.connect(&controller, deployment, false) {
+                Err(_) => {
+                    certificate_revocation_rejected = true;
+                    break;
+                }
+                Ok(mut client) => {
+                    let _ = client.revoke();
+                }
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        if !certificate_revocation_rejected {
+            return Err("TLS certificate revocation did not prevent reconnection".into());
+        }
+    }
+    let mut report = json!({
         "schema":"symbiote.network-research/1", "version":env!("CARGO_PKG_VERSION"), "status":"PASS", "identity":controller,
         "scope":"Boolean affine width4; native process/persistence prototype", "controller_pid":std::process::id(),
         "participants":[{"agent":"network-exact","pid":ready_a.pid,"restart_pid":restart_a.ready.pid,"instance_nonce":ready_a.instance_nonce,"restart_instance_nonce":restart_a.ready.instance_nonce,"identity":ready_a.identity,"active_models":restart_a.ready.active_models,"promotion":promoted_a,"restart_oracle_requests":{"observe":requests_a[0],"verify":requests_a[1],"assess":requests_a[2]}}, {"agent":"network-linear","pid":ready_b.pid,"restart_pid":restart_b.ready.pid,"instance_nonce":ready_b.instance_nonce,"restart_instance_nonce":restart_b.ready.instance_nonce,"identity":ready_b.identity,"active_models":restart_b.ready.active_models,"promotion":promoted_b,"restart_oracle_requests":{"observe":requests_b[0],"verify":requests_b[1],"assess":requests_b[2]}}],
@@ -972,8 +1304,17 @@ pub(crate) fn run_with_fault(state: &Path, receipts: &Path, fault: &str) -> Resu
         "performance_claim":"none; no paired cost comparison is executed by this deployment prototype",
         "limitations":["trusted same-host laboratory oracle and evaluator", "independent native learner implementations share one executable", "loopback transport; no sandbox against a malicious same-user process", "one four-bit context; no new general transfer claim"]
     });
-    retained_a.revoke()?;
-    retained_b.revoke()?;
+    if let Some(tls) = deployment {
+        report["schema"] = json!("symbiote.tls-network-research/1");
+        report["transport"] = json!({"protocol":"symbiote/2","tls_version":"TLS1.3","mutual_authentication":true,"explicit_ca_and_leaf_pins":true,"scope":SCOPE,"persistent_identity_bound":true,"revoked_session_rejected":revoked_session_rejected,"certificate_revocation_rejected":certificate_revocation_rejected,"plaintext_fallback":false});
+        report["participants"][0]["authenticated_id"] = json!(tls.exact.id);
+        report["participants"][1]["authenticated_id"] = json!(tls.linear.id);
+        report["participants"][0]["certificate_sha256"] =
+            json!(tls.exact.material.certificate_sha256);
+        report["participants"][1]["certificate_sha256"] =
+            json!(tls.linear.material.certificate_sha256);
+        report["limitations"] = json!(["trusted same-host laboratory oracle and evaluator","independent native learner implementations share one executable","operator-provisioned TLS on explicit loopback endpoints; external deployment not tested","no sandbox against a malicious same-user process","one four-bit context; no new general transfer or cost improvement claim"]);
+    }
     restart_a.shutdown()?;
     restart_b.shutdown()?;
     oracle_a.shutdown()?;

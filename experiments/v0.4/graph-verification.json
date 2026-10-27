@@ -1,0 +1,63 @@
+{
+  "schema": "symbiote.graph-verification/1",
+  "status": "PASS",
+  "protocol_sha256": "0924c5fb43f6dbdc370f2d7ff5d8b5ba197fdfb205a3015697a9eb3ea4952b2c",
+  "regimes": [
+    {
+      "name": "normal",
+      "worlds": 81,
+      "participant_comparisons": 162,
+      "isolated_cost": 69093,
+      "exchange_cost": 54105,
+      "bilateral_benefit_worlds": 64,
+      "classes": {
+        "improved_coverage": 0,
+        "equal_coverage_lower_cost": 144,
+        "neutral": 0,
+        "equal_coverage_higher_cost": 18,
+        "lower_coverage": 0
+      }
+    },
+    {
+      "name": "cheap_observation",
+      "worlds": 81,
+      "participant_comparisons": 162,
+      "isolated_cost": 15930,
+      "exchange_cost": 15216,
+      "bilateral_benefit_worlds": 64,
+      "classes": {
+        "improved_coverage": 0,
+        "equal_coverage_lower_cost": 144,
+        "neutral": 0,
+        "equal_coverage_higher_cost": 18,
+        "lower_coverage": 0
+      }
+    }
+  ],
+  "promotions": {
+    "already_retained": 0,
+    "promoted": 69,
+    "withheld_abstention": 93
+  },
+  "negative_controls": {
+    "duplicate": true,
+    "forged": true,
+    "previous_authority": true,
+    "wrong_context": true,
+    "wrong_source": true
+  },
+  "actual_offline_restart": true,
+  "measured_restart_oracle_requests": {
+    "observe": 0,
+    "verify": 0
+  },
+  "public_route_query": true,
+  "retained_ledger_unchanged": true,
+  "limitations": [
+    "graph endpoint cohort shares one controller process; separate-process proof remains the v0.3 affine experiment",
+    "finite topology and cost family only; no universal reciprocal advantage",
+    "trusted local authority and stationary context; raw digests cannot establish arbitrary remote honesty",
+    "cheap and normal regimes reuse the same81worlds; not162 independent environments"
+  ],
+  "cost_scope": "declared logical participant application-cost model; all cohort API/session/application-bytes/acquisition/verification/adoption/route-work/export categories; excludes OS,TCP/HMAC framing,controller,judge,audit-I/O and replay laboratory overhead"
+}

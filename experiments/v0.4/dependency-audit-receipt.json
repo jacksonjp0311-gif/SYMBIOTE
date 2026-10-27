@@ -1,0 +1,9 @@
+{
+  "schema": "symbiote.dependency-audit/1",
+  "status": "PASS",
+  "tool": "cargo-audit 0.22.2",
+  "lockfile_sha256": "e9bc586a627b900a80decdf4145c55f40b558b9b17b248d47876a9e3b77781ee",
+  "audit_sha256": "8b667e5d7beb8b0de2ae2d18c8cf720c9377fe944f60ed6c099e535ad5876fa5",
+  "audit_file": "dependency-audit.json",
+  "scope": "dated published advisory snapshot; not a proof of defect absence"
+}

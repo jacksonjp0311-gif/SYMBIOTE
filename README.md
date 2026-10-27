@@ -19,8 +19,9 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md)
 
-> **Research preview.** v0.3 Adaptive Memory adds supervised native peers, audited
-> recovery and migration, and a separately tested TLS API. The stable
+> **Research preview.** v0.4 adds persistent route-planning knowledge, a fully
+> enumerated reciprocal-cost experiment, offline route queries, and native peers
+> running through explicitly configured mutual TLS. The stable
 > v1.0 criteria remain open. Current experiments concern declared finite synthetic
 > environments; generalized intelligence and autonomous self-improvement are not
 > established.
@@ -36,7 +37,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v0.3.0 -AddToPath
+.\tools\install.ps1 -Version v0.4.0 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -44,7 +45,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v0.3.0
+sh tools/install.sh --version v0.4.0
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
@@ -67,6 +68,7 @@ You can also download a matching archive directly, extract it, and run
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
 symbiote research   # Run structural learning, exchange and isolated controls
+symbiote graph-research    # Learn route maps and measure every paired world
 symbiote network-research  # Run two real native peer processes and restart them
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
@@ -80,13 +82,17 @@ reports are written under `experiments/local/`. Both are ignored by Git.
 
 Run `demo` twice to observe retained knowledge being rechecked and reused. Run
 `research`, then `status`, to inspect structural knowledge retained from the
-extended experiment. `symbiote --help` lists every command and option.
+extended experiment. `graph-research` prints a ready-to-copy `route` command for
+its private retained graph store. Route queries return a conditional certificate
+or an explicit abstention. To run supervised peers over TLS, follow the
+[identity and credential guide](docs/TLS_DEPLOYMENT.md). `symbiote --help` lists every command and option.
 
 From a Windows checkout, the single entrypoint also supports:
 
 ```powershell
 .\SYMBIOTE-All-One.ps1 -Run
 .\SYMBIOTE-All-One.ps1 -Research
+.\SYMBIOTE-All-One.ps1 -GraphResearch
 .\SYMBIOTE-All-One.ps1 -NetworkResearch
 .\SYMBIOTE-All-One.ps1 -Doctor
 .\SYMBIOTE-All-One.ps1 -Verify
@@ -124,7 +130,9 @@ bounded JSONL frames and request budgets. It is scoped to trusted loopback use;
 the native process experiment uses that same explicit loopback protocol.
 A separate [TLS 1.3 API](docs/SECURITY.md) supplies mutual certificate validation,
 name/pin identity binding and resource-limited encrypted sessions for configured
-library integrations. External runtime deployment is a separate evidence gate.
+library integrations. The supervised runtime can use this transport with explicit operator credentials;
+its integration tests use real TLS on loopback. Nonlocal deployment remains a
+separate evidence gate.
 
 The native process experiment keeps each peer's identity and ledgers separate
 from the controller. Real process restarts use stored models, with actual oracle
@@ -140,6 +148,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
 | Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
 | Native processes, retained prediction, recovery and migration | [v0.3 software gates](experiments/v0.3/software-verification.json), [deployment verification](experiments/v0.3/deployed-verification.json) and [native exchange receipt](experiments/v0.3/native-process-exchange.json) |
+| Complete graph cohort, conditional routes and durable graph learning | [v0.4 graph verification](experiments/v0.4/graph-verification.json), [raw paired cases](experiments/v0.4/graph-exchange.json), and [experiment protocol](docs/RESEARCH_V04_PROTOCOL.md) |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
 
@@ -165,6 +174,15 @@ not priced; these figures establish no wall-clock or general efficiency gain.
 Separate-process offline prediction uses retained models; benchmark reruns
 deliberately reconstruct fresh learners.
 
+The v0.4 route-planning cohort enumerates all 81 four-edge worlds under two
+predeclared price regimes. Both isolated and exchanging learners certify 231/324
+held-out routes, with 93 abstentions and no wrong certificates. Normal logical
+costs are 69,093 versus 54,105; cheap-observation costs are 15,930 versus 15,216.
+Each regime includes 144 lower-cost and 18 higher-cost participant comparisons;
+64/81 worlds benefit both. Only 69 complete maps are retained; 93 partial maps
+are withheld. These are conditional results in one topology, with laboratory
+overhead excluded as declared. [Methods and limits](docs/RESEARCH_V04.md).
+
 Stable v1.0 requires broader independent environments, demonstrated reciprocal
 benefits after all costs, secure external connections, robust persistent memory
 and a documented failure envelope. Version numbers advance after the evidence.
@@ -188,7 +206,7 @@ behavior explicit without fragmenting the system into placeholder packages.
 | `tools/` | Installers, verification, packaging and upstream audit utilities |
 | `SYMBIOTE-All-One.ps1` | Synchronous Windows build, run, research, test, verify and Git operations |
 
-[Architecture](docs/ARCHITECTURE.md) · [Reasoning](docs/REASONING.md) ·
+[Architecture](docs/ARCHITECTURE.md) · [Compatibility](docs/COMPATIBILITY.md) · [Reasoning](docs/REASONING.md) ·
 [Protocol](docs/PROTOCOL.md) · [Operations](docs/OPERATIONS.md)
 
 ## Develop and verify

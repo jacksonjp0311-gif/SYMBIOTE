@@ -6,7 +6,9 @@ param(
     [switch]$Verify,
     [switch]$Benchmark,
     [switch]$Research,
+    [switch]$GraphResearch,
     [switch]$NetworkResearch,
+    [switch]$PrepareTlsState,
     [switch]$InspectState,
     [switch]$Recover,
     [switch]$Migrate,
@@ -15,6 +17,7 @@ param(
     [switch]$Json,
     [switch]$GitStatus,
     [string]$State = 'state/demo',
+    [string]$TlsConfig = '',
     [string]$Python = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -35,13 +38,20 @@ function Invoke-Symbiote([string[]]$Arguments) {
 }
 
 try {
+    if (-not $NetworkResearch -and -not [string]::IsNullOrWhiteSpace($TlsConfig)) { throw '-TlsConfig requires -NetworkResearch.' }
     if ($Build) { Invoke-Checked { cargo build --workspace --release --locked } }
     if ($InspectState) { Invoke-Symbiote -Arguments @('inspect-state', '--state', $State) }
     if ($Recover) { Invoke-Symbiote -Arguments @('recover', '--state', $State) }
     if ($Migrate) { Invoke-Symbiote -Arguments @('migrate', '--state', $State) }
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
-    if ($NetworkResearch) { Invoke-Symbiote -Arguments @('network-research', '--state', $State) }
+    if ($GraphResearch) { Invoke-Symbiote -Arguments @('graph-research', '--state', $State) }
+    if ($PrepareTlsState) { Invoke-Symbiote -Arguments @('prepare-tls-state', '--state', $State) }
+    if ($NetworkResearch) {
+        $networkArguments = @('network-research', '--state', $State)
+        if (-not [string]::IsNullOrWhiteSpace($TlsConfig)) { $networkArguments += @('--tls-config', $TlsConfig) }
+        Invoke-Symbiote -Arguments $networkArguments
+    }
     if ($Doctor) { Invoke-Symbiote -Arguments @('doctor', '--state', $State) }
     if ($Install) { & (Join-Path $repoRoot 'tools/install.ps1') -FromSource; if ($LASTEXITCODE -ne 0) { throw 'Installation failed' } }
     if ($Test) { Invoke-Checked { cargo test --workspace --locked } }
@@ -62,17 +72,19 @@ try {
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $NetworkResearch -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
+    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
         Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
         Write-Output ''
         Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
         Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
+        Write-Output 'Routes:     .\SYMBIOTE-All-One.ps1 -GraphResearch'
         Write-Output 'Processes:  .\SYMBIOTE-All-One.ps1 -NetworkResearch'
         Write-Output 'Check:      .\SYMBIOTE-All-One.ps1 -Doctor'
         Write-Output 'Verify:     .\SYMBIOTE-All-One.ps1 -Verify'
         Write-Output 'Install:    .\SYMBIOTE-All-One.ps1 -Install'
         Write-Output ''
         Write-Output 'State: -InspectState -Recover -Migrate -State DIR'
+        Write-Output 'TLS roles: -PrepareTlsState -State DIR; then -NetworkResearch -TlsConfig FILE'
         Write-Output 'Other switches: -Build -Test -Benchmark -GitStatus -Json -Python EXE'
     }
 }

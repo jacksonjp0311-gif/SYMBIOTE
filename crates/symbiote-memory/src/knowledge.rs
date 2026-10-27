@@ -11,6 +11,8 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 
+pub mod graph;
+
 const MAX_RECORD_BYTES: usize = 128 * 1024;
 const MAX_CASES: usize = 256;
 const MAX_COST: u64 = 1_000_000_000;
@@ -32,9 +34,22 @@ pub struct KnowledgeRecord {
     pub source: String,
     pub scope: String,
     pub schema_fingerprint: String,
-    /// Inert typed JSON. Only the explicitly supported affine data is admitted.
+    /// Inert typed JSON. Only the explicitly supported declarative grammars are admitted.
     pub payload: Value,
     pub provenance: String,
+}
+
+/// Parsing dispatch only; keeping `KnowledgeRecord.payload` as `Value` preserves
+/// the exact serialization of every pre-existing affine receipt.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+pub enum KnowledgePayload {
+    Affine {
+        width: u8,
+        coefficients: u16,
+        bias: bool,
+    },
+    GraphMap(graph::GraphMap),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -90,7 +105,17 @@ impl KnowledgeRecord {
         if self.provenance.trim().is_empty() || self.provenance.len() > 4096 {
             return Err("knowledge requires bounded provenance".into());
         }
-        AffinePayload::from_record(self)?;
+        match self.typed_payload()? {
+            KnowledgePayload::Affine { .. } => {
+                AffinePayload::from_record(self)?;
+            }
+            KnowledgePayload::GraphMap(map) => {
+                map.validate()?;
+                if self.schema_fingerprint != graph::graph_schema_fingerprint(&map.schema)? {
+                    return Err("knowledge schema fingerprint does not match graph payload".into());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -99,8 +124,34 @@ impl KnowledgeRecord {
     }
 
     pub fn predict(&self, input: u16) -> Result<u8, String> {
+        self.predict_if_certified(input)?.ok_or_else(|| {
+            "graph knowledge abstains without a conservative route certificate".into()
+        })
+    }
+
+    pub fn typed_payload(&self) -> Result<KnowledgePayload, String> {
+        serde_json::from_value(self.payload.clone()).map_err(|e| e.to_string())
+    }
+
+    /// A graph returns a cost only for a route certified from observed edges.
+    /// Unreachable and uncertain queries return `None`, never an invented value.
+    pub fn predict_if_certified(&self, input: u16) -> Result<Option<u8>, String> {
         self.validate()?;
-        AffinePayload::from_record(self)?.predict(input)
+        match self.typed_payload()? {
+            KnowledgePayload::Affine { .. } => {
+                AffinePayload::from_record(self)?.predict(input).map(Some)
+            }
+            KnowledgePayload::GraphMap(map) => map.predict(input),
+        }
+    }
+
+    /// Exposes the actual conditional path certificate as well as its cost.
+    pub fn graph_forecast(
+        &self,
+        input: u16,
+    ) -> Result<Option<symbiote_reasoning::planning::Route>, String> {
+        self.validate()?;
+        graph::GraphMap::from_record(self)?.forecast(input)
     }
 }
 
@@ -279,6 +330,11 @@ enum Event {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         policy_version: Option<u32>,
     },
+    PromoteGraph {
+        record: KnowledgeRecord,
+        assessment: Box<graph::GraphAssessment>,
+        policy_version: u32,
+    },
     Revoke {
         id: String,
         reason: String,
@@ -312,6 +368,7 @@ pub struct KnowledgeStore {
     revisions: BTreeMap<String, u64>,
     bindings: BTreeMap<String, (String, String, String)>,
     retained_expected: BTreeMap<String, BTreeMap<u16, u8>>,
+    retained_graph_edges: BTreeMap<String, BTreeMap<usize, u16>>,
 }
 
 impl KnowledgeStore {
@@ -333,6 +390,7 @@ impl KnowledgeStore {
             revisions: BTreeMap::new(),
             bindings: BTreeMap::new(),
             retained_expected: BTreeMap::new(),
+            retained_graph_edges: BTreeMap::new(),
         };
         let path = store.ledger_path();
         if path.exists() {
@@ -403,6 +461,7 @@ impl KnowledgeStore {
             revisions: BTreeMap::new(),
             bindings: BTreeMap::new(),
             retained_expected: BTreeMap::new(),
+            retained_graph_edges: BTreeMap::new(),
         };
         let mut previous = ZERO_HASH.to_string();
         for (sequence, line) in std::str::from_utf8(bytes)
@@ -460,6 +519,36 @@ impl KnowledgeStore {
             policy_version: Some(2),
         })
     }
+
+    pub fn promote_graph(
+        &mut self,
+        record: KnowledgeRecord,
+        assessment: graph::GraphAssessment,
+    ) -> Result<(), String> {
+        self.append(Event::PromoteGraph {
+            record,
+            assessment: Box::new(assessment),
+            policy_version: 2,
+        })
+    }
+
+    /// Returns the latest active graph's complete inert proof envelopes. Old
+    /// authority epochs must still be rejected by a fresh native authority.
+    pub fn graph_evidence(&self, id: &str) -> Option<graph::GraphTrialEvidence> {
+        if !self.active.contains_key(id) {
+            return None;
+        }
+        self.receipts
+            .iter()
+            .rev()
+            .find_map(|receipt| match &receipt.payload {
+                Event::PromoteGraph {
+                    record, assessment, ..
+                } if record.id == id => Some(assessment.evidence.clone()),
+                _ => None,
+            })
+    }
+
     pub fn revoke(&mut self, id: &str, reason: &str) -> Result<(), String> {
         self.append(Event::Revoke {
             id: id.into(),
@@ -544,6 +633,84 @@ impl KnowledgeStore {
                     }
                 }
             }
+            Event::PromoteGraph {
+                record,
+                assessment,
+                policy_version,
+            } => {
+                if !self.genesis || *policy_version != 2 {
+                    return Err("graph promotion requires genesis and supported policy 2".into());
+                }
+                record.validate()?;
+                assessment.validate(record)?;
+                if self
+                    .revisions
+                    .get(&record.id)
+                    .is_some_and(|revision| record.revision <= *revision)
+                {
+                    return Err("duplicate or stale knowledge revision".into());
+                }
+                let binding = (
+                    record.source.clone(),
+                    record.scope.clone(),
+                    record.schema_fingerprint.clone(),
+                );
+                if self
+                    .bindings
+                    .get(&record.id)
+                    .is_some_and(|previous| previous != &binding)
+                    || self
+                        .bindings
+                        .iter()
+                        .any(|(id, value)| id != &record.id && value == &binding)
+                {
+                    return Err(
+                        "graph identity or alias cannot bypass source, scope and schema history"
+                            .into(),
+                    );
+                }
+                let map = graph::GraphMap::from_record(record)?;
+                let observations: BTreeMap<_, _> = map
+                    .observations
+                    .iter()
+                    .map(|o| (o.edge_id, o.cost))
+                    .collect();
+                if let Some(retained) = self.retained_graph_edges.get(&record.id) {
+                    if retained
+                        .iter()
+                        .any(|(edge, cost)| observations.get(edge) != Some(cost))
+                    {
+                        return Err("stationary graph edges changed or disappeared; revoke or change context before promotion".into());
+                    }
+                }
+                if let Some(retained) = self.retained_expected.get(&record.id) {
+                    for case in &assessment.evidence.cases {
+                        if retained
+                            .get(&case.input)
+                            .is_some_and(|expected| *expected != case.expected)
+                        {
+                            return Err("stationary graph route labels changed; revoke or change context before promotion".into());
+                        }
+                    }
+                    for (input, expected) in retained {
+                        if record.predict_if_certified(*input)? != Some(*expected) {
+                            return Err(
+                                "new graph knowledge regresses or abstains on retained route cases"
+                                    .into(),
+                            );
+                        }
+                    }
+                }
+                if let Some(existing) = self.active.get(&record.id) {
+                    for case in &assessment.evidence.cases {
+                        if case.baseline != existing.predict_if_certified(case.input)? {
+                            return Err(
+                                "graph trial baseline does not reflect active knowledge".into()
+                            );
+                        }
+                    }
+                }
+            }
             Event::Revoke { id, reason } => {
                 if !self.genesis
                     || !self.active.contains_key(id)
@@ -587,9 +754,37 @@ impl KnowledgeStore {
                     retained.insert(case.input, case.expected);
                 }
             }
+            Event::PromoteGraph {
+                record, assessment, ..
+            } => {
+                self.revisions.insert(record.id.clone(), record.revision);
+                self.bindings.insert(
+                    record.id.clone(),
+                    (
+                        record.source.clone(),
+                        record.scope.clone(),
+                        record.schema_fingerprint.clone(),
+                    ),
+                );
+                self.active.insert(record.id.clone(), record.clone());
+                let retained = self.retained_expected.entry(record.id.clone()).or_default();
+                for case in &assessment.evidence.cases {
+                    retained.insert(case.input, case.expected);
+                }
+                // Validation guarantees every map observation exactly matches
+                // these typed acquisitions and preserves all earlier edges.
+                let edges = self
+                    .retained_graph_edges
+                    .entry(record.id.clone())
+                    .or_default();
+                for acquisition in &assessment.evidence.acquisitions {
+                    edges.insert(acquisition.edge_id, acquisition.cost);
+                }
+            }
             Event::Revoke { id, .. } => {
                 self.active.remove(id);
                 self.retained_expected.remove(id);
+                self.retained_graph_edges.remove(id);
             }
         }
     }

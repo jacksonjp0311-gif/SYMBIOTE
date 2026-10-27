@@ -1,5 +1,32 @@
 # Intelligence architecture
 
+The v0.4 operational system has four crates. The reasoning crate contains exact
+Moore prefix inference, affine version spaces and conservative positive-cost graph
+certificates. The protocol crate supplies sensors, bounded authenticated local
+sessions and a separately versioned TLS 1.3 transport. Memory stores private
+identities and evaluated declarative models with provenance, applicability,
+rollback and audited lifecycle operations. Runtime composes these into native
+learning experiments and offline queries.
+
+The graph experiment exchanges independently authenticated edge observations,
+chooses further observations through exact route reasoning, and promotes only
+maps that pass both fixed held-out route queries. A fresh process uses those
+stored maps to produce conditional routes or abstain. Its endpoint cohort shares
+one controller. The separate affine deployment runs two actual native peers;
+an explicit operator manifest can run that experiment over mutual TLS.
+These are complementary results, not evidence that every feature has been tested
+in every deployment configuration.
+
+An external Rust consumer can embed the reasoning crate directly:
+
+```text
+cargo run -p symbiote-reasoning --example native
+```
+
+[Example source](../crates/symbiote-reasoning/examples/native.rs),
+[graph experiment protocol](RESEARCH_V04_PROTOCOL.md),
+[TLS deployment](TLS_DEPLOYMENT.md), and [compatibility](COMPATIBILITY.md).
+
 The Genesis design below remains the legacy operational slice. v0.2 additionally
 provides exact affine reasoning, scoped protocol connections, two distinct native
 learning implementations and a schema-bound held-out knowledge ledger. See

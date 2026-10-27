@@ -1,5 +1,6 @@
 /target/
 /state/
+/credentials/
 /experiments/local/
 /dist/
 __pycache__/

@@ -28,8 +28,14 @@ tested separately as a library; the process experiment still uses authorized
 loopback v1. Graph reasoning is a verified primitive, with operational graph
 learning still pending. See [deployment evidence](../experiments/v0.3/deployed-verification.json).
 
-Next: turn route planning into a second persistent exchange task, integrate TLS
-into the supervised runtime, and evaluate partner choice prospectively.
+v0.4 turns route planning into a second persistent exchange task and integrates
+TLS into the supervised affine runtime. The complete graph cohort includes
+beneficial and harmful exchanges, withheld partial maps and actual offline replay.
+See [v0.4 methods and results](RESEARCH_V04.md). Those results are conditional on
+one topology and a fixed pair; they do not automatically satisfy later gates.
+
+Next: evaluate partner choice prospectively on unfamiliar topologies and combine
+bounded experiment selection with configured deployment and failure campaigns.
 Predeclare compute budgets, rejection criteria and participant utility. The
 broader v0.4–v1.0 claims remain open; local software success does not automatically
 advance those versions.

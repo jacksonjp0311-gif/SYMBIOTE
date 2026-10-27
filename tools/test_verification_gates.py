@@ -1,16 +1,44 @@
 """Release gates must remain effective under Python's optimization flag."""
 import ast
+import copy
 import importlib.util
+import json
 from pathlib import Path
 import subprocess
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-VERIFIERS = ["verify.py", "verify_research.py", "verify_deployed.py"]
+VERIFIERS = ["verify.py", "verify_research.py", "verify_deployed.py", "verify_graph.py"]
 
 
 class VerificationIntegrityTests(unittest.TestCase):
+    def test_recorded_graph_cohort_passes_and_tampered_metrics_or_omissions_fail(self):
+        spec = importlib.util.spec_from_file_location("graph_gate_fixture", ROOT / "tools" / "verify_graph.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        recorded = json.loads((ROOT / "experiments/v0.4/graph-exchange.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(module.validate(recorded)),2)
+        altered = copy.deepcopy(recorded)
+        altered["regimes"][0]["cases"][0]["participants"][0]["exchange_cost"] += 1
+        with self.assertRaises(RuntimeError):
+            module.validate(altered)
+        omitted = copy.deepcopy(recorded)
+        omitted["regimes"][0]["cases"].pop()
+        with self.assertRaises(RuntimeError):
+            module.validate(omitted)
+        filtered = copy.deepcopy(recorded)
+        filtered["regimes"][0]["cases"][0]["participants"][0]["exchange_forecasts"].pop()
+        with self.assertRaises(RuntimeError):
+            module.validate(filtered)
+
+    def test_native_receipt_output_is_decoded_as_utf8(self):
+        spec = importlib.util.spec_from_file_location("verification_utf8_fixture", ROOT / "tools" / "verify.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        result = module.execute([sys.executable,"-c","import sys; sys.stdout.buffer.write(bytes.fromhex('31e2869233'))"])
+        self.assertEqual(result.stdout,"1\u21923")
+
     def test_empty_or_zero_test_runs_cannot_pass(self):
         spec = importlib.util.spec_from_file_location("verification_count_fixture", ROOT / "tools" / "verify.py")
         module = importlib.util.module_from_spec(spec)

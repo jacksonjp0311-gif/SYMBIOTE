@@ -30,7 +30,7 @@ def main():
             cmd = [binary, command, "--json", "--state", state / "research-partner" if partner else state]
             if command == "research":
                 cmd += ["--receipts", receipt]
-            result = subprocess.run([str(x) for x in cmd], cwd=ROOT, capture_output=True, text=True, timeout=180)
+            result = subprocess.run([str(x) for x in cmd], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=180)
             if result.returncode:
                 raise RuntimeError(f"{command} failed: {result.stderr}")
             return json.loads(result.stdout)

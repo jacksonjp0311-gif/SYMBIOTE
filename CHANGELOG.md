@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.4.0 — Reciprocal Improvement — 2026-10-27
+
+- Persistent bounded graph knowledge with conditional route certificates,
+  explicit abstention, retained proof envelopes and graph-specific evaluation.
+- Complete predeclared 81-world routing cohort with independent learner and
+  judge algorithms, paired controls, measured costs and all harmful cases retained.
+- Actual offline graph replay and public `route` / targeted `predict` commands.
+- Supervised native affine peers over explicitly provisioned mutual TLS;
+  persistent-ID/certificate grants, no downgrade and acknowledged revocation.
+- Strict opaque context registry, stale-authority rejection and bounded child
+  startup/replay; legacy affine receipt serialization remains unchanged.
+- Embedding example, compatibility policy and bounded native stability campaign.
+
+The routing cohort is one topology with local endpoints. Logical costs exclude
+declared laboratory overhead; fixed peer selection and unfamiliar-domain transfer
+remain open. This release is a verified research increment, not stable v1.0.
+
 ## v0.3.0 — Adaptive Memory — 2026-10-27
 
 - Shared maintenance coordination, native read-only process checks, safe explicit

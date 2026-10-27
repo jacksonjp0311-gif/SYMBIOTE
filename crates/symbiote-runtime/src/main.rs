@@ -1,4 +1,5 @@
 //! Independent, bounded, LLM-free SYMBIOTE genesis runtime.
+mod graph_research;
 mod research;
 
 use serde_json::{json, Value};
@@ -6,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use symbiote_memory::knowledge::KnowledgeStore;
+use symbiote_memory::knowledge::{KnowledgePayload, KnowledgeStore};
 use symbiote_memory::{evaluate, Artifact, Store};
 use symbiote_protocol::{spawn_server, Client, EchoBuffer, Sensor, ServerConfig, Telemetry};
 use symbiote_reasoning::SymbolicLearner;
@@ -375,6 +376,10 @@ struct Cli {
     receipts: PathBuf,
     fault: String,
     artifact: Option<String>,
+    tls_config: Option<PathBuf>,
+    input: Option<u16>,
+    from: Option<usize>,
+    to: Option<usize>,
     json: bool,
 }
 
@@ -404,7 +409,18 @@ impl Cli {
                 index += 1;
                 continue;
             }
-            if ["--state", "--receipts", "--fault", "--artifact"].contains(&arg.as_str()) {
+            if [
+                "--state",
+                "--receipts",
+                "--fault",
+                "--artifact",
+                "--tls-config",
+                "--input",
+                "--from",
+                "--to",
+            ]
+            .contains(&arg.as_str())
+            {
                 let value = args
                     .get(index + 1)
                     .ok_or_else(|| format!("{arg} requires a value"))?;
@@ -433,7 +449,10 @@ impl Cli {
             "demo",
             "benchmark",
             "research",
+            "graph-research",
             "network-research",
+            "prepare-tls-state",
+            "route",
             "predict",
             "verify-memory",
             "status",
@@ -450,10 +469,19 @@ impl Cli {
         for option in options.keys() {
             let allowed = match option.as_str() {
                 "--state" => !["help", "version"].contains(&command.as_str()),
-                "--receipts" => ["demo", "benchmark", "research", "network-research"]
-                    .contains(&command.as_str()),
+                "--receipts" => [
+                    "demo",
+                    "benchmark",
+                    "research",
+                    "graph-research",
+                    "network-research",
+                ]
+                .contains(&command.as_str()),
                 "--fault" => ["demo", "benchmark", "network-research"].contains(&command.as_str()),
-                "--artifact" => command == "revoke",
+                "--artifact" => ["revoke", "predict", "route"].contains(&command.as_str()),
+                "--tls-config" => command == "network-research",
+                "--input" => command == "predict",
+                "--from" | "--to" => command == "route",
                 _ => false,
             };
             if !allowed {
@@ -478,10 +506,46 @@ impl Cli {
             ));
         }
         let artifact = options.remove("--artifact");
-        if command == "revoke" && artifact.is_none() {
-            return Err("revoke requires --artifact ID".into());
+        let tls_config = options.remove("--tls-config").map(PathBuf::from);
+        if tls_config.is_some() && fault != "none" {
+            return Err("--tls-config cannot be combined with fault injection".into());
         }
-        let default_receipt = if command == "network-research" {
+        if ["revoke", "route"].contains(&command.as_str()) && artifact.is_none() {
+            return Err(format!("{command} requires --artifact ID"));
+        }
+        let input = options
+            .remove("--input")
+            .map(|value| {
+                value
+                    .parse::<u16>()
+                    .map_err(|_| "--input must be a nonnegative 16-bit integer")
+            })
+            .transpose()?;
+        let from = options
+            .remove("--from")
+            .map(|value| {
+                value
+                    .parse::<usize>()
+                    .map_err(|_| "--from must be a nonnegative node index")
+            })
+            .transpose()?;
+        let to = options
+            .remove("--to")
+            .map(|value| {
+                value
+                    .parse::<usize>()
+                    .map_err(|_| "--to must be a nonnegative node index")
+            })
+            .transpose()?;
+        if command == "predict" && (artifact.is_some() != input.is_some()) {
+            return Err("querying predict requires both --artifact ID and --input N".into());
+        }
+        if command == "route" && (from.is_none() || to.is_none()) {
+            return Err("route requires --from NODE and --to NODE".into());
+        }
+        let default_receipt = if command == "graph-research" {
+            "experiments/local/graph-research.json"
+        } else if command == "network-research" {
             "experiments/local/network-research.json"
         } else if command == "research" {
             "experiments/local/research.json"
@@ -502,6 +566,10 @@ impl Cli {
             ),
             fault,
             artifact,
+            tls_config,
+            input,
+            from,
+            to,
             json,
         })
     }
@@ -519,14 +587,23 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     let command = cli.command.as_str();
     let state = &cli.state;
     let receipts = &cli.receipts;
+    if command == "graph-research" {
+        return graph_research::run(state, receipts);
+    }
     if command == "research" {
         return research::run(state, receipts);
     }
     if command == "network-research" {
+        if let Some(config) = &cli.tls_config {
+            return research::deployed::run_tls(state, receipts, config);
+        }
         if cli.fault == "none" {
             return research::deployed::run(state, receipts);
         }
         return research::deployed::run_with_fault(state, receipts, &cli.fault);
+    }
+    if command == "prepare-tls-state" {
+        return research::deployed::initialize_tls_state(state);
     }
     if command == "inspect-state" {
         return Ok(json!(symbiote_memory::maintenance::inspect(state)?));
@@ -551,6 +628,42 @@ fn execute(cli: &Cli) -> Result<Value, String> {
             json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":inspection.status,"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"ledger_integrity":inspection.ledger_integrity,"locks":inspection.locks,"network_requests":0,"state_modified":false}),
         );
     }
+    if command == "route" || (command == "predict" && cli.artifact.is_some()) {
+        if !path_exists(&state.join("ledger.jsonl"))?
+            || !path_exists(&state.join("knowledge.jsonl"))?
+        {
+            return Err(
+                "no retained structural knowledge; check --state DIR and --artifact ID".into(),
+            );
+        }
+        let identity = Store::open(state)?;
+        let knowledge = KnowledgeStore::open(state, identity.identity())?;
+        let id = cli.artifact.as_deref().ok_or("--artifact is required")?;
+        let record = knowledge
+            .active()
+            .into_iter()
+            .find(|record| record.id == id)
+            .ok_or_else(|| format!("no active structural knowledge named {id}"))?;
+        if command == "route" {
+            let KnowledgePayload::GraphMap(map) = record.typed_payload()? else {
+                return Err("route requires graph-map knowledge".into());
+            };
+            let input = symbiote_memory::knowledge::graph::encode_query(
+                map.schema.nodes,
+                cli.from.ok_or("--from required")?,
+                cli.to.ok_or("--to required")?,
+            )?;
+            let route = record.graph_forecast(input)?;
+            return Ok(
+                json!({"schema":"symbiote.route/1","status":"PASS","identity":identity.identity(),"artifact":record.id,"revision":record.revision,"scope":record.scope,"record_sha256":record.digest()?,"from":cli.from,"to":cli.to,"route":route,"prediction_status":if route.is_some(){"conditionally-certified"}else{"abstained"},"network_requests":0}),
+            );
+        }
+        let input = cli.input.ok_or("--input required")?;
+        let prediction = record.predict_if_certified(input)?;
+        return Ok(
+            json!({"schema":"symbiote.prediction/1","status":"PASS","identity":identity.identity(),"artifact":record.id,"revision":record.revision,"scope":record.scope,"record_sha256":record.digest()?,"input":input,"prediction":prediction,"prediction_status":if prediction.is_some(){"conditional-inference"}else{"abstained"},"network_requests":0}),
+        );
+    }
     if ["status", "predict", "verify-memory"].contains(&command)
         && !path_exists(&state.join("ledger.jsonl"))?
     {
@@ -568,14 +681,31 @@ fn execute(cli: &Cli) -> Result<Value, String> {
         if path_exists(&state.join("knowledge.jsonl"))? {
             let knowledge = KnowledgeStore::open(state, store.identity())?;
             for record in knowledge.active() {
-                let width = record.payload["width"]
-                    .as_u64()
-                    .ok_or("structural knowledge width missing")?;
-                let count = 8_usize.min(1_usize << width);
                 let mut sample_predictions = Vec::new();
-                for input in 0..count {
-                    sample_predictions
-                        .push(json!({"input":input,"output":record.predict(input as u16)?}));
+                match record.typed_payload()? {
+                    KnowledgePayload::Affine { width, .. } => {
+                        for input in 0..8_usize.min(1_usize << width) {
+                            sample_predictions.push(
+                                json!({"input":input,"output":record.predict(input as u16)?}),
+                            );
+                        }
+                    }
+                    KnowledgePayload::GraphMap(map) => {
+                        for start in 0..map.schema.nodes {
+                            for goal in 0..map.schema.nodes {
+                                if start == goal || sample_predictions.len() >= 8 {
+                                    continue;
+                                }
+                                let input = symbiote_memory::knowledge::graph::encode_query(
+                                    map.schema.nodes,
+                                    start,
+                                    goal,
+                                )?;
+                                let route = record.graph_forecast(input)?;
+                                sample_predictions.push(json!({"input":input,"from":start,"to":goal,"route":route,"prediction_status":if route.is_some(){"conditionally-certified"}else{"abstained"}}));
+                            }
+                        }
+                    }
                 }
                 structural_knowledge.push(json!({"id":record.id,"source":record.source,"scope":record.scope,"revision":record.revision,"schema_fingerprint":record.schema_fingerprint,"model":record.payload,"sample_predictions":sample_predictions,"prediction_status":"validated-in-declared-synthetic-scope"}));
             }
@@ -617,7 +747,7 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
@@ -632,7 +762,7 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  network-research  Run separately deployed native research agents\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for demo, research or benchmark\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} â€” Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
@@ -723,16 +853,19 @@ fn display(report: &Value, cli: &Cli) -> String {
         let structural_count = report["structural_artifacts"].as_u64().unwrap_or(0);
         if structural_count > 0 {
             lines.push(format!(
-                "Structural knowledge: {structural_count} validated affine model(s)"
+                "Structural knowledge: {structural_count} validated model(s)"
             ));
             if let Some(models) = report["structural_knowledge"].as_array() {
                 for model in models.iter().take(8) {
+                    let description = if model["model"]["kind"] == "graph-map" {
+                        format!("graph with {} nodes", model["model"]["schema"]["nodes"])
+                    } else {
+                        format!("{}-bit affine model", model["model"]["width"])
+                    };
                     lines.push(format!(
-                        "  {}: revision {}, {}-bit model, coefficients {}",
+                        "  {}: revision {} | {description}",
                         model["id"].as_str().unwrap_or("model"),
-                        model["revision"],
-                        model["model"]["width"],
-                        model["model"]["coefficients"]
+                        model["revision"]
                     ));
                 }
                 if models.len() > 8 {
@@ -753,6 +886,32 @@ fn display(report: &Value, cli: &Cli) -> String {
             "Revoked: {}",
             report["revoked"].as_str().unwrap_or("unknown")
         ));
+    }
+    if cli.command == "route" || (cli.command == "predict" && cli.artifact.is_some()) {
+        lines.push(format!(
+            "Artifact: {} | revision {}",
+            report["artifact"].as_str().unwrap_or("unknown"),
+            report["revision"]
+        ));
+        if let Some(route) = report["route"].as_object() {
+            lines.push(format!(
+                "Route: {} | cost {}",
+                route["nodes"], route["cost"]
+            ));
+        }
+        if let Some(prediction) = report.get("prediction") {
+            lines.push(format!("Input {} -> {}", report["input"], prediction));
+        }
+        lines.push(format!(
+            "Prediction: {}",
+            report["prediction_status"].as_str().unwrap_or("abstained")
+        ));
+        lines.push("Retained knowledge; network requests: 0".into());
+    }
+    if cli.command == "prepare-tls-state" {
+        lines.push(
+            serde_json::to_string_pretty(report).expect("serializable public role identities"),
+        );
     }
     if cli.command == "research" {
         for field in ["cases", "passed", "failed", "experiment", "scope"] {
@@ -805,6 +964,35 @@ fn display(report: &Value, cli: &Cli) -> String {
         ));
         lines.push("Deployment/persistence prototype; no new paired efficiency claim.".into());
     }
+    if cli.command == "graph-research" {
+        if let Some(regimes) = report["regimes"].as_array() {
+            for regime in regimes {
+                lines.push(format!("  {}: {} worlds | isolated cost {} / exchange cost {} | bilateral benefit in {} worlds",regime["name"].as_str().unwrap_or("regime"),regime["worlds"],regime["isolated_cost"],regime["exchange_cost"],regime["bilateral_benefit_worlds"]));
+                lines.push(format!("    Outcomes: {}", regime["classes"]));
+            }
+        }
+        lines.push(format!(
+            "Knowledge: {} promoted, {} withheld for incomplete held-out coverage",
+            report["promotions"]["promoted"].as_u64().unwrap_or(0),
+            report["promotions"]["withheld_abstention"]
+                .as_u64()
+                .unwrap_or(0)
+        ));
+        lines.push(format!(
+            "Retained graph predictions survived process restart: {}",
+            report["restart_retained_predictions"]
+        ));
+        if let Some(example) = report.get("example_query") {
+            lines.push(format!(
+                "Try: symbiote route --state \"{}\" --artifact {} --from 1 --to 3",
+                example["state"]
+                    .as_str()
+                    .unwrap_or("state/demo/graph/dijkstra"),
+                example["artifact"].as_str().unwrap_or("model")
+            ));
+        }
+        lines.push("Finite graph family and declared logical costs; all harmful cases remain in the report.".into());
+    }
     if cli.command == "inspect-state" {
         lines.push(format!(
             "Ledger integrity: {}",
@@ -839,7 +1027,15 @@ fn display(report: &Value, cli: &Cli) -> String {
         lines.push("Original learning ledger bytes preserved with registered backups.".into());
     }
     lines.push(format!("State: {}", cli.state.display()));
-    if ["demo", "benchmark", "research", "network-research"].contains(&cli.command.as_str()) {
+    if [
+        "demo",
+        "benchmark",
+        "research",
+        "graph-research",
+        "network-research",
+    ]
+    .contains(&cli.command.as_str())
+    {
         lines.push(format!("Receipt: {}", cli.receipts.display()));
     }
     lines.join("\n")
@@ -847,6 +1043,13 @@ fn display(report: &Value, cli: &Cli) -> String {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "__graph-forecast") {
+        if args.len() != 1 || graph_research::forecast_from_stdin().is_err() {
+            eprintln!("SYMBIOTE graph forecast failed; private request contents are withheld.");
+            std::process::exit(1);
+        }
+        return;
+    }
     if args.first().is_some_and(|arg| arg == "__research-partner") {
         if args.len() != 1 || research::deployed::serve_from_stdin().is_err() {
             eprintln!("SYMBIOTE native partner stopped with an error; configuration and capability contents are withheld.");

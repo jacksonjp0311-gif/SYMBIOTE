@@ -29,7 +29,7 @@ def main():
                 cmd += ["--receipts", base / "report.json"]
             if fault:
                 cmd += ["--fault", fault]
-            result = subprocess.run([str(x) for x in cmd], capture_output=True, text=True, cwd=ROOT, timeout=90)
+            result = subprocess.run([str(x) for x in cmd], capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=90)
             if result.returncode != expected:
                 raise RuntimeError(f"{command}: exit {result.returncode}: {result.stderr}")
             return json.loads(result.stdout) if expected == 0 else result.stderr

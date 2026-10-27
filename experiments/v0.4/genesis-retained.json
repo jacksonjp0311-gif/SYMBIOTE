@@ -1,0 +1,36 @@
+{
+  "active_artifacts": 2,
+  "genesis_artifacts": 2,
+  "identity": "symbiote-fa735b36661d070ab9d2de83",
+  "network_requests": 0,
+  "predictions": [
+    {
+      "artifact": "alpha-table",
+      "partner": "alpha",
+      "predictions": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "revision": 1,
+      "scope": "finite-boolean-v1"
+    },
+    {
+      "artifact": "beta-table",
+      "partner": "beta",
+      "predictions": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "revision": 1,
+      "scope": "finite-boolean-v1"
+    }
+  ],
+  "schema": "symbiote.retained/1",
+  "status": "PASS",
+  "structural_artifacts": 0,
+  "structural_knowledge": []
+}

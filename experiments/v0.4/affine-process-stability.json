@@ -1,0 +1,29 @@
+{
+  "schema": "symbiote.stability/1",
+  "status": "PASS",
+  "platform": "Windows",
+  "architecture": "AMD64",
+  "executable_sha256": "4f7c9b51097f96ecc11b1761307a4ec551f2e612c15c5ed04515a42e175120d6",
+  "cycles": 100,
+  "native_peer_instances": 400,
+  "distinct_durable_identities": 3,
+  "restart_oracle_requests": {
+    "observe": 0,
+    "verify": 0,
+    "assess": 0
+  },
+  "retained_ledger_sha256": {
+    "ledger.jsonl": "3c63bdcea070e57deb4b5dd98c6481128775a3e1b6ffd605419fba8e1deca04a",
+    "network\\exact\\ledger.jsonl": "df87f7be59b635776cd56e2276ed6b4f278229b74b9dbcce34e9a672084e9a36",
+    "network\\exact\\knowledge.jsonl": "b6e2fc3d1a32f8d2a39d0bcf57c3505499d3fcacd17d95db83d5b4eed702fdf8",
+    "network\\linear\\ledger.jsonl": "e49f578fa62d38b13e3a2623b18248670aca45eb143a8c8e9d326523355eb562",
+    "network\\linear\\knowledge.jsonl": "fe99d880dea9e7fe8f9077b9a4ff396a0da36f30cebb2763d3c56f2c46ee21d5"
+  },
+  "repeated_promotions": 0,
+  "elapsed_seconds": 77.985,
+  "limitations": [
+    "bounded supervised affine laboratory workload",
+    "repeated cases are endurance checks, not independent learning samples",
+    "does not establish power-loss durability, hostile-host isolation or long-term production reliability"
+  ]
+}

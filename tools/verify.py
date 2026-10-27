@@ -31,7 +31,7 @@ def count_python_tests(output):
 
 
 def execute(args, *, expected=0):
-    result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, capture_output=True, timeout=300)
+    result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, encoding="utf-8", capture_output=True, timeout=300)
     if result.returncode != expected:
         raise RuntimeError(f"{args[0]} returned {result.returncode}\n{result.stdout}\n{result.stderr}")
     return result
@@ -111,11 +111,13 @@ def main():
     print(result.stdout.strip(), flush=True)
     deployed = execute([sys.executable, ROOT / "tools/verify_deployed.py"])
     print(deployed.stdout.strip(), flush=True)
+    graph = execute([sys.executable, ROOT / "tools/verify_graph.py", "--output", args.output.parent / "graph-verification.json"])
+    print(graph.stdout.strip(), flush=True)
     digest = hashlib.sha256()
     sources = sorted(set(ROOT.glob("crates/**/*.rs")) | set(ROOT.glob("crates/**/Cargo.toml")) | set(ROOT.glob("tools/*.py")) | set(ROOT.glob("tools/*.ps1")) | set(ROOT.glob("tools/*.sh")) | {ROOT / "Cargo.toml", ROOT / "Cargo.lock", ROOT / "SYMBIOTE-All-One.ps1"})
     for source in sources:
         digest.update(source.relative_to(ROOT).as_posix().encode()+b"\0"+source.read_bytes().replace(b"\r\n",b"\n"))
-    summary = dict(schema="symbiote.software-verification/1", status="PASS", source_sha256=digest.hexdigest(), platform=platform.system(), architecture=platform.machine(), native_tests_passed=native_tests, packaging_and_installation_tests_passed=package_tests, legacy_parity_executed=not args.skip_parity, cargo_gates_executed=not args.skip_cargo, genesis_compatibility=True, structural_exchange=True, deployed_processes_migration_and_recovery=True, stable_v1_criteria="remain separate from software gate")
+    summary = dict(schema="symbiote.software-verification/1", status="PASS", source_sha256=digest.hexdigest(), platform=platform.system(), architecture=platform.machine(), native_tests_passed=native_tests, packaging_and_installation_tests_passed=package_tests, legacy_parity_executed=not args.skip_parity, cargo_gates_executed=not args.skip_cargo, genesis_compatibility=True, structural_exchange=True, deployed_processes_migration_and_recovery=True, graph_exchange_and_retained_routes=True, stable_v1_criteria="remain separate from software gate")
     args.summary.parent.mkdir(parents=True, exist_ok=True)
     args.summary.write_text(json.dumps(summary, indent=2)+"\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))

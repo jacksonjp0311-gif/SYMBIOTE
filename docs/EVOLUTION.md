@@ -60,9 +60,23 @@ Graph interval reasoning is verified as a second native primitive. It has not ye
 earned network-learning or durable graph-knowledge claims. Stable v1.0 therefore
 remains a separate target after the v0.3 delivery gates.
 
+## Cycle 6: graph knowledge and secure process integration
+
+The complete opaque-context routing cohort retains both beneficial and harmful
+cost outcomes. Strict independent checks recompute every class and cost category;
+69 complete maps persist and 93 partial maps are withheld. Actual native replay
+uses stored routes with measured zero authority traffic. Mutual TLS now carries
+the separate supervised affine experiment with operator-provisioned role grants.
+
+The combined local gate passes 140 native tests and 15 Python tests. New verifier
+regressions protect UTF-8 receipt decoding, explicit zero-count categories,
+altered costs, omitted worlds and filtered held-out tasks. A 100-cycle affine
+process campaign preserves identities and ledger bytes across 400 peer instances;
+it does not substitute for future graph/TLS endurance or production deployment.
+
 ## Current advancement boundary
 
-v0.2 and v0.3 are verified local research increments. Neither is the stable v1.0
+v0.2, v0.3 and v0.4 are verified local research increments. None is the stable v1.0
 endpoint. Outstanding criteria include externally operated or nonlocal partners,
 multiple unfamiliar task families, secure nonlocal
 transport, long-run/crash/migration campaigns, validated partner selection and
