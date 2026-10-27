@@ -15,12 +15,12 @@
     {
       "backup_directory": "migration-backup-v1",
       "changed": true,
-      "identity": "symbiote-901d74963c6de96409701e15",
+      "identity": "symbiote-569044f784c56cc8a5f9b703",
       "layout_version": 1,
       "ledger_bytes_changed": false,
       "registered_ledger_sha256": {
-        "knowledge.jsonl": "8bced41986b575d1d8f3650091c71c299932ffda8fd8a4ecfc6248bbc1726b79",
-        "ledger.jsonl": "850be66ed9a9195ff50d83cbd79203e2e0c73b6e1bc8a949e0f2e92e30075343"
+        "knowledge.jsonl": "161be1b355850e0686e43fa0d600d1692117aaf2ffa6379bb8b5a2f6bf58b78f",
+        "ledger.jsonl": "d3049c791a8be89688460699a04220452fe5c307874648155051962ce2599976"
       },
       "schema": "symbiote.migration/1",
       "status": "PASS"
@@ -28,12 +28,12 @@
     {
       "backup_directory": "migration-backup-v1",
       "changed": true,
-      "identity": "symbiote-88eb1a8ab564e7b3042302c1",
+      "identity": "symbiote-a129ac65f6a15bee94ec57e0",
       "layout_version": 1,
       "ledger_bytes_changed": false,
       "registered_ledger_sha256": {
-        "knowledge.jsonl": "68cc435bc5d134309a66d650e1d0bcfcaa5a657a5bdfb95fe4b6a3f9ca6c1926",
-        "ledger.jsonl": "891e45d15516dd6591374b1c793fa81496e06a1c0ebff2d84f56e0a11645ab72"
+        "knowledge.jsonl": "70c27ecc8165fb6c5617083faf9a97348acbe764d8e3fe40c72cc170b4573749",
+        "ledger.jsonl": "eb1db9302d2e1889d41f9a0892a33164db86fa8e825b9c52f723c471654b1b6d"
       },
       "schema": "symbiote.migration/1",
       "status": "PASS"
@@ -58,6 +58,6 @@
       "status": "PASS"
     }
   ],
-  "committed_knowledge_sha256": "76caba8226792a630584ff2812cf1ffceb89dcb82bcd96557d0647bbc2588d22",
+  "committed_knowledge_sha256": "2cb44cd422bd8568a252498489089f0bfb1205a30a6ab88dc2ea25c03a5f2d3b",
   "performance_claim": "none; deployment/persistence experiment only"
 }
