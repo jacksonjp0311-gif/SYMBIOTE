@@ -2,6 +2,7 @@
 name = "symbiote-protocol"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 description = "Authorized bounded loopback exchanges and telemetry for SYMBIOTE"
 license-file = "../../LICENSE"
 

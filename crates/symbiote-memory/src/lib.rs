@@ -7,6 +7,7 @@ pub mod backup;
 pub mod knowledge;
 pub mod maintenance;
 pub mod operational;
+pub mod strategy;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -214,10 +215,12 @@ impl Store {
         }
         if !directory.join("ledger.jsonl").exists()
             && (directory.join("operations.jsonl").exists()
-                || directory.join(operational::OWNER_FILE).exists())
+                || directory.join(operational::OWNER_FILE).exists()
+                || directory.join(strategy::STRATEGY_FILE).exists()
+                || directory.join(strategy::STRATEGY_OWNER_FILE).exists())
         {
             return Err(
-                "operational journal exists without its identity ledger; refusing identity reset"
+                "operational or strategy history exists without its identity ledger; refusing identity reset"
                     .into(),
             );
         }

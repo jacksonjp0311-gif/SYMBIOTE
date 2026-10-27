@@ -4,15 +4,27 @@
 use super::{label, KnowledgePayload, KnowledgeRecord, TrialCase, TrialCosts};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
 use symbiote_reasoning::planning::{GraphSchema, Route, RouteLearner};
 
-pub const MAX_NODES: usize = 8;
+pub const MAX_NODES: usize = 12;
 pub const MAX_EDGES: usize = 56;
 pub const MAX_EDGE_COST: u16 = 9;
 const MAX_RECEIPT_BYTES: usize = 2048;
-// At most 56 observation updates and 8 * 56 edge scans for one Dijkstra query.
+// At most 56 observation updates and 12 * 56 edge scans for one Dijkstra query.
 const PREDICTION_WORK_BUDGET: usize = 1024;
+thread_local! {
+    static FORECAST_WORK: Cell<Option<u64>> = const { Cell::new(Some(0)) };
+}
+/// Actual exact-learner work performed by graph forecasts on this thread.
+/// Additive diagnostic only; it does not change evidence or certificates.
+pub fn forecast_work_units() -> Result<u64, String> {
+    FORECAST_WORK.with(|work| {
+        work.get()
+            .ok_or_else(|| "graph forecast work counter overflow".into())
+    })
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -35,7 +47,7 @@ fn validate_schema(schema: &GraphSchema) -> Result<(), String> {
         || schema.edges.iter().any(|edge| edge.upper > MAX_EDGE_COST)
     {
         return Err(
-            "durable graph domain is bounded to 2..8 nodes, 56 edges and costs 1..9".into(),
+            "durable graph domain is bounded to 2..12 nodes, 56 edges and costs 1..9".into(),
         );
     }
     Ok(())
@@ -101,17 +113,27 @@ impl GraphMap {
         self.validate()?;
         let (start, goal) = decode_query(self.schema.nodes, input)?;
         let mut learner = RouteLearner::new(self.schema.clone(), PREDICTION_WORK_BUDGET)?;
-        for observation in &self.observations {
-            learner.observe(observation.edge_id, observation.cost)?;
-        }
-        let result = learner.assess(start, goal)?;
-        if result.status != "supported" {
-            return Err(format!(
-                "durable graph prediction unavailable: {}",
-                result.status
-            ));
-        }
-        Ok(result.certified)
+        let result = (|| {
+            for observation in &self.observations {
+                learner.observe(observation.edge_id, observation.cost)?;
+            }
+            let result = learner.assess(start, goal)?;
+            if result.status != "supported" {
+                return Err(format!(
+                    "durable graph prediction unavailable: {}",
+                    result.status
+                ));
+            }
+            Ok(result.certified)
+        })();
+        FORECAST_WORK.with(|work| {
+            work.set(
+                work.get()
+                    .and_then(|n| n.checked_add(learner.model_work() as u64)),
+            )
+        });
+        forecast_work_units()?;
+        result
     }
 
     pub fn predict(&self, input: u16) -> Result<Option<u8>, String> {
@@ -139,14 +161,14 @@ pub fn graph_schema_fingerprint(schema: &GraphSchema) -> Result<String, String> 
 
 pub fn encode_query(nodes: usize, start: usize, goal: usize) -> Result<u16, String> {
     if !(2..=MAX_NODES).contains(&nodes) || start >= nodes || goal >= nodes || start == goal {
-        return Err("graph query needs distinct nodes in a 2..8 node schema".into());
+        return Err("graph query needs distinct nodes in a 2..12 node schema".into());
     }
     u16::try_from(start * nodes + goal).map_err(|_| "graph query encoding overflow".into())
 }
 
 pub fn decode_query(nodes: usize, input: u16) -> Result<(usize, usize), String> {
     if !(2..=MAX_NODES).contains(&nodes) {
-        return Err("graph query schema needs 2..8 nodes".into());
+        return Err("graph query schema needs 2..12 nodes".into());
     }
     let input = usize::from(input);
     let (start, goal) = (input / nodes, input % nodes);

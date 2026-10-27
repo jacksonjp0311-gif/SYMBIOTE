@@ -243,6 +243,19 @@ behavior explicit without fragmenting the system into placeholder packages.
 [Architecture](docs/ARCHITECTURE.md) · [Compatibility](docs/COMPATIBILITY.md) · [Reasoning](docs/REASONING.md) ·
 [Protocol](docs/PROTOCOL.md) · [Operations](docs/OPERATIONS.md)
 
+### v1 candidate under qualification
+
+Development is continuing beyond v0.5.1. The candidate adds a configured native
+cognitive runtime, portable query strategies with durable revocation, controlled
+three-peer TLS topology, outcome-conditioned exploration and strategy-aware
+backup/migration. These capabilities have focused engineering checks; the new
+prospective transfer study and source-frozen one-hour continuity campaign must
+finish before release claims are updated.
+
+[Native architecture](docs/NATIVE_ARCHITECTURE.md) ·
+[Run your configured agent](docs/LIVE_RUNTIME.md) ·
+[Qualification contract](docs/V1_RELEASE_CONTRACT.md)
+
 ## Develop and verify
 
 Stable Rust and Cargo build the native system. Python 3.11+ is needed only for
@@ -273,8 +286,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 5.95 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.96% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 6.66 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.84% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

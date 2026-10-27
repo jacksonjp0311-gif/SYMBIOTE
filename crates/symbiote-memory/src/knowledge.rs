@@ -371,6 +371,16 @@ pub struct KnowledgeStore {
     retained_graph_edges: BTreeMap<String, BTreeMap<usize, u16>>,
 }
 
+/// A read-only position in a validated owner history. This does not grant trust
+/// to an external value; consumers retain the current anchor independently.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct KnowledgeAnchor {
+    pub identity: String,
+    pub records: usize,
+    pub head_sha256: String,
+}
+
 impl KnowledgeStore {
     pub fn open(directory: &Path, identity: &str) -> Result<Self, String> {
         if !label(identity) {
@@ -380,6 +390,9 @@ impl KnowledgeStore {
         let (lock, _initialization_gate) =
             super::maintenance::writer_lock(directory, "knowledge.writer.lock")?;
         super::maintenance::validate_knowledge_owner(directory, identity)?;
+        // Reject an unsupported registered format before a first knowledge
+        // genesis can mutate that owner's directory.
+        super::maintenance::validate_layout_identity(directory, identity)?;
         let mut store = Self {
             directory: directory.to_path_buf(),
             _lock: Some(lock),
@@ -499,6 +512,24 @@ impl KnowledgeStore {
     pub fn active(&self) -> Vec<KnowledgeRecord> {
         self.active.values().cloned().collect()
     }
+    /// Reconstructs active knowledge at an exact already-validated prefix.
+    /// Later revocation or supersession cannot rewrite a historical decision.
+    pub fn active_at(&self, anchor: &KnowledgeAnchor) -> Result<Vec<KnowledgeRecord>, String> {
+        self.validate_anchor(anchor)?;
+        let mut active = BTreeMap::new();
+        for receipt in self.receipts.iter().take(anchor.records) {
+            match &receipt.payload {
+                Event::Promote { record, .. } | Event::PromoteGraph { record, .. } => {
+                    active.insert(record.id.clone(), record.clone());
+                }
+                Event::Revoke { id, .. } => {
+                    active.remove(id);
+                }
+                Event::Genesis { .. } => {}
+            }
+        }
+        Ok(active.into_values().collect())
+    }
     pub fn highest_revision(&self, id: &str) -> Option<u64> {
         self.revisions.get(id).copied()
     }
@@ -524,6 +555,86 @@ impl KnowledgeStore {
     }
     pub fn record_count(&self) -> usize {
         self.receipts.len()
+    }
+    pub fn history_anchor(&self) -> KnowledgeAnchor {
+        KnowledgeAnchor {
+            identity: self.identity.clone(),
+            records: self.receipts.len(),
+            head_sha256: self
+                .receipts
+                .last()
+                .map(|receipt| receipt.sha256.clone())
+                .unwrap_or_else(|| ZERO_HASH.into()),
+        }
+    }
+    pub fn validate_anchor(&self, anchor: &KnowledgeAnchor) -> Result<(), String> {
+        if anchor.identity != self.identity
+            || anchor.records == 0
+            || anchor.records > self.receipts.len()
+            || self.receipts[anchor.records - 1].sha256 != anchor.head_sha256
+        {
+            return Err("knowledge prefix anchor is missing, foreign or changed".into());
+        }
+        Ok(())
+    }
+    /// Finds one exact committed promotion between two verified history heads.
+    /// The original stored evaluation must match, and the record must still be
+    /// active at the completion head. Later revocation preserves the old proof.
+    pub fn promotion_between(
+        &self,
+        record: &KnowledgeRecord,
+        evidence: &Value,
+        before: &KnowledgeAnchor,
+        after: &KnowledgeAnchor,
+    ) -> Result<String, String> {
+        self.validate_anchor(before)?;
+        self.validate_anchor(after)?;
+        if before.records >= after.records {
+            return Err("experiment has no new knowledge history".into());
+        }
+        let expected = record.digest()?;
+        let mut active = None;
+        let mut matched = None;
+        for receipt in self.receipts.iter().take(after.records) {
+            match &receipt.payload {
+                Event::Promote {
+                    record: stored,
+                    assessment,
+                    ..
+                } if stored.id == record.id => {
+                    active = Some(stored.digest()?);
+                    if receipt.sequence >= before.records
+                        && active.as_deref() == Some(expected.as_str())
+                        && serde_json::to_value(&assessment.evidence).map_err(|e| e.to_string())?
+                            == *evidence
+                    {
+                        matched = Some(receipt.sha256.clone());
+                    }
+                }
+                Event::PromoteGraph {
+                    record: stored,
+                    assessment,
+                    ..
+                } if stored.id == record.id => {
+                    active = Some(stored.digest()?);
+                    if receipt.sequence >= before.records
+                        && active.as_deref() == Some(expected.as_str())
+                        && serde_json::to_value(&assessment.evidence).map_err(|e| e.to_string())?
+                            == *evidence
+                    {
+                        matched = Some(receipt.sha256.clone());
+                    }
+                }
+                Event::Revoke { id, .. } if id == &record.id => active = None,
+                _ => {}
+            }
+        }
+        if active.as_deref() != Some(expected.as_str()) {
+            return Err("completed experiment record was revoked or superseded".into());
+        }
+        matched.ok_or_else(|| {
+            "no fresh promotion with this exact stored evaluation between selected heads".into()
+        })
     }
     pub fn ledger_path(&self) -> PathBuf {
         self.directory.join("knowledge.jsonl")
@@ -943,10 +1054,12 @@ mod tests {
         let original = record();
         let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
         assert!(!store.has_historical_promotion(&original).unwrap());
+        let empty_anchor = store.history_anchor();
         store
             .promote(original.clone(), assess(&original, &evidence()).unwrap())
             .unwrap();
         let committed = fs::read(store.ledger_path()).unwrap();
+        let original_anchor = store.history_anchor();
         assert!(store.has_historical_promotion(&original).unwrap());
         assert_eq!(
             fs::read(store.ledger_path()).unwrap(),
@@ -957,6 +1070,7 @@ mod tests {
             .revoke(&original.id, "operator withdrew active use")
             .unwrap();
         assert!(store.active().is_empty());
+        let revoked_anchor = store.history_anchor();
         assert!(store.has_historical_promotion(&original).unwrap());
         let mut next = original.clone();
         next.revision = 2;
@@ -974,6 +1088,19 @@ mod tests {
         let replayed = KnowledgeStore::open(&dir.0, "owner").unwrap();
         assert!(replayed.has_historical_promotion(&original).unwrap());
         assert!(replayed.has_historical_promotion(&next).unwrap());
+        assert!(replayed.active_at(&empty_anchor).unwrap().is_empty());
+        assert_eq!(
+            replayed.active_at(&original_anchor).unwrap(),
+            vec![original]
+        );
+        assert!(replayed.active_at(&revoked_anchor).unwrap().is_empty());
+        assert_eq!(
+            replayed.active_at(&replayed.history_anchor()).unwrap(),
+            vec![next]
+        );
+        let mut forged = original_anchor;
+        forged.head_sha256 = "0".repeat(64);
+        assert!(replayed.active_at(&forged).is_err());
     }
     #[test]
     fn training_leakage_duplicates_wrong_outputs_and_inert_instructions_are_rejected() {

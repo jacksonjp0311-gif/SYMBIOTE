@@ -23,8 +23,12 @@ use symbiote_protocol::{
 };
 use symbiote_reasoning::planning::{Edge, GraphSchema};
 
+#[path = "service/cognitive.rs"]
+mod cognitive;
 #[path = "service/endurance.rs"]
 mod endurance;
+#[path = "service/soak.rs"]
+mod soak;
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 const OPS: &[&str] = &[

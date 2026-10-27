@@ -3,8 +3,9 @@ members = ["crates/symbiote-reasoning", "crates/symbiote-protocol", "crates/symb
 resolver = "2"
 
 [workspace.package]
-version = "0.5.1"
+version = "1.0.0"
 edition = "2021"
+rust-version = "1.98.1"
 license = "MIT"
 
 [workspace.dependencies]

@@ -1,5 +1,21 @@
 # Changelog
 
+## v1 candidate — unreleased
+
+- Configured native cognitive episodes with bounded authorized sensing,
+  independent local evaluation, persistent learning and reciprocal inert offers.
+- Exact graph query-policy transfer, held-out graph facts, durable strategy
+  promotion/revocation and explicit strategy-aware state migration and backup.
+- Three owned native TLS peers with per-edge mutual consent, custody-bound
+  forwarding, persistent denials and complete declared plaintext admission costs.
+- Outcome-conditioned bounded exploration with fresh promotion anchors,
+  actual native restarts and neutral-history/equal-budget controls.
+- Prospective transfer protocol and a separate once-only one-hour local
+  continuity protocol. Focused engineering checks do not substitute for either
+  qualification; negative utility and historical HOLDs remain visible.
+- Versioned portable source manifests distinguish exact bytes and ordering from
+  the historical verification algorithm. Original evidence remains unchanged.
+
 ## v0.5.1 — Durable Operations — 2026-10-27
 
 - Verified offline single-owner backup and restore with external manifest pins,

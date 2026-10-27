@@ -1,5 +1,11 @@
 # Compatibility and release boundary
 
+The unreleased v1 candidate adds the [public runtime API](RUST_API.md), native
+cognitive profile events and a separate strategy ledger. Its minimum compiler
+is declared as Rust 1.98.1 and must pass the final 1.98.1 local build. The tables
+below retain the published v0.5.1 qualification; they are not candidate results.
+Final candidate platform and duration evidence will be recorded separately.
+
 **v0.5.1 remains a research preview.** It adds owner backups and an offline
 policy lifecycle to v0.5.0's configured services. S5 passed bounded local
 qualification on this Windows PC; stable 1.0, independent two-host deployment
@@ -70,6 +76,9 @@ reassessment and revocation; old observations must not be silently edited.
 | Knowledge ledger | JSONL v1, typed model events | Preserve promotion, supersession and revocation history; reject unsupported events |
 | Operational ledger | JSONL v1, typed service events | Preserve its owner marker, Genesis and exact prior receipt prefix |
 | Registered layout | `symbiote.state-layout/1` | Explicit byte-preserving registration; no silent migration |
+| Strategy ledger, v1 candidate | JSONL strategy version 1; `symbiote.strategy-owner/1` | Bound to the exact owner's Genesis bytes; validated policy decisions and family-wide counterexamples survive restart |
+| Strategy-bearing layout, v1 candidate | `symbiote.state-layout/2` | Explicit `migrate`; preserve original layout and immutable v1/v2 migration backups; incomplete preparations block writers until reviewed resume |
+| Cognitive run policy, v1 candidate | `symbiote.cognition-policy/1` | Exact owner/service epoch and narrower finite grants; unfamiliar fields reject |
 | Owner backup, v0.5.1 | `symbiote.owner-backup/1` | New destination only; external manifest digest required; same operating system |
 | Restore mapping, v0.5.1 | `symbiote.restored-owner/1` | Immutable copied-history mapping; configured activation requires explicit reviewed relocation |
 

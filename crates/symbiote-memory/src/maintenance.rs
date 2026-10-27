@@ -16,9 +16,18 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const GATE: &str = "maintenance.guard";
 const WRITERS: [&str; 2] = ["writer.lock", "knowledge.writer.lock"];
-const LEDGERS: [&str; 3] = ["ledger.jsonl", "knowledge.jsonl", "operations.jsonl"];
+const LEGACY_LEDGERS: [&str; 3] = ["ledger.jsonl", "knowledge.jsonl", "operations.jsonl"];
+const LEDGERS: [&str; 4] = [
+    "ledger.jsonl",
+    "knowledge.jsonl",
+    "operations.jsonl",
+    "strategy.jsonl",
+];
 const LAYOUT: &str = "state-layout.json";
 const BACKUP: &str = "migration-backup-v1";
+const FEATURE_BACKUP: &str = "migration-backup-v2";
+pub(crate) const FORMAT_UPGRADE: &str = "format-upgrade-incomplete.json";
+const PREVIOUS_LAYOUT: &str = "previous-state-layout.json";
 const AUDIT: &str = "maintenance-audit.jsonl";
 const MAX_LOCK_BYTES: usize = 4096;
 const MAX_METADATA_BYTES: usize = 16 * 1024;
@@ -90,6 +99,35 @@ struct StateLayout {
     promotion_policy: u32,
     backup_directory: String,
     snapshot_sha256: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    sidecar_sha256: BTreeMap<String, String>,
+}
+
+/// Persistent preparation is written before feature-registration mutations.
+/// Resume accepts only these exact source bytes and the old or planned layout.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct UpgradePlan {
+    schema: String,
+    identity: String,
+    target: StateLayout,
+    previous_layout_json: Option<String>,
+    source_sha256: BTreeMap<String, String>,
+    sha256: String,
+}
+impl UpgradePlan {
+    fn hash(&self) -> Result<String, String> {
+        Ok(hash(
+            &serde_json::to_vec(&(
+                &self.schema,
+                &self.identity,
+                &self.target,
+                &self.previous_layout_json,
+                &self.source_sha256,
+            ))
+            .map_err(|e| e.to_string())?,
+        ))
+    }
 }
 
 fn hash(bytes: &[u8]) -> String {
@@ -139,27 +177,54 @@ fn ensure_directory(directory: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn read_layout(directory: &Path) -> Result<Option<StateLayout>, String> {
-    let Some(bytes) = read_regular(&directory.join(LAYOUT), MAX_METADATA_BYTES)? else {
-        return Ok(None);
-    };
-    let layout: StateLayout = serde_json::from_slice(&bytes)
-        .map_err(|e| format!("invalid state-layout metadata: {e}"))?;
-    if layout.schema != "symbiote.state-layout/1"
-        || layout.layout_version != 1
+fn parse_layout(bytes: &[u8]) -> Result<StateLayout, String> {
+    let layout: StateLayout =
+        serde_json::from_slice(bytes).map_err(|e| format!("invalid state-layout metadata: {e}"))?;
+    let legacy = layout.schema == "symbiote.state-layout/1"
+        && layout.layout_version == 1
+        && layout.backup_directory == BACKUP
+        && layout.sidecar_sha256.is_empty();
+    let feature = layout.schema == "symbiote.state-layout/2"
+        && layout.layout_version == 2
+        && layout.backup_directory == FEATURE_BACKUP
+        && layout.ledger_formats.contains_key("ledger.jsonl")
+        && layout
+            .ledger_formats
+            .contains_key(crate::strategy::STRATEGY_FILE)
+        && layout
+            .sidecar_sha256
+            .contains_key(crate::strategy::STRATEGY_OWNER_FILE)
+        && layout.ledger_formats.contains_key("operations.jsonl")
+            == layout
+                .sidecar_sha256
+                .contains_key(crate::operational::OWNER_FILE)
+        && layout.sidecar_sha256.iter().all(|(name, pin)| {
+            [
+                crate::strategy::STRATEGY_OWNER_FILE,
+                crate::operational::OWNER_FILE,
+                PREVIOUS_LAYOUT,
+            ]
+            .contains(&name.as_str())
+                && hex_digest(pin)
+        });
+    if !(legacy || feature)
         || layout.promotion_policy != 2
         || !owner_label(&layout.identity)
-        || layout.backup_directory != BACKUP
         || layout.ledger_formats.is_empty()
         || layout.ledger_formats.len() > LEDGERS.len()
         || layout
             .ledger_formats
             .keys()
             .ne(layout.snapshot_sha256.keys())
-        || layout
-            .ledger_formats
-            .iter()
-            .any(|(name, version)| !LEDGERS.contains(&name.as_str()) || *version != 1)
+        || layout.ledger_formats.iter().any(|(name, version)| {
+            !(if legacy {
+                &LEGACY_LEDGERS[..]
+            } else {
+                &LEDGERS[..]
+            })
+            .contains(&name.as_str())
+                || *version != 1
+        })
         || layout
             .snapshot_sha256
             .values()
@@ -167,6 +232,14 @@ fn read_layout(directory: &Path) -> Result<Option<StateLayout>, String> {
     {
         return Err("unsupported state layout, ledger format or promotion policy; preserve state and use a compatible version".into());
     }
+    Ok(layout)
+}
+
+fn read_layout(directory: &Path) -> Result<Option<StateLayout>, String> {
+    let Some(bytes) = read_regular(&directory.join(LAYOUT), MAX_METADATA_BYTES)? else {
+        return Ok(None);
+    };
+    let layout = parse_layout(&bytes)?;
     for name in layout.ledger_formats.keys() {
         let metadata = fs::symlink_metadata(directory.join(name))
             .map_err(|_| format!("registered ledger {name} is missing; refusing to reset state"))?;
@@ -184,14 +257,33 @@ pub(crate) fn validate_layout_identity(directory: &Path, identity: &str) -> Resu
     Ok(())
 }
 
+/// A legacy registered owner may prepare an empty strategy journal/marker pair,
+/// but learning mutations require deliberate feature-format registration first.
+/// The caller retains the original Store lease, so migration cannot race it.
+pub(crate) fn validate_strategy_learning_admission(directory: &Path) -> Result<(), String> {
+    super::backup::writer_admission(directory)?;
+    if let Some(layout) = read_layout(directory)? {
+        if layout.layout_version != 2
+            || layout.ledger_formats.get(crate::strategy::STRATEGY_FILE) != Some(&1)
+        {
+            return Err("HOLD: registered legacy owner must explicitly migrate to state-layout/2 before strategy learning mutations".into());
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn validate_knowledge_owner(directory: &Path, identity: &str) -> Result<(), String> {
     validate_layout_identity(directory, identity)?;
     let original = read_regular(&directory.join("ledger.jsonl"), super::MAX_LEDGER_BYTES)?;
     if original.is_none()
         && (directory.join("operations.jsonl").exists()
-            || directory.join(super::operational::OWNER_FILE).exists())
+            || directory.join(super::operational::OWNER_FILE).exists()
+            || directory.join(super::strategy::STRATEGY_FILE).exists()
+            || directory
+                .join(super::strategy::STRATEGY_OWNER_FILE)
+                .exists())
     {
-        return Err("operational state exists without its original identity ledger; refusing structural owner initialization".into());
+        return Err("operational or strategy state exists without its original identity ledger; refusing structural owner initialization".into());
     }
     if let Some(bytes) = original {
         if super::Store::validate_snapshot(&bytes)? != identity {
@@ -287,6 +379,7 @@ pub(crate) fn offline_guard(directory: &Path) -> Result<WriterLock, String> {
 /// evidence. The caller holds `offline_guard` when coherence is required.
 pub(crate) fn validate_offline_state(directory: &Path) -> Result<String, String> {
     ensure_directory(directory)?;
+    reject_pending_upgrade(directory)?;
     let layout = read_layout(directory)?;
     audit_rows(directory)?;
     let (identity, _) = validated_snapshots(directory)?;
@@ -438,6 +531,7 @@ pub fn inspect(directory: &Path) -> Result<Inspection, String> {
         });
     }
     ensure_directory(directory)?;
+    reject_pending_upgrade(directory)?;
     let layout = read_layout(directory)?;
     let mut locks = Vec::new();
     for name in [GATE, WRITERS[0], WRITERS[1]] {
@@ -455,11 +549,14 @@ pub fn inspect(directory: &Path) -> Result<Inspection, String> {
         super::operational::MAX_OWNER_BYTES,
     )?
     .is_some();
-    let validated_identity = if ledgers.is_empty() && !has_operational_registration {
-        None
-    } else {
-        Some(validated_snapshots(directory)?.0)
-    };
+    let has_strategy_registration =
+        read_regular(&directory.join(crate::strategy::STRATEGY_OWNER_FILE), 2048)?.is_some();
+    let validated_identity =
+        if ledgers.is_empty() && !has_operational_registration && !has_strategy_registration {
+            None
+        } else {
+            Some(validated_snapshots(directory)?.0)
+        };
     if layout
         .as_ref()
         .is_some_and(|layout| validated_identity.as_ref() != Some(&layout.identity))
@@ -622,6 +719,7 @@ fn quiescent_locks(directory: &Path, allow_dead: bool) -> Result<Vec<(String, Ve
 /// A stale maintenance gate itself requires explicit quiescent operator recovery.
 pub fn recover(directory: &Path) -> Result<RecoveryReport, String> {
     let _gate = gate(directory)?;
+    reject_pending_upgrade(directory)?;
     read_layout(directory)?;
     audit_rows(directory)?;
     let dead = quiescent_locks(directory, true)?;
@@ -671,12 +769,21 @@ fn validated_snapshots(directory: &Path) -> Result<(String, BTreeMap<String, Vec
     if snapshots.contains_key("operations.jsonl") != operational_registration.is_some() {
         return Err("HOLD: operational journal/owner registration pair is incomplete; preserve state and restore history".into());
     }
+    let strategy_registration =
+        read_regular(&directory.join(crate::strategy::STRATEGY_OWNER_FILE), 2048)?;
+    if snapshots.contains_key(crate::strategy::STRATEGY_FILE) != strategy_registration.is_some() {
+        return Err(
+            "HOLD: strategy journal/owner registration pair is incomplete; preserve state".into(),
+        );
+    }
     if snapshots.is_empty() {
         return Err("no learning ledgers to register; run a demonstration first".into());
     }
-    if snapshots.contains_key("operations.jsonl") && !snapshots.contains_key("ledger.jsonl") {
+    if (snapshots.contains_key("operations.jsonl") || strategy_registration.is_some())
+        && !snapshots.contains_key("ledger.jsonl")
+    {
         return Err(
-            "operational journal is missing its original identity ledger; refusing owner reset"
+            "operational or strategy journal is missing its original identity ledger; refusing owner reset"
                 .into(),
         );
     }
@@ -712,11 +819,28 @@ fn validated_snapshots(directory: &Path) -> Result<(String, BTreeMap<String, Vec
                 .ok_or("operational registration missing")?,
         )?;
     }
+    if let Some(bytes) = snapshots.get(crate::strategy::STRATEGY_FILE) {
+        let owner = snapshots
+            .get("ledger.jsonl")
+            .ok_or("strategy owner identity ledger missing")?;
+        let genesis = owner
+            .split_inclusive(|byte| *byte == b'\n')
+            .next()
+            .ok_or("owner genesis missing")?;
+        crate::strategy::StrategyLedger::validate_snapshot(
+            bytes,
+            strategy_registration
+                .as_deref()
+                .ok_or("strategy registration missing")?,
+            &identity,
+            &hash(genesis),
+        )?;
+    }
     Ok((identity, snapshots))
 }
 
 fn backup_matches(directory: &Path, layout: &StateLayout) -> Result<(), String> {
-    let backup = directory.join(BACKUP);
+    let backup = directory.join(&layout.backup_directory);
     ensure_directory(&backup)?;
     let raw = read_regular(&backup.join("manifest.json"), MAX_METADATA_BYTES)?
         .ok_or("migration backup manifest missing")?;
@@ -732,6 +856,13 @@ fn backup_matches(directory: &Path, layout: &StateLayout) -> Result<(), String> 
             return Err("migration backup checksum mismatch".into());
         }
     }
+    for (name, expected) in &layout.sidecar_sha256 {
+        let bytes = read_regular(&backup.join(name), super::MAX_LEDGER_BYTES)?
+            .ok_or("migration backup sidecar missing")?;
+        if hash(&bytes) != *expected {
+            return Err("migration backup sidecar checksum mismatch".into());
+        }
+    }
     if layout.ledger_formats.contains_key("operations.jsonl") {
         let operations = read_regular(&backup.join("operations.jsonl"), super::MAX_LEDGER_BYTES)?
             .ok_or("operational backup ledger missing")?;
@@ -742,18 +873,298 @@ fn backup_matches(directory: &Path, layout: &StateLayout) -> Result<(), String> 
         .ok_or("operational backup owner registration missing")?;
         super::operational::validate_snapshot(&operations, &layout.identity, &registration)?;
     }
+    if layout.layout_version == 2 {
+        let (owner, snapshots) = validated_snapshots(&backup)?;
+        if owner != layout.identity || snapshots.keys().ne(layout.snapshot_sha256.keys()) {
+            return Err("feature migration backup differs from registered owner ledgers".into());
+        }
+        if let Some(raw) = read_regular(&backup.join(PREVIOUS_LAYOUT), MAX_METADATA_BYTES)? {
+            let prior = parse_layout(&raw)?;
+            if prior.identity != layout.identity || prior.layout_version != 1 {
+                return Err("feature migration backup has a foreign historical layout".into());
+            }
+            backup_matches(directory, &prior)?;
+        }
+    }
     Ok(())
+}
+
+const MAX_UPGRADE_BYTES: usize = 64 * 1024;
+fn parse_upgrade(bytes: &[u8]) -> Result<UpgradePlan, String> {
+    let plan: UpgradePlan = serde_json::from_slice(bytes)
+        .map_err(|e| format!("HOLD: invalid format-upgrade preparation: {e}"))?;
+    let target = parse_layout(&serde_json::to_vec(&plan.target).map_err(|e| e.to_string())?)?;
+    if plan.schema != "symbiote.format-upgrade/1"
+        || plan.sha256 != plan.hash()?
+        || plan.identity != target.identity
+        || target.layout_version != 2
+        || plan.source_sha256.is_empty()
+        || plan.source_sha256.len() > 6
+        || plan.source_sha256.iter().any(|(name, pin)| {
+            !(LEDGERS.contains(&name.as_str())
+                || [
+                    crate::operational::OWNER_FILE,
+                    crate::strategy::STRATEGY_OWNER_FILE,
+                ]
+                .contains(&name.as_str()))
+                || !hex_digest(pin)
+        })
+        || target
+            .snapshot_sha256
+            .iter()
+            .any(|(name, pin)| plan.source_sha256.get(name) != Some(pin))
+        || plan
+            .source_sha256
+            .keys()
+            .filter(|name| LEDGERS.contains(&name.as_str()))
+            .ne(target.snapshot_sha256.keys())
+        || plan
+            .source_sha256
+            .iter()
+            .filter(|(name, _)| !LEDGERS.contains(&name.as_str()))
+            .any(|(name, pin)| target.sidecar_sha256.get(name) != Some(pin))
+    {
+        return Err("HOLD: altered or unsupported format-upgrade preparation".into());
+    }
+    match &plan.previous_layout_json {
+        Some(raw) => {
+            let prior = parse_layout(raw.as_bytes())?;
+            if raw.len() > MAX_METADATA_BYTES
+                || prior.layout_version != 1
+                || prior.identity != plan.identity
+                || target.sidecar_sha256.get(PREVIOUS_LAYOUT) != Some(&hash(raw.as_bytes()))
+            {
+                return Err("HOLD: format-upgrade historical layout differs".into());
+            }
+        }
+        None if target.sidecar_sha256.contains_key(PREVIOUS_LAYOUT) => {
+            return Err("HOLD: upgrade lost its historical layout bytes".into())
+        }
+        None => {}
+    }
+    let mut expected_sidecars: BTreeMap<_, _> = plan
+        .source_sha256
+        .iter()
+        .filter(|(name, _)| !LEDGERS.contains(&name.as_str()))
+        .map(|(name, pin)| (name.clone(), pin.clone()))
+        .collect();
+    if let Some(raw) = &plan.previous_layout_json {
+        expected_sidecars.insert(PREVIOUS_LAYOUT.into(), hash(raw.as_bytes()));
+    }
+    if target.sidecar_sha256 != expected_sidecars {
+        return Err("HOLD: format-upgrade sidecars differ from exact prepared source files".into());
+    }
+    if !plan
+        .source_sha256
+        .contains_key(crate::strategy::STRATEGY_OWNER_FILE)
+        || !plan.source_sha256.contains_key("ledger.jsonl")
+    {
+        return Err("HOLD: upgrade lacks its exact original owner/strategy pair".into());
+    }
+    Ok(plan)
+}
+fn reject_pending_upgrade(directory: &Path) -> Result<(), String> {
+    if let Some(bytes) = read_regular(&directory.join(FORMAT_UPGRADE), MAX_UPGRADE_BYTES)? {
+        parse_upgrade(&bytes)?;
+        return Err("HOLD: interrupted format upgrade; only explicit migrate may validate and resume its exact planned bytes".into());
+    }
+    Ok(())
+}
+fn feature_sources(
+    directory: &Path,
+    snapshots: &BTreeMap<String, Vec<u8>>,
+) -> Result<BTreeMap<String, Vec<u8>>, String> {
+    let mut result = snapshots.clone();
+    for name in [
+        crate::operational::OWNER_FILE,
+        crate::strategy::STRATEGY_OWNER_FILE,
+    ] {
+        if let Some(bytes) = read_regular(&directory.join(name), MAX_METADATA_BYTES)? {
+            result.insert(name.into(), bytes);
+        }
+    }
+    Ok(result)
+}
+fn resume_feature_upgrade(directory: &Path, plan_bytes: &[u8]) -> Result<MigrationReport, String> {
+    let plan = parse_upgrade(plan_bytes)?;
+    let (identity, snapshots) = validated_snapshots(directory)?;
+    let sources = feature_sources(directory, &snapshots)?;
+    let source_hashes: BTreeMap<_, _> = sources
+        .iter()
+        .map(|(name, bytes)| (name.clone(), hash(bytes)))
+        .collect();
+    if identity != plan.identity || source_hashes != plan.source_sha256 {
+        return Err("HOLD: source bytes changed after format-upgrade preparation; no upgrade writes allowed".into());
+    }
+    let target_bytes = serde_json::to_vec_pretty(&plan.target).map_err(|e| e.to_string())?;
+    let current = read_regular(&directory.join(LAYOUT), MAX_METADATA_BYTES)?;
+    if current.as_deref() != Some(target_bytes.as_slice())
+        && current.as_deref() != plan.previous_layout_json.as_ref().map(|s| s.as_bytes())
+    {
+        return Err(
+            "HOLD: owner layout differs from both exact prepared and planned layout bytes".into(),
+        );
+    }
+    if let Some(raw) = &plan.previous_layout_json {
+        backup_matches(directory, &parse_layout(raw.as_bytes())?)?;
+    }
+    let mut files = sources;
+    if let Some(raw) = &plan.previous_layout_json {
+        files.insert(PREVIOUS_LAYOUT.into(), raw.as_bytes().to_vec());
+    }
+    files.insert("manifest.json".into(), target_bytes.clone());
+    let backup = directory.join(FEATURE_BACKUP);
+    if backup.exists() {
+        ensure_directory(&backup)?;
+        for entry in fs::read_dir(&backup).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let name = entry
+                .file_name()
+                .to_str()
+                .ok_or("upgrade backup entry is not UTF8")?
+                .to_string();
+            let expected = files
+                .get(&name)
+                .ok_or("HOLD: unexpected feature-upgrade backup material")?;
+            if read_regular(&entry.path(), super::MAX_LEDGER_BYTES)?.as_deref()
+                != Some(expected.as_slice())
+            {
+                return Err(
+                    "HOLD: interrupted feature-upgrade backup differs from exact planned bytes"
+                        .into(),
+                );
+            }
+        }
+    }
+    let already_completed = audit_rows(directory)?.iter().any(|row| {
+        row.event["operation_id"].as_str() == Some(&plan.sha256)
+            && row.event["phase"].as_str() == Some("completed")
+    });
+    if !already_completed {
+        append_audit(
+            directory,
+            json!({"operation":"format_upgrade","phase":"prepared","operation_id":plan.sha256,"identity":identity,"layout_version":2,"ledger_bytes_changed":false}),
+        )?;
+    }
+    if !backup.exists() {
+        fs::create_dir(&backup).map_err(|e| e.to_string())?;
+    }
+    for (name, bytes) in &files {
+        let path = backup.join(name);
+        if read_regular(&path, super::MAX_LEDGER_BYTES)?.is_none() {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+                .map_err(|e| e.to_string())?;
+            file.write_all(bytes)
+                .and_then(|()| file.sync_all())
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    backup_matches(directory, &plan.target)?;
+    if current.as_deref() != Some(target_bytes.as_slice()) {
+        atomic_replace(directory, LAYOUT, &target_bytes)?;
+    }
+    if !already_completed {
+        append_audit(
+            directory,
+            json!({"operation":"format_upgrade","phase":"completed","operation_id":plan.sha256,"identity":identity,"layout_version":2,"layout_sha256":hash(&target_bytes),"ledger_bytes_changed":false}),
+        )?;
+    }
+    if read_regular(&directory.join(FORMAT_UPGRADE), MAX_UPGRADE_BYTES)?.as_deref()
+        != Some(plan_bytes)
+    {
+        return Err(
+            "HOLD: format-upgrade preparation changed before completion; preserve evidence".into(),
+        );
+    }
+    fs::remove_file(directory.join(FORMAT_UPGRADE)).map_err(|e| {
+        format!("upgrade complete but preparation marker could not be cleared: {e}")
+    })?;
+    Ok(MigrationReport {
+        schema: "symbiote.migration/1",
+        status: "PASS",
+        changed: true,
+        layout_version: 2,
+        identity,
+        backup_directory: FEATURE_BACKUP.into(),
+        registered_ledger_sha256: plan.target.snapshot_sha256,
+        ledger_bytes_changed: false,
+    })
 }
 
 /// Registers the existing v1 ledger encodings with explicit layout/policy metadata.
 /// Both original byte streams remain unchanged and immutable backup copies are
 /// checked. This is an additive state-layout migration, not an invented new encoding.
 pub fn migrate(directory: &Path) -> Result<MigrationReport, String> {
+    migrate_with_preparation_hook(directory, || Ok(()))
+}
+
+fn migrate_with_preparation_hook(
+    directory: &Path,
+    after_preparation: impl FnOnce() -> Result<(), String>,
+) -> Result<MigrationReport, String> {
     let _gate = gate(directory)?;
     let existing = read_layout(directory)?;
     audit_rows(directory)?;
     quiescent_locks(directory, false)?;
+    if let Some(plan) = read_regular(&directory.join(FORMAT_UPGRADE), MAX_UPGRADE_BYTES)? {
+        return resume_feature_upgrade(directory, &plan);
+    }
     let (identity, snapshots) = validated_snapshots(directory)?;
+    if snapshots.contains_key(crate::strategy::STRATEGY_FILE)
+        && existing
+            .as_ref()
+            .is_none_or(|layout| layout.layout_version != 2)
+    {
+        if let Some(layout) = &existing {
+            backup_matches(directory, layout)?;
+        }
+        let sources = feature_sources(directory, &snapshots)?;
+        let previous_layout_json = read_regular(&directory.join(LAYOUT), MAX_METADATA_BYTES)?
+            .map(String::from_utf8)
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let mut sidecars: BTreeMap<_, _> = sources
+            .iter()
+            .filter(|(name, _)| !LEDGERS.contains(&name.as_str()))
+            .map(|(name, bytes)| (name.clone(), hash(bytes)))
+            .collect();
+        if let Some(raw) = &previous_layout_json {
+            sidecars.insert(PREVIOUS_LAYOUT.into(), hash(raw.as_bytes()));
+        }
+        let target = StateLayout {
+            schema: "symbiote.state-layout/2".into(),
+            layout_version: 2,
+            identity: identity.clone(),
+            ledger_formats: snapshots.keys().map(|name| (name.clone(), 1)).collect(),
+            promotion_policy: 2,
+            backup_directory: FEATURE_BACKUP.into(),
+            snapshot_sha256: snapshots
+                .iter()
+                .map(|(name, bytes)| (name.clone(), hash(bytes)))
+                .collect(),
+            sidecar_sha256: sidecars,
+        };
+        let mut plan = UpgradePlan {
+            schema: "symbiote.format-upgrade/1".into(),
+            identity,
+            target,
+            previous_layout_json,
+            source_sha256: sources
+                .iter()
+                .map(|(name, bytes)| (name.clone(), hash(bytes)))
+                .collect(),
+            sha256: String::new(),
+        };
+        plan.sha256 = plan.hash()?;
+        let bytes = serde_json::to_vec_pretty(&plan).map_err(|e| e.to_string())?;
+        parse_upgrade(&bytes)?;
+        atomic_replace(directory, FORMAT_UPGRADE, &bytes)?;
+        after_preparation()?;
+        return resume_feature_upgrade(directory, &bytes);
+    }
     if let Some(layout) = existing {
         if layout.identity != identity {
             return Err("state-layout identity mismatch".into());
@@ -761,15 +1172,15 @@ pub fn migrate(directory: &Path) -> Result<MigrationReport, String> {
         backup_matches(directory, &layout)?;
         append_audit(
             directory,
-            json!({"operation":"migrate","phase":"already_current","identity":identity,"layout_version":1,"ledger_bytes_changed":false}),
+            json!({"operation":"migrate","phase":"already_current","identity":identity,"layout_version":layout.layout_version,"ledger_bytes_changed":false}),
         )?;
         return Ok(MigrationReport {
             schema: "symbiote.migration/1",
             status: "PASS",
             changed: false,
-            layout_version: 1,
+            layout_version: layout.layout_version,
             identity,
-            backup_directory: BACKUP.into(),
+            backup_directory: layout.backup_directory,
             registered_ledger_sha256: layout.snapshot_sha256,
             ledger_bytes_changed: false,
         });
@@ -786,6 +1197,7 @@ pub fn migrate(directory: &Path) -> Result<MigrationReport, String> {
         promotion_policy: 2,
         backup_directory: BACKUP.into(),
         snapshot_sha256: hashes.clone(),
+        sidecar_sha256: BTreeMap::new(),
     };
     let operation = hash(&lock_bytes()?);
     append_audit(
@@ -1004,5 +1416,96 @@ mod tests {
         }
         assert_eq!(parse_pid(b"process=1\n").unwrap(), 1);
         assert_eq!(parse_pid(b"process=2147483647\n").unwrap(), 2_147_483_647);
+    }
+
+    #[test]
+    fn interrupted_feature_registration_blocks_writers_and_resumes_exact_bytes() {
+        use crate::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+        use std::sync::Arc;
+        let dir = Directory::new();
+        let owner = crate::Store::open(&dir.0).unwrap().identity().to_string();
+        migrate(&dir.0).unwrap();
+        let legacy_layout = fs::read(dir.0.join(LAYOUT)).unwrap();
+        let legacy_backup = fs::read(dir.0.join(BACKUP).join("manifest.json")).unwrap();
+        drop(StrategyLedger::open(Arc::new(crate::Store::open(&dir.0).unwrap())).unwrap());
+        let identity_bytes = fs::read(dir.0.join("ledger.jsonl")).unwrap();
+        let strategy_bytes = fs::read(dir.0.join(STRATEGY_FILE)).unwrap();
+        let owner_marker = fs::read(dir.0.join(STRATEGY_OWNER_FILE)).unwrap();
+        let audit_before = fs::read(dir.0.join(AUDIT)).unwrap();
+        assert!(migrate_with_preparation_hook(&dir.0, || Err(
+            "injected stop after durable preparation".into()
+        ))
+        .is_err());
+        let prepared = fs::read(dir.0.join(FORMAT_UPGRADE)).unwrap();
+        assert!(!dir.0.join(FEATURE_BACKUP).exists());
+        assert!(crate::Store::open(&dir.0).is_err());
+        assert!(crate::knowledge::KnowledgeStore::open(&dir.0, &owner).is_err());
+        assert!(inspect(&dir.0).is_err());
+        assert!(recover(&dir.0).is_err());
+        assert_eq!(fs::read(dir.0.join(AUDIT)).unwrap(), audit_before);
+        assert_eq!(fs::read(dir.0.join(LAYOUT)).unwrap(), legacy_layout);
+        let mut altered: Value = serde_json::from_slice(&prepared).unwrap();
+        altered["sha256"] = json!("0".repeat(64));
+        let altered = serde_json::to_vec(&altered).unwrap();
+        fs::write(dir.0.join(FORMAT_UPGRADE), &altered).unwrap();
+        assert!(migrate(&dir.0).is_err());
+        assert_eq!(fs::read(dir.0.join(FORMAT_UPGRADE)).unwrap(), altered);
+        assert_eq!(fs::read(dir.0.join(AUDIT)).unwrap(), audit_before);
+        assert_eq!(fs::read(dir.0.join(LAYOUT)).unwrap(), legacy_layout);
+        fs::write(dir.0.join(FORMAT_UPGRADE), &prepared).unwrap();
+        let mut altered_owner = owner_marker.clone();
+        altered_owner.push(b'\n');
+        fs::write(dir.0.join(STRATEGY_OWNER_FILE), &altered_owner).unwrap();
+        assert!(migrate(&dir.0).is_err());
+        assert_eq!(fs::read(dir.0.join(AUDIT)).unwrap(), audit_before);
+        assert_eq!(fs::read(dir.0.join(LAYOUT)).unwrap(), legacy_layout);
+        fs::write(dir.0.join(STRATEGY_OWNER_FILE), &owner_marker).unwrap();
+        // A crash during immutable backup copying resumes only matching bytes.
+        fs::create_dir(dir.0.join(FEATURE_BACKUP)).unwrap();
+        fs::write(
+            dir.0.join(FEATURE_BACKUP).join("ledger.jsonl"),
+            b"different partial backup",
+        )
+        .unwrap();
+        assert!(migrate(&dir.0).is_err());
+        assert_eq!(fs::read(dir.0.join(AUDIT)).unwrap(), audit_before);
+        assert_eq!(fs::read(dir.0.join(LAYOUT)).unwrap(), legacy_layout);
+        fs::write(
+            dir.0.join(FEATURE_BACKUP).join("ledger.jsonl"),
+            &identity_bytes,
+        )
+        .unwrap();
+        let report = migrate(&dir.0).unwrap();
+        assert_eq!(report.layout_version, 2);
+        assert!(report.changed);
+        assert!(!dir.0.join(FORMAT_UPGRADE).exists());
+        assert_eq!(
+            fs::read(dir.0.join("ledger.jsonl")).unwrap(),
+            identity_bytes
+        );
+        assert_eq!(fs::read(dir.0.join(STRATEGY_FILE)).unwrap(), strategy_bytes);
+        assert_eq!(
+            fs::read(dir.0.join(STRATEGY_OWNER_FILE)).unwrap(),
+            owner_marker
+        );
+        assert_eq!(
+            fs::read(dir.0.join(BACKUP).join("manifest.json")).unwrap(),
+            legacy_backup
+        );
+        assert_eq!(
+            fs::read(dir.0.join(FEATURE_BACKUP).join(PREVIOUS_LAYOUT)).unwrap(),
+            legacy_layout
+        );
+        assert_eq!(crate::Store::open(&dir.0).unwrap().identity(), owner);
+        // Also exercise the cutpoint after layout + completion audit, before
+        // removal of the preparation marker. Resume adds no duplicate history.
+        let completed_audit = fs::read(dir.0.join(AUDIT)).unwrap();
+        let completed_layout = fs::read(dir.0.join(LAYOUT)).unwrap();
+        fs::write(dir.0.join(FORMAT_UPGRADE), &prepared).unwrap();
+        assert!(crate::Store::open(&dir.0).is_err());
+        assert!(migrate(&dir.0).unwrap().changed);
+        assert_eq!(fs::read(dir.0.join(AUDIT)).unwrap(), completed_audit);
+        assert_eq!(fs::read(dir.0.join(LAYOUT)).unwrap(), completed_layout);
+        assert!(!migrate(&dir.0).unwrap().changed);
     }
 }

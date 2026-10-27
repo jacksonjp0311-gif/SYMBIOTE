@@ -148,8 +148,11 @@ fn exists(path: &Path) -> Result<bool, String> {
 }
 /// Normal writers never activate an incomplete or still-reserved restore.
 pub(crate) fn writer_admission(directory: &Path) -> Result<(), String> {
-    if exists(&directory.join(INCOMPLETE))? || exists(&reservation(directory)?)? {
-        return Err("HOLD: incomplete/reserved restore cannot become an active owner store; preserve its evidence".into());
+    if exists(&directory.join(INCOMPLETE))?
+        || exists(&reservation(directory)?)?
+        || exists(&directory.join(maintenance::FORMAT_UPGRADE))?
+    {
+        return Err("HOLD: incomplete/reserved restore or format upgrade cannot become an active owner store; preserve evidence and explicitly resume migration".into());
     }
     Ok(())
 }
@@ -287,6 +290,8 @@ fn known_file(name: &str) -> bool {
         "knowledge.jsonl",
         "operations.jsonl",
         "operations-owner.json",
+        "strategy.jsonl",
+        "strategy-owner.json",
         "state-layout.json",
         "maintenance-audit.jsonl",
         REGISTRY,
@@ -303,6 +308,21 @@ fn known_file(name: &str) -> bool {
                     "knowledge.jsonl",
                     "operations.jsonl",
                     "operations-owner.json",
+                ]
+                .contains(&tail)
+            })
+        || name
+            .strip_prefix("migration-backup-v2/")
+            .is_some_and(|tail| {
+                [
+                    "manifest.json",
+                    "ledger.jsonl",
+                    "knowledge.jsonl",
+                    "operations.jsonl",
+                    "operations-owner.json",
+                    "strategy.jsonl",
+                    "strategy-owner.json",
+                    "previous-state-layout.json",
                 ]
                 .contains(&tail)
             })
@@ -339,8 +359,13 @@ fn inventory(directory: &Path, allow_incomplete: bool) -> Result<Files, String> 
                 continue;
             }
             if metadata.is_dir() {
-                if !["migration-backup-v1", "graph", "public-dependencies"]
-                    .contains(&relative.as_str())
+                if ![
+                    "migration-backup-v1",
+                    "migration-backup-v2",
+                    "graph",
+                    "public-dependencies",
+                ]
+                .contains(&relative.as_str())
                 {
                     return Err(format!("unsupported descendant/child store {relative}; one-owner backup never silently omits it"));
                 }
@@ -398,6 +423,28 @@ fn validate_files(files: &Files) -> Result<String, String> {
             .ok_or("one-owner backup requires its original identity ledger")?,
     )?;
     let history = records(files, &identity)?;
+    match (
+        files.get(crate::strategy::STRATEGY_FILE),
+        files.get(crate::strategy::STRATEGY_OWNER_FILE),
+    ) {
+        (Some(bytes), Some(marker)) => {
+            let owner = files
+                .get("ledger.jsonl")
+                .ok_or("strategy lacks its original owner ledger")?;
+            let genesis = owner
+                .split_inclusive(|byte| *byte == b'\n')
+                .next()
+                .ok_or("owner genesis missing")?;
+            crate::strategy::StrategyLedger::validate_snapshot(
+                bytes,
+                marker,
+                &identity,
+                &hash(genesis),
+            )?;
+        }
+        (None, None) => {}
+        _ => return Err("strategy journal/owner marker pair is incomplete".into()),
+    }
     for (name, bytes) in files.iter().filter(|(name, _)| is_marker(name)) {
         if bytes.len() > MAX_MAPPING {
             return Err("historical restore marker exceeds its bound".into());
@@ -575,11 +622,16 @@ fn dependencies(files: &Files) -> Result<Vec<ActivationDependency>, String> {
     Ok(result)
 }
 fn ledger_formats(files: &BTreeMap<String, FileFingerprint>) -> BTreeMap<String, u32> {
-    ["ledger.jsonl", "knowledge.jsonl", "operations.jsonl"]
-        .into_iter()
-        .filter(|name| files.contains_key(*name))
-        .map(|name| (name.into(), 1))
-        .collect()
+    [
+        "ledger.jsonl",
+        "knowledge.jsonl",
+        "operations.jsonl",
+        "strategy.jsonl",
+    ]
+    .into_iter()
+    .filter(|name| files.contains_key(*name))
+    .map(|name| (name.into(), 1))
+    .collect()
 }
 fn operational_anchor(files: &Files) -> Result<(Option<String>, Option<String>), String> {
     let Some(bytes) = files.get("operations.jsonl") else {

@@ -1,10 +1,10 @@
 //! OS-provided resource counters for an owned child only. These are separate
 //! from logical experiment costs. No process lookup or executable is accepted.
 //! Native layouts/units: Microsoft PROCESS_MEMORY_COUNTERS and GetProcessTimes:
-//! https://learn.microsoft.com/windows/win32/api/psapi/ns-psapi-process_memory_counters
-//! https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes
+//! <https://learn.microsoft.com/windows/win32/api/psapi/ns-psapi-process_memory_counters>
+//! <https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes>
 //! Linux VmHWM/VmRSS accounting caveat:
-//! https://man7.org/linux/man-pages/man5/proc_pid_status.5.html
+//! <https://man7.org/linux/man-pages/man5/proc_pid_status.5.html>
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::process::Child;

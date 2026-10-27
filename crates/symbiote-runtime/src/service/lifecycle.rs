@@ -241,7 +241,7 @@ pub(super) fn restore_inspection(state: &State) -> Result<RestoreInspection, Str
     Ok(RestoreInspection { consumed, pending })
 }
 
-pub(crate) fn policy_status(path: &Path) -> Result<Value, String> {
+pub fn policy_status(path: &Path) -> Result<Value, String> {
     // Public-only loading works after a lost old private key. Inspection never
     // runs pending learning recovery.
     let config = Config::load_public(path)?;
@@ -274,7 +274,7 @@ pub(crate) fn policy_status(path: &Path) -> Result<Value, String> {
     )
 }
 
-pub(crate) fn policy_transition(
+pub fn policy_transition(
     previous: &Path,
     next: &Path,
     expected_policy: &str,
@@ -372,7 +372,7 @@ pub(crate) fn policy_transition(
     )
 }
 
-pub(crate) fn peer_regrant(
+pub fn peer_regrant(
     path: &Path,
     peer: &str,
     expected_policy: &str,

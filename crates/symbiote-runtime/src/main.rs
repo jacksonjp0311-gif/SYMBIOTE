@@ -2,7 +2,7 @@
 mod adaptive_research;
 mod graph_research;
 mod research;
-mod service;
+use symbiote_runtime::service;
 
 use serde_json::{json, Value};
 use std::fs;
@@ -383,6 +383,7 @@ struct Cli {
     from: Option<usize>,
     to: Option<usize>,
     config: Option<PathBuf>,
+    run_policy: Option<PathBuf>,
     previous_config: Option<PathBuf>,
     expected_policy: Option<String>,
     expected_head: Option<String>,
@@ -393,6 +394,7 @@ struct Cli {
     candidate: Option<String>,
     reason: Option<String>,
     registration: Option<PathBuf>,
+    registration_sha256: Option<String>,
     setup_catalogue: Option<PathBuf>,
     setup_sha256: Option<String>,
     backup: Option<PathBuf>,
@@ -467,6 +469,7 @@ impl Cli {
                 "--from",
                 "--to",
                 "--config",
+                "--run-policy",
                 "--previous-config",
                 "--expected-policy",
                 "--expected-head",
@@ -475,6 +478,7 @@ impl Cli {
                 "--candidate",
                 "--reason",
                 "--registration",
+                "--registration-sha256",
                 "--setup-catalogue",
                 "--setup-sha256",
                 "--backup",
@@ -510,11 +514,16 @@ impl Cli {
             "help",
             "version",
             "demo",
+            "run",
             "benchmark",
             "research",
             "graph-research",
             "adaptive-research",
             "network-research",
+            "transfer-register",
+            "transfer-research",
+            "topology-research",
+            "exploration-research",
             "prepare-tls-state",
             "route",
             "prepare-service",
@@ -548,6 +557,7 @@ impl Cli {
                     "help",
                     "version",
                     "serve",
+                    "run",
                     "peers",
                     "connect",
                     "evaluate",
@@ -565,6 +575,11 @@ impl Cli {
                     "graph-research",
                     "adaptive-research",
                     "network-research",
+                    "transfer-register",
+                    "transfer-research",
+                    "topology-research",
+                    "exploration-research",
+                    "run",
                 ]
                 .contains(&command.as_str()),
                 "--fault" => ["demo", "benchmark", "network-research"].contains(&command.as_str()),
@@ -574,6 +589,7 @@ impl Cli {
                 "--from" | "--to" => command == "route",
                 "--config" => [
                     "serve",
+                    "run",
                     "peers",
                     "connect",
                     "evaluate",
@@ -583,6 +599,7 @@ impl Cli {
                     "policy-transition",
                 ]
                 .contains(&command.as_str()),
+                "--run-policy" => command == "run",
                 "--peer" => ["connect", "peer-revoke", "peer-regrant"].contains(&command.as_str()),
                 "--request" => command == "connect",
                 "--candidate" => command == "evaluate",
@@ -593,7 +610,10 @@ impl Cli {
                 "--expected-policy" | "--expected-head" => {
                     ["policy-transition", "peer-regrant"].contains(&command.as_str())
                 }
-                "--registration" => command == "adaptive-research",
+                "--registration" => {
+                    ["adaptive-research", "transfer-research"].contains(&command.as_str())
+                }
+                "--registration-sha256" => command == "transfer-research",
                 "--setup-catalogue" | "--setup-sha256" => command == "adaptive-research",
                 "--backup" => {
                     ["backup-state", "verify-backup", "restore-state"].contains(&command.as_str())
@@ -622,6 +642,7 @@ impl Cli {
             .remove("--graph-context-registry")
             .map(PathBuf::from);
         let graph_context_sha256 = options.remove("--graph-context-sha256");
+        let registration_sha256 = options.remove("--registration-sha256");
         if ["backup-state", "verify-backup", "restore-state"].contains(&command.as_str()) {
             if backup.is_none() {
                 return Err(format!("{command} requires --backup DIR"));
@@ -639,6 +660,7 @@ impl Cli {
         for (name, value) in [
             ("--manifest-sha256", &manifest_sha256),
             ("--graph-context-sha256", &graph_context_sha256),
+            ("--registration-sha256", &registration_sha256),
         ] {
             if value.as_ref().is_some_and(|value| {
                 value.len() != 64
@@ -707,6 +729,12 @@ impl Cli {
             return Err("route requires --from NODE and --to NODE".into());
         }
         let config = options.remove("--config").map(PathBuf::from);
+        let run_policy = options.remove("--run-policy").map(PathBuf::from);
+        if command == "run"
+            && (config.is_none() || run_policy.is_none() || !options.contains_key("--receipts"))
+        {
+            return Err("run requires --config FILE --run-policy FILE --receipts NEW_DIR".into());
+        }
         let previous_config = options.remove("--previous-config").map(PathBuf::from);
         let expected_policy = options.remove("--expected-policy");
         let expected_head = options.remove("--expected-head");
@@ -738,6 +766,24 @@ impl Cli {
         let candidate = options.remove("--candidate");
         let reason = options.remove("--reason");
         let registration = options.remove("--registration").map(PathBuf::from);
+        if [
+            "transfer-register",
+            "transfer-research",
+            "topology-research",
+            "exploration-research",
+        ]
+        .contains(&command.as_str())
+            && (!options.contains_key("--state") || !options.contains_key("--receipts"))
+        {
+            return Err(format!(
+                "{command} requires explicit --state DIR and --receipts FILE"
+            ));
+        }
+        if command == "transfer-research"
+            && (registration.is_none() || registration_sha256.is_none())
+        {
+            return Err("transfer-research requires --registration FILE and independently retained --registration-sha256 SHA256".into());
+        }
         let setup_catalogue = options.remove("--setup-catalogue").map(PathBuf::from);
         let setup_sha256 = options.remove("--setup-sha256");
         if setup_catalogue.is_some() != setup_sha256.is_some() {
@@ -851,6 +897,7 @@ impl Cli {
             from,
             to,
             config,
+            run_policy,
             previous_config,
             expected_policy,
             expected_head,
@@ -861,6 +908,7 @@ impl Cli {
             candidate,
             reason,
             registration,
+            registration_sha256,
             setup_catalogue,
             setup_sha256,
             backup,
@@ -886,6 +934,34 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     let command = cli.command.as_str();
     let state = &cli.state;
     let receipts = &cli.receipts;
+    if command == "run" {
+        return service::run(
+            cli.config.as_deref().ok_or("--config required")?,
+            cli.run_policy.as_deref().ok_or("--run-policy required")?,
+            receipts,
+        );
+    }
+    if command == "transfer-register" {
+        return symbiote_runtime::transfer::register(state, receipts);
+    }
+    if command == "transfer-research" {
+        return symbiote_runtime::transfer::run_registered(
+            state,
+            cli.registration
+                .as_deref()
+                .ok_or("--registration required")?,
+            cli.registration_sha256
+                .as_deref()
+                .ok_or("--registration-sha256 required")?,
+            receipts,
+        );
+    }
+    if command == "topology-research" {
+        return symbiote_runtime::topology_research::run(state, receipts);
+    }
+    if command == "exploration-research" {
+        return symbiote_runtime::exploration_research::run(state, receipts);
+    }
     if command == "backup-state" {
         let options = symbiote_memory::backup::BackupOptions {
             graph_context_registry: cli
@@ -1173,14 +1249,14 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","policy-status --config FILE","policy-transition --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT [--review-permission-change] [--review-relocation]","peer-regrant --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","backup-state --state DIR --backup NEW_DIR [--graph-context-registry FILE --graph-context-sha256 SHA256]","verify-backup --backup DIR --manifest-sha256 SHA256","restore-state --backup DIR --manifest-sha256 SHA256 --state NEW_DIR","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","run --config FILE --run-policy FILE --receipts NEW_DIR","transfer-register --state FRESH_DIR --receipts REGISTRATION","transfer-research --state DIR --registration FILE --registration-sha256 SHA256 --receipts FILE","topology-research --state FRESH_DIR --receipts FILE","exploration-research --state FRESH_DIR --receipts FILE","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","policy-status --config FILE","policy-transition --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT [--review-permission-change] [--review-relocation]","peer-regrant --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","backup-state --state DIR --backup NEW_DIR [--graph-context-registry FILE --graph-context-sha256 SHA256]","verify-backup --backup DIR --manifest-sha256 SHA256","restore-state --backup DIR --manifest-sha256 SHA256 --state NEW_DIR","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
 }
 
 fn display(report: &Value, cli: &Cli) -> String {
-    if cli.command == "serve" {
+    if ["serve", "run"].contains(&cli.command.as_str()) {
         return serde_json::to_string(report).expect("serializable service frame");
     }
     if [
@@ -1220,10 +1296,40 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  policy-status  Inspect policy/head without old private keys\n  policy-transition  Offline rotation: --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT\n  peer-regrant   Offline regrant: --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change\n  backup-state   Snapshot one offline owner: --state DIR --backup NEW_DIR\n  verify-backup  Check an archive: --backup DIR --manifest-sha256 SHA256\n  restore-state  Restore stopped state: --backup DIR --manifest-sha256 SHA256 --state NEW_DIR\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  run            Drive an authorized cognitive episode: --config FILE --run-policy FILE --receipts NEW_DIR\n  transfer-register  Freeze a new query-policy experiment before targets\n  transfer-research  Execute one externally pinned registration\n  topology-research  Three owned native peers with consented TLS links\n  exploration-research  Native retained-outcome experiment-selection control\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  policy-status  Inspect policy/head without old private keys\n  policy-transition  Offline rotation: --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT\n  peer-regrant   Offline regrant: --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change\n  backup-state   Snapshot one offline owner: --state DIR --backup NEW_DIR\n  verify-backup  Check an archive: --backup DIR --manifest-sha256 SHA256\n  restore-state  Restore stopped state: --backup DIR --manifest-sha256 SHA256 --state NEW_DIR\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
+    if cli.command == "transfer-research" {
+        lines.push(format!(
+            "Completed cells: {} / {}",
+            report["completed_cells"], report["expected_cells"]
+        ));
+        lines.push(format!(
+            "Reciprocal efficiency: {}",
+            report["reciprocal_efficiency"]
+                .as_str()
+                .unwrap_or("UNVERIFIED")
+        ));
+        lines.push(
+            "Target evaluations reuse a fixed cohort; they are not independent samples.".into(),
+        );
+    }
+    if cli.command == "transfer-register" {
+        lines.push(format!(
+            "Registration SHA256: {}",
+            report["registration_sha256"]
+                .as_str()
+                .unwrap_or("UNAVAILABLE")
+        ));
+        lines.push("Registration only; no target truth opened.".into());
+    }
+    if cli.command == "topology-research" || cli.command == "exploration-research" {
+        lines.push(
+            "Bounded native research control; inspect the receipt for individual costs and limits."
+                .into(),
+        );
+    }
     if cli.command == "doctor" {
         lines.push(format!(
             "Platform: {} / {}",
@@ -1543,6 +1649,10 @@ fn display(report: &Value, cli: &Cli) -> String {
         "graph-research",
         "network-research",
         "adaptive-research",
+        "transfer-register",
+        "transfer-research",
+        "topology-research",
+        "exploration-research",
     ]
     .contains(&cli.command.as_str())
     {
@@ -1553,6 +1663,22 @@ fn display(report: &Value, cli: &Cli) -> String {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "__exploration-agent") {
+        if args.len() != 1 || symbiote_runtime::exploration_research::serve_from_stdin().is_err() {
+            eprintln!("SYMBIOTE exploration participant stopped; private bootstrap contents are withheld.");
+            std::process::exit(1);
+        }
+        return;
+    }
+    if args.first().is_some_and(|arg| arg == "__topology-agent") {
+        if args.len() != 1 || symbiote_runtime::topology_research::serve_from_stdin().is_err() {
+            eprintln!(
+                "SYMBIOTE topology participant stopped; private bootstrap contents are withheld."
+            );
+            std::process::exit(1);
+        }
+        return;
+    }
     if args
         .first()
         .is_some_and(|arg| arg == "__adaptive-participant")

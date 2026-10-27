@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+import tomllib
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -266,7 +267,8 @@ class NativeContractTests(unittest.TestCase):
             c.check_exit(version)
             metadata=json.loads(c.output(version,root))
             self.assertEqual(metadata["name"],"SYMBIOTE")
-            self.assertEqual(metadata["version"],"0.5.1")
+            expected_version=tomllib.loads((ROOT/"Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
+            self.assertEqual(metadata["version"],expected_version)
             self.assertIsInstance(metadata["build_source_commit"],str)
             first=c.execute([binary,"demo","--state",state,"--receipts",root/"demo.json","--json"],root,"demo",timeout=30)
             c.check_exit(first)

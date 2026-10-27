@@ -137,7 +137,7 @@ On Linux use `sha256sum affine-truth.json`; on macOS use
 Affine fixtures must cover every input in the declared width. A graph fixture uses
 `"family":{"kind":"graph","schema":GRAPH_SCHEMA,"costs":[...]}`, where the
 complete edge-cost list follows the exact schema edge order. Durable native graphs
-are bounded to 2–8 nodes, 56 edges and positive integer costs 1–9. Offered edge
+are bounded to 2–12 nodes, 56 edges and positive integer costs 1–9. Offered edge
 observations are checked against these local values. Native conservative route
 certificates are then compared with routes from the complete local graph.
 

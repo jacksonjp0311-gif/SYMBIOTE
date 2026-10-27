@@ -1,6 +1,10 @@
 //! Configured, finite native knowledge service. Remote data never supplies code,
 //! authority endpoints, expected labels or permission to promote local knowledge.
+mod cognitive;
 mod config;
+pub use cognitive::run;
+#[allow(unused_imports)]
+pub use cognitive::run_with_cancel;
 mod evaluation;
 mod lifecycle;
 mod wire;
@@ -51,7 +55,7 @@ fn validate_graph_query(
     symbiote_memory::knowledge::graph::decode_query(map.schema.nodes, input).map(|_| ())
 }
 
-pub(crate) fn prepare(state: &Path) -> Result<Value, String> {
+pub fn prepare(state: &Path) -> Result<Value, String> {
     if state.join("knowledge.jsonl").exists() && !state.join("ledger.jsonl").exists() {
         return Err("knowledge exists without its service identity; state was preserved".into());
     }
@@ -83,6 +87,18 @@ struct State {
     work: usize,
 }
 impl State {
+    /// Cognition never recovers unfinished evaluations outside its explicit episode budgets.
+    fn open_for_cognition(config: Config) -> Result<Self, String> {
+        let state = Self::load(config)?;
+        state.require_activated_restore()?;
+        if state.journal.events().iter().any(|event| {
+            matches!(event,OperationalEvent::EvaluationPrepared {candidate_id,..}
+            if state.completed(candidate_id).is_none())
+        }) {
+            return Err("HOLD: pending local evaluation requires explicit offline recovery before native cognition; no evaluation or promotion was performed".into());
+        }
+        Ok(state)
+    }
     fn open(config: Config) -> Result<Self, String> {
         let mut state = Self::load(config)?;
         state.require_activated_restore()?;
@@ -132,7 +148,7 @@ impl State {
     fn validate_replay(&self) -> Result<(), String> {
         lifecycle::check_context_history(&self.config, &self.journal, None)?;
         let mut policy = lifecycle::initial_policy(&self.config, &self.journal)?;
-        for event in self.journal.events() {
+        for (event_index, event) in self.journal.events().iter().enumerate() {
             match event {
                 OperationalEvent::Quarantined {
                     key,
@@ -235,8 +251,15 @@ impl State {
                 }
                 OperationalEvent::PartnerOutcomeRecorded { .. }
                 | OperationalEvent::PartnerDecisionRecorded { .. }
-                | OperationalEvent::PartnerInteractionCompleted { .. }
-                | OperationalEvent::SourceWarmupRetained { .. } => {
+                | OperationalEvent::PartnerInteractionCompleted { .. } => {
+                    cognitive::validate_profile_event(
+                        &policy,
+                        event,
+                        &self.journal.events()[..event_index],
+                        &self.knowledge,
+                    )?;
+                }
+                OperationalEvent::SourceWarmupRetained { .. } => {
                     return Err("adaptive-profile events are outside the configured service journal namespace".into());
                 }
                 _ => {}
@@ -660,7 +683,7 @@ fn quarantine_response(candidate: &str) -> Value {
     json!({"schema":"symbiote.service-quarantine/1","status":"QUARANTINED","candidate":candidate,"promoted":false})
 }
 
-pub(crate) fn serve(path: &Path) -> Result<Value, String> {
+pub fn serve(path: &Path) -> Result<Value, String> {
     let state = State::open(Config::load(path)?)?;
     let identity = state.config.identity.clone();
     let policy = state.config.policy_digest.clone();
@@ -737,7 +760,7 @@ pub(crate) fn serve(path: &Path) -> Result<Value, String> {
         json!({"schema":"symbiote.service-stop/1","status":"STOPPED","identity":identity,"reason":reason,"requests":server.request_count(),"connections":server.connection_count(),"failed_sessions":server.session_failures(),"operational_records":state.journal.record_count(),"active_knowledge":state.knowledge.active().len(),"model_work_units":state.work}),
     )
 }
-pub(crate) fn peers(path: &Path) -> Result<Value, String> {
+pub fn peers(path: &Path) -> Result<Value, String> {
     let state = State::open(Config::load(path)?)?;
     let denied = state.journal.denied_peers();
     let peers:Vec<_>=state.config.peers.iter().map(|peer|json!({"alias":peer.alias,"id":peer.id,"address":peer.address,"server_name":peer.server_name,"access":peer.access,"denied":denied.contains(&peer.id)})).collect();
@@ -745,7 +768,7 @@ pub(crate) fn peers(path: &Path) -> Result<Value, String> {
         json!({"schema":"symbiote.service-peers/1","identity":state.config.identity,"peers":peers,"network_requests":0,"policy_sha256":state.journal.policy_digest(),"journal_head_sha256":state.journal.head_sha256(),"discovery":"explicit operator registry only"}),
     )
 }
-pub(crate) fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Result<Value, String> {
+pub fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Result<Value, String> {
     let state = State::open(Config::load(path)?)?;
     let config = &state.config;
     let request: Request = serde_json::from_slice(&config::read_bounded(request_path, 65_536)?)
@@ -774,10 +797,10 @@ pub(crate) fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Res
     client.revoke()?;
     Ok(response)
 }
-pub(crate) fn evaluate(path: &Path, candidate: &str) -> Result<Value, String> {
+pub fn evaluate(path: &Path, candidate: &str) -> Result<Value, String> {
     State::open(Config::load(path)?)?.evaluate(candidate)
 }
-pub(crate) fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value, String> {
+pub fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value, String> {
     if reason.trim().is_empty() || reason.len() > 1024 {
         return Err("peer denial needs a nonempty bounded reason".into());
     }
@@ -800,4 +823,4 @@ pub(crate) fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value
 }
 
 // Offline operator entry points. No remote request variant calls these.
-pub(crate) use lifecycle::{peer_regrant, policy_status, policy_transition};
+pub use lifecycle::{peer_regrant, policy_status, policy_transition};

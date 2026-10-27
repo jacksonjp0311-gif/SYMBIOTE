@@ -2,6 +2,7 @@
 name = "symbiote-memory"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 description = "Evidence-gated durable knowledge and an auditable learning ledger for SYMBIOTE"
 license = "MIT"
 

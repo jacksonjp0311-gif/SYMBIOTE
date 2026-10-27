@@ -126,6 +126,245 @@ fn prefix(path: &Path) {
     fs::write(path, &bytes[..end]).unwrap();
 }
 
+fn strategy_task(context: &str) -> symbiote_reasoning::query_strategy::GraphTask {
+    use symbiote_reasoning::planning::{Edge, GraphSchema};
+    symbiote_reasoning::query_strategy::GraphTask {
+        context: context.into(),
+        start: 0,
+        goal: 3,
+        schema: GraphSchema {
+            nodes: 4,
+            edges: [(0, 1), (1, 3), (0, 2), (2, 3)]
+                .into_iter()
+                .map(|(from, to)| Edge {
+                    from,
+                    to,
+                    lower: 1,
+                    upper: 9,
+                })
+                .collect(),
+        },
+        costs: vec![1, 9, 1, 1],
+    }
+}
+fn strategy_record() -> crate::strategy::StrategyRecord {
+    use symbiote_reasoning::query_strategy::{derive_policy, EdgeObservation, SourceTrace};
+    let training = ["backup-source-a", "backup-source-b"]
+        .into_iter()
+        .map(|context| {
+            let task = strategy_task(context);
+            SourceTrace {
+                context: context.into(),
+                schema: task.schema,
+                start: 0,
+                goal: 3,
+                observations: vec![
+                    EdgeObservation { edge: 0, cost: 1 },
+                    EdgeObservation { edge: 1, cost: 9 },
+                ],
+            }
+        })
+        .collect::<Vec<_>>();
+    crate::strategy::StrategyRecord {
+        id: "backup-query-policy".into(),
+        revision: 1,
+        source: "authorized-fixture".into(),
+        policy: derive_policy(&training, 1000).unwrap().policy,
+        training,
+        provenance: "independent fixture observations; no target oracle disclosure".into(),
+    }
+}
+
+#[test]
+fn strategy_backup_restore_preserves_selection_and_counterexample_revocation() {
+    use crate::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+    use symbiote_reasoning::query_strategy::{run_trial, TrialLimits};
+    let dir = Directory::new();
+    let source = dir.path("strategy-source");
+    let owner = Arc::new(Store::open(&source).unwrap());
+    let identity = owner.identity().to_string();
+    let mut strategy = StrategyLedger::open(owner).unwrap();
+    assert!(
+        strategy
+            .consider(
+                strategy_record(),
+                vec![strategy_task("backup-cal-a"), strategy_task("backup-cal-b")]
+            )
+            .unwrap()
+            .promoted
+    );
+    drop(strategy);
+    let before_ledger = fs::read(source.join(STRATEGY_FILE)).unwrap();
+    let before_marker = fs::read(source.join(STRATEGY_OWNER_FILE)).unwrap();
+    assert_eq!(maintenance::migrate(&source).unwrap().layout_version, 2);
+    let bundle = dir.path("strategy-bundle");
+    let report = create(&source, &bundle, &BackupOptions::default()).unwrap();
+    let manifest: BackupManifest =
+        serde_json::from_slice(&fs::read(bundle.join(MANIFEST)).unwrap()).unwrap();
+    assert_eq!(manifest.ledger_formats.get(STRATEGY_FILE), Some(&1));
+    assert_eq!(
+        verify(&bundle, &report.manifest_sha256).unwrap().identity,
+        identity
+    );
+    let restored = dir.path("strategy-restored");
+    restore(&bundle, &report.manifest_sha256, &restored).unwrap();
+    assert_eq!(
+        fs::read(restored.join(STRATEGY_FILE)).unwrap(),
+        before_ledger
+    );
+    assert_eq!(
+        fs::read(restored.join(STRATEGY_OWNER_FILE)).unwrap(),
+        before_marker
+    );
+    let owner = Arc::new(Store::open(&restored).unwrap());
+    assert_eq!(owner.identity(), identity);
+    let mut strategy = StrategyLedger::open(owner).unwrap();
+    let selected = strategy.selected().unwrap();
+    let trial = run_trial(
+        &strategy_task("restored-future"),
+        Some(&selected.policy),
+        TrialLimits {
+            max_queries: 24,
+            model_work: 10_000,
+            policy_work: 10_000,
+        },
+    )
+    .unwrap();
+    assert!(trial.certified_correctly());
+    assert_eq!(trial.queried_edges, vec![1, 3, 2]);
+    let mut harmful = strategy_task("restored-counterexample");
+    harmful.costs = vec![9, 1, 1, 1];
+    assert!(strategy
+        .revoke_for_counterexample(&selected.id, harmful)
+        .unwrap()
+        .query_regression());
+    drop(strategy);
+    let second = dir.path("revoked-bundle");
+    let report = create(&restored, &second, &BackupOptions::default()).unwrap();
+    let final_state = dir.path("revoked-restored");
+    restore(&second, &report.manifest_sha256, &final_state).unwrap();
+    let owner = Arc::new(Store::open(&final_state).unwrap());
+    let mut strategy = StrategyLedger::open(owner).unwrap();
+    assert!(strategy.selected().is_none());
+    let mut alias = strategy_record();
+    alias.id = "renamed-policy".into();
+    alias.source = "renamed-source".into();
+    for (i, row) in alias.training.iter_mut().enumerate() {
+        row.context = format!("renamed-training-{i}");
+    }
+    let denied = strategy
+        .consider(
+            alias,
+            vec![strategy_task("new-cal-a"), strategy_task("new-cal-b")],
+        )
+        .unwrap();
+    assert!(!denied.promoted);
+    assert_eq!(denied.assessment.regression_checks.len(), 1);
+    assert!(strategy.selected().is_none());
+}
+
+#[test]
+fn incomplete_strategy_or_foreign_owner_proof_prevents_backup_before_publication() {
+    use crate::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+    let dir = Directory::new();
+    let source = dir.path("source");
+    let other = dir.path("foreign-owner");
+    drop(StrategyLedger::open(Arc::new(Store::open(&source).unwrap())).unwrap());
+    drop(StrategyLedger::open(Arc::new(Store::open(&other).unwrap())).unwrap());
+    let marker = fs::read(source.join(STRATEGY_OWNER_FILE)).unwrap();
+    let journal = fs::read(source.join(STRATEGY_FILE)).unwrap();
+    fs::remove_file(source.join(STRATEGY_OWNER_FILE)).unwrap();
+    assert!(maintenance::inspect(&source).is_err());
+    assert!(maintenance::migrate(&source).is_err());
+    assert!(create(
+        &source,
+        &dir.path("missing-pair"),
+        &BackupOptions::default()
+    )
+    .is_err());
+    assert!(!dir.path("missing-pair").exists());
+    fs::write(
+        source.join(STRATEGY_OWNER_FILE),
+        fs::read(other.join(STRATEGY_OWNER_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert!(maintenance::inspect(&source).is_err());
+    assert!(maintenance::migrate(&source).is_err());
+    assert!(create(
+        &source,
+        &dir.path("foreign-pair"),
+        &BackupOptions::default()
+    )
+    .is_err());
+    assert!(!dir.path("foreign-pair").exists());
+    assert_eq!(fs::read(source.join(STRATEGY_FILE)).unwrap(), journal);
+    fs::write(source.join(STRATEGY_OWNER_FILE), marker).unwrap();
+    assert!(maintenance::inspect(&source).is_ok());
+}
+
+#[test]
+fn registered_legacy_owner_explicitly_adds_strategy_without_rewriting_history() {
+    use crate::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+    let dir = Directory::new();
+    let source = dir.path("legacy-source");
+    let (identity, record) = fixture(&source);
+    assert_eq!(maintenance::migrate(&source).unwrap().layout_version, 1);
+    let original = gather(&source).unwrap();
+    let old_layout = fs::read(source.join("state-layout.json")).unwrap();
+    let mut prepared = StrategyLedger::open(Arc::new(Store::open(&source).unwrap())).unwrap();
+    let before_learning = fs::read(source.join(STRATEGY_FILE)).unwrap();
+    assert!(prepared
+        .consider(
+            strategy_record(),
+            vec![
+                strategy_task("pre-upgrade-cal-a"),
+                strategy_task("pre-upgrade-cal-b")
+            ]
+        )
+        .is_err());
+    assert_eq!(
+        fs::read(source.join(STRATEGY_FILE)).unwrap(),
+        before_learning
+    );
+    drop(prepared);
+    let strategy = fs::read(source.join(STRATEGY_FILE)).unwrap();
+    let marker = fs::read(source.join(STRATEGY_OWNER_FILE)).unwrap();
+    let migrated = maintenance::migrate(&source).unwrap();
+    assert_eq!(migrated.layout_version, 2);
+    assert!(migrated.changed);
+    for (name, bytes) in &original {
+        if name != "state-layout.json" && name != "maintenance-audit.jsonl" {
+            assert_eq!(
+                &fs::read(source.join(name)).unwrap(),
+                bytes,
+                "legacy evidence changed: {name}"
+            );
+        }
+    }
+    assert_eq!(
+        fs::read(source.join("migration-backup-v2/previous-state-layout.json")).unwrap(),
+        old_layout
+    );
+    assert_eq!(fs::read(source.join(STRATEGY_FILE)).unwrap(), strategy);
+    assert_eq!(fs::read(source.join(STRATEGY_OWNER_FILE)).unwrap(), marker);
+    let owner = Store::open(&source).unwrap();
+    assert_eq!(owner.identity(), identity);
+    let knowledge = KnowledgeStore::open(&source, &identity).unwrap();
+    assert!(knowledge.has_historical_promotion(&record).unwrap());
+    drop(knowledge);
+    drop(owner);
+    let bundle = dir.path("upgraded-backup");
+    let receipt = create(&source, &bundle, &BackupOptions::default()).unwrap();
+    let restored = dir.path("upgraded-restore");
+    restore(&bundle, &receipt.manifest_sha256, &restored).unwrap();
+    assert_eq!(fs::read(restored.join(STRATEGY_FILE)).unwrap(), strategy);
+    assert_eq!(
+        fs::read(restored.join(STRATEGY_OWNER_FILE)).unwrap(),
+        marker
+    );
+    assert_eq!(Store::open(&restored).unwrap().identity(), identity);
+}
+
 #[test]
 fn bytes_predictions_history_denials_idempotency_and_migration_survive_restore() {
     let dir = Directory::new();

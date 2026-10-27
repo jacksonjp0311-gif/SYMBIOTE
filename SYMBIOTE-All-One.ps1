@@ -2,6 +2,7 @@
 param(
     [switch]$Build,
     [switch]$Run,
+    [switch]$Cognitive,
     [switch]$Test,
     [switch]$Verify,
     [switch]$Benchmark,
@@ -19,6 +20,9 @@ param(
     [switch]$GitStatus,
     [string]$State = 'state/demo',
     [string]$TlsConfig = '',
+    [string]$Config = '',
+    [string]$RunPolicy = '',
+    [string]$Receipts = '',
     [string]$SetupCatalogue = '',
     [string]$SetupSha256 = '',
     [string]$Python = ''
@@ -41,6 +45,8 @@ function Invoke-Symbiote([string[]]$Arguments) {
 }
 
 try {
+    if ($Cognitive -and ([string]::IsNullOrWhiteSpace($Config) -or [string]::IsNullOrWhiteSpace($RunPolicy) -or [string]::IsNullOrWhiteSpace($Receipts))) { throw '-Cognitive requires -Config FILE -RunPolicy FILE -Receipts NEW_DIR.' }
+    if (-not $Cognitive -and (-not [string]::IsNullOrWhiteSpace($Config) -or -not [string]::IsNullOrWhiteSpace($RunPolicy) -or -not [string]::IsNullOrWhiteSpace($Receipts))) { throw '-Config, -RunPolicy and -Receipts require -Cognitive.' }
     if (-not $NetworkResearch -and -not [string]::IsNullOrWhiteSpace($TlsConfig)) { throw '-TlsConfig requires -NetworkResearch.' }
     $hasSetup = -not [string]::IsNullOrWhiteSpace($SetupCatalogue)
     $hasSetupHash = -not [string]::IsNullOrWhiteSpace($SetupSha256)
@@ -51,6 +57,7 @@ try {
     if ($Recover) { Invoke-Symbiote -Arguments @('recover', '--state', $State) }
     if ($Migrate) { Invoke-Symbiote -Arguments @('migrate', '--state', $State) }
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
+    if ($Cognitive) { Invoke-Symbiote -Arguments @('run', '--config', $Config, '--run-policy', $RunPolicy, '--receipts', $Receipts) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
     if ($GraphResearch) { Invoke-Symbiote -Arguments @('graph-research', '--state', $State) }
     if ($AdaptiveResearch) {
@@ -84,10 +91,11 @@ try {
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $AdaptiveResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
+    if (-not ($Build -or $Run -or $Cognitive -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $AdaptiveResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
         Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
         Write-Output ''
         Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
+        Write-Output 'Agent:      .\SYMBIOTE-All-One.ps1 -Cognitive -Config FILE -RunPolicy FILE -Receipts NEW_DIR'
         Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
         Write-Output 'Routes:     .\SYMBIOTE-All-One.ps1 -GraphResearch'
         Write-Output 'Partners:   .\SYMBIOTE-All-One.ps1 -AdaptiveResearch (fresh temporary study)'

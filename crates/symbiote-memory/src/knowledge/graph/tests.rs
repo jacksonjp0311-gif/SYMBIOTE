@@ -66,6 +66,83 @@ fn diamond() -> GraphSchema {
         ],
     }
 }
+
+#[test]
+fn twelve_node_domain_roundtrips_exactly_without_widening_route_outputs() {
+    for nodes in [10, 12] {
+        let schema = GraphSchema {
+            nodes,
+            edges: (1..nodes)
+                .map(|to| Edge {
+                    from: to - 1,
+                    to,
+                    lower: 1,
+                    upper: 9,
+                })
+                .collect(),
+        };
+        let map = GraphMap::new(
+            schema.clone(),
+            (0..nodes - 1)
+                .map(|edge_id| GraphObservation { edge_id, cost: 1 })
+                .collect(),
+        )
+        .unwrap();
+        let raw = serde_json::to_vec(&map).unwrap();
+        let restored: GraphMap = serde_json::from_slice(&raw).unwrap();
+        let input = encode_query(nodes, 0, nodes - 1).unwrap();
+        assert_eq!(decode_query(nodes, input).unwrap(), (0, nodes - 1));
+        let before = forecast_work_units().unwrap();
+        assert_eq!(restored.predict(input).unwrap(), Some((nodes - 1) as u8));
+        let delta = forecast_work_units().unwrap() - before;
+        let mut reference = RouteLearner::new(schema, PREDICTION_WORK_BUDGET).unwrap();
+        for observation in &map.observations {
+            reference
+                .observe(observation.edge_id, observation.cost)
+                .unwrap();
+        }
+        assert_eq!(
+            reference
+                .assess(0, nodes - 1)
+                .unwrap()
+                .certified
+                .unwrap()
+                .cost,
+            (nodes - 1) as u64
+        );
+        assert_eq!(delta, reference.model_work() as u64);
+        let costly = GraphMap::new(
+            map.schema,
+            (0..nodes - 1)
+                .map(|edge_id| GraphObservation { edge_id, cost: 9 })
+                .collect(),
+        )
+        .unwrap();
+        assert_eq!(
+            costly.forecast(input).unwrap().unwrap().cost,
+            ((nodes - 1) * 9) as u64
+        );
+        assert!(costly
+            .predict(input)
+            .unwrap_err()
+            .contains("bounded domain"));
+    }
+    assert!(GraphMap::new(
+        GraphSchema {
+            nodes: 13,
+            edges: vec![Edge {
+                from: 0,
+                to: 12,
+                lower: 1,
+                upper: 9
+            }]
+        },
+        vec![]
+    )
+    .is_err());
+    assert!(encode_query(13, 0, 12).is_err());
+    assert!(decode_query(13, 12).is_err());
+}
 fn fixture_record(observations: &[(usize, u16)]) -> KnowledgeRecord {
     let map = GraphMap::new(
         diamond(),
@@ -162,6 +239,8 @@ fn strict_schema_order_bounds_and_checked_maximum_cost_are_enforced() {
     );
     let mut wide = schema.clone();
     wide.nodes = 9;
+    assert!(graph_schema_fingerprint(&wide).is_ok()); // Newly supported exact domain.
+    wide.nodes = 13;
     assert!(graph_schema_fingerprint(&wide).is_err());
     let mut expensive = schema;
     expensive.edges[0].upper = 10;

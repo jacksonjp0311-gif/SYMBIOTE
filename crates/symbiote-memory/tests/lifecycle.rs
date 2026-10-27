@@ -9,6 +9,58 @@ use symbiote_memory::operational::{OperationalEvent, OperationalJournal};
 use symbiote_memory::{knowledge::KnowledgeStore, maintenance, Store};
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
+
+#[test]
+fn surviving_strategy_files_never_create_a_replacement_identity() {
+    use symbiote_memory::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+    for surviving in ["both", STRATEGY_FILE, STRATEGY_OWNER_FILE] {
+        let dir = Directory::new();
+        let owner = Arc::new(Store::open(&dir.0).unwrap());
+        let identity = owner.identity().to_string();
+        drop(StrategyLedger::open(owner).unwrap());
+        fs::remove_file(dir.0.join("ledger.jsonl")).unwrap();
+        if surviving == STRATEGY_FILE {
+            fs::remove_file(dir.0.join(STRATEGY_OWNER_FILE)).unwrap();
+        }
+        if surviving == STRATEGY_OWNER_FILE {
+            fs::remove_file(dir.0.join(STRATEGY_FILE)).unwrap();
+        }
+        let before: Vec<_> = [STRATEGY_FILE, STRATEGY_OWNER_FILE]
+            .iter()
+            .map(|name| (*name, fs::read(dir.0.join(name)).ok()))
+            .collect();
+        assert!(Store::open(&dir.0).is_err());
+        assert!(KnowledgeStore::open(&dir.0, &identity).is_err());
+        assert!(maintenance::inspect(&dir.0).is_err());
+        assert!(maintenance::migrate(&dir.0).is_err());
+        assert!(!dir.0.join("ledger.jsonl").exists());
+        assert!(!dir.0.join("knowledge.jsonl").exists());
+        for (name, bytes) in before {
+            assert_eq!(fs::read(dir.0.join(name)).ok(), bytes);
+        }
+    }
+}
+
+#[test]
+fn strategy_owner_proof_binds_the_raw_genesis_line_including_its_newline() {
+    use symbiote_memory::strategy::{StrategyLedger, STRATEGY_FILE, STRATEGY_OWNER_FILE};
+    let dir = Directory::new();
+    drop(StrategyLedger::open(Arc::new(Store::open(&dir.0).unwrap())).unwrap());
+    let original = fs::read(dir.0.join("ledger.jsonl")).unwrap();
+    let strategy = fs::read(dir.0.join(STRATEGY_FILE)).unwrap();
+    let marker = fs::read(dir.0.join(STRATEGY_OWNER_FILE)).unwrap();
+    let mut changed = original[..original.len() - 1].to_vec();
+    changed.extend_from_slice(b"\r\n");
+    fs::write(dir.0.join("ledger.jsonl"), &changed).unwrap();
+    // Semantic JSON is unchanged; the original owner's exact byte anchor is not.
+    let owner = Arc::new(Store::open(&dir.0).unwrap());
+    assert!(StrategyLedger::open(owner).is_err());
+    assert!(maintenance::inspect(&dir.0).is_err());
+    assert!(maintenance::migrate(&dir.0).is_err());
+    assert_eq!(fs::read(dir.0.join("ledger.jsonl")).unwrap(), changed);
+    assert_eq!(fs::read(dir.0.join(STRATEGY_FILE)).unwrap(), strategy);
+    assert_eq!(fs::read(dir.0.join(STRATEGY_OWNER_FILE)).unwrap(), marker);
+}
 struct Directory(PathBuf);
 impl Directory {
     fn new() -> Self {
