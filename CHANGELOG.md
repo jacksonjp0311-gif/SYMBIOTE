@@ -2,6 +2,13 @@
 
 ## v1 candidate — unreleased
 
+- Reciprocal receipt schema `symbiote.reciprocal-evaluation/2`. A content
+  digest is not benefit. Benefit requires a completed promotion between the
+  receiver's anchors, a derived behavior change, and stored trial totals with
+  a strict cost improvement. Mutual success requires two crossed receipts for
+  the same transferred record. A declined value plan cannot turn a verifying
+  receipt into benefit. The width-3 affine cycle remains negative. Protocol
+  002 stays `NOT_RUN`. This is not a reciprocal-efficiency result.
 - Pre-exchange value decisions. Unqualified gain is not utility zero. Connect
   requires both existing authorizations and does not send knowledge. Negative
   exchange counts saturate. The cognitive runtime records the plan and
@@ -23,7 +30,9 @@
 - CI run 40545912958 at `4da99383` passed Ubuntu, Windows and macOS.
   CI run 40557119693 at `b7f46a6` also passed all three platforms, including
   `tools/verify.py`. CI run 40558477313 at `b957548` passed the following
-  documentation commit on all three platforms. The cancelled hour remains HOLD.
+  documentation commit on all three platforms. CI run 40584546812 at `9825165`
+  passed Ubuntu, Windows and macOS, including `tools/verify.py`. That run does
+  not cover the receipt-attribution change. The cancelled hour remains HOLD.
   Later commits need their own run.
 - Configured native cognitive episodes with bounded authorized sensing,
   independent local evaluation, persistent learning and reciprocal inert offers.

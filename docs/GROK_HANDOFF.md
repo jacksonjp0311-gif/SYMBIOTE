@@ -10,17 +10,22 @@ What is implemented: four crates for exact reasoning, authorized exchange,
 durable memory and a configured cognitive runtime. Query policies, three-peer
 custody, bounded exploration, backup and migration are in the tree. The new
 `symbiosis` and `reciprocal` modules add a participant-specific value function
-and a receiver-bound receipt. The cognitive episode now records `MEASURE`.
+and a receiver-bound receipt. Benefit now requires a completed promotion
+between the receiver's own anchors. A content digest, a caller-supplied sender
+net, and a declined value plan cannot verify it. The cognitive episode records
+`MEASURE`. `partner_benefits_verified` remains 0.
 
 What verified evidence supports: CI run `40545912958` at
 `4da99383e9081767f4f0e08eda671323a76629fa` passed Ubuntu, Windows and macOS.
 Frozen research at `ddd63d7954917c949ea1173a90f30343bcb16397` still stands,
 including parity, the cognitive promotion/restart control, reciprocal adoption
-inside that control, and the negative utility results below. On this Windows machine, `cargo test --workspace --locked` passed 351 tests
-and left the 3 registered duration tests ignored. Clippy with `-D warnings`
-passed for the workspace crates. Python is not installed here, so local
-`tools/verify.py` was not re-run and the committed parity receipt was not
-rewritten. CI run `40557119693` at `b7f46a63bd1268458124aaf05cf6097a6d44c841`
+inside that control, and the negative utility results below. On this Windows
+machine, `cargo test --workspace --locked` for the receipt-attribution tree
+passed 357 tests and left the 3 registered duration tests ignored. Clippy with
+`-D warnings` passed for the workspace crates. An earlier local count of 351
+belongs to the tree before this receipt change. Python is not installed here,
+so local `tools/verify.py` was not re-run and the committed parity receipt was
+not rewritten. CI run `40557119693` at `b7f46a63bd1268458124aaf05cf6097a6d44c841`
 then passed Ubuntu, Windows and macOS, including `tools/verify.py`. Run
 `40545912958` remains the record for `4da99383` only. A later documentation
 commit is not covered by `40557119693`.
@@ -31,7 +36,9 @@ and not run. The configured `run` path now plans a value decision before
 `candidate.submit`. Full-fixture affine and graph transfers are deferred, so
 those episodes send no contribution payload. `partner_benefits_verified`
 remains 0. CI run `40558477313` passed Ubuntu, Windows and macOS at
-`b957548`, including `tools/verify.py`. That run does not cover later commits.
+`b957548`, including `tools/verify.py`. CI run `40584546812` passed Ubuntu,
+Windows and macOS at `9825165`, including `tools/verify.py`. That run does not
+cover the receipt-attribution change.
 
 The next bottleneck is not more message delivery. Transferred query guidance
 on the frozen cohort, and affine hints in the new mechanism check, match cheap
@@ -44,13 +51,16 @@ place to test that. It is not a license to rerun protocol 001.
 
 Highest-value next work, in order:
 
-1. Close reciprocal evidence so a content digest cannot stand in for an
-   independent receiver evaluation. Keep benefit false unless both sides have
-   separately checked positive nets.
-2. Run the fresh source-frozen hour campaign on a commit whose software gate
+1. Run the fresh source-frozen hour campaign on a commit whose software gate
    has passed, with a new registration. Do not resume the cancelled run.
-3. Execute protocol 002 only after a registration pin. Report a negative net
-   as negative.
+   Python is not installed on this PC, so `tools/soak_campaign.py` cannot be
+   executed here. Do not shorten the campaign and call it the hour gate.
+2. Execute protocol 002 only after a registration pin. Report a negative net
+   as negative. Its receipt predicate now names
+   `symbiote.reciprocal-evaluation/2`. Status remains `NOT_RUN`.
+3. Publish stable v1 only after the declared software gates pass. Two-host
+   qualification stays **OPEN_UNAVAILABLE**. Do not claim reciprocal-efficiency
+   superiority from the receipt predicate or the width-3 mechanism check.
 
 ## Start here
 

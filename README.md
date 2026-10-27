@@ -25,7 +25,8 @@ local demonstrations.
 > remains HOLD at 71/120 cycles. The verified public binary remains v0.5.1.
 > [Start with the Grok handoff](docs/GROK_HANDOFF.md).
 > A value-of-symbiosis check declines a non-positive exchange before a payload
-> is sent. It does not establish a reciprocal-efficiency gain.
+> is sent. A content digest cannot verify benefit. Neither result establishes
+> a reciprocal-efficiency gain.
 
 
 ## Get started

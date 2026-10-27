@@ -8,7 +8,9 @@ versioned TLS 1.3 transport. Memory stores private identities, evaluated
 declarative models and receiver-originated reciprocal receipts, with provenance,
 applicability, rollback and audited lifecycle operations. Runtime composes these
 into native learning experiments and offline queries. A hint still cannot shrink
-exact affine support. Receipt binding does not turn promotion into benefit.
+exact affine support. A content digest does not verify benefit. A completed
+ledger promotion can, and a declined value plan still blocks it. That gate is
+not a reciprocal-efficiency result.
 
 The graph experiment exchanges independently authenticated edge observations,
 chooses further observations through exact route reasoning, and promotes only

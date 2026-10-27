@@ -98,14 +98,18 @@ even when the local score is positive. The cognitive runtime plans this before
 `candidate.submit`. The current affine and graph fixtures do not beat their
 isolated check bounds, so those submissions are not sent.
 
-`symbiote_memory::reciprocal` seals a receiver-originated receipt. The binding
-is SHA-256 over the canonical body, including both identities and the knowledge
-digests from before the exchange. Receiver benefit is true only when validation
-is local evidence, the receiver adopted the record, later behavior changed, the
-exchange path cost is strictly below the isolated control, and certification
-was not bypassed. Durable benefit also requires `persisted_after_restart` to
-be true. Mutual research success requires the sender's return net to be
-strictly positive as well. Missing restart evidence is not durability.
+`symbiote_memory::reciprocal` seals a receiver-originated receipt. Schema
+`symbiote.reciprocal-evaluation/2` binds a SHA-256 digest over the canonical
+body. That digest is not benefit. Benefit is true only when `seal_promoted`
+finds a completed promotion between the receiver's validated anchors, the
+active payload for that scope changed, and the stored exchange total is
+strictly below the stored isolated baseline. Those facts are copied from the
+ledger. A content digest, a declined value plan, and a receipt resealed
+against a different owner stay false. Durable benefit also requires
+`persisted_after_restart` to be true. Mutual research success requires two
+such receipts with crossed identities and the same transferred record. Missing
+restart evidence is not durability. The stored affine fixture can satisfy this
+predicate; that is not a generalized reciprocal-learning result.
 
 The configured cognitive episode emits `VALUE` before any contribution payload
 and reconciles that prediction with whether a payload was sent. Its summary

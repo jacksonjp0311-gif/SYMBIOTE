@@ -66,9 +66,10 @@ partner identities, including negative transfer and matched-cost controls.
 [Protocol 002](RESEARCH_V06_PROTOCOL.md) freezes that evaluation and has not
 been opened. Do not retune the completed query-policy cohort. The value
 function and reciprocal receipt are mechanism code. On the enumerated width-3
-affine family they decline a hint that ties the fixed basis after costs. That
-check is not protocol 002 and does not convert protocol 001 from
-`NOT_DEMONSTRATED`. The [stable release gates](STABLE_RELEASE_GATES.md)
+affine family they decline a hint that ties the fixed basis after costs. A
+content digest cannot verify benefit; a completed receiver promotion can, and
+only when the value plan sent the payload. That attribution check is not
+protocol 002 and does not convert protocol 001 from `NOT_DEMONSTRATED`. The [stable release gates](STABLE_RELEASE_GATES.md)
 distinguish reliable bounded software from unresolved hypotheses.
 
 A proposed single-PC v0.6 pilot should test a portable reasoning strategy on

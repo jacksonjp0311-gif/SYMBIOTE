@@ -26,8 +26,10 @@ The reusable reasoning, protocol and memory types are documented in their Rust
 sources. `symbiote_reasoning::symbiosis` (`decide`, `plan`, `reconcile`) and
 `symbiote_memory::reciprocal` are part of that surface.
 `symbiote_runtime::reciprocal::redundant_affine_exchange` runs the width-bounded
-mechanism check. A plan does not grant access, and reconciliation does not
-treat a caller-supplied net as verified benefit. Build the documentation with
+mechanism check. `attributed_benefit` is true only when that plan sent knowledge
+and `confirmed_benefit` reseals the receipt against the receiver ledger. A plan
+does not grant access, and a content digest is not verified benefit. Build the
+documentation with
 `cargo doc --workspace --no-deps --locked`.
 Research controllers such as `transfer`, `topology_research` and
 `exploration_research` are experimental, versioned receipt producers; they are

@@ -42,13 +42,18 @@ restart with zero replay oracle calls are required controls.
 
 ## Receipts and costs
 
-Every receiver writes a `symbiote.reciprocal-evaluation/1` receipt. Delivery,
-quarantine, agreement and promotion do not satisfy the receipt predicate.
-Benefit requires local evidence, adoption, a behavior change, exchange cost
-strictly below that participant's isolated control, and `certification_bypassed`
-false. Durable benefit additionally requires the restart flag. Research success
-requires both participants' nets to be strictly positive. Scores in different
-units are not added.
+Every receiver writes a `symbiote.reciprocal-evaluation/2` receipt. This
+wording replaces `symbiote.reciprocal-evaluation/1` before any target for this
+protocol is opened. A content digest is not benefit. Benefit requires a
+promotion between the receiver's own before and after anchors, adoption and a
+behavior change derived from that promotion, and the stored exchange total
+strictly below the stored isolated baseline. Delivery, quarantine, agreement,
+and an unfinished promotion do not satisfy it. Durable benefit additionally
+requires the restart flag. Research success requires two such receipts with
+crossed identities and the same transferred record; a caller-supplied sender
+net on one receipt is not the other participant's result. Scores in different
+units are not added. The acceptance table below is unchanged. Status remains
+**NOT_RUN**.
 
 A transferred constraint may choose an experiment. It may not remove a
 hypothesis or authorize a prediction until the receiver's own observations do.

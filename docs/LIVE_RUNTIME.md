@@ -70,7 +70,9 @@ evaluation budget or count recovered old learning as a new result.
   unqualified gain is not utility zero. `Connect` does not send knowledge.
   Full-fixture affine and graph checks cost more than their isolated lower
   bounds, so those offers are deferred and no payload is sent. Quarantine and
-  promotion remain delivery, not benefit. `partner_benefits_verified` stays 0.
+  promotion remain delivery, not benefit. A receipt verifies benefit only when
+  the value plan actually sent knowledge and the receiver ledger reseals it.
+  `partner_benefits_verified` stays 0.
 - **Reassess:** retain decisions, transport/application outcomes, failures and
   learning receipts. Later choices can use this history without resetting identity.
 
