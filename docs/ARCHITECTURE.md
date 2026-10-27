@@ -27,6 +27,40 @@ cargo run -p symbiote-reasoning --example native
 [graph experiment protocol](RESEARCH_V04_PROTOCOL.md),
 [TLS deployment](TLS_DEPLOYMENT.md), and [compatibility](COMPATIBILITY.md).
 
+## Configured service and prospective relationships
+
+The v0.5 development line adds a native knowledge service with an explicit
+operator manifest. Each peer has a pinned TLS identity, permitted operations,
+contexts and artifact IDs. Received candidates enter durable quarantine; an
+offline operator command evaluates them against a pinned local fixture before
+promotion. Remote requests cannot supply an evaluator or execute instructions.
+Denial survives restart and takes precedence over pending, uncommitted promotion.
+An immutable registration binds the service policy to its persistent identity.
+See [the service guide](SERVICE.md) for the operational contract and its limits.
+
+A separate adaptive experiment supervises five private learner profiles and an
+independent observation/evaluation authority per control arm and price regime.
+The learners receive public graph schemas and authorized observations, while the
+controller and judge retain evaluation labels. A prospective policy combines its
+current exact route frontier with prior verified outcomes to rank useful offers.
+An outcome profile is an operational record, not proof of learning. Only native
+knowledge records that pass the held-out promotion gate become retained models.
+
+The experiment compares isolation, a fixed authorized partner, uniform selection
+and prospective selection under [an immutable protocol](RESEARCH_V05_PROTOCOL_004.md).
+The same five logical identities are paired across forty isolated counterfactual
+profiles; files, TLS leaf pins, authority epochs and policies remain separate.
+Eight distinct authorities and the controller bring the setup to fourteen unique
+identities and forty-nine state paths. This is a controlled consent topology,
+not autonomous discovery of external systems.
+
+An operational JSONL journal stores decisions before requests, typed outcomes,
+idempotent replies, evaluation intents and retained warmup receipts. Its owner
+marker detects loss of either journal component. A registered service whose
+knowledge ledger disappears fails HOLD. These checks protect the declared
+filesystem failure cases; a privileged actor rewriting every file is outside
+the integrity guarantee.
+
 The Genesis design below remains the legacy operational slice. v0.2 additionally
 provides exact affine reasoning, scoped protocol connections, two distinct native
 learning implementations and a schema-bound held-out knowledge ledger. See

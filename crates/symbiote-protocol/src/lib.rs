@@ -6,9 +6,10 @@ mod telemetry;
 mod transport;
 
 pub use secure::{
-    fresh_capability, spawn_secure_server, SecureAgreement, SecureCancellation, SecureClient,
-    SecureEndpoint, SecureLimits, SecurePeerGrant, SecureServerConfig, SecureServerHandle,
-    SecureSession, TlsClientConfig, TlsIdentity, SECURE_PROTOCOL_VERSION,
+    fresh_capability, spawn_secure_server, spawn_secure_server_metered, SecureAgreement,
+    SecureCancellation, SecureClient, SecureEndpoint, SecureLimits, SecurePeerGrant,
+    SecureServerConfig, SecureServerHandle, SecureSession, SecureTraffic, SecureTrafficSnapshot,
+    TlsClientConfig, TlsIdentity, SECURE_PROTOCOL_VERSION,
 };
 
 pub use telemetry::{EchoBuffer, Sensor, Telemetry};

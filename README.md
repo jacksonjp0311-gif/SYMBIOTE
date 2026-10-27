@@ -17,7 +17,7 @@ local demonstrations.
 
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
-[Operations](docs/OPERATIONS.md)
+[Operations](docs/OPERATIONS.md) · [Stable release gates](docs/STABLE_RELEASE_GATES.md)
 
 > **Research preview.** v0.4 adds persistent route-planning knowledge, a fully
 > enumerated reciprocal-cost experiment, offline route queries, and native peers
@@ -69,6 +69,7 @@ You can also download a matching archive directly, extract it, and run
 symbiote demo       # Watch the original two-agent learning cycle
 symbiote research   # Run structural learning, exchange and isolated controls
 symbiote graph-research    # Learn route maps and measure every paired world
+symbiote adaptive-research --reproduce  # Compare partner policies in fresh state
 symbiote network-research  # Run two real native peer processes and restart them
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
@@ -85,7 +86,10 @@ Run `demo` twice to observe retained knowledge being rechecked and reused. Run
 extended experiment. `graph-research` prints a ready-to-copy `route` command for
 its private retained graph store. Route queries return a conditional certificate
 or an explicit abstention. To run supervised peers over TLS, follow the
-[identity and credential guide](docs/TLS_DEPLOYMENT.md). `symbiote --help` lists every command and option.
+[identity and credential guide](docs/TLS_DEPLOYMENT.md). The
+[configured knowledge service](docs/SERVICE.md) supports explicitly granted
+queries and quarantined offers over operator-provisioned TLS. Local evaluation
+controls promotion. `symbiote --help` lists every command and option.
 
 From a Windows checkout, the single entrypoint also supports:
 
@@ -93,6 +97,7 @@ From a Windows checkout, the single entrypoint also supports:
 .\SYMBIOTE-All-One.ps1 -Run
 .\SYMBIOTE-All-One.ps1 -Research
 .\SYMBIOTE-All-One.ps1 -GraphResearch
+.\SYMBIOTE-All-One.ps1 -AdaptiveResearch
 .\SYMBIOTE-All-One.ps1 -NetworkResearch
 .\SYMBIOTE-All-One.ps1 -Doctor
 .\SYMBIOTE-All-One.ps1 -Verify
@@ -186,6 +191,9 @@ overhead excluded as declared. [Methods and limits](docs/RESEARCH_V04.md).
 Stable v1.0 requires broader independent environments, demonstrated reciprocal
 benefits after all costs, secure external connections, robust persistent memory
 and a documented failure envelope. Version numbers advance after the evidence.
+The [release gates](docs/STABLE_RELEASE_GATES.md) distinguish the bounded stable
+core from research hypotheses and specify credential lifecycle, verified restore
+and deployment checks still needed before release.
 
 ## Architecture
 

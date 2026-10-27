@@ -5,6 +5,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Barrier};
 use std::time::{Duration, Instant};
+use symbiote_memory::operational::{OperationalEvent, OperationalJournal};
 use symbiote_memory::{knowledge::KnowledgeStore, maintenance, Store};
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
@@ -330,5 +331,52 @@ fn a_wrong_structural_owner_cannot_create_a_poisoned_ledger_before_or_after_migr
     assert_eq!(
         KnowledgeStore::open(&dir.0, &identity).unwrap().identity(),
         identity
+    );
+}
+
+#[test]
+fn supervised_operational_intent_crash_replays_original_response_after_safe_recovery() {
+    let dir = Directory::new();
+    let mut fixture = Fixture::spawn(&dir.0, "operational");
+    assert!(maintenance::recover(&dir.0).is_err());
+    let original = fs::read(dir.0.join("ledger.jsonl")).unwrap();
+    let operations = fs::read(dir.0.join("operations.jsonl")).unwrap();
+    fixture.crash();
+    let report = maintenance::recover(&dir.0).unwrap();
+    assert_eq!(report.recovered_locks, vec!["writer.lock"]);
+    assert_eq!(fs::read(dir.0.join("ledger.jsonl")).unwrap(), original);
+    assert_eq!(
+        fs::read(dir.0.join("operations.jsonl")).unwrap(),
+        operations
+    );
+    assert!(!dir.0.join("knowledge.jsonl").exists());
+    let owner = Arc::new(Store::open(&dir.0).unwrap());
+    assert_eq!(owner.identity(), fixture.identity);
+    let mut journal =
+        OperationalJournal::open(Arc::clone(&owner), "crash-fixture", &"e".repeat(64)).unwrap();
+    assert_eq!(journal.events().len(), 2);
+    let (record_sha256, response) = match &journal.events()[1] {
+        OperationalEvent::EvaluationPrepared {
+            record, response, ..
+        } => (record.digest().unwrap(), response.clone()),
+        _ => panic!("prepared intent missing"),
+    };
+    journal
+        .append(OperationalEvent::EvaluationCompleted {
+            candidate_id: "crash-candidate".into(),
+            record_sha256,
+            response: response.clone(),
+        })
+        .unwrap();
+    assert_eq!(response["marker"], "original-planned-response");
+    assert_eq!(response["promoted"], true);
+    // Operational receipts alone never commit the planned learning record.
+    assert!(owner.active().is_empty());
+    assert!(!dir.0.join("knowledge.jsonl").exists());
+    drop(journal);
+    drop(owner);
+    assert_eq!(
+        maintenance::inspect(&dir.0).unwrap().ledger_integrity,
+        "verified_snapshot"
     );
 }

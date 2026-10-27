@@ -1,6 +1,8 @@
 //! Independent, bounded, LLM-free SYMBIOTE genesis runtime.
+mod adaptive_research;
 mod graph_research;
 mod research;
+mod service;
 
 use serde_json::{json, Value};
 use std::fs;
@@ -380,6 +382,14 @@ struct Cli {
     input: Option<u16>,
     from: Option<usize>,
     to: Option<usize>,
+    config: Option<PathBuf>,
+    peer: Option<String>,
+    request: Option<PathBuf>,
+    candidate: Option<String>,
+    reason: Option<String>,
+    registration: Option<PathBuf>,
+    reproduce: bool,
+    automatic_artifact_paths: bool,
     json: bool,
 }
 
@@ -388,6 +398,7 @@ impl Cli {
         let mut command = None;
         let mut options = std::collections::BTreeMap::new();
         let mut json = false;
+        let mut reproduce = false;
         let mut index = 0;
         while index < args.len() {
             let arg = &args[index];
@@ -396,6 +407,14 @@ impl Cli {
                     return Err("--json was supplied more than once".into());
                 }
                 json = true;
+                index += 1;
+                continue;
+            }
+            if arg == "--reproduce" {
+                if reproduce {
+                    return Err("--reproduce was supplied more than once".into());
+                }
+                reproduce = true;
                 index += 1;
                 continue;
             }
@@ -418,6 +437,12 @@ impl Cli {
                 "--input",
                 "--from",
                 "--to",
+                "--config",
+                "--peer",
+                "--request",
+                "--candidate",
+                "--reason",
+                "--registration",
             ]
             .contains(&arg.as_str())
             {
@@ -450,9 +475,16 @@ impl Cli {
             "benchmark",
             "research",
             "graph-research",
+            "adaptive-research",
             "network-research",
             "prepare-tls-state",
             "route",
+            "prepare-service",
+            "serve",
+            "peers",
+            "connect",
+            "evaluate",
+            "peer-revoke",
             "predict",
             "verify-memory",
             "status",
@@ -468,12 +500,22 @@ impl Cli {
         }
         for option in options.keys() {
             let allowed = match option.as_str() {
-                "--state" => !["help", "version"].contains(&command.as_str()),
+                "--state" => ![
+                    "help",
+                    "version",
+                    "serve",
+                    "peers",
+                    "connect",
+                    "evaluate",
+                    "peer-revoke",
+                ]
+                .contains(&command.as_str()),
                 "--receipts" => [
                     "demo",
                     "benchmark",
                     "research",
                     "graph-research",
+                    "adaptive-research",
                     "network-research",
                 ]
                 .contains(&command.as_str()),
@@ -482,6 +524,13 @@ impl Cli {
                 "--tls-config" => command == "network-research",
                 "--input" => command == "predict",
                 "--from" | "--to" => command == "route",
+                "--config" => ["serve", "peers", "connect", "evaluate", "peer-revoke"]
+                    .contains(&command.as_str()),
+                "--peer" => ["connect", "peer-revoke"].contains(&command.as_str()),
+                "--request" => command == "connect",
+                "--candidate" => command == "evaluate",
+                "--reason" => command == "peer-revoke",
+                "--registration" => command == "adaptive-research",
                 _ => false,
             };
             if !allowed {
@@ -543,6 +592,45 @@ impl Cli {
         if command == "route" && (from.is_none() || to.is_none()) {
             return Err("route requires --from NODE and --to NODE".into());
         }
+        let config = options.remove("--config").map(PathBuf::from);
+        let peer = options.remove("--peer");
+        let request = options.remove("--request").map(PathBuf::from);
+        let candidate = options.remove("--candidate");
+        let reason = options.remove("--reason");
+        let registration = options.remove("--registration").map(PathBuf::from);
+        if reproduce && command != "adaptive-research" {
+            return Err("--reproduce applies only to adaptive-research".into());
+        }
+        if command == "adaptive-research" {
+            if reproduce == registration.is_some() {
+                return Err(
+                    "adaptive-research requires exactly one of --reproduce or --registration FILE"
+                        .into(),
+                );
+            }
+            let state_set = options.contains_key("--state");
+            let receipt_set = options.contains_key("--receipts");
+            if state_set != receipt_set || (!reproduce && !state_set) {
+                return Err("registered or custom adaptive experiments require both --state DIR and --receipts FILE".into());
+            }
+        }
+        if ["serve", "peers", "connect", "evaluate", "peer-revoke"].contains(&command.as_str())
+            && config.is_none()
+        {
+            return Err(format!("{command} requires --config FILE"));
+        }
+        if ["connect", "peer-revoke"].contains(&command.as_str()) && peer.is_none() {
+            return Err(format!("{command} requires --peer ID"));
+        }
+        if command == "connect" && request.is_none() {
+            return Err("connect requires --request FILE".into());
+        }
+        if command == "evaluate" && candidate.is_none() {
+            return Err("evaluate requires --candidate SHA256".into());
+        }
+        if command == "peer-revoke" && reason.is_none() {
+            return Err("peer-revoke requires --reason TEXT".into());
+        }
         let default_receipt = if command == "graph-research" {
             "experiments/local/graph-research.json"
         } else if command == "network-research" {
@@ -552,24 +640,52 @@ impl Cli {
         } else {
             "experiments/local/demo.json"
         };
+        let automatic_artifact_paths =
+            command == "adaptive-research" && reproduce && !options.contains_key("--state");
+        let automatic_root = if automatic_artifact_paths {
+            Some(std::env::temp_dir().join(format!(
+                "symbiote-reproduction-{}",
+                symbiote_protocol::fresh_capability()?
+            )))
+        } else {
+            None
+        };
+        let state = options
+            .remove("--state")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                automatic_root
+                    .as_ref()
+                    .map(|root| root.join("state"))
+                    .unwrap_or_else(|| PathBuf::from("state/demo"))
+            });
+        let receipts = options
+            .remove("--receipts")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                automatic_root
+                    .as_ref()
+                    .map(|root| root.join("reciprocal-frontier.json"))
+                    .unwrap_or_else(|| PathBuf::from(default_receipt))
+            });
         Ok(Self {
             command,
-            state: PathBuf::from(
-                options
-                    .remove("--state")
-                    .unwrap_or_else(|| "state/demo".into()),
-            ),
-            receipts: PathBuf::from(
-                options
-                    .remove("--receipts")
-                    .unwrap_or_else(|| default_receipt.into()),
-            ),
+            state,
+            receipts,
             fault,
             artifact,
             tls_config,
             input,
             from,
             to,
+            config,
+            peer,
+            request,
+            candidate,
+            reason,
+            registration,
+            reproduce,
+            automatic_artifact_paths,
             json,
         })
     }
@@ -587,6 +703,49 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     let command = cli.command.as_str();
     let state = &cli.state;
     let receipts = &cli.receipts;
+    if command == "adaptive-research" {
+        if cli.automatic_artifact_paths {
+            let parent = state.parent().ok_or("automatic artifact parent missing")?;
+            fs::create_dir(parent)
+                .map_err(|_| "cannot create fresh reproduction artifact directory")?;
+            fs::create_dir(state).map_err(|_| "cannot create fresh reproduction state")?;
+        }
+        if cli.reproduce {
+            return adaptive_research::run_reproduction(state, receipts);
+        }
+        return adaptive_research::run_primary(
+            state,
+            receipts,
+            cli.registration
+                .as_deref()
+                .ok_or("--registration required")?,
+        );
+    }
+    if command == "prepare-service" {
+        return service::prepare(state);
+    }
+    if ["serve", "peers", "connect", "evaluate", "peer-revoke"].contains(&command) {
+        let config = cli.config.as_deref().ok_or("--config required")?;
+        return match command {
+            "serve" => service::serve(config),
+            "peers" => service::peers(config),
+            "connect" => service::connect(
+                config,
+                cli.peer.as_deref().ok_or("--peer required")?,
+                cli.request.as_deref().ok_or("--request required")?,
+            ),
+            "evaluate" => service::evaluate(
+                config,
+                cli.candidate.as_deref().ok_or("--candidate required")?,
+            ),
+            "peer-revoke" => service::peer_revoke(
+                config,
+                cli.peer.as_deref().ok_or("--peer required")?,
+                cli.reason.as_deref().ok_or("--reason required")?,
+            ),
+            _ => unreachable!(),
+        };
+    }
     if command == "graph-research" {
         return graph_research::run(state, receipts);
     }
@@ -743,17 +902,33 @@ fn execute(cli: &Cli) -> Result<Value, String> {
         );
     }
     if command == "version" {
-        return Ok(json!({"name":"SYMBIOTE","version":env!("CARGO_PKG_VERSION")}));
+        return Ok(
+            json!({"name":"SYMBIOTE","version":env!("CARGO_PKG_VERSION"),"build_source_commit":option_env!("SYMBIOTE_SOURCE_COMMIT").unwrap_or("unknown")}),
+        );
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
 }
 
 fn display(report: &Value, cli: &Cli) -> String {
+    if cli.command == "serve" {
+        return serde_json::to_string(report).expect("serializable service frame");
+    }
+    if [
+        "peers",
+        "connect",
+        "evaluate",
+        "peer-revoke",
+        "prepare-service",
+    ]
+    .contains(&cli.command.as_str())
+    {
+        return serde_json::to_string_pretty(report).expect("serializable service receipt");
+    }
     if cli.json {
         return serde_json::to_string_pretty(report).expect("serializable report");
     }
@@ -762,7 +937,7 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} â€” Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
@@ -964,6 +1139,53 @@ fn display(report: &Value, cli: &Cli) -> String {
         ));
         lines.push("Deployment/persistence prototype; no new paired efficiency claim.".into());
     }
+    if cli.command == "adaptive-research" {
+        lines.push(format!(
+            "Build source: {}",
+            report["source_commit"].as_str().unwrap_or("unknown")
+        ));
+        if report["source_commit"] == "unknown" {
+            lines.push("This source build has no commit binding; full scientific evidence verification requires a bound build.".into());
+        }
+        lines.push(format!(
+            "Study: {} worlds × {} prices × {} arms | {} / {} cases recorded",
+            report["world_count"],
+            report["price_regimes"],
+            report["comparison_arms"],
+            report["cases_recorded"],
+            report["cases_expected"]
+        ));
+        if let Some(regimes) = report["comparisons"]["regimes"].as_array() {
+            for regime in regimes {
+                if let Some(comparisons) = regime["prospective_vs_controls"].as_array() {
+                    for comparison in comparisons {
+                        lines.push(format!(
+                            "  Price {} / prospective vs {}: A+B1 cost {} vs {} | bilateral benefit in {} worlds",
+                            regime["observation_price"], comparison["baseline_arm"].as_str().unwrap_or("control"),
+                            comparison["A_B1_candidate_cost"], comparison["A_B1_baseline_cost"],
+                            comparison["bilateral_benefit_worlds"]
+                        ));
+                    }
+                }
+            }
+        }
+        lines.push(format!(
+            "Normal-price utility: {} | Better partner selection: {} | Persistent learning: {}",
+            report["comparisons"]["normal_policy_utility"]
+                .as_str()
+                .unwrap_or("NOT_DEMONSTRATED"),
+            report["comparisons"]["normal_better_partner_selection"]
+                .as_str()
+                .unwrap_or("NOT_DEMONSTRATED"),
+            report["learning_gate"]["status"]
+                .as_str()
+                .unwrap_or("NOT_DEMONSTRATED")
+        ));
+        lines.push("PASS denotes completed software and safety checks. Selection and utility claims require the paired measurements in the receipt.".into());
+        lines.push(
+            "Owned local TLS processes; finite synthetic tasks and declared logical costs.".into(),
+        );
+    }
     if cli.command == "graph-research" {
         if let Some(regimes) = report["regimes"].as_array() {
             for regime in regimes {
@@ -1033,6 +1255,7 @@ fn display(report: &Value, cli: &Cli) -> String {
         "research",
         "graph-research",
         "network-research",
+        "adaptive-research",
     ]
     .contains(&cli.command.as_str())
     {
@@ -1043,6 +1266,29 @@ fn display(report: &Value, cli: &Cli) -> String {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args
+        .first()
+        .is_some_and(|arg| arg == "__adaptive-participant")
+    {
+        if args.len() != 1 || adaptive_research::serve_from_stdin().is_err() {
+            eprintln!(
+                "SYMBIOTE adaptive participant stopped; private bootstrap contents are withheld."
+            );
+            std::process::exit(1);
+        }
+        return;
+    }
+    #[cfg(debug_assertions)]
+    if args
+        .first()
+        .is_some_and(|arg| arg == "__adaptive-development")
+    {
+        if args.len() != 1 || adaptive_research::development_from_stdin().is_err() {
+            eprintln!("SYMBIOTE fixed-fixture development probe failed; private input contents are withheld.");
+            std::process::exit(1);
+        }
+        return;
+    }
     if args.first().is_some_and(|arg| arg == "__graph-forecast") {
         if args.len() != 1 || graph_research::forecast_from_stdin().is_err() {
             eprintln!("SYMBIOTE graph forecast failed; private request contents are withheld.");

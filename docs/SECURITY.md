@@ -1,8 +1,8 @@
 # Security boundaries and the TLS agent API
 
-Status: controlled engineering verification for the v0.3 development line. The
-TLS backend is a native library surface; it does not automatically attach the
-runtime to external agents. Successful transport tests are not an external
+Status: controlled engineering verification, extended with the v0.5 configured
+native service and owned laboratory processes. The TLS backend and configured
+service do not automatically attach to external agents. Successful transport tests are not an external
 security audit or evidence of production readiness.
 
 ## Two explicit protocols
@@ -15,8 +15,10 @@ as a fallback for nonlocal connections.
 `symbiote/2` is a separate TLS 1.3 API in
 `symbiote_protocol::secure`. It permits nonlocal addresses only when the caller
 supplies the bind address or endpoint, credentials, trust anchors, certificate
-pins and grants. It performs no network scanning, public discovery, credential
-generation, default system-root loading or trust-on-first-use enrollment.
+pins and grants. It performs no network scanning, public discovery, default
+system-root loading or trust-on-first-use enrollment. Configured deployment
+requires operator-provisioned credentials. The separate adaptive laboratory
+generates ephemeral credentials only for its own supervised loopback processes.
 
 ## Authentication before application data
 
@@ -108,14 +110,15 @@ preempt native handlers or roll back completed or in-flight application mutation
 
 - Provision a private CA and distinct role-appropriate certificates through the
   operator's approved process. The library does not acquire credentials or infer
-  consent from a reachable API. All test certificates are generated in memory by
-  a development-only fixture dependency and are not production credentials.
+  consent from a reachable API. Test and owned adaptive-laboratory certificates
+  are generated in memory; they are not external enrollment or production credentials.
 - Protect private keys and maintain the explicit pin/grant registry. Certificate
   rotation requires an updated configured pin; there is no automatic enrollment
   or silent pin replacement.
-- Peer revocation is terminal for the current server instance. Persistently
-  revoked peers must also be removed from the operator's durable configuration
-  before a restart. The transport does not claim durable grant storage.
+- The transport library's peer revocation lasts for its server instance. The
+  [configured native service](SERVICE.md) adds durable denial and operation
+  journaling. Its registered policy is immutable: edits, certificate rotation
+  and regrant require a future explicit migration, and currently fail HOLD.
 - Trusted Rust handlers execute synchronously and must terminate under their own
   application budget. TLS/socket deadlines cannot preempt arbitrary native handler
   code. Process isolation or a suitable controlled worker boundary is needed for
@@ -126,8 +129,9 @@ preempt native handlers or roll back completed or in-flight application mutation
 - Transferred payloads are inert JSON values. This module has no code, shell,
   instruction or plugin execution path. A trusted application handler must preserve
   that boundary rather than treating received text as execution authority.
-- The current automated tests use real TLS sockets on loopback. Accepting explicit
-  nonlocal addresses is implemented, but real external deployment, certificate
+- Transport tests use real TLS sockets on loopback; configured-service integration
+  tests also use separate native processes over an available private interface,
+  with no loopback substitution. Internet deployment, certificate
   operations, high concurrency and hostile public-network workloads remain
   unverified. No production security certification is claimed.
 
@@ -153,9 +157,11 @@ AWS-LC or OpenSSL dependency in this backend.
 
 ring avoids AWS-LC's CMake build but still includes a native C/assembly build.
 Source builds need the toolchain supported by ring; end users installing a
-prebuilt release do not compile it. `rcgen` 0.14.10 is development-only for ephemeral
-certificate fixtures, with default features disabled and `crypto`/`ring`/`pem`
-enabled. It is not linked into release binaries. The lockfile includes optional,
+prebuilt release do not compile it. `rcgen` 0.14.10 is used for ephemeral test
+certificates and is linked into the runtime for the explicitly owned loopback
+adaptive laboratory. It has default features disabled and `crypto`/`ring`/`pem`
+enabled. Configured `serve` and `connect` never generate or enroll credentials.
+The lockfile includes optional,
 development and target-specific packages; a lockfile count is not a runtime
 dependency count. Inspect the actual production graph with:
 

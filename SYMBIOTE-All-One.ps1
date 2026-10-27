@@ -7,6 +7,7 @@ param(
     [switch]$Benchmark,
     [switch]$Research,
     [switch]$GraphResearch,
+    [switch]$AdaptiveResearch,
     [switch]$NetworkResearch,
     [switch]$PrepareTlsState,
     [switch]$InspectState,
@@ -46,6 +47,7 @@ try {
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
     if ($GraphResearch) { Invoke-Symbiote -Arguments @('graph-research', '--state', $State) }
+    if ($AdaptiveResearch) { Invoke-Symbiote -Arguments @('adaptive-research', '--reproduce') }
     if ($PrepareTlsState) { Invoke-Symbiote -Arguments @('prepare-tls-state', '--state', $State) }
     if ($NetworkResearch) {
         $networkArguments = @('network-research', '--state', $State)
@@ -72,12 +74,13 @@ try {
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
+    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $AdaptiveResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
         Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
         Write-Output ''
         Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
         Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
         Write-Output 'Routes:     .\SYMBIOTE-All-One.ps1 -GraphResearch'
+        Write-Output 'Partners:   .\SYMBIOTE-All-One.ps1 -AdaptiveResearch (fresh temporary study)'
         Write-Output 'Processes:  .\SYMBIOTE-All-One.ps1 -NetworkResearch'
         Write-Output 'Check:      .\SYMBIOTE-All-One.ps1 -Doctor'
         Write-Output 'Verify:     .\SYMBIOTE-All-One.ps1 -Verify'

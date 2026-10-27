@@ -1,0 +1,16 @@
+{
+  "schema": "symbiote.candidate-source-validation/1",
+  "status": "PASS",
+  "full_gate_receipt": "software-verification.json",
+  "full_gate_source_sha256": "1ca4aa3af2f1a9e1c201e59548b464e4f256b05baad8abf8f8376be73a800f9a",
+  "candidate_source_sha256": "13c7935508c34af006808b4255af9278aaed2fa54a8d592b712ae1ca93ef4ca9",
+  "post_gate_changes": [
+    {
+      "path": "tools/verify_adaptive.py",
+      "change": "Remove three redundant blank lines at EOF; all nontrailing bytes identical.",
+      "targeted_checker_tests_passed": 17
+    }
+  ],
+  "native_source_unchanged": true,
+  "declared_prospective_study_executed": false
+}

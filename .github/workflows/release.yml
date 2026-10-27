@@ -71,6 +71,8 @@ jobs:
             target: x86_64-apple-darwin
             executable: symbiote
     runs-on: ${{ matrix.os }}
+    env:
+      SYMBIOTE_SOURCE_COMMIT: ${{ needs.prepare.outputs.sha }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4

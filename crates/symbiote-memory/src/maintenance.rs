@@ -16,7 +16,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const GATE: &str = "maintenance.guard";
 const WRITERS: [&str; 2] = ["writer.lock", "knowledge.writer.lock"];
-const LEDGERS: [&str; 2] = ["ledger.jsonl", "knowledge.jsonl"];
+const LEDGERS: [&str; 3] = ["ledger.jsonl", "knowledge.jsonl", "operations.jsonl"];
 const LAYOUT: &str = "state-layout.json";
 const BACKUP: &str = "migration-backup-v1";
 const AUDIT: &str = "maintenance-audit.jsonl";
@@ -109,7 +109,7 @@ fn owner_label(value: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || b"._:/-".contains(&b))
 }
 
-fn read_regular(path: &Path, limit: usize) -> Result<Option<Vec<u8>>, String> {
+pub(crate) fn read_regular(path: &Path, limit: usize) -> Result<Option<Vec<u8>>, String> {
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -151,7 +151,7 @@ fn read_layout(directory: &Path) -> Result<Option<StateLayout>, String> {
         || !owner_label(&layout.identity)
         || layout.backup_directory != BACKUP
         || layout.ledger_formats.is_empty()
-        || layout.ledger_formats.len() > 2
+        || layout.ledger_formats.len() > LEDGERS.len()
         || layout
             .ledger_formats
             .keys()
@@ -186,7 +186,14 @@ pub(crate) fn validate_layout_identity(directory: &Path, identity: &str) -> Resu
 
 pub(crate) fn validate_knowledge_owner(directory: &Path, identity: &str) -> Result<(), String> {
     validate_layout_identity(directory, identity)?;
-    if let Some(bytes) = read_regular(&directory.join("ledger.jsonl"), super::MAX_LEDGER_BYTES)? {
+    let original = read_regular(&directory.join("ledger.jsonl"), super::MAX_LEDGER_BYTES)?;
+    if original.is_none()
+        && (directory.join("operations.jsonl").exists()
+            || directory.join(super::operational::OWNER_FILE).exists())
+    {
+        return Err("operational state exists without its original identity ledger; refusing structural owner initialization".into());
+    }
+    if let Some(bytes) = original {
         if super::Store::validate_snapshot(&bytes)? != identity {
             return Err("structural knowledge owner differs from original identity ledger; refusing to create or modify state".into());
         }
@@ -417,7 +424,12 @@ pub fn inspect(directory: &Path) -> Result<Inspection, String> {
         }
     }
     audit_rows(directory)?;
-    let validated_identity = if ledgers.is_empty() {
+    let has_operational_registration = read_regular(
+        &directory.join(super::operational::OWNER_FILE),
+        super::operational::MAX_OWNER_BYTES,
+    )?
+    .is_some();
+    let validated_identity = if ledgers.is_empty() && !has_operational_registration {
         None
     } else {
         Some(validated_snapshots(directory)?.0)
@@ -494,7 +506,7 @@ fn audit_rows(directory: &Path) -> Result<Vec<AuditRecord>, String> {
     Ok(rows)
 }
 
-fn atomic_replace(directory: &Path, name: &str, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn atomic_replace(directory: &Path, name: &str, bytes: &[u8]) -> Result<(), String> {
     let sequence = super::TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let temporary = directory.join(format!(
         ".maintenance.{}.{sequence}.tmp",
@@ -626,8 +638,21 @@ fn validated_snapshots(directory: &Path) -> Result<(String, BTreeMap<String, Vec
             snapshots.insert(name.into(), bytes);
         }
     }
+    let operational_registration = read_regular(
+        &directory.join(super::operational::OWNER_FILE),
+        super::operational::MAX_OWNER_BYTES,
+    )?;
+    if snapshots.contains_key("operations.jsonl") != operational_registration.is_some() {
+        return Err("HOLD: operational journal/owner registration pair is incomplete; preserve state and restore history".into());
+    }
     if snapshots.is_empty() {
         return Err("no learning ledgers to register; run a demonstration first".into());
+    }
+    if snapshots.contains_key("operations.jsonl") && !snapshots.contains_key("ledger.jsonl") {
+        return Err(
+            "operational journal is missing its original identity ledger; refusing owner reset"
+                .into(),
+        );
     }
     let identity = if let Some(bytes) = snapshots.get("ledger.jsonl") {
         super::Store::validate_snapshot(bytes)?
@@ -652,6 +677,15 @@ fn validated_snapshots(directory: &Path) -> Result<(String, BTreeMap<String, Vec
     if let Some(bytes) = snapshots.get("knowledge.jsonl") {
         super::knowledge::KnowledgeStore::validate_snapshot(bytes, &identity)?;
     }
+    if let Some(bytes) = snapshots.get("operations.jsonl") {
+        super::operational::validate_snapshot(
+            bytes,
+            &identity,
+            operational_registration
+                .as_ref()
+                .ok_or("operational registration missing")?,
+        )?;
+    }
     Ok((identity, snapshots))
 }
 
@@ -671,6 +705,16 @@ fn backup_matches(directory: &Path, layout: &StateLayout) -> Result<(), String> 
         if hash(&bytes) != *expected {
             return Err("migration backup checksum mismatch".into());
         }
+    }
+    if layout.ledger_formats.contains_key("operations.jsonl") {
+        let operations = read_regular(&backup.join("operations.jsonl"), super::MAX_LEDGER_BYTES)?
+            .ok_or("operational backup ledger missing")?;
+        let registration = read_regular(
+            &backup.join(super::operational::OWNER_FILE),
+            super::operational::MAX_OWNER_BYTES,
+        )?
+        .ok_or("operational backup owner registration missing")?;
+        super::operational::validate_snapshot(&operations, &layout.identity, &registration)?;
     }
     Ok(())
 }
@@ -734,11 +778,23 @@ pub fn migrate(directory: &Path) -> Result<MigrationReport, String> {
             .to_str()
             .ok_or("unexpected backup entry")?
             .to_string();
-        if !LEDGERS.contains(&name.as_str()) && name != "manifest.json" {
+        if !LEDGERS.contains(&name.as_str())
+            && name != "manifest.json"
+            && name != super::operational::OWNER_FILE
+        {
             return Err("unexpected migration backup material; preserve it and investigate".into());
         }
     }
-    for (name, bytes) in &snapshots {
+    let mut backup_files = snapshots.clone();
+    if snapshots.contains_key("operations.jsonl") {
+        let registration = read_regular(
+            &directory.join(super::operational::OWNER_FILE),
+            super::operational::MAX_OWNER_BYTES,
+        )?
+        .ok_or("operational owner registration missing during migration")?;
+        backup_files.insert(super::operational::OWNER_FILE.into(), registration);
+    }
+    for (name, bytes) in &backup_files {
         let path = backup.join(name);
         if let Some(existing) = read_regular(&path, super::MAX_LEDGER_BYTES)? {
             if existing != *bytes {

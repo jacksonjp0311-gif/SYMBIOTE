@@ -15,6 +15,4 @@ sha2.workspace = true
 symbiote-reasoning = { path = "../symbiote-reasoning" }
 symbiote-protocol = { path = "../symbiote-protocol" }
 symbiote-memory = { path = "../symbiote-memory" }
-
-[dev-dependencies]
 rcgen = { version = "0.14.10", default-features = false, features = ["crypto", "ring", "pem"] }

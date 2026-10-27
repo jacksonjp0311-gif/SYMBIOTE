@@ -502,6 +502,26 @@ impl KnowledgeStore {
     pub fn highest_revision(&self, id: &str) -> Option<u64> {
         self.revisions.get(id).copied()
     }
+    /// An operational completion can anchor a past learning commit even after
+    /// legitimate revocation or a newer revision. This checks exact validated
+    /// historical content; active membership alone cannot prove that history.
+    pub fn has_historical_promotion(&self, expected: &KnowledgeRecord) -> Result<bool, String> {
+        expected.validate()?;
+        let expected_digest = expected.digest()?;
+        for receipt in &self.receipts {
+            let record = match &receipt.payload {
+                Event::Promote { record, .. } | Event::PromoteGraph { record, .. } => record,
+                _ => continue,
+            };
+            if record.id == expected.id
+                && record.revision == expected.revision
+                && record.digest()? == expected_digest
+            {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
     pub fn record_count(&self) -> usize {
         self.receipts.len()
     }
@@ -916,6 +936,44 @@ mod tests {
         assert_eq!(again.identity(), "symbiote-owner");
         drop(again);
         assert!(KnowledgeStore::open(&dir.0, "another-owner").is_err());
+    }
+    #[test]
+    fn exact_promotion_history_survives_revocation_and_newer_revision_without_writes() {
+        let dir = Directory::new();
+        let original = record();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        assert!(!store.has_historical_promotion(&original).unwrap());
+        store
+            .promote(original.clone(), assess(&original, &evidence()).unwrap())
+            .unwrap();
+        let committed = fs::read(store.ledger_path()).unwrap();
+        assert!(store.has_historical_promotion(&original).unwrap());
+        assert_eq!(
+            fs::read(store.ledger_path()).unwrap(),
+            committed,
+            "history lookup must be read-only"
+        );
+        store
+            .revoke(&original.id, "operator withdrew active use")
+            .unwrap();
+        assert!(store.active().is_empty());
+        assert!(store.has_historical_promotion(&original).unwrap());
+        let mut next = original.clone();
+        next.revision = 2;
+        next.provenance = "explicitly revalidated next revision".into();
+        store
+            .promote(next.clone(), assess(&next, &evidence()).unwrap())
+            .unwrap();
+        assert_eq!(store.active(), vec![next.clone()]);
+        assert!(store.has_historical_promotion(&original).unwrap());
+        assert!(store.has_historical_promotion(&next).unwrap());
+        let mut uncommitted = original.clone();
+        uncommitted.provenance = "different valid content was never committed".into();
+        assert!(!store.has_historical_promotion(&uncommitted).unwrap());
+        drop(store);
+        let replayed = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        assert!(replayed.has_historical_promotion(&original).unwrap());
+        assert!(replayed.has_historical_promotion(&next).unwrap());
     }
     #[test]
     fn training_leakage_duplicates_wrong_outputs_and_inert_instructions_are_rejected() {

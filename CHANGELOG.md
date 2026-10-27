@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0 candidate — Adaptive Relationships
+
+- Operator-configured native TLS knowledge service with exact grants, durable
+  quarantine, local fixture evaluation, persistent denial and idempotent replies.
+- Owner-bound operational journal, interrupted evaluation recovery and exact
+  historical-promotion checks that detect a surviving journal paired with an
+  older knowledge prefix. Historical learning serializers remain unchanged.
+- Actual negotiation/RPC byte meters, operation-specific frame ceilings and
+  failure-attempt accounting. Rejected knowledge cannot mutate reasoning state.
+- Preregistered prospective relationship experiment with five paired learner
+  identities, forty private control profiles, eight observation authorities and
+  actual process restarts. Independent raw-evidence verification separates
+  software completion, utility and persistent learning.
+- Fresh temporary study command, configured service guide and explicit stable
+  release gates. The 24-world primary study has not yet been executed in this
+  candidate; no outcome or stable v1.0 claim is made.
+
 ## v0.4.0 — Reciprocal Improvement — 2026-10-27
 
 - Persistent bounded graph knowledge with conditional route certificates,

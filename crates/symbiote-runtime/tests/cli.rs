@@ -63,12 +63,50 @@ fn invalid_arguments_fail_before_touching_state() {
         vec!["status", "--fault", "drift"],
         vec!["revoke"],
         vec!["demo", "--state", "one", "--state", "two"],
+        vec!["adaptive-research"],
+        vec![
+            "adaptive-research",
+            "--reproduce",
+            "--registration",
+            "record.json",
+        ],
+        vec!["adaptive-research", "--registration", "record.json"],
+        vec!["adaptive-research", "--reproduce", "--state", "unpaired"],
+        vec!["demo", "--reproduce"],
+        vec!["serve", "--config", "service.json", "--state", "override"],
+        vec!["connect", "--config", "service.json", "--peer", "partner"],
+        vec!["evaluate", "--config", "service.json"],
+        vec![
+            "peer-revoke",
+            "--config",
+            "service.json",
+            "--peer",
+            "partner",
+        ],
     ] {
         let output = sandbox.run(&args);
         assert_eq!(output.status.code(), Some(2), "arguments: {args:?}");
         assert!(String::from_utf8_lossy(&output.stderr).contains("--help"));
     }
     assert!(!sandbox.0.join("state").exists());
+}
+
+#[test]
+fn missing_primary_registration_cannot_create_experiment_state() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.run(&[
+        "adaptive-research",
+        "--registration",
+        "missing.json",
+        "--state",
+        "untouched",
+        "--receipts",
+        "unwritten.json",
+    ]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(!sandbox.0.join("untouched").exists());
+    assert!(!sandbox.0.join("unwritten.json").exists());
+    assert!(!sandbox.0.join("primary-started.json").exists());
 }
 
 #[test]

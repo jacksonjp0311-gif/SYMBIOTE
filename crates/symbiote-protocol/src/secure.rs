@@ -30,6 +30,82 @@ const MAX_KEY_BYTES: usize = 16_384;
 const MAX_REQUESTS: u64 = 10_000;
 const REVOKE_OPERATION: &str = "_session_revoke";
 
+/// Application plaintext accepted by the TLS writer or delivered by its reader.
+/// TLS record framing, certificates and the cryptographic handshake are excluded.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SecureTrafficSnapshot {
+    pub rpc_sent_bytes: u64,
+    pub rpc_received_bytes: u64,
+    pub negotiation_sent_bytes: u64,
+    pub negotiation_received_bytes: u64,
+    pub connection_attempts: u64,
+}
+
+#[derive(Debug, Default)]
+struct TrafficCounters {
+    rpc_sent: AtomicU64,
+    rpc_received: AtomicU64,
+    negotiation_sent: AtomicU64,
+    negotiation_received: AtomicU64,
+    connection_attempts: AtomicU64,
+}
+
+/// A cloneable cumulative meter. An external handle retains failed-connect and
+/// partial-write counters even when constructing a SecureClient returns Err.
+#[derive(Clone, Debug, Default)]
+pub struct SecureTraffic(Arc<TrafficCounters>);
+
+impl SecureTraffic {
+    pub fn snapshot(&self) -> SecureTrafficSnapshot {
+        SecureTrafficSnapshot {
+            rpc_sent_bytes: self.0.rpc_sent.load(Ordering::Acquire),
+            rpc_received_bytes: self.0.rpc_received.load(Ordering::Acquire),
+            negotiation_sent_bytes: self.0.negotiation_sent.load(Ordering::Acquire),
+            negotiation_received_bytes: self.0.negotiation_received.load(Ordering::Acquire),
+            connection_attempts: self.0.connection_attempts.load(Ordering::Acquire),
+        }
+    }
+    fn add(counter: &AtomicU64, count: u64) {
+        // All configured session bounds are far below u64; cumulative external
+        // handles saturate rather than silently wrapping if reused indefinitely.
+        let mut current = counter.load(Ordering::Acquire);
+        loop {
+            match counter.compare_exchange_weak(
+                current,
+                current.saturating_add(count),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => break,
+                Err(observed) => current = observed,
+            }
+        }
+    }
+    fn connection_attempt(&self) {
+        Self::add(&self.0.connection_attempts, 1);
+    }
+    fn sent(&self, negotiation: bool, count: usize) {
+        Self::add(
+            if negotiation {
+                &self.0.negotiation_sent
+            } else {
+                &self.0.rpc_sent
+            },
+            count as u64,
+        );
+    }
+    fn received(&self, negotiation: bool, count: usize) {
+        Self::add(
+            if negotiation {
+                &self.0.negotiation_received
+            } else {
+                &self.0.rpc_received
+            },
+            count as u64,
+        );
+    }
+}
+
 /// An OS-random 256-bit bearer capability, suitable for separate local process
 /// channels. No capability is generated from clock time, PID or a fixed seed.
 pub fn fresh_capability() -> Result<String, String> {
@@ -192,6 +268,7 @@ pub struct SecureServerConfig {
     tls: Arc<rustls::ServerConfig>,
     grants: BTreeMap<String, SecurePeerGrant>,
     limits: SecureLimits,
+    operation_frame_limits: BTreeMap<String, usize>,
 }
 
 impl SecureServerConfig {
@@ -254,7 +331,30 @@ impl SecureServerConfig {
             tls: Arc::new(tls),
             grants: by_pin,
             limits,
+            operation_frame_limits: BTreeMap::new(),
         })
+    }
+
+    /// Operator-owned ceilings are applied to every operation in the negotiated
+    /// session. A client cannot expand a small operation by proposing a larger
+    /// frame or combining it with an operation that has a larger ceiling.
+    pub fn with_operation_frame_limits(
+        mut self,
+        limits: BTreeMap<String, usize>,
+    ) -> Result<Self, String> {
+        let known = self
+            .grants
+            .values()
+            .flat_map(|grant| grant.scopes.values())
+            .flatten()
+            .collect::<BTreeSet<_>>();
+        if limits.iter().any(|(operation, limit)| {
+            !known.contains(operation) || !(1024..=self.limits.max_frame_bytes).contains(limit)
+        }) {
+            return Err("operation frame ceilings must name configured capabilities and lie between1024 and the globalframecap".into());
+        }
+        self.operation_frame_limits = limits;
+        Ok(self)
     }
 }
 
@@ -264,6 +364,8 @@ pub struct SecureSession {
     pub certificate_sha256: String,
     pub scope: String,
     pub operations: Vec<String>,
+    #[serde(skip)]
+    pub traffic: SecureTraffic,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -379,17 +481,102 @@ impl Write for DeadlineSocket {
 
 trait FramedTls: Read + Write {
     fn reset_deadline(&mut self, timeout: Duration);
+    /// Separates plaintext acceptance from a possibly failing network flush.
+    fn write_application(&mut self, bytes: &[u8]) -> io::Result<usize>;
+    fn set_read_allowance(&mut self, _remaining: usize) {}
 }
 
 impl FramedTls for StreamOwned<ClientConnection, DeadlineSocket> {
     fn reset_deadline(&mut self, timeout: Duration) {
         self.sock.reset_deadline(timeout);
     }
+    fn write_application(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.sock.remaining()?;
+        self.conn.writer().write(bytes)
+    }
 }
 
 impl FramedTls for StreamOwned<ServerConnection, DeadlineSocket> {
     fn reset_deadline(&mut self, timeout: Duration) {
         self.sock.reset_deadline(timeout);
+    }
+    fn write_application(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.sock.remaining()?;
+        self.conn.writer().write(bytes)
+    }
+}
+
+struct MeteredTls<S> {
+    inner: S,
+    traffic: SecureTraffic,
+    aggregate: Option<SecureTraffic>,
+    negotiation: bool,
+    read_allowance: usize,
+}
+struct SessionMetering {
+    negotiation_limit: usize,
+    traffic: SecureTraffic,
+    aggregate: SecureTraffic,
+}
+impl<S> MeteredTls<S> {
+    fn new(inner: S, traffic: SecureTraffic, aggregate: Option<SecureTraffic>) -> Self {
+        Self {
+            inner,
+            traffic,
+            aggregate,
+            negotiation: true,
+            read_allowance: usize::MAX,
+        }
+    }
+    fn begin_rpc(&mut self) {
+        self.negotiation = false;
+    }
+}
+impl<S: FramedTls> Read for MeteredTls<S> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        if buffer.is_empty() {
+            return Ok(0);
+        }
+        if self.read_allowance == 0 {
+            return Err(io::Error::other(
+                "incoming JSON frame exceeds negotiated byte budget",
+            ));
+        }
+        let allowance = buffer.len().min(self.read_allowance);
+        let received = self.inner.read(&mut buffer[..allowance])?;
+        self.read_allowance -= received;
+        self.traffic.received(self.negotiation, received);
+        if let Some(aggregate) = &self.aggregate {
+            aggregate.received(self.negotiation, received);
+        }
+        Ok(received)
+    }
+}
+impl<S: FramedTls> Write for MeteredTls<S> {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        let accepted = self.inner.write_application(bytes)?;
+        // Count before flushing: StreamOwned::write can otherwise return Err
+        // after accepting plaintext, hiding the real partial cost from callers.
+        self.traffic.sent(self.negotiation, accepted);
+        if let Some(aggregate) = &self.aggregate {
+            aggregate.sent(self.negotiation, accepted);
+        }
+        self.inner.flush()?;
+        Ok(accepted)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+impl<S: FramedTls> FramedTls for MeteredTls<S> {
+    fn reset_deadline(&mut self, timeout: Duration) {
+        self.inner.reset_deadline(timeout);
+    }
+    fn write_application(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.write(bytes)
+    }
+    fn set_read_allowance(&mut self, remaining: usize) {
+        self.read_allowance = remaining;
     }
 }
 
@@ -439,6 +626,13 @@ fn read_frame<S: FramedTls, T: DeserializeOwned>(
     stream.get_mut().reset_deadline(timeout);
     let mut bytes = Vec::new();
     loop {
+        let remaining = limit.saturating_sub(bytes.len());
+        if remaining == 0 {
+            return Err("incoming JSON frame exceeds negotiated byte budget".into());
+        }
+        // Clip TLS plaintext delivery before BufReader prefetches. At the exact
+        // cap without a newline, reject without reading even one extra byte.
+        stream.get_mut().set_read_allowance(remaining);
         let available = stream.fill_buf().map_err(io_error)?;
         if available.is_empty() {
             return Err("secure peer closed before a complete JSONL frame".into());
@@ -480,6 +674,7 @@ pub struct SecureServerHandle {
     connections: Arc<AtomicU64>,
     session_failures: Arc<AtomicU64>,
     last_failure: Arc<Mutex<Option<String>>>,
+    traffic: SecureTraffic,
     thread: Option<JoinHandle<()>>,
 }
 
@@ -513,6 +708,10 @@ impl SecureServerHandle {
             .lock()
             .ok()
             .and_then(|failure| failure.clone())
+    }
+
+    pub fn traffic(&self) -> SecureTraffic {
+        self.traffic.clone()
     }
 
     pub fn revoke_peer(&self, peer_id: &str) -> Result<(), String> {
@@ -564,6 +763,19 @@ pub fn spawn_secure_server<F>(
 where
     F: Fn(&SecureSession, &str, Value) -> Result<Value, String> + Send + 'static,
 {
+    let negotiation_limit = config.limits.max_frame_bytes;
+    spawn_secure_server_metered(config, negotiation_limit, handler)
+}
+
+pub fn spawn_secure_server_metered<F>(
+    config: SecureServerConfig,
+    negotiation_limit: usize,
+    handler: F,
+) -> Result<SecureServerHandle, String>
+where
+    F: Fn(&SecureSession, &str, Value) -> Result<Value, String> + Send + 'static,
+{
+    validate_negotiation_limit(negotiation_limit, config.limits.max_frame_bytes)?;
     let listener = TcpListener::bind(config.bind_address).map_err(io_error)?;
     listener.set_nonblocking(true).map_err(io_error)?;
     let address = listener.local_addr().map_err(io_error)?;
@@ -576,6 +788,7 @@ where
     let connections = Arc::new(AtomicU64::new(0));
     let session_failures = Arc::new(AtomicU64::new(0));
     let last_failure = Arc::new(Mutex::new(None));
+    let traffic = SecureTraffic::default();
     let mut handle = SecureServerHandle {
         address,
         server_id: config.server_id.clone(),
@@ -591,6 +804,7 @@ where
         connections: Arc::clone(&connections),
         session_failures: Arc::clone(&session_failures),
         last_failure: Arc::clone(&last_failure),
+        traffic: traffic.clone(),
         thread: None,
     };
     handle.thread = Some(thread::spawn(move || {
@@ -607,6 +821,9 @@ where
                     // Count before parsing TLS or authenticating a peer: invalid
                     // reconnects consume a real crypto/connection budget too.
                     connections.fetch_add(1, Ordering::AcqRel);
+                    traffic.connection_attempt();
+                    let session_traffic = SecureTraffic::default();
+                    session_traffic.connection_attempt();
                     let result = (|| {
                         let cancellation_socket = socket.try_clone().map_err(io_error)?;
                         state
@@ -616,7 +833,19 @@ where
                             peer_id: None,
                             socket: cancellation_socket,
                         });
-                        serve_session(socket, &config, &state, &stopped, &requests, &handler)
+                        serve_session(
+                            socket,
+                            &config,
+                            &state,
+                            &stopped,
+                            &requests,
+                            &handler,
+                            SessionMetering {
+                                negotiation_limit,
+                                traffic: session_traffic,
+                                aggregate: traffic.clone(),
+                            },
+                        )
                     })();
                     if let Ok(mut state) = state.lock() {
                         state.active = None;
@@ -650,10 +879,16 @@ fn serve_session<F>(
     stopped: &Arc<AtomicBool>,
     requests: &Arc<AtomicU64>,
     handler: &F,
+    metering: SessionMetering,
 ) -> Result<(), String>
 where
     F: Fn(&SecureSession, &str, Value) -> Result<Value, String>,
 {
+    let SessionMetering {
+        negotiation_limit,
+        traffic,
+        aggregate,
+    } = metering;
     let socket = DeadlineSocket::new(socket, config.limits.timeout, Arc::clone(stopped))?;
     let connection = ServerConnection::new(Arc::clone(&config.tls))
         .map_err(|_| "TLS server connection failed")?;
@@ -682,12 +917,8 @@ where
             active.peer_id = Some(grant.id.clone());
         }
     }
-    let mut stream = BufReader::new(stream);
-    let hello: Hello = read_frame(
-        &mut stream,
-        config.limits.max_frame_bytes,
-        config.limits.timeout,
-    )?;
+    let mut stream = BufReader::new(MeteredTls::new(stream, traffic.clone(), Some(aggregate)));
+    let hello: Hello = read_frame(&mut stream, negotiation_limit, config.limits.timeout)?;
     if hello.version != SECURE_PROTOCOL_VERSION
         || hello.server_id != config.server_id
         || hello.client_id != grant.id
@@ -728,7 +959,13 @@ where
         format: "jsonl".into(),
         operations: operations.clone(),
         max_requests: remaining.min(hello.max_requests),
-        max_frame_bytes: config.limits.max_frame_bytes.min(hello.max_frame_bytes),
+        max_frame_bytes: operations
+            .iter()
+            .filter_map(|operation| config.operation_frame_limits.get(operation))
+            .fold(
+                config.limits.max_frame_bytes.min(hello.max_frame_bytes),
+                |cap, limit| cap.min(*limit),
+            ),
     };
     if agreement.max_requests == 0 {
         return Err("server-wide secure request budget exhausted".into());
@@ -736,14 +973,16 @@ where
     write_frame(
         stream.get_mut(),
         &agreement,
-        agreement.max_frame_bytes,
+        agreement.max_frame_bytes.min(negotiation_limit),
         config.limits.timeout,
     )?;
+    stream.get_mut().begin_rpc();
     let context = SecureSession {
         peer_id: grant.id.clone(),
         certificate_sha256: pin,
         scope: hello.scope,
         operations,
+        traffic,
     };
     let mut expected_id = 1_u64;
     loop {
@@ -844,7 +1083,7 @@ impl SecureCancellation {
 }
 
 pub struct SecureClient {
-    stream: BufReader<StreamOwned<ClientConnection, DeadlineSocket>>,
+    stream: BufReader<MeteredTls<StreamOwned<ClientConnection, DeadlineSocket>>>,
     agreement: SecureAgreement,
     timeout: Duration,
     next_request: u64,
@@ -853,11 +1092,26 @@ pub struct SecureClient {
 
 impl SecureClient {
     pub fn connect(endpoint: &SecureEndpoint, config: &TlsClientConfig) -> Result<Self, String> {
+        Self::connect_with_metering(
+            endpoint,
+            config,
+            SecureTraffic::default(),
+            endpoint.limits.max_frame_bytes,
+        )
+    }
+
+    pub fn connect_with_metering(
+        endpoint: &SecureEndpoint,
+        config: &TlsClientConfig,
+        traffic: SecureTraffic,
+        negotiation_limit: usize,
+    ) -> Result<Self, String> {
         validate_label(&endpoint.server_id)?;
         validate_pin(&endpoint.server_certificate_sha256)?;
         validate_scope(&endpoint.scope)?;
         validate_operations(&endpoint.operations)?;
         endpoint.limits.validate()?;
+        validate_negotiation_limit(negotiation_limit, endpoint.limits.max_frame_bytes)?;
         if endpoint.address.port() == 0
             || endpoint.address.ip().is_unspecified()
             || endpoint.address.ip().is_multicast()
@@ -866,6 +1120,7 @@ impl SecureClient {
         }
         let server_name = ServerName::try_from(endpoint.server_name.clone())
             .map_err(|_| "invalid TLS server name")?;
+        traffic.connection_attempt();
         let socket = TcpStream::connect_timeout(&endpoint.address, endpoint.limits.timeout)
             .map_err(io_error)?;
         let stopped = Arc::new(AtomicBool::new(false));
@@ -886,6 +1141,7 @@ impl SecureClient {
         if !fingerprint(peer).eq_ignore_ascii_case(&endpoint.server_certificate_sha256) {
             return Err("server certificate does not match the explicitly pinned identity".into());
         }
+        let mut stream = MeteredTls::new(stream, traffic, None);
         // No application data is sent until PKI, hostname, TLS, ALPN and pin checks pass.
         let hello = Hello {
             version: SECURE_PROTOCOL_VERSION.into(),
@@ -900,15 +1156,12 @@ impl SecureClient {
         write_frame(
             &mut stream,
             &hello,
-            endpoint.limits.max_frame_bytes,
+            negotiation_limit,
             endpoint.limits.timeout,
         )?;
         let mut stream = BufReader::new(stream);
-        let agreement: SecureAgreement = read_frame(
-            &mut stream,
-            endpoint.limits.max_frame_bytes,
-            endpoint.limits.timeout,
-        )?;
+        let agreement: SecureAgreement =
+            read_frame(&mut stream, negotiation_limit, endpoint.limits.timeout)?;
         if agreement.version != SECURE_PROTOCOL_VERSION
             || agreement.server_id != endpoint.server_id
             || agreement.client_id != config.client_id
@@ -929,6 +1182,7 @@ impl SecureClient {
             );
         }
         validate_operations(&agreement.operations)?;
+        stream.get_mut().begin_rpc();
         Ok(Self {
             stream,
             agreement,
@@ -942,11 +1196,16 @@ impl SecureClient {
         &self.agreement
     }
 
+    pub fn traffic(&self) -> SecureTraffic {
+        self.stream.get_ref().traffic.clone()
+    }
+
     pub fn cancellation_handle(&self) -> Result<SecureCancellation, String> {
         Ok(SecureCancellation {
             socket: self
                 .stream
                 .get_ref()
+                .inner
                 .sock
                 .socket
                 .try_clone()
@@ -1027,6 +1286,7 @@ impl SecureClient {
         self.stopped.store(true, Ordering::Release);
         self.stream
             .get_mut()
+            .inner
             .sock
             .socket
             .shutdown(Shutdown::Both)
@@ -1164,6 +1424,13 @@ fn validate_operations(operations: &[String]) -> Result<(), String> {
         if operation == REVOKE_OPERATION || !unique.insert(operation) {
             return Err("duplicate or reserved secure capability".into());
         }
+    }
+    Ok(())
+}
+
+fn validate_negotiation_limit(limit: usize, rpc_limit: usize) -> Result<(), String> {
+    if limit == 0 || limit > rpc_limit || limit > MAX_FRAME {
+        return Err("secure negotiation frame limit must be positive and no larger than the application frame cap".into());
     }
     Ok(())
 }
@@ -1318,10 +1585,13 @@ mod tests {
             SecureClient::connect(&fixture.endpoint(&server), &fixture.client_config()).unwrap();
         assert_eq!(client.agreement().version, "symbiote/2");
         assert_eq!(
-            client.stream.get_ref().conn.protocol_version(),
+            client.stream.get_ref().inner.conn.protocol_version(),
             Some(rustls::ProtocolVersion::TLSv1_3)
         );
-        assert_eq!(client.stream.get_ref().conn.alpn_protocol(), Some(ALPN));
+        assert_eq!(
+            client.stream.get_ref().inner.conn.alpn_protocol(),
+            Some(ALPN)
+        );
         let response = client
             .call(
                 "echo",
@@ -1598,6 +1868,7 @@ mod tests {
         client
             .stream
             .get_mut()
+            .inner
             .sock
             .reset_deadline(Duration::from_secs(2));
         client
@@ -1772,6 +2043,7 @@ mod tests {
         client
             .stream
             .get_mut()
+            .inner
             .sock
             .reset_deadline(Duration::from_secs(2));
         let mut disconnected = false;
@@ -1862,6 +2134,342 @@ mod tests {
         );
     }
 
+    fn jsonl_bytes(value: &impl Serialize) -> u64 {
+        u64::try_from(serde_json::to_vec(value).unwrap().len() + 1).unwrap()
+    }
+
+    #[test]
+    fn metered_tls_counts_complete_utf8_frames_and_reconciles_both_endpoints() {
+        let fixture = Fixtures::new();
+        let (sent, received) = mpsc::channel();
+        let server = spawn_secure_server_metered(
+            fixture.server_config(SecureLimits::default()),
+            1024,
+            move |session, _, payload| {
+                assert!(serde_json::to_value(session)
+                    .unwrap()
+                    .get("traffic")
+                    .is_none());
+                sent.send(session.traffic.clone()).unwrap();
+                Ok(payload)
+            },
+        )
+        .unwrap();
+        let mut endpoint = fixture.endpoint(&server);
+        endpoint.limits.max_frame_bytes = 4096;
+        let external = SecureTraffic::default();
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            external.clone(),
+            1024,
+        )
+        .unwrap();
+        let hello = Hello {
+            version: SECURE_PROTOCOL_VERSION.into(),
+            server_id: endpoint.server_id.clone(),
+            client_id: "client".into(),
+            scope: endpoint.scope.clone(),
+            format: "jsonl".into(),
+            operations: endpoint.operations.clone(),
+            max_requests: endpoint.limits.max_requests,
+            max_frame_bytes: endpoint.limits.max_frame_bytes,
+        };
+        let initial = external.snapshot();
+        assert_eq!(initial.connection_attempts, 1);
+        assert_eq!(initial.negotiation_sent_bytes, jsonl_bytes(&hello));
+        assert_eq!(
+            initial.negotiation_received_bytes,
+            jsonl_bytes(client.agreement())
+        );
+        assert_eq!(initial.rpc_sent_bytes, 0);
+        let payload = json!({"utf8":"é🧬","escaped":"line\nline","n":3});
+        assert_eq!(client.call("echo", &payload).unwrap(), payload);
+        let provider = received.recv_timeout(Duration::from_secs(1)).unwrap();
+        let request = Request {
+            version: SECURE_PROTOCOL_VERSION.into(),
+            request_id: 1,
+            scope: endpoint.scope.clone(),
+            operation: "echo".into(),
+            payload: payload.clone(),
+        };
+        let response = Response {
+            version: SECURE_PROTOCOL_VERSION.into(),
+            request_id: 1,
+            scope: endpoint.scope,
+            ok: true,
+            result: payload,
+            error: None,
+        };
+        let caller = external.snapshot();
+        let callee = provider.snapshot();
+        assert_eq!(caller, client.traffic().snapshot());
+        assert_eq!(caller.rpc_sent_bytes, jsonl_bytes(&request));
+        assert_eq!(caller.rpc_received_bytes, jsonl_bytes(&response));
+        assert_eq!(caller.rpc_sent_bytes, callee.rpc_received_bytes);
+        assert_eq!(caller.rpc_received_bytes, callee.rpc_sent_bytes);
+        assert_eq!(
+            caller.negotiation_sent_bytes,
+            callee.negotiation_received_bytes
+        );
+        assert_eq!(
+            caller.negotiation_received_bytes,
+            callee.negotiation_sent_bytes
+        );
+        assert_eq!(callee, server.traffic().snapshot());
+        // Cancellation is socket control, not an invented application frame.
+        client.cancel().unwrap();
+        assert_eq!(caller, external.snapshot());
+    }
+
+    #[test]
+    fn metered_error_response_and_failed_socket_flush_retain_accepted_bytes() {
+        let fixture = Fixtures::new();
+        let server = spawn_secure_server_metered(
+            fixture.server_config(SecureLimits::default()),
+            1024,
+            |_, _, _| Err("operator rejection".into()),
+        )
+        .unwrap();
+        let endpoint = fixture.endpoint(&server);
+        let external = SecureTraffic::default();
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            external.clone(),
+            1024,
+        )
+        .unwrap();
+        assert!(client.call("echo", &Value::Null).is_err());
+        let request = Request {
+            version: SECURE_PROTOCOL_VERSION.into(),
+            request_id: 1,
+            scope: endpoint.scope.clone(),
+            operation: "echo".into(),
+            payload: Value::Null,
+        };
+        let response = Response {
+            version: SECURE_PROTOCOL_VERSION.into(),
+            request_id: 1,
+            scope: endpoint.scope.clone(),
+            ok: false,
+            result: Value::Null,
+            error: Some("operator rejection".into()),
+        };
+        assert_eq!(external.snapshot().rpc_sent_bytes, jsonl_bytes(&request));
+        assert_eq!(
+            external.snapshot().rpc_received_bytes,
+            jsonl_bytes(&response)
+        );
+        // A real Rustls writer can accept plaintext before a dead socket makes
+        // its flush fail. The failed operation still has an application cost.
+        let failed = SecureTraffic::default();
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            failed.clone(),
+            1024,
+        )
+        .unwrap();
+        client
+            .stream
+            .get_mut()
+            .inner
+            .sock
+            .socket
+            .shutdown(Shutdown::Both)
+            .unwrap();
+        assert!(client.call("echo", &Value::Null).is_err());
+        assert_eq!(failed.snapshot().rpc_sent_bytes, jsonl_bytes(&request));
+        assert_eq!(failed.snapshot().rpc_received_bytes, 0);
+    }
+
+    struct TestFramedTls {
+        input: io::Cursor<Vec<u8>>,
+        accepted: Vec<u8>,
+        read_sizes: Vec<usize>,
+        chunk: usize,
+        fail_flush: bool,
+    }
+    impl TestFramedTls {
+        fn new(input: Vec<u8>) -> Self {
+            Self {
+                input: io::Cursor::new(input),
+                accepted: Vec::new(),
+                read_sizes: Vec::new(),
+                chunk: usize::MAX,
+                fail_flush: false,
+            }
+        }
+    }
+    impl Read for TestFramedTls {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            self.read_sizes.push(buffer.len());
+            self.input.read(buffer)
+        }
+    }
+    impl Write for TestFramedTls {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            let count = bytes.len().min(self.chunk);
+            self.accepted.extend_from_slice(&bytes[..count]);
+            Ok(count)
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            if self.fail_flush {
+                Err(io::Error::new(
+                    io::ErrorKind::BrokenPipe,
+                    "supervised partial flush failure",
+                ))
+            } else {
+                Ok(())
+            }
+        }
+    }
+    impl FramedTls for TestFramedTls {
+        fn reset_deadline(&mut self, _: Duration) {}
+        fn write_application(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.write(bytes)
+        }
+    }
+
+    #[test]
+    fn metered_partial_writes_count_actual_acceptance_before_failure() {
+        let traffic = SecureTraffic::default();
+        let aggregate = SecureTraffic::default();
+        let mut inner = TestFramedTls::new(Vec::new());
+        inner.chunk = 3;
+        inner.fail_flush = true;
+        let mut stream = MeteredTls::new(inner, traffic.clone(), Some(aggregate.clone()));
+        assert!(write_frame(&mut stream, &json!({"x":1}), 64, Duration::from_secs(1)).is_err());
+        assert_eq!(stream.inner.accepted.len(), 3);
+        assert_eq!(traffic.snapshot().negotiation_sent_bytes, 3);
+        assert_eq!(traffic.snapshot(), aggregate.snapshot());
+        assert_eq!(traffic.snapshot().rpc_sent_bytes, 0);
+        let traffic = SecureTraffic::default();
+        let mut stream = MeteredTls::new(TestFramedTls::new(Vec::new()), traffic.clone(), None);
+        stream.begin_rpc();
+        assert!(write_frame(
+            &mut stream,
+            &json!("x".repeat(128)),
+            16,
+            Duration::from_secs(1)
+        )
+        .is_err());
+        assert!(stream.inner.accepted.is_empty());
+        assert_eq!(traffic.snapshot(), SecureTrafficSnapshot::default());
+    }
+
+    #[test]
+    fn metered_reads_count_partial_malformed_and_prefetched_bytes_without_overread() {
+        let traffic = SecureTraffic::default();
+        let mut reader = BufReader::new(MeteredTls::new(
+            TestFramedTls::new(vec![b'x'; 1025]),
+            traffic.clone(),
+            None,
+        ));
+        assert!(read_frame::<_, Value>(&mut reader, 1024, Duration::from_secs(1)).is_err());
+        assert_eq!(traffic.snapshot().negotiation_received_bytes, 1024);
+        assert_eq!(reader.get_ref().inner.input.position(), 1024);
+        assert_eq!(reader.get_ref().inner.read_sizes, vec![1024]);
+        let traffic = SecureTraffic::default();
+        let input = b"not-json\nextra".to_vec();
+        let mut reader = BufReader::new(MeteredTls::new(
+            TestFramedTls::new(input.clone()),
+            traffic.clone(),
+            None,
+        ));
+        assert!(read_frame::<_, Value>(&mut reader, 1024, Duration::from_secs(1)).is_err());
+        // Prefetched plaintext was really delivered by Read, even if the first
+        // malformed line caused parsing to stop before consuming the buffer.
+        assert_eq!(
+            traffic.snapshot().negotiation_received_bytes,
+            u64::try_from(input.len()).unwrap()
+        );
+        let traffic = SecureTraffic::default();
+        let partial = b"{\"x\":1".to_vec();
+        let mut reader = BufReader::new(MeteredTls::new(
+            TestFramedTls::new(partial.clone()),
+            traffic.clone(),
+            None,
+        ));
+        reader.get_mut().begin_rpc();
+        assert!(read_frame::<_, Value>(&mut reader, 1024, Duration::from_secs(1)).is_err());
+        assert_eq!(
+            traffic.snapshot().rpc_received_bytes,
+            u64::try_from(partial.len()).unwrap()
+        );
+    }
+
+    #[test]
+    fn negotiation_cap_and_failed_connect_are_enforced_and_externally_metered() {
+        let fixture = Fixtures::new();
+        let calls = Arc::new(AtomicU64::new(0));
+        let server = spawn_secure_server_metered(
+            fixture.server_config(SecureLimits::default()),
+            1024,
+            counting_handler(Arc::clone(&calls)),
+        )
+        .unwrap();
+        let mut endpoint = fixture.endpoint(&server);
+        endpoint.limits.max_frame_bytes = 4096;
+        endpoint.operations = (0..16)
+            .map(|index| format!("op{index}{}", "x".repeat(100)))
+            .collect();
+        let local = SecureTraffic::default();
+        assert!(SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            local.clone(),
+            1024
+        )
+        .is_err());
+        assert_eq!(local.snapshot().connection_attempts, 1);
+        assert_eq!(local.snapshot().negotiation_sent_bytes, 0);
+        let oversized = SecureTraffic::default();
+        assert!(SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            oversized.clone(),
+            4096
+        )
+        .is_err());
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while server.session_failures() < 2 && Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(2));
+        }
+        assert_eq!(server.traffic().snapshot().negotiation_received_bytes, 1024);
+        assert!(oversized.snapshot().negotiation_sent_bytes > 1024);
+        assert_eq!(calls.load(Ordering::Acquire), 0);
+        let mut refused = fixture.endpoint(&server);
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        refused.address = listener.local_addr().unwrap();
+        drop(listener);
+        let traffic = SecureTraffic::default();
+        assert!(SecureClient::connect_with_metering(
+            &refused,
+            &fixture.client_config(),
+            traffic.clone(),
+            1024
+        )
+        .is_err());
+        assert_eq!(
+            traffic.snapshot(),
+            SecureTrafficSnapshot {
+                connection_attempts: 1,
+                ..SecureTrafficSnapshot::default()
+            }
+        );
+        let invalid = SecureTraffic::default();
+        assert!(SecureClient::connect_with_metering(
+            &refused,
+            &fixture.client_config(),
+            invalid.clone(),
+            0
+        )
+        .is_err());
+        assert_eq!(invalid.snapshot().connection_attempts, 0);
+    }
+
     #[test]
     fn identity_pem_limits_and_explicit_configuration_fail_closed() {
         let fixture = Fixtures::new();
@@ -1919,5 +2527,75 @@ mod tests {
             SecureLimits::default(),
         )
         .is_ok());
+    }
+
+    #[test]
+    fn operation_frame_ceiling_cannot_be_expanded_by_large_or_mixed_proposals() {
+        let fixture = Fixtures::new();
+        let calls = Arc::new(AtomicU64::new(0));
+        let counter = Arc::clone(&calls);
+        let config = fixture
+            .server_config(SecureLimits::default())
+            .with_operation_frame_limits(BTreeMap::from([("echo".into(), 1024)]))
+            .unwrap();
+        let server = spawn_secure_server_metered(config, 1024, move |_, _, payload| {
+            counter.fetch_add(1, Ordering::AcqRel);
+            Ok(payload)
+        })
+        .unwrap();
+        let mut endpoint = fixture.endpoint(&server);
+        endpoint.operations = vec!["echo".into()];
+        endpoint.limits.max_frame_bytes = 16384;
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            SecureTraffic::default(),
+            1024,
+        )
+        .unwrap();
+        assert_eq!(client.agreement().max_frame_bytes, 1024);
+        assert!(client
+            .call("echo", &json!({"large":"x".repeat(2048)}))
+            .is_err());
+        drop(client);
+        endpoint.operations = vec!["wait".into()];
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            SecureTraffic::default(),
+            1024,
+        )
+        .unwrap();
+        assert_eq!(client.agreement().max_frame_bytes, 16384);
+        let payload = json!({"large":"x".repeat(2048)});
+        assert_eq!(client.call("wait", &payload).unwrap(), payload);
+        drop(client);
+        endpoint.operations = vec!["wait".into(), "echo".into()];
+        let mut client = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            SecureTraffic::default(),
+            1024,
+        )
+        .unwrap();
+        assert_eq!(client.agreement().max_frame_bytes, 1024);
+        assert!(client.call("wait", &payload).is_err());
+        assert_eq!(calls.load(Ordering::Acquire), 1);
+    }
+
+    #[test]
+    fn operation_frame_ceiling_rejects_unknown_capabilities_and_out_of_bounds_caps() {
+        let fixture = Fixtures::new();
+        for (operation, limit) in [
+            ("unknown", 1024),
+            ("echo", 1023),
+            ("echo", 16385),
+            (REVOKE_OPERATION, 1024),
+        ] {
+            assert!(fixture
+                .server_config(SecureLimits::default())
+                .with_operation_frame_limits(BTreeMap::from([(operation.into(), limit)]))
+                .is_err());
+        }
     }
 }

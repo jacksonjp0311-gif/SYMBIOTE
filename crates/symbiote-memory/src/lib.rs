@@ -5,6 +5,7 @@
 //! receives a privileged simulator oracle. It is not a universal truth verifier.
 pub mod knowledge;
 pub mod maintenance;
+pub mod operational;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -12,7 +13,7 @@ use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const SCOPE: &str = "finite-boolean-v1";
@@ -184,6 +185,7 @@ impl Receipt {
 pub struct Store {
     directory: PathBuf,
     _lock: Option<maintenance::WriterLock>,
+    operational_lease: AtomicBool,
     identity: String,
     receipts: Vec<Receipt>,
     active: BTreeMap<String, Artifact>,
@@ -209,11 +211,21 @@ impl Store {
                     .into(),
             );
         }
+        if !directory.join("ledger.jsonl").exists()
+            && (directory.join("operations.jsonl").exists()
+                || directory.join(operational::OWNER_FILE).exists())
+        {
+            return Err(
+                "operational journal exists without its identity ledger; refusing identity reset"
+                    .into(),
+            );
+        }
         before_genesis();
         let path = directory.join("ledger.jsonl");
         let mut store = Self {
             directory: directory.to_path_buf(),
             _lock: Some(lock),
+            operational_lease: AtomicBool::new(false),
             identity: String::new(),
             receipts: Vec::new(),
             active: BTreeMap::new(),
@@ -278,6 +290,7 @@ impl Store {
         let mut snapshot = Self {
             directory: PathBuf::new(),
             _lock: None,
+            operational_lease: AtomicBool::new(false),
             identity: String::new(),
             receipts: Vec::new(),
             active: BTreeMap::new(),

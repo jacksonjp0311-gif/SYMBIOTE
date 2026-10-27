@@ -41,6 +41,37 @@ queries a retained affine or encoded graph model directly.
 The PowerShell equivalents are `-GraphResearch`, `-NetworkResearch`,
 `-PrepareTlsState` and `-TlsConfig FILE`.
 
+## Adaptive study and configured peers
+
+In the v0.5 development line, `symbiote adaptive-research --reproduce` creates a
+fresh, dedicated temporary directory and runs the frozen four-arm study with
+owned local TLS processes. It prints the state and receipt paths. It never
+overwrites a previous study or attaches to a third-party agent. The corresponding
+PowerShell switch is `-AdaptiveResearch`. For explicit destinations, provide both
+`--state ABSOLUTE_FRESH_DIR` and `--receipts ABSOLUTE_FILE`, inside a dedicated
+OS temporary artifact directory whose empty state directory already exists.
+
+Primary research uses `--registration FILE` instead of `--reproduce`; it requires
+the immutable protocol, frozen source commit, exact binary hash and runner record.
+Its start marker prohibits an unrecorded retry. Reproductions are labelled
+separately and cannot replace primary failures. See the
+[preregistered protocol](RESEARCH_V05_PROTOCOL_004.md).
+
+Published binaries embed their build commit. A plain source build reports
+`unknown` unless `SYMBIOTE_SOURCE_COMMIT` was set at compilation. For an audited
+study, freeze and commit the source first, then build with that exact commit in
+the environment; do not label an edited checkout as its previous commit. The
+primary guard checks the compiled commit and executable hash against the
+registration. An unbound source reproduction can run but cannot pass the full
+source/binary evidence verifier. `symbiote version --json` exposes the binding.
+
+For an operator-managed deployment, follow [the configured service guide](SERVICE.md):
+prepare an identity, provision authorized TLS credentials and grants, then use
+`serve`, `peers` and `connect`. Candidates remain quarantined until the local
+`evaluate` command approves them using a pinned local fixture. `peer-revoke`
+persists denial. Policy edits and automatic certificate enrollment are unsupported
+and produce an explicit failure rather than silently replacing trust.
+
 ## Developer verification and Genesis recovery
 
 Rust stable and Cargo are sufficient for the native process. Python 3.11+ is

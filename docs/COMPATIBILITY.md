@@ -5,6 +5,13 @@ versions; a stable v1.0 API is a separate acceptance gate. Native releases inclu
 the lockfile used by their build and publish platform-specific ZIPs and SHA256SUMS.
 The command `symbiote --version` identifies the installed implementation.
 
+The v0.5 configured service adds separate `operations.jsonl` and
+`operations-owner.json` files. They preserve operational decisions and denial;
+they do not change historical knowledge serializers. Back them up together with
+the knowledge and identity ledgers. Their registered owner and policy are
+immutable in this version. Deleting files is not a supported policy upgrade,
+certificate rotation or peer restoration procedure.
+
 Historical Genesis and affine ledger serializers remain intact. New graph
 knowledge uses a distinct typed promotion event. Old binaries cannot read new
 event variants and must not run concurrently with a newer writer. Upgrade only
