@@ -2,6 +2,7 @@
 //!
 //! A singleton support is conditional on the declared stationary deterministic
 //! Moore-machine family. It does not establish that a real agent belongs to it.
+pub mod planning;
 pub mod structural;
 
 use serde::Serialize;

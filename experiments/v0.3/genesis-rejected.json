@@ -1,0 +1,43 @@
+{
+  "identity": "symbiote-bfd0a82b58511aede0ee9aa8",
+  "partner": "alpha",
+  "phases": [
+    {
+      "authorization": "explicit-local-registry",
+      "partner": "alpha",
+      "phase": "CONNECT",
+      "protocol": "symbiote/1",
+      "scope": "finite-boolean-v1"
+    },
+    {
+      "observations": 2,
+      "partner": "alpha",
+      "phase": "SENSE",
+      "resource_units": 2
+    },
+    {
+      "epistemic_status": "conditional-inference",
+      "grammar": "Moore<=4,2-actions,2-bit stationary",
+      "hypotheses": 1,
+      "next_support": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "partner": "alpha",
+      "phase": "MODEL",
+      "status": "supported"
+    },
+    {
+      "opportunity": "two unseen inputs in local task model",
+      "partner": "alpha",
+      "phase": "EXCHANGE",
+      "status": "untrusted-candidate"
+    }
+  ],
+  "promoted_before_failure": 0,
+  "reason": "promotion refused: correct 3/4, baseline 2/4, regressions 0",
+  "schema": "symbiote.demo/1",
+  "status": "REJECTED"
+}

@@ -276,6 +276,8 @@ enum Event {
     Promote {
         record: KnowledgeRecord,
         assessment: Box<Assessment>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        policy_version: Option<u32>,
     },
     Revoke {
         id: String,
@@ -302,13 +304,14 @@ impl Receipt {
 /// into genesis. Opening it never resets or migrates the original v0.1 ledger.
 pub struct KnowledgeStore {
     directory: PathBuf,
-    _lock: super::WriterLock,
+    _lock: Option<super::maintenance::WriterLock>,
     identity: String,
     genesis: bool,
     receipts: Vec<Receipt>,
     active: BTreeMap<String, KnowledgeRecord>,
     revisions: BTreeMap<String, u64>,
     bindings: BTreeMap<String, (String, String, String)>,
+    retained_expected: BTreeMap<String, BTreeMap<u16, u8>>,
 }
 
 impl KnowledgeStore {
@@ -317,26 +320,19 @@ impl KnowledgeStore {
             return Err("invalid persistent knowledge owner identity".into());
         }
         fs::create_dir_all(directory).map_err(|e| format!("knowledge directory: {e}"))?;
-        let lock_path = directory.join("knowledge.writer.lock");
-        let mut lock_file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&lock_path)
-            .map_err(|e| {
-                format!("exclusive knowledge lock unavailable (live or stale writer): {e}")
-            })?;
-        let lock = super::WriterLock(lock_path);
-        writeln!(lock_file, "process={}", std::process::id()).map_err(|e| e.to_string())?;
-        lock_file.sync_all().map_err(|e| e.to_string())?;
+        let (lock, _initialization_gate) =
+            super::maintenance::writer_lock(directory, "knowledge.writer.lock")?;
+        super::maintenance::validate_knowledge_owner(directory, identity)?;
         let mut store = Self {
             directory: directory.to_path_buf(),
-            _lock: lock,
+            _lock: Some(lock),
             identity: identity.into(),
             genesis: false,
             receipts: Vec::new(),
             active: BTreeMap::new(),
             revisions: BTreeMap::new(),
             bindings: BTreeMap::new(),
+            retained_expected: BTreeMap::new(),
         };
         let path = store.ledger_path();
         if path.exists() {
@@ -388,7 +384,54 @@ impl KnowledgeStore {
                 identity: identity.into(),
             })?;
         }
+        super::maintenance::validate_layout_identity(directory, &store.identity)?;
         Ok(store)
+    }
+
+    pub(crate) fn validate_snapshot(bytes: &[u8], identity: &str) -> Result<(), String> {
+        if bytes.len() > super::MAX_LEDGER_BYTES || bytes.is_empty() || bytes.last() != Some(&b'\n')
+        {
+            return Err("knowledge ledger empty, truncated or over budget".into());
+        }
+        let mut snapshot = Self {
+            directory: PathBuf::new(),
+            _lock: None,
+            identity: identity.into(),
+            genesis: false,
+            receipts: Vec::new(),
+            active: BTreeMap::new(),
+            revisions: BTreeMap::new(),
+            bindings: BTreeMap::new(),
+            retained_expected: BTreeMap::new(),
+        };
+        let mut previous = ZERO_HASH.to_string();
+        for (sequence, line) in std::str::from_utf8(bytes)
+            .map_err(|e| e.to_string())?
+            .lines()
+            .enumerate()
+        {
+            if sequence >= super::MAX_RECORDS || line.is_empty() || line.len() > MAX_RECORD_BYTES {
+                return Err("knowledge record exceeds budget or is empty".into());
+            }
+            let receipt: Receipt = serde_json::from_str(line)
+                .map_err(|e| format!("invalid knowledge receipt {sequence}: {e}"))?;
+            if receipt.sequence != sequence
+                || receipt.previous != previous
+                || receipt.sha256 != receipt.hash()?
+            {
+                return Err(format!(
+                    "knowledge hash chain mismatch at receipt {sequence}"
+                ));
+            }
+            snapshot.validate_event(&receipt.payload)?;
+            snapshot.apply(&receipt.payload);
+            previous = receipt.sha256.clone();
+            snapshot.receipts.push(receipt);
+        }
+        if !snapshot.genesis {
+            return Err("knowledge genesis missing".into());
+        }
+        Ok(())
     }
 
     pub fn identity(&self) -> &str {
@@ -414,6 +457,7 @@ impl KnowledgeStore {
         self.append(Event::Promote {
             record,
             assessment: Box::new(assessment),
+            policy_version: Some(2),
         })
     }
     pub fn revoke(&mut self, id: &str, reason: &str) -> Result<(), String> {
@@ -434,12 +478,36 @@ impl KnowledgeStore {
                     return Err("unsupported genesis or persistent identity mismatch".into());
                 }
             }
-            Event::Promote { record, assessment } => {
+            Event::Promote {
+                record,
+                assessment,
+                policy_version,
+            } => {
                 if !self.genesis {
                     return Err("knowledge promotion before genesis".into());
                 }
                 record.validate()?;
                 assessment.validate(record)?;
+                if policy_version.is_some_and(|version| version != 2) {
+                    return Err("unsupported knowledge promotion policy".into());
+                }
+                if policy_version == &Some(2) {
+                    if let Some(retained) = self.retained_expected.get(&record.id) {
+                        for case in &assessment.evidence.cases {
+                            if retained
+                                .get(&case.input)
+                                .is_some_and(|expected| *expected != case.expected)
+                            {
+                                return Err("stationary context changed expected labels; revoke or change context before promotion".into());
+                            }
+                        }
+                        for (input, expected) in retained {
+                            if record.predict(*input)? != *expected {
+                                return Err("new knowledge regresses on retained validated cases; revoke or change context before promotion".into());
+                            }
+                        }
+                    }
+                }
                 if self
                     .revisions
                     .get(&record.id)
@@ -494,7 +562,11 @@ impl KnowledgeStore {
     fn apply(&mut self, event: &Event) {
         match event {
             Event::Genesis { .. } => self.genesis = true,
-            Event::Promote { record, .. } => {
+            Event::Promote {
+                record,
+                assessment,
+                policy_version,
+            } => {
                 self.revisions.insert(record.id.clone(), record.revision);
                 self.bindings.insert(
                     record.id.clone(),
@@ -505,9 +577,19 @@ impl KnowledgeStore {
                     ),
                 );
                 self.active.insert(record.id.clone(), record.clone());
+                let retained = self.retained_expected.entry(record.id.clone()).or_default();
+                // Legacy policy could supersede a changing law. Preserve old
+                // read compatibility without rewriting its accepted history.
+                if policy_version.is_none() {
+                    retained.clear();
+                }
+                for case in &assessment.evidence.cases {
+                    retained.insert(case.input, case.expected);
+                }
             }
             Event::Revoke { id, .. } => {
                 self.active.remove(id);
+                self.retained_expected.remove(id);
             }
         }
     }
@@ -745,5 +827,72 @@ mod tests {
         assert!(KnowledgeStore::open(&dir.0, "owner").is_err());
         fs::write(&path, vec![b'x'; super::super::MAX_LEDGER_BYTES + 1]).unwrap();
         assert!(KnowledgeStore::open(&dir.0, "owner").is_err());
+    }
+
+    #[test]
+    fn changed_stationary_labels_require_explicit_revocation_before_new_version() {
+        let dir = Directory::new();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let original = record();
+        store
+            .promote(original.clone(), assess(&original, &evidence()).unwrap())
+            .unwrap();
+        let mut changed = original.clone();
+        changed.revision = 2;
+        changed.payload["coefficients"] = json!(1);
+        let mut trial = evidence();
+        for case in &mut trial.cases {
+            case.expected = changed.predict(case.input).unwrap();
+            case.candidate = case.expected;
+            case.baseline = Some(original.predict(case.input).unwrap());
+        }
+        let assessment = assess(&changed, &trial).unwrap();
+        assert!(store
+            .promote(changed.clone(), assessment.clone())
+            .unwrap_err()
+            .contains("stationary"));
+        assert_eq!(store.active(), vec![original.clone()]);
+        assert_eq!(store.record_count(), 2);
+        store
+            .revoke(
+                &original.id,
+                "independent counterexample invalidates stationary context",
+            )
+            .unwrap();
+        store.promote(changed.clone(), assessment).unwrap();
+        drop(store);
+        assert_eq!(
+            KnowledgeStore::open(&dir.0, "owner").unwrap().active(),
+            vec![changed]
+        );
+    }
+
+    #[test]
+    fn a_new_evaluation_subset_cannot_hide_regressions_on_retained_cases() {
+        let dir = Directory::new();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let original = record();
+        let mut first = evidence();
+        first.cases.retain(|case| case.input == 2);
+        store
+            .promote(original.clone(), assess(&original, &first).unwrap())
+            .unwrap();
+        let mut changed = original.clone();
+        changed.revision = 2;
+        changed.payload["coefficients"] = json!(1);
+        let mut next = evidence();
+        next.cases.retain(|case| case.input == 4);
+        for case in &mut next.cases {
+            case.expected = changed.predict(case.input).unwrap();
+            case.candidate = case.expected;
+            case.baseline = Some(original.predict(case.input).unwrap());
+        }
+        let assessment = assess(&changed, &next).unwrap();
+        assert!(assessment.cost_improved);
+        assert!(store
+            .promote(changed, assessment)
+            .unwrap_err()
+            .contains("retained validated cases"));
+        assert_eq!(store.active(), vec![original]);
     }
 }

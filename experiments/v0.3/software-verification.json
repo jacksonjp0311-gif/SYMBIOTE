@@ -1,0 +1,15 @@
+{
+  "schema": "symbiote.software-verification/1",
+  "status": "PASS",
+  "source_sha256": "3a740de3f2e1f08448ebbc32d816e02a5f7572e385e625fd7c232e0d3425bf24",
+  "platform": "Windows",
+  "architecture": "AMD64",
+  "native_tests_passed": 113,
+  "packaging_and_installation_tests_passed": 13,
+  "legacy_parity_executed": true,
+  "cargo_gates_executed": true,
+  "genesis_compatibility": true,
+  "structural_exchange": true,
+  "deployed_processes_migration_and_recovery": true,
+  "stable_v1_criteria": "remain separate from software gate"
+}

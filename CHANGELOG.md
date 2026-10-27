@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.0 — Adaptive Memory — 2026-10-27
+
+- Shared maintenance coordination, native read-only process checks, safe explicit
+  stale-lock recovery and byte-preserving audited state-layout migration.
+- Policy-versioned promotions reject changed stationary labels and regressions
+  hidden outside the newest evaluation subset; historical receipts remain valid.
+- Two supervised native agent processes with private identities and ledgers,
+  independent oracle/judge APIs, actual restart prediction and measured zero
+  restart oracle traffic. Cloned identities and incompatible stored schemas fail.
+- Separate TLS 1.3/mutual-certificate API with explicit CA/name/leaf-pin identity
+  grants, scopes, deadlines, connection/request budgets, cancellation and revocation.
+- Exact positive-cost graph lower bounds and conservative route certification as
+  a second embeddable reasoning primitive; operational graph exchange is deferred.
+- Atomic native installation with concurrency leases and verified staging.
+- Independent reviews reproduced and fixed a first-initialization owner race,
+  an identity-alias deployment gap and a revocation-set resource bound.
+
+The process experiment remains one four-bit context using loopback protocol v1.
+TLS v2 is independently tested as a library API. Neither delivery implies
+unfamiliar-domain transfer, a new efficiency result, or stable v1.0 readiness.
+
 ## v0.2.0 — First Symbiosis — 2026-10-27
 
 - Exact Boolean affine reasoning with active maximin observations, explicit

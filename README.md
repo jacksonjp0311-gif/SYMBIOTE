@@ -19,7 +19,8 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md)
 
-> **Research preview.** v0.2 First Symbiosis provides the verified local experiment below. The stable
+> **Research preview.** v0.3 Adaptive Memory adds supervised native peers, audited
+> recovery and migration, and a separately tested TLS API. The stable
 > v1.0 criteria remain open. Current experiments concern declared finite synthetic
 > environments; generalized intelligence and autonomous self-improvement are not
 > established.
@@ -35,7 +36,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v0.2.0 -AddToPath
+.\tools\install.ps1 -Version v0.3.0 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -43,7 +44,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v0.2.0
+sh tools/install.sh --version v0.3.0
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
@@ -66,6 +67,7 @@ You can also download a matching archive directly, extract it, and run
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
 symbiote research   # Run structural learning, exchange and isolated controls
+symbiote network-research  # Run two real native peer processes and restart them
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
 symbiote doctor     # Inspect readiness without changing local state
@@ -85,6 +87,7 @@ From a Windows checkout, the single entrypoint also supports:
 ```powershell
 .\SYMBIOTE-All-One.ps1 -Run
 .\SYMBIOTE-All-One.ps1 -Research
+.\SYMBIOTE-All-One.ps1 -NetworkResearch
 .\SYMBIOTE-All-One.ps1 -Doctor
 .\SYMBIOTE-All-One.ps1 -Verify
 ```
@@ -118,7 +121,16 @@ candidate family or authorize a prediction.
 
 The local protocol provides mutual authentication, revocation, sequence checks,
 bounded JSONL frames and request budgets. It is scoped to trusted loopback use;
-secure nonlocal transports remain a later milestone.
+the native process experiment uses that same explicit loopback protocol.
+A separate [TLS 1.3 API](docs/SECURITY.md) supplies mutual certificate validation,
+name/pin identity binding and resource-limited encrypted sessions for configured
+library integrations. External runtime deployment is a separate evidence gate.
+
+The native process experiment keeps each peer's identity and ledgers separate
+from the controller. Real process restarts use stored models, with actual oracle
+counters required to stay zero during retained prediction. [Deployment](docs/DEPLOYED_AGENTS.md)
+and [memory lifecycle](docs/MEMORY_LIFECYCLE.md) document supervision, copied-identity
+rejection, crash recovery, immutable backups and byte-preserving migration.
 
 ## Evidence and limits
 
@@ -127,6 +139,7 @@ secure nonlocal transports remain a later milestone.
 | Original BRUTE algorithm preserved exactly | [Byte-identical Python reference](docs/reference/brute/symbolic.py) and [parity receipt](experiments/parity.json): 6,093 cases, 20,843 checkpoints |
 | Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
 | Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
+| Native processes, retained prediction, recovery and migration | [v0.3 software gates](experiments/v0.3/software-verification.json), [deployment verification](experiments/v0.3/deployed-verification.json) and [native exchange receipt](experiments/v0.3/native-process-exchange.json) |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
 
@@ -163,10 +176,10 @@ behavior explicit without fragmenting the system into placeholder packages.
 
 | Path | Responsibility |
 | --- | --- |
-| `crates/symbiote-reasoning/` | Exact hidden-state support, affine structural inference, active query selection and conditional prediction |
-| `crates/symbiote-protocol/` | Authorized local sessions, capability negotiation, telemetry sensors, bounded echoes and revocation |
-| `crates/symbiote-memory/` | Persistent identity, versioned knowledge, evidence-bound promotion, integrity checks and rollback |
-| `crates/symbiote-runtime/` | Human-friendly commands, simulated services, reciprocal learning experiments and controls |
+| `crates/symbiote-reasoning/` | Exact hidden-state and affine inference, conservative graph certificates, active queries and conditional prediction |
+| `crates/symbiote-protocol/` | Authorized local sessions, separate TLS 1.3 API, resource limits, sensors and revocation |
+| `crates/symbiote-memory/` | Private identity, versioned knowledge, promotion, audit integrity, rollback and safe lifecycle operations |
+| `crates/symbiote-runtime/` | Readable commands, supervised native peers, simulated services, experiments and controls |
 | `docs/` | Architecture, mathematics, operations, provenance, research and version objectives |
 | `docs/assets/` | Original project artwork and its provenance |
 | `docs/reference/` | Preserved upstream algorithm used by developer parity checks |

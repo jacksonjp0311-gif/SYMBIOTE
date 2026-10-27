@@ -1,0 +1,263 @@
+{
+  "active_artifacts": 2,
+  "authorized_endpoints": 2,
+  "control_interpretation": "Exchange extends persistent prediction coverage relative to the two-observation isolated baseline. A control allowed the same four complete probes also reaches full coverage; no sample-efficiency or general transfer advantage is established.",
+  "cost_accounting": {
+    "matched_probe_control_queries": 8,
+    "partner_verification_queries": 8,
+    "symbiote_verification_queries": 8,
+    "task_predictions": 64,
+    "task_predictions_are_repeated_not_independent_samples": true,
+    "telemetry_observations": 4
+  },
+  "identity": "symbiote-9fd3fcc91bbee7866449ea24",
+  "language_model": false,
+  "participants": [
+    {
+      "measured_change": "persistent complete finite prediction table replaces two-input partial table",
+      "partner": "alpha",
+      "partner_benefit": {
+        "after_correct": 32,
+        "baseline_correct": 16,
+        "baseline_resource_units": 176,
+        "baseline_with_oracle_fallback_correct": 32,
+        "cost_model": "local lookup/expression=1; simulated oracle=10; logical units, not wall-clock",
+        "strategy": "xor",
+        "strategy_resource_units_including_verification": 72,
+        "total": 32,
+        "verification_queries": 4
+      },
+      "symbiote": {
+        "exchange_correct": 32,
+        "isolated_abstentions": 16,
+        "isolated_correct": 16,
+        "matched_probe_control_correct": 32,
+        "matched_probe_control_queries": 4,
+        "telemetry_observations": 2,
+        "total": 32,
+        "verification_queries": 4
+      }
+    },
+    {
+      "measured_change": "persistent complete finite prediction table replaces two-input partial table",
+      "partner": "beta",
+      "partner_benefit": {
+        "after_correct": 32,
+        "baseline_correct": 16,
+        "baseline_resource_units": 176,
+        "baseline_with_oracle_fallback_correct": 32,
+        "cost_model": "local lookup/expression=1; simulated oracle=10; logical units, not wall-clock",
+        "strategy": "second-bit",
+        "strategy_resource_units_including_verification": 72,
+        "total": 32,
+        "verification_queries": 4
+      },
+      "symbiote": {
+        "exchange_correct": 32,
+        "isolated_abstentions": 16,
+        "isolated_correct": 16,
+        "matched_probe_control_correct": 32,
+        "matched_probe_control_queries": 4,
+        "telemetry_observations": 2,
+        "total": 32,
+        "verification_queries": 4
+      }
+    }
+  ],
+  "phases": [
+    {
+      "authorization": "explicit-local-registry",
+      "partner": "alpha",
+      "phase": "CONNECT",
+      "protocol": "symbiote/1",
+      "scope": "finite-boolean-v1"
+    },
+    {
+      "observations": 2,
+      "partner": "alpha",
+      "phase": "SENSE",
+      "resource_units": 2
+    },
+    {
+      "epistemic_status": "conditional-inference",
+      "grammar": "Moore<=4,2-actions,2-bit stationary",
+      "hypotheses": 1,
+      "next_support": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "partner": "alpha",
+      "phase": "MODEL",
+      "status": "supported"
+    },
+    {
+      "evaluation": {
+        "artifact_digest": "c555a990dba100fba718f94e3f4107206c27e40cefc79f6759df2d41d7ea278a",
+        "baseline": [
+          0,
+          1,
+          null,
+          null
+        ],
+        "baseline_correct": 2,
+        "candidate_correct": 4,
+        "oracle": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "regressions": 0,
+        "total": 4,
+        "verification_queries": 4
+      },
+      "partner": "alpha",
+      "phase": "VERIFY",
+      "scope": "exhaustively-checked-four-input-simulator"
+    },
+    {
+      "artifact": "alpha-table",
+      "partner": "alpha",
+      "phase": "LEARN",
+      "retained": true,
+      "revision": 1
+    },
+    {
+      "adoption": {
+        "adopted": true,
+        "evaluation": {
+          "artifact_digest": "af730ef3f3540a40453de8ebf87f6b0a44f4fca9e055718605585cc3ee4f268c",
+          "baseline": [
+            0,
+            1,
+            null,
+            null
+          ],
+          "baseline_correct": 2,
+          "candidate_correct": 4,
+          "oracle": [
+            0,
+            1,
+            1,
+            0
+          ],
+          "regressions": 0,
+          "total": 4,
+          "verification_queries": 4
+        }
+      },
+      "derived_abstraction": "xor",
+      "partner": "alpha",
+      "phase": "CONTRIBUTE"
+    },
+    {
+      "drift": 0.0,
+      "independent_probes": 4,
+      "partner": "alpha",
+      "persistent_artifact": "alpha-table",
+      "phase": "REASSESS"
+    },
+    {
+      "authorization": "explicit-local-registry",
+      "partner": "beta",
+      "phase": "CONNECT",
+      "protocol": "symbiote/1",
+      "scope": "finite-boolean-v1"
+    },
+    {
+      "observations": 2,
+      "partner": "beta",
+      "phase": "SENSE",
+      "resource_units": 2
+    },
+    {
+      "epistemic_status": "conditional-inference",
+      "grammar": "Moore<=4,2-actions,2-bit stationary",
+      "hypotheses": 1,
+      "next_support": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "partner": "beta",
+      "phase": "MODEL",
+      "status": "supported"
+    },
+    {
+      "evaluation": {
+        "artifact_digest": "07aebcb7dec785b04233c5822fec4ad54ae6292bb2cd2fe21af5b8f6020aa4a8",
+        "baseline": [
+          0,
+          1,
+          null,
+          null
+        ],
+        "baseline_correct": 2,
+        "candidate_correct": 4,
+        "oracle": [
+          0,
+          1,
+          0,
+          1
+        ],
+        "regressions": 0,
+        "total": 4,
+        "verification_queries": 4
+      },
+      "partner": "beta",
+      "phase": "VERIFY",
+      "scope": "exhaustively-checked-four-input-simulator"
+    },
+    {
+      "artifact": "beta-table",
+      "partner": "beta",
+      "phase": "LEARN",
+      "retained": true,
+      "revision": 1
+    },
+    {
+      "adoption": {
+        "adopted": true,
+        "evaluation": {
+          "artifact_digest": "79a6a696152504d82c56463716f64d92c4c37602d40a1f15a1bd2bc998221993",
+          "baseline": [
+            0,
+            1,
+            null,
+            null
+          ],
+          "baseline_correct": 2,
+          "candidate_correct": 4,
+          "oracle": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "regressions": 0,
+          "total": 4,
+          "verification_queries": 4
+        }
+      },
+      "derived_abstraction": "second-bit",
+      "partner": "beta",
+      "phase": "CONTRIBUTE"
+    },
+    {
+      "drift": 0.0,
+      "independent_probes": 4,
+      "partner": "beta",
+      "persistent_artifact": "beta-table",
+      "phase": "REASSESS"
+    }
+  ],
+  "promoted": 0,
+  "reused": 2,
+  "schema": "symbiote.demo/1",
+  "scientific_status": "deterministic finite-domain software experiment; not generalized intelligence",
+  "status": "PASS",
+  "version": "0.3.0"
+}

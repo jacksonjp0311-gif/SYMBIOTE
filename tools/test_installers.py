@@ -65,6 +65,12 @@ class NativeInstallerTests(unittest.TestCase):
     def test_native_bundle_installs_without_network_or_path_changes(self):
         self.successful_install()
 
+    def test_valid_reinstallation_replaces_atomically_and_cleans_stage_files(self):
+        before = self.successful_install()
+        self.assertEqual(self.successful_install(), before)
+        self.assertFalse((self.installed / ".install.lock").exists())
+        self.assertEqual(list(self.installed.glob(".symbiote-*")), [])
+
     def test_checksum_failure_preserves_existing_installation(self):
         before = self.successful_install()
         with self.archive.open("ab") as stream:
@@ -94,6 +100,19 @@ class NativeInstallerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("version", (result.stdout + result.stderr).lower())
         self.assertEqual((self.installed / self.executable_name).read_bytes(), before)
+
+    def test_existing_install_lease_prevents_concurrent_replacement(self):
+        before = self.successful_install()
+        lease = self.installed / ".install.lock"
+        if sys.platform == "win32":
+            lease.write_text("process=supervised-fixture\n", encoding="utf-8")
+        else:
+            lease.mkdir()
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("lock", (result.stdout + result.stderr).lower())
+        self.assertEqual((self.installed / self.executable_name).read_bytes(), before)
+        self.assertTrue(lease.exists())
 
 
 if __name__ == "__main__":

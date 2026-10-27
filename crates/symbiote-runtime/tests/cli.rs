@@ -85,6 +85,39 @@ fn doctor_and_empty_status_are_nonmutating() {
 }
 
 #[test]
+fn doctor_rejects_corrupt_evidence_and_migration_preserves_ledger_bytes() {
+    let sandbox = Sandbox::new();
+    let state = sandbox.0.join("checked");
+    let identity = {
+        let store = Store::open(&state).unwrap();
+        store.identity().to_string()
+    };
+    let original = fs::read(state.join("ledger.jsonl")).unwrap();
+    let doctor = sandbox.run(&["doctor", "--state", "checked", "--json"]);
+    assert!(doctor.status.success());
+    let report: Value = serde_json::from_slice(&doctor.stdout).unwrap();
+    assert_eq!(report["ledger_integrity"], "verified_snapshot");
+    assert_eq!(fs::read(state.join("ledger.jsonl")).unwrap(), original);
+    assert!(!state.join("writer.lock").exists());
+    let migration = sandbox.run(&["migrate", "--state", "checked", "--json"]);
+    assert!(
+        migration.status.success(),
+        "{}",
+        String::from_utf8_lossy(&migration.stderr)
+    );
+    let report: Value = serde_json::from_slice(&migration.stdout).unwrap();
+    assert_eq!(report["identity"], identity);
+    assert_eq!(report["ledger_bytes_changed"], false);
+    assert_eq!(fs::read(state.join("ledger.jsonl")).unwrap(), original);
+    let mut corrupt = original;
+    corrupt[12] ^= 1;
+    fs::write(state.join("ledger.jsonl"), &corrupt).unwrap();
+    let rejected = sandbox.run(&["doctor", "--state", "checked", "--json"]);
+    assert!(!rejected.status.success());
+    assert_eq!(fs::read(state.join("ledger.jsonl")).unwrap(), corrupt);
+}
+
+#[test]
 fn demonstration_has_human_summary_and_explicit_json_mode() {
     let sandbox = Sandbox::new();
     let human = sandbox.run(&["demo"]);

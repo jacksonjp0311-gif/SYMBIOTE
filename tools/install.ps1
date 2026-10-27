@@ -15,6 +15,33 @@ $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 if ([string]::IsNullOrWhiteSpace($InstallDir)) { $InstallDir = Join-Path $env:LOCALAPPDATA 'SYMBIOTE/bin' }
 $InstallDir = [System.IO.Path]::GetFullPath($InstallDir)
 $temporary = $null
+function Install-ValidatedBinary([string]$SourceBinary) {
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    $targetBinary = Join-Path $InstallDir 'symbiote.exe'
+    $incomingBinary = Join-Path $InstallDir ('.symbiote-' + [guid]::NewGuid().ToString('N') + '.incoming')
+    $leasePath = Join-Path $InstallDir '.install.lock'
+    $lease = $null
+    try {
+        try { $lease = [System.IO.File]::Open($leasePath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None) }
+        catch { throw "Installation lock unavailable: $leasePath. Another installer may be active or interrupted; the existing binary is unchanged." }
+        $ownerBytes = [System.Text.Encoding]::UTF8.GetBytes("process=$PID`n")
+        $lease.Write($ownerBytes, 0, $ownerBytes.Length)
+        $lease.Flush($true)
+        Copy-Item -LiteralPath $SourceBinary -Destination $incomingBinary
+        $incoming = [System.IO.File]::Open($incomingBinary, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::Read)
+        try { $incoming.Flush($true) }
+        finally { $incoming.Dispose() }
+        if (Test-Path -LiteralPath $targetBinary) { [System.IO.File]::Replace($incomingBinary, $targetBinary, [NullString]::Value) }
+        if (-not (Test-Path -LiteralPath $targetBinary)) { [System.IO.File]::Move($incomingBinary, $targetBinary) }
+    }
+    finally {
+        if (Test-Path -LiteralPath $incomingBinary) { Remove-Item -LiteralPath $incomingBinary -Force }
+        if ($null -ne $lease) {
+            $lease.Dispose()
+            Remove-Item -LiteralPath $leasePath -Force
+        }
+    }
+}
 try {
     if ($FromSource) {
         $manifest = Join-Path $PSScriptRoot '../crates/symbiote-runtime/Cargo.toml'
@@ -24,10 +51,10 @@ try {
         New-Item -ItemType Directory -Path $temporary | Out-Null
         & cargo install --path (Split-Path -Parent $manifest) --locked --root $temporary --force
         if ($LASTEXITCODE -ne 0) { throw "Cargo installation failed ($LASTEXITCODE)." }
-        & (Join-Path $temporary 'bin/symbiote.exe') --version
+        $sourceVersion = & (Join-Path $temporary 'bin/symbiote.exe') --version
         if ($LASTEXITCODE -ne 0) { throw 'The staged source binary failed its version check.' }
-        New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $temporary 'bin/symbiote.exe') -Destination (Join-Path $InstallDir 'symbiote.exe') -Force
+        if ($Version -ne 'latest' -and ($sourceVersion -join "`n").Trim() -ne "SYMBIOTE $($Version.TrimStart('v'))") { throw 'Local source version does not match -Version; the existing binary is unchanged.' }
+        Install-ValidatedBinary (Join-Path $temporary 'bin/symbiote.exe')
     }
     if (-not $FromSource) {
         if ($env:OS -ne 'Windows_NT') { throw 'Use tools/install.sh on Linux or macOS.' }
@@ -36,7 +63,7 @@ try {
             $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/jacksonjp0311-gif/SYMBIOTE/releases/latest' -Headers @{ Accept = 'application/vnd.github+json'; 'User-Agent' = 'SYMBIOTE-installer' }
             $Version = $release.tag_name
         }
-        if ($Version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') { throw 'Version must be a release tag such as v0.2.0.' }
+        if ($Version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') { throw 'Version must be a release tag such as v0.3.0.' }
         $asset = "symbiote-$Version-x86_64-pc-windows-msvc.zip"
         $baseUri = "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/$Version"
         $temporary = Join-Path ([System.IO.Path]::GetTempPath()) ('symbiote-install-' + [guid]::NewGuid().ToString('N'))
@@ -75,8 +102,7 @@ try {
             [System.IO.Compression.ZipFileExtensions]::ExtractToFile($executables[0], $staged, $false)
             $stagedVersion = & $staged --version
             if ($LASTEXITCODE -ne 0 -or ($stagedVersion -join "`n").Trim() -ne "SYMBIOTE $($Version.Substring(1))") { throw 'Staged executable version does not match its release tag; nothing installed.' }
-            New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-            Copy-Item -LiteralPath $staged -Destination (Join-Path $InstallDir 'symbiote.exe') -Force
+            Install-ValidatedBinary $staged
         }
         finally { $zip.Dispose() }
     }

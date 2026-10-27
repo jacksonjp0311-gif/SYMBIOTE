@@ -6,6 +6,10 @@ param(
     [switch]$Verify,
     [switch]$Benchmark,
     [switch]$Research,
+    [switch]$NetworkResearch,
+    [switch]$InspectState,
+    [switch]$Recover,
+    [switch]$Migrate,
     [switch]$Doctor,
     [switch]$Install,
     [switch]$Json,
@@ -32,8 +36,12 @@ function Invoke-Symbiote([string[]]$Arguments) {
 
 try {
     if ($Build) { Invoke-Checked { cargo build --workspace --release --locked } }
+    if ($InspectState) { Invoke-Symbiote -Arguments @('inspect-state', '--state', $State) }
+    if ($Recover) { Invoke-Symbiote -Arguments @('recover', '--state', $State) }
+    if ($Migrate) { Invoke-Symbiote -Arguments @('migrate', '--state', $State) }
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
+    if ($NetworkResearch) { Invoke-Symbiote -Arguments @('network-research', '--state', $State) }
     if ($Doctor) { Invoke-Symbiote -Arguments @('doctor', '--state', $State) }
     if ($Install) { & (Join-Path $repoRoot 'tools/install.ps1') -FromSource; if ($LASTEXITCODE -ne 0) { throw 'Installation failed' } }
     if ($Test) { Invoke-Checked { cargo test --workspace --locked } }
@@ -54,16 +62,18 @@ try {
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $Doctor -or $Install -or $GitStatus)) {
+    if (-not ($Build -or $Run -or $Test -or $Verify -or $Benchmark -or $Research -or $NetworkResearch -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
         Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
         Write-Output ''
         Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
         Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
+        Write-Output 'Processes:  .\SYMBIOTE-All-One.ps1 -NetworkResearch'
         Write-Output 'Check:      .\SYMBIOTE-All-One.ps1 -Doctor'
         Write-Output 'Verify:     .\SYMBIOTE-All-One.ps1 -Verify'
         Write-Output 'Install:    .\SYMBIOTE-All-One.ps1 -Install'
         Write-Output ''
-        Write-Output 'Other switches: -Build -Test -Benchmark -GitStatus -Json -State DIR -Python EXE'
+        Write-Output 'State: -InspectState -Recover -Migrate -State DIR'
+        Write-Output 'Other switches: -Build -Test -Benchmark -GitStatus -Json -Python EXE'
     }
 }
 finally { Set-Location -LiteralPath $repoRoot }

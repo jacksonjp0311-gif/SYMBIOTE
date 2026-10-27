@@ -4,6 +4,7 @@
 //! against an adversary capable of rewriting its complete contents. Evaluation
 //! receives a privileged simulator oracle. It is not a universal truth verifier.
 pub mod knowledge;
+pub mod maintenance;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -138,6 +139,8 @@ enum Event {
     Promote {
         artifact: Artifact,
         evaluation: Evaluation,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        policy_version: Option<u32>,
     },
     Revoke {
         id: String,
@@ -176,20 +179,11 @@ impl Receipt {
     }
 }
 
-struct WriterLock(PathBuf);
-impl Drop for WriterLock {
-    fn drop(&mut self) {
-        // A stale lock after process death is deliberately not broken by open().
-        // Explicit operator recovery must first establish no writer is alive.
-        let _ = fs::remove_file(&self.0);
-    }
-}
-
 /// One writer owns the directory until drop. The ledger itself is the only
 /// durable source of truth; no separately updated snapshot can diverge from it.
 pub struct Store {
     directory: PathBuf,
-    _lock: WriterLock,
+    _lock: Option<maintenance::WriterLock>,
     identity: String,
     receipts: Vec<Receipt>,
     active: BTreeMap<String, Artifact>,
@@ -198,22 +192,28 @@ pub struct Store {
 
 impl Store {
     pub fn open(directory: &Path) -> Result<Self, String> {
+        Self::open_with_initialization_hook(directory, || {})
+    }
+
+    /// A private no-op in production; tests can deterministically schedule a
+    /// competing constructor at the pre-genesis filesystem commit boundary.
+    fn open_with_initialization_hook(
+        directory: &Path,
+        before_genesis: impl FnOnce(),
+    ) -> Result<Self, String> {
         fs::create_dir_all(directory).map_err(|e| format!("memory directory: {e}"))?;
-        let lock_path = directory.join("writer.lock");
-        let mut lock_file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&lock_path)
-            .map_err(|e| {
-                format!("exclusive memory lock unavailable (live or stale writer): {e}")
-            })?;
-        let lock = WriterLock(lock_path);
-        writeln!(lock_file, "process={}", std::process::id()).map_err(|e| e.to_string())?;
-        lock_file.sync_all().map_err(|e| e.to_string())?;
+        let (lock, _initialization_gate) = maintenance::writer_lock(directory, "writer.lock")?;
+        if !directory.join("ledger.jsonl").exists() && directory.join("knowledge.jsonl").exists() {
+            return Err(
+                "structural knowledge exists without its identity ledger; refusing identity reset"
+                    .into(),
+            );
+        }
+        before_genesis();
         let path = directory.join("ledger.jsonl");
         let mut store = Self {
             directory: directory.to_path_buf(),
-            _lock: lock,
+            _lock: Some(lock),
             identity: String::new(),
             receipts: Vec::new(),
             active: BTreeMap::new(),
@@ -228,31 +228,7 @@ impl Store {
             file.take(MAX_LEDGER_BYTES as u64 + 1)
                 .read_to_end(&mut bytes)
                 .map_err(|e| e.to_string())?;
-            if bytes.len() > MAX_LEDGER_BYTES || bytes.is_empty() || bytes.last() != Some(&b'\n') {
-                return Err("memory ledger is empty, truncated, or over budget".into());
-            }
-            let raw = std::str::from_utf8(&bytes).map_err(|e| e.to_string())?;
-            let mut previous = ZERO_HASH.to_string();
-            for (sequence, line) in raw.lines().enumerate() {
-                if sequence >= MAX_RECORDS || line.is_empty() || line.len() > MAX_RECORD_BYTES {
-                    return Err("memory record exceeds budget or is empty".into());
-                }
-                let receipt: Receipt = serde_json::from_str(line)
-                    .map_err(|e| format!("invalid memory receipt {sequence}: {e}"))?;
-                if receipt.sequence != sequence
-                    || receipt.previous != previous
-                    || receipt.sha256 != receipt.calculate_hash()?
-                {
-                    return Err(format!("memory hash chain mismatch at receipt {sequence}"));
-                }
-                store.validate_event(&receipt.payload)?;
-                store.apply(&receipt.payload);
-                previous = receipt.sha256.clone();
-                store.receipts.push(receipt);
-            }
-            if store.identity.is_empty() {
-                return Err("memory genesis identity is missing".into());
-            }
+            store.replay_bytes(&bytes)?;
         }
         if !path.exists() {
             let now = SystemTime::now()
@@ -265,7 +241,50 @@ impl Store {
                 identity: format!("symbiote-{}", &id[..24]),
             })?;
         }
+        maintenance::validate_layout_identity(directory, &store.identity)?;
         Ok(store)
+    }
+
+    fn replay_bytes(&mut self, bytes: &[u8]) -> Result<(), String> {
+        if bytes.len() > MAX_LEDGER_BYTES || bytes.is_empty() || bytes.last() != Some(&b'\n') {
+            return Err("memory ledger is empty, truncated, or over budget".into());
+        }
+        let raw = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+        let mut previous = ZERO_HASH.to_string();
+        for (sequence, line) in raw.lines().enumerate() {
+            if sequence >= MAX_RECORDS || line.is_empty() || line.len() > MAX_RECORD_BYTES {
+                return Err("memory record exceeds budget or is empty".into());
+            }
+            let receipt: Receipt = serde_json::from_str(line)
+                .map_err(|e| format!("invalid memory receipt {sequence}: {e}"))?;
+            if receipt.sequence != sequence
+                || receipt.previous != previous
+                || receipt.sha256 != receipt.calculate_hash()?
+            {
+                return Err(format!("memory hash chain mismatch at receipt {sequence}"));
+            }
+            self.validate_event(&receipt.payload)?;
+            self.apply(&receipt.payload);
+            previous = receipt.sha256.clone();
+            self.receipts.push(receipt);
+        }
+        if self.identity.is_empty() {
+            return Err("memory genesis identity is missing".into());
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_snapshot(bytes: &[u8]) -> Result<String, String> {
+        let mut snapshot = Self {
+            directory: PathBuf::new(),
+            _lock: None,
+            identity: String::new(),
+            receipts: Vec::new(),
+            active: BTreeMap::new(),
+            revisions: BTreeMap::new(),
+        };
+        snapshot.replay_bytes(bytes)?;
+        Ok(snapshot.identity)
     }
 
     pub fn identity(&self) -> &str {
@@ -294,6 +313,7 @@ impl Store {
         self.append(Event::Promote {
             artifact,
             evaluation,
+            policy_version: Some(2),
         })
     }
 
@@ -321,12 +341,16 @@ impl Store {
             Event::Promote {
                 artifact,
                 evaluation,
+                policy_version,
             } => {
                 if self.identity.is_empty() {
                     return Err("promotion before genesis".into());
                 }
                 artifact.validate()?;
                 evaluation.validate(artifact)?;
+                if policy_version.is_some_and(|version| version != 2) {
+                    return Err("unsupported memory promotion policy".into());
+                }
                 if self
                     .revisions
                     .get(&artifact.id)
@@ -338,6 +362,10 @@ impl Store {
                     existing.id == artifact.id
                         || (existing.source == artifact.source && existing.scope == artifact.scope)
                 }) {
+                    if policy_version == &Some(2) && evaluation.oracle.as_slice() != existing.table
+                    {
+                        return Err("stationary context contradicts retained truth; revoke or change context before promotion".into());
+                    }
                     let existing_predictions = std::array::from_fn(|i| Some(existing.table[i]));
                     if evaluation.baseline != existing_predictions {
                         return Err(
@@ -594,5 +622,33 @@ mod tests {
         assert!(store.promote(a.clone(), good_evaluation(&a)).is_err());
         assert!(store.active().is_empty());
         assert_eq!(store.record_count(), 1);
+    }
+
+    #[test]
+    fn changed_finite_world_truth_requires_revocation_without_rewriting_history() {
+        let dir = TestDirectory::new();
+        let mut store = Store::open(&dir.0).unwrap();
+        let original = artifact();
+        store
+            .promote(original.clone(), good_evaluation(&original))
+            .unwrap();
+        let mut changed = original.clone();
+        changed.revision = 2;
+        changed.table[2] ^= 1;
+        let oracle: [u8; 4] = changed.table.clone().try_into().unwrap();
+        let baseline = std::array::from_fn(|i| Some(original.table[i]));
+        let evaluation = evaluate(&changed, &oracle, &baseline).unwrap();
+        assert!(store
+            .promote(changed.clone(), evaluation.clone())
+            .unwrap_err()
+            .contains("stationary"));
+        assert_eq!(store.record_count(), 2);
+        assert_eq!(store.active(), vec![original.clone()]);
+        store
+            .revoke(&original.id, "changed environment verified")
+            .unwrap();
+        store.promote(changed.clone(), evaluation).unwrap();
+        drop(store);
+        assert_eq!(Store::open(&dir.0).unwrap().active(), vec![changed]);
     }
 }

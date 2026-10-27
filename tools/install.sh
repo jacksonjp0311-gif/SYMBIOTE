@@ -10,12 +10,26 @@ while [ "$#" -gt 0 ]; do
         --install-dir) [ "$#" -ge 2 ] || { echo '--install-dir needs a directory' >&2; exit 2; }; install_dir=$2; shift 2 ;;
         --bundle-dir) [ "$#" -ge 2 ] || { echo '--bundle-dir needs a directory' >&2; exit 2; }; bundle_dir=$2; shift 2 ;;
         --from-source) from_source=1; shift ;;
-        --help|-h) printf '%s\n' 'Usage: sh tools/install.sh [--version v0.2.0] [--install-dir DIR] [--from-source] [--bundle-dir DIR]'; exit 0 ;;
+        --help|-h) printf '%s\n' 'Usage: sh tools/install.sh [--version v0.3.0] [--install-dir DIR] [--from-source] [--bundle-dir DIR]'; exit 0 ;;
         *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
     esac
 done
 [ -z "$bundle_dir" ] || [ "$from_source" -eq 0 ] || { echo '--bundle-dir and --from-source cannot be combined.' >&2; exit 2; }
 [ -z "$bundle_dir" ] || [ "$version" != latest ] || { echo '--bundle-dir requires an explicit --version tag.' >&2; exit 2; }
+install_validated_binary() (
+    source_binary=$1
+    mkdir -p -- "$install_dir"
+    lease="$install_dir/.install.lock"
+    mkdir -- "$lease" 2>/dev/null || { echo 'Installation lock unavailable; another installer may be active or interrupted. Existing binary unchanged.' >&2; exit 1; }
+    incoming=
+    trap '[ -z "$incoming" ] || rm -f -- "$incoming"; rmdir -- "$lease"' EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    incoming=$(mktemp "$install_dir/.symbiote-XXXXXXXXXX")
+    install -m 755 "$source_binary" "$incoming"
+    mv -f -- "$incoming" "$install_dir/symbiote"
+)
 if [ "$from_source" -eq 1 ]; then
     command -v cargo >/dev/null 2>&1 || { echo 'Rust/Cargo is required for --from-source.' >&2; exit 1; }
     source_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -23,8 +37,9 @@ if [ "$from_source" -eq 1 ]; then
     temporary=$(mktemp -d)
     trap 'rm -rf -- "$temporary"' EXIT HUP INT TERM
     cargo install --path "$source_root/crates/symbiote-runtime" --locked --root "$temporary" --force
-    mkdir -p -- "$install_dir"
-    install -m 755 "$temporary/bin/symbiote" "$install_dir/symbiote"
+    source_version=$("$temporary/bin/symbiote" --version)
+    if [ "$version" != latest ]; then [ "$source_version" = "SYMBIOTE ${version#v}" ] || { echo 'Local source version does not match --version; existing binary unchanged.' >&2; exit 1; }; fi
+    install_validated_binary "$temporary/bin/symbiote"
 fi
 if [ "$from_source" -eq 0 ]; then
     command -v unzip >/dev/null 2>&1 || { echo 'Required tool missing: unzip' >&2; exit 1; }
@@ -71,8 +86,7 @@ if [ "$from_source" -eq 0 ]; then
     chmod 755 "$temporary/symbiote"
     staged_version=$("$temporary/symbiote" --version)
     [ "$staged_version" = "SYMBIOTE ${version#v}" ] || { echo 'Staged executable version differs from release tag; nothing installed.' >&2; exit 1; }
-    mkdir -p -- "$install_dir"
-    install -m 755 "$temporary/symbiote" "$install_dir/symbiote"
+    install_validated_binary "$temporary/symbiote"
 fi
 "$install_dir/symbiote" --version
 printf 'Installed: %s/symbiote\nRun: %s/symbiote demo\n' "$install_dir" "$install_dir"

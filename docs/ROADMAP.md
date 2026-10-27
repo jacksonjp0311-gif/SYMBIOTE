@@ -22,7 +22,14 @@ exact active queries, held-out inputs and reciprocal verified evidence reuse.
 Its trusted local oracle and declared cost model are explicit limitations; both
 learners still share one controller process. See [v0.2 research](RESEARCH_V02.md).
 
-Next: strengthen v0.3 persistence/crash/migration behavior and separate partner
-deployment, while expanding beyond the affine task family. Predeclare compute
-budgets, rejection criteria and participant utility. The broader v0.4–v1.0 claims
-remain open; local software success does not automatically advance those versions.
+v0.3 adds two supervised native peer processes, private retained knowledge,
+byte-preserving migration and explicit crash recovery. Its TLS transport is
+tested separately as a library; the process experiment still uses authorized
+loopback v1. Graph reasoning is a verified primitive, with operational graph
+learning still pending. See [deployment evidence](../experiments/v0.3/deployed-verification.json).
+
+Next: turn route planning into a second persistent exchange task, integrate TLS
+into the supervised runtime, and evaluate partner choice prospectively.
+Predeclare compute budgets, rejection criteria and participant utility. The
+broader v0.4–v1.0 claims remain open; local software success does not automatically
+advance those versions.

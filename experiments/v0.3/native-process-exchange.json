@@ -1,0 +1,75 @@
+{
+  "controller_pid": 45692,
+  "cross_domain_receipt_rejected": true,
+  "duplicate_receipt_rejected": true,
+  "forged_receipt_rejected": true,
+  "hidden_law_parameters_sent_to_children": false,
+  "identity": "symbiote-762a9ac35cb0b48d619bde42",
+  "limitations": [
+    "trusted same-host laboratory oracle and evaluator",
+    "independent native learner implementations share one executable",
+    "loopback transport; no sandbox against a malicious same-user process",
+    "one four-bit context; no new general transfer claim"
+  ],
+  "oracle_requests": {
+    "assess": 2,
+    "observe": 10,
+    "verify": 5
+  },
+  "participants": [
+    {
+      "active_models": 1,
+      "agent": "network-exact",
+      "identity": "symbiote-901d74963c6de96409701e15",
+      "instance_nonce": "6d215f2dffdefc8fb4823264d7988d0e5edc6c953e8c0eabc8220d75d4c14e9a",
+      "pid": 24652,
+      "promotion": {
+        "active_models": 1,
+        "already_retained": false,
+        "correct": 11,
+        "promoted": true,
+        "total": 11
+      },
+      "restart_instance_nonce": "9f37a0926f7147e5efe91ba35af02221733fc0deab9dc6f0d646c5d1c3e9991c",
+      "restart_oracle_requests": {
+        "assess": 0,
+        "observe": 0,
+        "verify": 0
+      },
+      "restart_pid": 39608
+    },
+    {
+      "active_models": 1,
+      "agent": "network-linear",
+      "identity": "symbiote-88eb1a8ab564e7b3042302c1",
+      "instance_nonce": "b1b0eed65dfbaf1844e7f98fcd70da2d50bf98d1da5e662c505910db9a63af18",
+      "pid": 28756,
+      "promotion": {
+        "active_models": 1,
+        "already_retained": false,
+        "correct": 11,
+        "promoted": true,
+        "total": 11
+      },
+      "restart_instance_nonce": "56c96d6c2ab17689dd602f6351f12d25970c7ffbbc5d8fd9440e83ef687afd7c",
+      "restart_oracle_requests": {
+        "assess": 0,
+        "observe": 0,
+        "verify": 0
+      },
+      "restart_pid": 42784
+    }
+  ],
+  "performance_claim": "none; no paired cost comparison is executed by this deployment prototype",
+  "private_identity_and_ledgers": true,
+  "process_separation": true,
+  "restart_acquisition_requests": 0,
+  "restart_assessment_requests": 0,
+  "restart_retained_predictions": true,
+  "restart_verification_requests": 0,
+  "schema": "symbiote.network-research/1",
+  "scope": "Boolean affine width4; native process/persistence prototype",
+  "secrets_in_arguments_or_readiness": false,
+  "status": "PASS",
+  "version": "0.3.0"
+}

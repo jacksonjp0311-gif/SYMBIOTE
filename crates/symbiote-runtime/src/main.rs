@@ -433,11 +433,15 @@ impl Cli {
             "demo",
             "benchmark",
             "research",
+            "network-research",
             "predict",
             "verify-memory",
             "status",
             "revoke",
             "doctor",
+            "inspect-state",
+            "recover",
+            "migrate",
         ]
         .contains(&command.as_str())
         {
@@ -446,8 +450,9 @@ impl Cli {
         for option in options.keys() {
             let allowed = match option.as_str() {
                 "--state" => !["help", "version"].contains(&command.as_str()),
-                "--receipts" => ["demo", "benchmark", "research"].contains(&command.as_str()),
-                "--fault" => ["demo", "benchmark"].contains(&command.as_str()),
+                "--receipts" => ["demo", "benchmark", "research", "network-research"]
+                    .contains(&command.as_str()),
+                "--fault" => ["demo", "benchmark", "network-research"].contains(&command.as_str()),
                 "--artifact" => command == "revoke",
                 _ => false,
             };
@@ -456,16 +461,29 @@ impl Cli {
             }
         }
         let fault = options.remove("--fault").unwrap_or_else(|| "none".into());
-        if !["none", "wrong-artifact", "drift"].contains(&fault.as_str()) {
+        let faults = if command == "network-research" {
+            &[
+                "none",
+                "startup-timeout",
+                "crash-after-ready",
+                "crash-after-promotion",
+            ][..]
+        } else {
+            &["none", "wrong-artifact", "drift"][..]
+        };
+        if !faults.contains(&fault.as_str()) {
             return Err(format!(
-                "unknown fault: {fault}; choose wrong-artifact or drift"
+                "unknown fault: {fault}; allowed values: {}",
+                faults.join(", ")
             ));
         }
         let artifact = options.remove("--artifact");
         if command == "revoke" && artifact.is_none() {
             return Err("revoke requires --artifact ID".into());
         }
-        let default_receipt = if command == "research" {
+        let default_receipt = if command == "network-research" {
+            "experiments/local/network-research.json"
+        } else if command == "research" {
             "experiments/local/research.json"
         } else {
             "experiments/local/demo.json"
@@ -504,17 +522,33 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     if command == "research" {
         return research::run(state, receipts);
     }
+    if command == "network-research" {
+        if cli.fault == "none" {
+            return research::deployed::run(state, receipts);
+        }
+        return research::deployed::run_with_fault(state, receipts, &cli.fault);
+    }
+    if command == "inspect-state" {
+        return Ok(json!(symbiote_memory::maintenance::inspect(state)?));
+    }
+    if command == "recover" {
+        return Ok(json!(symbiote_memory::maintenance::recover(state)?));
+    }
+    if command == "migrate" {
+        return Ok(json!(symbiote_memory::maintenance::migrate(state)?));
+    }
     if command == "demo" || command == "benchmark" {
         return demo(state, receipts, &cli.fault);
     }
     if command == "doctor" {
+        let inspection = symbiote_memory::maintenance::inspect(state)?;
         let state_exists = path_exists(state)?;
         let ledger_exists = path_exists(&state.join("ledger.jsonl"))?;
         let lock_exists = path_exists(&state.join("writer.lock"))?;
         let knowledge_exists = path_exists(&state.join("knowledge.jsonl"))?;
         let knowledge_lock_exists = path_exists(&state.join("knowledge.writer.lock"))?;
         return Ok(
-            json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":if lock_exists || knowledge_lock_exists { "ATTENTION" } else { "PASS" },"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"network_requests":0,"state_modified":false}),
+            json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":inspection.status,"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"ledger_integrity":inspection.ledger_integrity,"locks":inspection.locks,"network_requests":0,"state_modified":false}),
         );
     }
     if ["status", "predict", "verify-memory"].contains(&command)
@@ -583,7 +617,7 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE]","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
@@ -598,7 +632,7 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for demo, research or benchmark\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  research       Run structural-transfer experiments and matched controls\n  network-research  Run separately deployed native research agents\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for demo, research or benchmark\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
@@ -624,6 +658,12 @@ fn display(report: &Value, cli: &Cli) -> String {
             );
         }
         lines.push("Inspection only; no state changes or network requests.".into());
+        lines.push(format!(
+            "Ledger integrity: {}",
+            report["ledger_integrity"]
+                .as_str()
+                .unwrap_or("not verified")
+        ));
         return lines.join("\n");
     }
     if let Some(identity) = report["identity"].as_str() {
@@ -647,7 +687,7 @@ fn display(report: &Value, cli: &Cli) -> String {
     }
     if let Some(participants) = report["participants"]
         .as_array()
-        .filter(|_| cli.command != "research")
+        .filter(|_| ["demo", "benchmark"].contains(&cli.command.as_str()))
     {
         for participant in participants {
             let s = &participant["symbiote"];
@@ -743,15 +783,78 @@ fn display(report: &Value, cli: &Cli) -> String {
         }
         lines.push("Use --json for complete experimental measurements.".into());
     }
+    if cli.command == "network-research" {
+        if let Some(participants) = report["participants"].as_array() {
+            for agent in participants {
+                lines.push(format!(
+                    "  {}: native PID {} -> restarted PID {} | {} retained model(s)",
+                    agent["agent"].as_str().unwrap_or("agent"),
+                    agent["pid"],
+                    agent["restart_pid"],
+                    agent["active_models"]
+                ));
+            }
+        }
+        lines.push(format!(
+            "Private identity and predictions survived restart: {}",
+            report["restart_retained_predictions"]
+        ));
+        lines.push(format!(
+            "Forged observation rejected: {}",
+            report["forged_receipt_rejected"]
+        ));
+        lines.push("Deployment/persistence prototype; no new paired efficiency claim.".into());
+    }
+    if cli.command == "inspect-state" {
+        lines.push(format!(
+            "Ledger integrity: {}",
+            report["ledger_integrity"]
+                .as_str()
+                .unwrap_or("not verified")
+        ));
+        if let Some(locks) = report["locks"].as_array() {
+            for lock in locks {
+                lines.push(format!(
+                    "  {}: {} | owner PID {}",
+                    lock["name"].as_str().unwrap_or("lock"),
+                    lock["state"].as_str().unwrap_or("unknown"),
+                    lock["process"]
+                ));
+            }
+        }
+        lines.push("Read-only inspection; no state changes.".into());
+    }
+    if cli.command == "recover" {
+        lines.push(format!(
+            "Verified-dead locks recovered: {}",
+            report["recovered_locks"]
+        ));
+        lines.push("Learning ledgers preserved; no processes terminated.".into());
+    }
+    if cli.command == "migrate" {
+        lines.push(format!(
+            "Layout version: {} | changed: {}",
+            report["layout_version"], report["changed"]
+        ));
+        lines.push("Original learning ledger bytes preserved with registered backups.".into());
+    }
     lines.push(format!("State: {}", cli.state.display()));
-    if ["demo", "benchmark", "research"].contains(&cli.command.as_str()) {
+    if ["demo", "benchmark", "research", "network-research"].contains(&cli.command.as_str()) {
         lines.push(format!("Receipt: {}", cli.receipts.display()));
     }
     lines.join("\n")
 }
 
 fn main() {
-    let cli = match Cli::parse(std::env::args().skip(1).collect()) {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "__research-partner") {
+        if args.len() != 1 || research::deployed::serve_from_stdin().is_err() {
+            eprintln!("SYMBIOTE native partner stopped with an error; configuration and capability contents are withheld.");
+            std::process::exit(1);
+        }
+        return;
+    }
+    let cli = match Cli::parse(args) {
         Ok(cli) => cli,
         Err(error) => {
             eprintln!("SYMBIOTE: {error}\nRun `symbiote --help` for usage.");

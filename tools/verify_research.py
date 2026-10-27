@@ -10,6 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def require(condition, description):
+    if not condition:
+        raise RuntimeError("Acceptance gate failed: " + description)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "experiments/local/research-verification.json")
@@ -31,30 +36,30 @@ def main():
             return json.loads(result.stdout)
 
         first = run("research")
-        assert first["status"] == "PASS" and first["cases"] == 24 and first["promoted"] == 48
-        assert all(first["negative_controls"].values())
-        assert first["aggregate"]["correct"] == first["aggregate"]["heldout_predictions"]
+        require(first['status'] == 'PASS' and first['cases'] == 24 and (first['promoted'] == 48), "verify_research.py:39: first['status'] == 'PASS' and first['cases'] == 24 and (first['promoted'] == 48)")
+        require(all(first['negative_controls'].values()), "verify_research.py:40: all(first['negative_controls'].values())")
+        require(first['aggregate']['correct'] == first['aggregate']['heldout_predictions'], "verify_research.py:41: first['aggregate']['correct'] == first['aggregate']['heldout_predictions']")
         for participant in first["participants"]:
-            assert participant["correct"] == participant["isolated_correct"] == participant["total"]
-            assert participant["exchange_cost"] < participant["isolated_cost"]
-            assert participant["own_oracle_queries"] == participant["width"] + 1
+            require(participant['correct'] == participant['isolated_correct'] == participant['total'], "verify_research.py:43: participant['correct'] == participant['isolated_correct'] == participant['total']")
+            require(participant['exchange_cost'] < participant['isolated_cost'], "verify_research.py:44: participant['exchange_cost'] < participant['isolated_cost']")
+            require(participant['own_oracle_queries'] == participant['width'] + 1, "verify_research.py:45: participant['own_oracle_queries'] == participant['width'] + 1")
             parts = participant["cost_breakdown"]
-            assert sum(parts.values()) == participant["exchange_cost"]
+            require(sum(parts.values()) == participant['exchange_cost'], "verify_research.py:47: sum(parts.values()) == participant['exchange_cost']")
         own_bytes = (state / "knowledge.jsonl").read_bytes()
         partner_bytes = (state / "research-partner/knowledge.jsonl").read_bytes()
         own = run("predict")
         partner = run("predict", partner=True)
-        assert own["identity"] == first["identity"] and partner["identity"] == first["partner_identity"]
-        assert own["identity"] != partner["identity"]
+        require(own['identity'] == first['identity'] and partner['identity'] == first['partner_identity'], "verify_research.py:52: own['identity'] == first['identity'] and partner['identity'] == first['partner_identity']")
+        require(own['identity'] != partner['identity'], "verify_research.py:53: own['identity'] != partner['identity']")
         for retained in [own, partner]:
-            assert retained["structural_artifacts"] == 24 and retained["network_requests"] == 0
-        assert (state / "knowledge.jsonl").read_bytes() == own_bytes
-        assert (state / "research-partner/knowledge.jsonl").read_bytes() == partner_bytes
+            require(retained['structural_artifacts'] == 24 and retained['network_requests'] == 0, "verify_research.py:55: retained['structural_artifacts'] == 24 and retained['network_requests'] == 0")
+        require((state / 'knowledge.jsonl').read_bytes() == own_bytes, "verify_research.py:56: (state / 'knowledge.jsonl').read_bytes() == own_bytes")
+        require((state / 'research-partner/knowledge.jsonl').read_bytes() == partner_bytes, "verify_research.py:57: (state / 'research-partner/knowledge.jsonl').read_bytes() == partner_bytes")
         rerun = run("research")
-        assert rerun["promoted"] == 0 and rerun["already_retained"] == 48
-        assert rerun["aggregate"] == first["aggregate"]
-        assert (state / "knowledge.jsonl").read_bytes() == own_bytes
-        assert (state / "research-partner/knowledge.jsonl").read_bytes() == partner_bytes
+        require(rerun['promoted'] == 0 and rerun['already_retained'] == 48, "verify_research.py:59: rerun['promoted'] == 0 and rerun['already_retained'] == 48")
+        require(rerun['aggregate'] == first['aggregate'], "verify_research.py:60: rerun['aggregate'] == first['aggregate']")
+        require((state / 'knowledge.jsonl').read_bytes() == own_bytes, "verify_research.py:61: (state / 'knowledge.jsonl').read_bytes() == own_bytes")
+        require((state / 'research-partner/knowledge.jsonl').read_bytes() == partner_bytes, "verify_research.py:62: (state / 'research-partner/knowledge.jsonl').read_bytes() == partner_bytes")
         out = args.output.parent
         out.mkdir(parents=True, exist_ok=True)
         (out / "reciprocal-exchange.json").write_text(json.dumps(first, indent=2)+"\n", encoding="utf-8")

@@ -1,6 +1,8 @@
 //! Evidence-conditioned exchange between two independently implemented learners.
 //! Trusted laboratory observation receipts are a stated assumption, not a proof
 //! of arbitrary remote honesty. All costs are declared logical resource units.
+pub(crate) mod deployed;
+
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};

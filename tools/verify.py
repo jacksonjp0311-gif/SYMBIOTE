@@ -1,6 +1,9 @@
 """Reproduce final-tree gates and independent-process learning/restart receipts."""
 import argparse
 import json
+import hashlib
+import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -10,8 +13,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def require(condition, description):
+    if not condition:
+        raise RuntimeError("Acceptance gate failed: " + description)
+
+
+def count_native_tests(output):
+    count = sum(int(value) for value in re.findall(r"test result: ok\. (\d+) passed;", output))
+    require(count > 0, "native test output must report executed passing tests")
+    return count
+
+
+def count_python_tests(output):
+    match = re.search(r"Ran (\d+) tests", output)
+    require(match is not None and int(match.group(1)) > 0, "Python discovery must report executed tests")
+    return int(match.group(1))
+
+
 def execute(args, *, expected=0):
-    result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, capture_output=True, timeout=180)
+    result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, capture_output=True, timeout=300)
     if result.returncode != expected:
         raise RuntimeError(f"{args[0]} returned {result.returncode}\n{result.stdout}\n{result.stderr}")
     return result
@@ -22,15 +42,20 @@ def main():
     parser.add_argument("--skip-cargo", action="store_true")
     parser.add_argument("--skip-parity", action="store_true")
     parser.add_argument("--output", type=Path, default=ROOT / "experiments/local/genesis-verification.json")
+    parser.add_argument("--summary", type=Path, default=ROOT / "experiments/local/software-verification.json")
     args = parser.parse_args()
+    native_tests = None
     if not args.skip_cargo:
         for command in [["cargo", "fmt", "--all", "--", "--check"], ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["cargo", "test", "--workspace", "--locked"], ["cargo", "build", "--workspace", "--locked"]]:
-            execute(command)
+            checked = execute(command)
+            if command[1] == "test":
+                native_tests = count_native_tests(checked.stdout)
             print("PASS", " ".join(command), flush=True)
     if not args.skip_parity:
         result = execute([sys.executable, ROOT / "tools" / "parity.py", "--output", ROOT / "experiments" / "parity.json"])
         print(result.stdout.strip(), flush=True)
-    execute([sys.executable, "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"])
+    packaged = execute([sys.executable, "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"])
+    package_tests = count_python_tests(packaged.stderr)
     print("PASS release packaging and native installer integrity tests", flush=True)
     binary = ROOT / "target" / "debug" / ("symbiote.exe" if sys.platform == "win32" else "symbiote")
     with tempfile.TemporaryDirectory(prefix="symbiote-verification-") as directory:
@@ -52,28 +77,28 @@ def main():
         first = run("demo")
         retained = run("predict")
         restart = run("demo")
-        assert first["promoted"] == 2 and first["reused"] == 0
-        assert restart["promoted"] == 0 and restart["reused"] == 2
-        assert first["identity"] == retained["identity"] == restart["identity"]
-        assert retained["active_artifacts"] == 2 and retained["network_requests"] == 0
+        require(first['promoted'] == 2 and first['reused'] == 0, "verify.py:68: first['promoted'] == 2 and first['reused'] == 0")
+        require(restart['promoted'] == 0 and restart['reused'] == 2, "verify.py:69: restart['promoted'] == 0 and restart['reused'] == 2")
+        require(first['identity'] == retained['identity'] == restart['identity'], "verify.py:70: first['identity'] == retained['identity'] == restart['identity']")
+        require(retained['active_artifacts'] == 2 and retained['network_requests'] == 0, "verify.py:71: retained['active_artifacts'] == 2 and retained['network_requests'] == 0")
         for participant in first["participants"]:
             s, p = participant["symbiote"], participant["partner_benefit"]
-            assert (s["isolated_correct"], s["exchange_correct"], s["matched_probe_control_correct"]) == (16, 32, 32)
-            assert (p["baseline_resource_units"], p["strategy_resource_units_including_verification"]) == (176, 72)
+            require((s['isolated_correct'], s['exchange_correct'], s['matched_probe_control_correct']) == (16, 32, 32), "verify.py:74: (s['isolated_correct'], s['exchange_correct'], s['matched_probe_control_correct']) == (16, 32, 32)")
+            require((p['baseline_resource_units'], p['strategy_resource_units_including_verification']) == (176, 72), "verify.py:75: (p['baseline_resource_units'], p['strategy_resource_units_including_verification']) == (176, 72)")
         failure = run("demo", "wrong-artifact", base / "rejected", expect=1)
-        assert failure["status"] == "REJECTED"
-        assert run("predict", state_dir=base / "rejected")["active_artifacts"] == 0
+        require(failure['status'] == 'REJECTED', "verify.py:77: failure['status'] == 'REJECTED'")
+        require(run('predict', state_dir=base / 'rejected')['active_artifacts'] == 0, "verify.py:78: run('predict', state_dir=base / 'rejected')['active_artifacts'] == 0")
         recovery = run("demo", state_dir=base / "rejected")
-        assert recovery["promoted"] == 2
+        require(recovery['promoted'] == 2, "verify.py:80: recovery['promoted'] == 2")
         drift = run("demo", "drift", expect=1)
-        assert drift["status"] == "REJECTED"
+        require(drift['status'] == 'REJECTED', "verify.py:82: drift['status'] == 'REJECTED'")
         after_drift = run("predict")
-        assert after_drift["active_artifacts"] == 1
+        require(after_drift['active_artifacts'] == 1, "verify.py:84: after_drift['active_artifacts'] == 1")
         drift_recovery = run("demo")
-        assert drift_recovery["identity"] == first["identity"]
-        assert drift_recovery["promoted"] == 1 and drift_recovery["reused"] == 1
+        require(drift_recovery['identity'] == first['identity'], "verify.py:86: drift_recovery['identity'] == first['identity']")
+        require(drift_recovery['promoted'] == 1 and drift_recovery['reused'] == 1, "verify.py:87: drift_recovery['promoted'] == 1 and drift_recovery['reused'] == 1")
         recovered_predictions = run("predict")
-        assert recovered_predictions["predictions"][0]["revision"] == 2
+        require(recovered_predictions['predictions'][0]['revision'] == 2, "verify.py:89: recovered_predictions['predictions'][0]['revision'] == 2")
         evidence = args.output.parent
         evidence.mkdir(parents=True, exist_ok=True)
         for name, report in [("genesis-first.json", first), ("genesis-retained.json", retained), ("genesis-restart.json", restart), ("genesis-rejected.json", failure), ("genesis-drift.json", drift)]:
@@ -84,6 +109,16 @@ def main():
         print(json.dumps(report, indent=2))
     result = execute([sys.executable, ROOT / "tools/verify_research.py"])
     print(result.stdout.strip(), flush=True)
+    deployed = execute([sys.executable, ROOT / "tools/verify_deployed.py"])
+    print(deployed.stdout.strip(), flush=True)
+    digest = hashlib.sha256()
+    sources = sorted(set(ROOT.glob("crates/**/*.rs")) | set(ROOT.glob("crates/**/Cargo.toml")) | set(ROOT.glob("tools/*.py")) | set(ROOT.glob("tools/*.ps1")) | set(ROOT.glob("tools/*.sh")) | {ROOT / "Cargo.toml", ROOT / "Cargo.lock", ROOT / "SYMBIOTE-All-One.ps1"})
+    for source in sources:
+        digest.update(source.relative_to(ROOT).as_posix().encode()+b"\0"+source.read_bytes().replace(b"\r\n",b"\n"))
+    summary = dict(schema="symbiote.software-verification/1", status="PASS", source_sha256=digest.hexdigest(), platform=platform.system(), architecture=platform.machine(), native_tests_passed=native_tests, packaging_and_installation_tests_passed=package_tests, legacy_parity_executed=not args.skip_parity, cargo_gates_executed=not args.skip_cargo, genesis_compatibility=True, structural_exchange=True, deployed_processes_migration_and_recovery=True, stable_v1_criteria="remain separate from software gate")
+    args.summary.parent.mkdir(parents=True, exist_ok=True)
+    args.summary.write_text(json.dumps(summary, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
