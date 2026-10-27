@@ -787,13 +787,20 @@ where
         {
             return Err("secure operation or session budget rejected".into());
         }
-        if requests
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |count| {
-                (count < config.limits.max_requests).then_some(count + 1)
-            })
-            .is_err()
-        {
-            return Err("server-wide secure request budget exhausted".into());
+        let mut admitted = requests.load(Ordering::Acquire);
+        loop {
+            if admitted >= config.limits.max_requests {
+                return Err("server-wide secure request budget exhausted".into());
+            }
+            match requests.compare_exchange_weak(
+                admitted,
+                admitted + 1,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => break,
+                Err(current) => admitted = current,
+            }
         }
         let result = handler(&context, &request.operation, request.payload);
         let response = match result {

@@ -10,7 +10,7 @@
     "task_predictions_are_repeated_not_independent_samples": true,
     "telemetry_observations": 4
   },
-  "identity": "symbiote-9fd3fcc91bbee7866449ea24",
+  "identity": "symbiote-59925fd395f4afddd7c1ab9a",
   "language_model": false,
   "participants": [
     {
@@ -134,7 +134,7 @@
       "adoption": {
         "adopted": true,
         "evaluation": {
-          "artifact_digest": "af730ef3f3540a40453de8ebf87f6b0a44f4fca9e055718605585cc3ee4f268c",
+          "artifact_digest": "be48d38bddd5c22ab8025d8bd8bc1e432b1d47329551ef4d982610ac39459804",
           "baseline": [
             0,
             1,
@@ -234,7 +234,7 @@
       "adoption": {
         "adopted": true,
         "evaluation": {
-          "artifact_digest": "79a6a696152504d82c56463716f64d92c4c37602d40a1f15a1bd2bc998221993",
+          "artifact_digest": "52121233d6cf087adecaf7fcd30a2e3ebbb9c5e15a262af89808b8b5c6aa1da7",
           "baseline": [
             0,
             1,
