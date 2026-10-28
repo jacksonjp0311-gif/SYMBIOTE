@@ -1,0 +1,30 @@
+{
+  "schema": "symbiote.corrective-backend-measurement/1",
+  "status": "PASS_MICROBENCHMARK_ONLY",
+  "source_commit": "e7ad4c7c7aa9ad752e7045bfbfb207cd5346fb55",
+  "test_executable": {
+    "path": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\release\\deps\\symbiote_reasoning-b938cde48a46fa98.exe",
+    "saved_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qb-101-e7ad4c7b\\binaries\\symbiote_reasoning-b938cde48a46fa98.exe",
+    "bytes": 1240064,
+    "sha256": "64a57f1c520ca049ec638029c40aea719eb2d4105102eec8003412fda202601e"
+  },
+  "raw_sha256": "b14340ade9542b9df5995f0ab210cfd7aa157438bac698cc2f8b67c4adf38127",
+  "measurement": {
+    "compact": {
+      "elapsed_microseconds": 1146,
+      "units": 454832,
+      "work_model": "gf2-row-operations/1"
+    },
+    "interpretation": "engineering microbenchmark; logical units are not interchangeable; no agent-learning or general speedup claim",
+    "reference": {
+      "elapsed_microseconds": 8370,
+      "units": 4186400,
+      "work_field": "legacy AffineSnapshot.model_evaluations"
+    },
+    "runs": 16,
+    "schema": "symbiote.affine-backend-comparison/1",
+    "width": 8
+  },
+  "independent_samples": 1,
+  "interpretation": "One local optimized batch of16width8 identifications; different logical units are not comparable. No runtime/general efficiency claim."
+}

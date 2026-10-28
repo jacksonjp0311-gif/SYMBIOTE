@@ -86,3 +86,43 @@ python -m unittest discover -s tools/release -p "test_*.py"
 These test membership/byte mutation rejection, mixed-format scanning, decoded
 credentials, per-source attribution, workflow/source binding, redirects, checksum
 sets and native archive shape. Synthetic executable fixtures are never run.
+
+## Replay the extracted corrective evidence
+
+`portable_evidence_replay.py` replays recorded data from an extracted archive.
+First verify the archive and retain its `MANIFEST.json` SHA256 independently.
+Only use trusted, reviewed consumer code: a self-declared hash is not authority
+to execute Python. The adapter validates the complete member census, source
+anchors and executable-role digests. It maps original absolute paths through
+the pinned manifest, with no fallback to the original host directories.
+
+The final archive uses these mappings:
+
+| Kind | `--collection` | Additional arguments |
+| --- | --- | --- |
+| `cohort` | `final-reciprocal` | `--registration-anchor final-reciprocal-registration` |
+| `normal` | `normal-feedback` | None |
+| `hour` | `final-hour` | `--registration-anchor final-hour-registration` |
+| `observation` | `active-observation` | The exact observation helper member and SHA below |
+
+Use `--tools-member evidence/preserved-receipts/qp-101-6025fff/qualification-tools`
+and `--consumer-sha256 40b4e51e3d08aab461dec395d47983f9faa0ff758a233ebc397eb141f5ed4a54`.
+Executable roles default to `final-build-native` and `final-build-service-tests`;
+registered cohort/hour source and binary pins must match their original anchors.
+
+```text
+python tools/release/portable_evidence_replay.py cohort --archive-root EXTRACTED_ROOT --manifest-sha256 EXTERNAL_MANIFEST_SHA256 --collection final-reciprocal --registration-anchor final-reciprocal-registration --tools-member evidence/preserved-receipts/qp-101-6025fff/qualification-tools --consumer-sha256 40b4e51e3d08aab461dec395d47983f9faa0ff758a233ebc397eb141f5ed4a54 --output NEW_FILE_OUTSIDE_ARCHIVE.json
+```
+
+For observation replay, also pass
+`--observation-helper evidence/independent-audits/qe-6025fff-rhjvvxuy/audit_observation_6025fff.py`
+and `--observation-helper-sha256 6834b3d80feca2e08db63c3779248cbe9304601ebb84c3eacce7e81c0b51b162`.
+Every output must be new and outside the extracted corpus. The loader checks
+each selected Python dependency's exact bytes immediately before compiling those
+bytes; timestamp-valid cached `.pyc` files cannot substitute different code.
+
+This is data-only replay: it launches no native executable or registered study,
+modifies no original record and infers no missing result. Public-binary proof
+uses `--native-role public-build-native` only after that independently anchored
+role exists in the final manifest; it cannot replace the frozen cohort/hour
+binary. Public installation and archive delivery remain separate required checks.

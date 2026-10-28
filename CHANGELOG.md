@@ -2,6 +2,49 @@
 
 ## v1.0.1 — under qualification
 
+Native source `6025fff43ad4b508b94977eeff801aeebf549fd9` passes
+[Windows, Ubuntu and macOS CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717).
+Source-pinned native learning components and the completed 64-cell operational
+cohort pass separate consumers. The fresh hour records PASS_LOCAL_HOUR and passes
+independent data review; public binary/archive delivery remains pending. This is a
+corrective bounded one-host release, not closure of broader stable criteria.
+
+- Demonstrate normal two-way capability contribution with experiments disabled,
+  independent receiver adoption, actual retained-model use and process restarts.
+  Incoming feedback closes locally; return adoption/use uses separately authorized
+  receiver CLI/test-harness checks. Live outbound `partner_benefits_verified`
+  remains zero without witnessed receiver feedback; no autonomous network
+  return-benefit protocol is established.
+  A cheap-query case records cost harm; a high-price case has positive finite
+  received-task window nets. Complete participant comparisons lose against
+  isolation, and matched-resource controls explain coverage. General transfer
+  efficiency remains NOT_DEMONSTRATED.
+- Distinct training/held-out checks and later reuse do not establish an advantage
+  over answer caching. Next work targets measured evaluator/control overhead,
+  an authorized receiver-outcome channel and an unfamiliar independent adapter,
+  while retaining all checks and open broader stable criteria.
+- Complete the once-only registered 64-cell engineering cohort in 237.344 seconds.
+  Operational reciprocity passes. Aggregate exchange costs exceed isolated
+  greedy costs for all three participants; every fixed-order control is cheaper,
+  and matched-resource controls complete all targets. Preserve these negative
+  efficiency outcomes alongside the operational evidence.
+- Complete a fresh 120-cycle one-host hour on the corrective source. Measurement
+  is 3,602,431 ms, recorded live main-listener time 3,592,105 ms and maximum
+  maintenance gap 2,057 ms; owned process/wrapper elapsed are 3,604.453/3,607.359 s.
+  Cleanup is verified, the awake guard is released, maximum reported suspension
+  is 3 ms and source-watch failures are zero. The server retains two models;
+  the client retains unchanged genesis with none. Independent data review also
+  passes, including a relocated 1,073-file audit with zero original raw-root reads.
+  Actual public delivery and broader stable/two-host qualification stay distinct.
+- Harmful durable feedback changes a reopened source choice against a no-feedback
+  comparator. Favorable preference persists and is selected, but does not change
+  that fixture's winner. These are bounded engineering outcomes, not independent
+  scientific samples or generally improved partner selection.
+- Verify empty-memory observation learning at widths 3 and 8 with distinct
+  held-out inputs, all 8 and 256 retained-domain answers, and zero source queries
+  after actual process restart. Keep the legacy adaptive study's one-search
+  method and reservations through `assess_optimistic_reference`; the new normal
+  path retains its separately metered exact witness search.
 - Close the configured decision→artifact→evaluation→promotion→use→outcome
   chain with durable, one-time attribution. Swapped receipts, active-record
   revocation, duplicate capability and unsupported restart claims fail closed.

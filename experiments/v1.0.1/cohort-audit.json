@@ -1,0 +1,281 @@
+{
+  "schema": "symbiote.independent-registered-cohort-audit/1",
+  "status": "PASS",
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "source_manifest_sha256": "f4f30a5dbc1e55563d5f4a1c4e0760af25ed32696088636fd2e7716bda4444ba",
+  "registration_sha256": "286d685ac999ba3313b99966b5c82e308e2658040ada4c576248bdb6811c0ca0",
+  "independent_verification_sha256": "ff1cd7d3662f3b1cd6f1a04a6e116b37bb4c40b2f2f5f177f8e8c01a8263055b",
+  "consumer_source_sha256": "40b4e51e3d08aab461dec395d47983f9faa0ff758a233ebc397eb141f5ed4a54",
+  "audit_script_sha256": "51e7ec518d6f61ce294d6cd83925f36be615f62f45619d185ca2e17b52242d16",
+  "native_binary_sha256": "4e5700f1b2a2b04e26a0afb20a7549db5253b5a6f9eab36f2ef5f03e7f490c65",
+  "service_test_sha256": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4",
+  "artifact_manifest_sha256": "3406372141362fee216074f0bcdeb13db1720bf56a858fb379562f7ac40bf6ad",
+  "full_cells_verified": 64,
+  "actual_promotions_verified": 384,
+  "actual_return_adoptions_verified": 128,
+  "actual_restarted_retained_return_predictions_verified": 128,
+  "fixed_order_controls_verified": 3072,
+  "matched_resource_target_controls_verified": 256,
+  "greedy_controls_verified": 128,
+  "equal_query_controls_verified": 128,
+  "original_manifest_census_reverified_after_tampering": true,
+  "original_raw_evidence_modified": false,
+  "tamper_test_scope": "Post-census semantic consumer with virtual rehashed JSON/JSONL and coherent native run copies; actual byte census checked before/after; no native execution or source edits",
+  "tamper_tests": [
+    {
+      "case": "cross_cell_substitution",
+      "status": "REJECTED",
+      "reason": "prospective cell enumeration differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "cell.json",
+          "bytes": 143401,
+          "sha256": "bf4ddcb176d75dcc329983fb23ccd396cbf33f04ea756c3c555b18dcc7b340fb"
+        }
+      ]
+    },
+    {
+      "case": "cross_owner_identity",
+      "status": "REJECTED",
+      "reason": "configured private owner differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "actor.json",
+          "bytes": 2111,
+          "sha256": "6edcb23f3547ec8e8894024c70876283ce1730ec6a517981cc47e75153c5634a"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "1457676e867a95aacbddf672718360b3064fdb95aae484e3f55ea1ff05b85f90"
+        }
+      ]
+    },
+    {
+      "case": "understated_actor_cost",
+      "status": "REJECTED",
+      "reason": "all actual exchange/replay/wire/adoption costs differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "ebeb0f92d762b6be6767d1a1c4c74e4435d581d8e21d933e093bcb9cf7295051"
+        }
+      ]
+    },
+    {
+      "case": "changed_actual_oracle_cost",
+      "status": "REJECTED",
+      "reason": "all actual central candidate/control queries differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "native-first/events.jsonl",
+          "bytes": 28543,
+          "sha256": "fb36ea8eeee73e7e7addc1625d790839fc0725a1132c8c73b09ab758eb24987d"
+        },
+        {
+          "path": "native-first/summary.json",
+          "bytes": 6495,
+          "sha256": "4d3e09b6380dd55fad2c3365129310f2ef129e98b7e6af92af8e012c3580d3ce"
+        },
+        {
+          "path": "native-first-stdout.jsonl",
+          "bytes": 35038,
+          "sha256": "df84de968a1ea8e2638733ae53a632886cf731cd960a8018b300b9787272486a"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "8b444e4c52ae3af832c10f1578c739cb678a3537b90bff8af915ccae76c58a55"
+        }
+      ]
+    },
+    {
+      "case": "duplicate_retained_knowledge",
+      "status": "REJECTED",
+      "reason": "both declared graph scopes retained differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "actor-state/knowledge.jsonl",
+          "bytes": 7716,
+          "sha256": "5ca7c3789daa724bf0a8b887fe26a4ccafa5a76dfcbee9aa4a3d820324d4fbf0"
+        },
+        {
+          "path": "native-first/events.jsonl",
+          "bytes": 28543,
+          "sha256": "fb36ea8eeee73e7e7addc1625d790839fc0725a1132c8c73b09ab758eb24987d"
+        },
+        {
+          "path": "native-first/summary.json",
+          "bytes": 6495,
+          "sha256": "0d434c1e2cfd807e4192b072a3b6d1ad2f0d57acfe7435831d522c1d4c25853b"
+        },
+        {
+          "path": "native-first-stdout.jsonl",
+          "bytes": 35038,
+          "sha256": "e3c7a4b80c903e4df23662e6b99ea62967887c75d1fa79cf630664d5ee5cf881"
+        },
+        {
+          "path": "native-restart/events.jsonl",
+          "bytes": 12397,
+          "sha256": "b2fd6751455be935a536ccefa2d5fab21fd9928ef79041447cb2ec35d34839a1"
+        },
+        {
+          "path": "native-restart/summary.json",
+          "bytes": 5043,
+          "sha256": "27c5411a37aeee0d0baf1f4a2d16357e25f08b48cb6179e9bce6b52ddce798f6"
+        },
+        {
+          "path": "native-restart-stdout.jsonl",
+          "bytes": 17440,
+          "sha256": "97b5fad62dddcd0f34491a4989c8f02a11cfe84935b87ac3e011f1805441a58d"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "2fb1fac0f5d64bed542c88029f65fdf9636b0b3d9599ae0ab03a7131cdf91ed1"
+        }
+      ]
+    },
+    {
+      "case": "foreign_return_source",
+      "status": "REJECTED",
+      "reason": "actual return source identity differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "server-state/knowledge.jsonl",
+          "bytes": 7664,
+          "sha256": "ada7acb05d944c6bf7ab8a5beeb495bdac6a39ee7e299bdf7b01e9e83ab76913"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "1457676e867a95aacbddf672718360b3064fdb95aae484e3f55ea1ff05b85f90"
+        }
+      ]
+    },
+    {
+      "case": "missing_exact_return_adoption",
+      "status": "REJECTED",
+      "reason": "return adoption lacks a durable operational completion",
+      "virtual_changed_members": [
+        {
+          "path": "server-state/operations.jsonl",
+          "bytes": 39300,
+          "sha256": "ca0098196b7ed89de3ebce0fa18e47c12e9de6d8277e689d17b41b75ca2cb745"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "1457676e867a95aacbddf672718360b3064fdb95aae484e3f55ea1ff05b85f90"
+        }
+      ]
+    },
+    {
+      "case": "same_pid_unsupported_restart",
+      "status": "REJECTED",
+      "reason": "native process was not actually restarted",
+      "virtual_changed_members": [
+        {
+          "path": "native-restart/events.jsonl",
+          "bytes": 12397,
+          "sha256": "a22a088efc681bc0e873907289be0a77c1f7c7612d4de4c1d09b5f39205243f8"
+        },
+        {
+          "path": "native-restart/summary.json",
+          "bytes": 5043,
+          "sha256": "15f1903dcc27eda152b4a9c1da9b8dcb422cc45123105bcf0b097936ace382bd"
+        },
+        {
+          "path": "native-restart-stdout.jsonl",
+          "bytes": 17440,
+          "sha256": "636f5b3915ee31690b8f3c22345d99caf58ee31abbf090f3c0d4f98d6aca8088"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "08f787b21417a5cdef8be737768e80df6fe9e3c6654f58b4c960b2a181fc4b31"
+        }
+      ]
+    },
+    {
+      "case": "falsified_fixed_control_work",
+      "status": "REJECTED",
+      "reason": "exact independent lookup/work/certificate trace differs from independent recomputation",
+      "virtual_changed_members": [
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "a68c5839ea07c42ae48fbe9c2664a631c7e99e7984778d0ec71c499a2a4f638a"
+        }
+      ]
+    },
+    {
+      "case": "unsupported_operational_genesis",
+      "status": "REJECTED",
+      "reason": "operational owner/version binding",
+      "virtual_changed_members": [
+        {
+          "path": "actor-state/operations.jsonl",
+          "bytes": 85656,
+          "sha256": "64b41b48538c75adfdfb90b5f74487e2e64efb25a6913d104797e0158ede94f5"
+        },
+        {
+          "path": "actor-state/operations-owner.json",
+          "bytes": 311,
+          "sha256": "3a7f404ee91bfa106a9f372dd4c5ba312b2e8914edf0ae1cbd9fb399c7a4a8ea"
+        },
+        {
+          "path": "cell.json",
+          "bytes": 140745,
+          "sha256": "1457676e867a95aacbddf672718360b3064fdb95aae484e3f55ea1ff05b85f90"
+        }
+      ]
+    }
+  ],
+  "participants": {
+    "actor": {
+      "exchange_units": 52118896,
+      "greedy_units": 28846944,
+      "exchange_extra_cost_vs_greedy": 23271952,
+      "fixed_order_min": 31250472,
+      "fixed_order_max": 36057528,
+      "matched_units": 28846944,
+      "matched_complete": true,
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    },
+    "server": {
+      "exchange_units": 64646792,
+      "greedy_units": 53150880,
+      "exchange_extra_cost_vs_greedy": 11495912,
+      "fixed_order_min": 54352644,
+      "fixed_order_max": 56756172,
+      "matched_units": 53150880,
+      "matched_complete": true,
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    },
+    "client": {
+      "exchange_units": 64638668,
+      "greedy_units": 53140992,
+      "exchange_extra_cost_vs_greedy": 11497676,
+      "fixed_order_min": 54342756,
+      "fixed_order_max": 56746284,
+      "matched_units": 53140992,
+      "matched_complete": true,
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    }
+  },
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "conclusion": "Operational reciprocal learning/adoption/restart demonstrated in this registered finite family. Exchange costs exceed greedy controls for all roles; matched-resource controls explain every result. Efficiency gain is not demonstrated.",
+  "limitations": [
+    "trusted local truth and native counters, same PC",
+    "fixed finite related controls are not independent scientific samples",
+    "no OS reboot or external remote execution attestation",
+    "Python audit work is separate from declared native logical units"
+  ],
+  "elapsed_seconds": 6.938
+}

@@ -19,13 +19,13 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
-> **Corrective release v1.0.1 is under qualification.**
-> The public v1.0.0 benefit helpers have documented defects. Main adds witnessed
-> outcome attribution, observation-driven learning, exact compact affine inference
-> and durable feedback. Replacement binaries require their own tests and evidence;
-> the v1.0.0 tag remains unchanged. See the [corrective release account](docs/CORRECTIVE_RELEASE_101.md)
-> and [original release audit](docs/V1_RELEASE_AUDIT.md). Independent two-host
-> deployment remains open.
+> **v1.0.1 is a corrective release for a bounded, one-host engine.**
+> Source, native component, 64-cell operational and fresh-hour checks pass.
+> Independent hour review passes; public binary and archive delivery remain pending. Corrected verification,
+> observation-driven learning and useful reciprocal contribution do not establish
+> general intelligence or general transfer efficiency. The v1.0.0 tag and its
+> [original audit](docs/V1_RELEASE_AUDIT.md) remain unchanged.
+> [Current evidence and limits](docs/CORRECTIVE_RELEASE_101.md#qualification-evidence).
 
 
 ## Get started
@@ -39,7 +39,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v1.0.0 -AddToPath
+.\tools\install.ps1 -Version v1.0.1 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -47,12 +47,12 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v1.0.0
+sh tools/install.sh --version v1.0.1
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
 
-Installers require the matching binary bundle on the
+These commands target the v1.0.1 assets once published. Installers require the matching binary bundle on the
 [release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases). If a bundle
 has not been published for your version or architecture, build from source:
 
@@ -69,7 +69,7 @@ You can also download a matching archive directly, extract it, and run
 
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
-symbiote observe-demo --state state/observation # Corrective candidate/source build
+symbiote observe-demo --state state/observation # Learn by choosing observations
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
 symbiote doctor     # Inspect readiness without changing local state
@@ -84,7 +84,7 @@ Run `demo` twice to observe retained knowledge being rechecked and reused. Run
 `status` or `predict` to inspect and use the retained state. Optional experiments
 exercise the broader native system:
 
-On the corrective candidate, `observe-demo` starts from empty memory, chooses
+`observe-demo` starts from empty memory, chooses
 bounded queries through the engine's observation interface and stores a
 conditional affine model. Repeat the same command to reuse it with zero source
 queries. It needs no network, credentials or model service. Keep its state path
@@ -193,6 +193,12 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 
 | What is checked | Evidence |
 | --- | --- |
+| Corrective v1.0.1 software | [Three-platform CI on source `6025fff`](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717); qualified native bytes and public installation are separate checks |
+| Learning from an authorized observation source | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): widths 3 and 8, independent held-out inputs, retained predictions and zero source queries after restart |
+| Useful normal reciprocal contribution and feedback | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): two-way independent adoption, actual later use, retained knowledge and harmful feedback changing a later choice |
+| Registered 64-cell engineering cohort | [Operational PASS, efficiency NOT_DEMONSTRATED](docs/CORRECTIVE_RELEASE_101.md#registered-engineering-cohort): all participant aggregate costs exceed isolation; each fixed order is cheaper in aggregate and matched controls reproduce coverage |
+| Fresh one-host hour | [PASS_LOCAL_HOUR with independent data audit](docs/CORRECTIVE_RELEASE_101.md#fresh-one-host-hour): 120 cycles, measured 3,602,431 ms; server retains two models and client remains unchanged genesis |
+| v1.0.1 public binary and archive delivery | [Qualification evidence](docs/CORRECTIVE_RELEASE_101.md#qualification-evidence): pending actual downloads and delivery checks; broader stable and two-host gates remain open |
 | Original BRUTE algorithm preserved exactly | [Byte-identical Python reference](docs/reference/brute/symbolic.py) and [parity receipt](experiments/parity.json): 6,093 cases, 20,843 checkpoints |
 | Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
 | Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
@@ -203,6 +209,28 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Public v0.5.1 installation and native delivery | [Download/install receipt](experiments/v0.5.1/publication-verification.json): all seven assets verified, four ZIP architectures inspected, actual Windows restart and backup/restore passed |
 | Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
 | Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
+
+The new normal-policy fixture separates capability from efficiency. Its local
+SENSE-through-first-use windows gain at the expensive observation price and lose
+at the cheap price. Full participant cost comparisons lose in both cases;
+matched-resource controls reproduce the coverage. Favorable preference is retained,
+but does not change that fixture's winning choice; harmful feedback does change
+the later choice. [Exact scope and results](docs/CORRECTIVE_RELEASE_101.md#component-evidence).
+
+The engine closes its own incoming learning and feedback loop. Return adoption
+and use are proved through separately authorized receiver CLI/test-harness
+checks; the live outbound `partner_benefits_verified` counter remains zero
+without witnessed receiver feedback. A fully autonomous network return-benefit
+protocol is not established. Validating a distinct held-out target and then
+reusing it does not establish an advantage over answer caching.
+
+The separately registered 64-cell cohort also passes operational reciprocity
+while losing its aggregate full-cost comparisons. Neither its fixed-order nor
+matched-resource controls establish an exchange-efficiency advantage.
+
+Next, reduce or amortize the measured evaluation/control overhead while keeping
+the checks, add an authorized receiver-outcome channel, and test an unfamiliar
+independent observation adapter. Broader stable qualification remains open.
 
 The v0.5.1 default software gate passed **292 Rust test executions, 53 Python
 tests and 6,093 parity cases**. A separately selected ignored test completed the
@@ -279,10 +307,12 @@ three-peer TLS topology, outcome-conditioned exploration and strategy-aware
 backup/migration. The runtime can also score a proposed exchange against an
 equal-query isolated control and refuses non-positive outbound fixture offers.
 The [release audit](docs/V1_RELEASE_AUDIT.md) found incorrect tagged benefit
-helpers; corrections on main need a separately qualified patch. These are
+helpers; v1.0.1 qualifies the corrections separately. These are
 bounded engineering checks. Query-transfer protocol 001 remains
-`NOT_DEMONSTRATED`. The fresh one-host hour passed; the cancelled 71/120
-attempt remains HOLD. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
+`NOT_DEMONSTRATED`. The historical hour on source `31b9418` passed; the cancelled
+71/120 attempt remains HOLD. The replacement source's fresh hour records
+PASS_LOCAL_HOUR on `6025fff`, with independent data review passing; public delivery
+remains pending. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
 is preregistered and has not been run.
 
 [Native architecture](docs/NATIVE_ARCHITECTURE.md) ·
@@ -319,8 +349,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 7.69 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.66% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 7.81 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.64% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

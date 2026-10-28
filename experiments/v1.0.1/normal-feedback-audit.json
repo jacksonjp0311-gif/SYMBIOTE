@@ -1,0 +1,488 @@
+{
+  "schema": "symbiote.normal-feedback-independent/1",
+  "status": "PASS_OPERATIONAL_RECIPROCITY",
+  "classification": "NORMAL_QUALITY_GOAL_AND_HARM_FIXTURES_NOT_REGISTERED_COHORT",
+  "cells": 2,
+  "participants": {
+    "actor": {
+      "baseline_kind": "measured",
+      "exchange_units": 1508471,
+      "greedy_units": 800564,
+      "each_fixed_order_units": [
+        800564,
+        800604
+      ],
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "matched_resource_explains_all": true,
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    },
+    "server": {
+      "baseline_kind": "measured",
+      "exchange_units": 1864430,
+      "greedy_units": 1508659,
+      "each_fixed_order_units": [
+        1508659,
+        1508679
+      ],
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "matched_resource_explains_all": true,
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    },
+    "client": {
+      "baseline_kind": "measured",
+      "exchange_units": 1864278,
+      "greedy_units": 1508507,
+      "each_fixed_order_units": [
+        1508507,
+        1508527
+      ],
+      "efficiency_vs_all_fixed_orders": "NOT_DEMONSTRATED",
+      "matched_resource_explains_all": true,
+      "efficiency_vs_matched_resource": "NOT_DEMONSTRATED"
+    }
+  },
+  "cell_results": [
+    {
+      "status": "PASS_OPERATIONAL_RECIPROCITY",
+      "oracle_price": 100000,
+      "labels": [
+        1,
+        2
+      ],
+      "cheap_indices": [
+        1,
+        1
+      ],
+      "participants": [
+        {
+          "role": "actor",
+          "baseline_kind": "measured",
+          "exchange_units": 1454386,
+          "greedy_units": 800278,
+          "fixed_units": [
+            800278,
+            800298
+          ],
+          "matched_resource_units": 800278,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -654108
+        },
+        {
+          "role": "server",
+          "baseline_kind": "measured",
+          "exchange_units": 1832147,
+          "greedy_units": 1504322,
+          "fixed_units": [
+            1504322,
+            1504332
+          ],
+          "matched_resource_units": 1504322,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -327825
+        },
+        {
+          "role": "client",
+          "baseline_kind": "measured",
+          "exchange_units": 1832197,
+          "greedy_units": 1504246,
+          "fixed_units": [
+            1504246,
+            1504256
+          ],
+          "matched_resource_units": 1504246,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -327951
+        }
+      ],
+      "equal_query_complete": {
+        "reciprocal-x/v1": false,
+        "reciprocal-y/v1": false
+      },
+      "wrong_control_units": 104857,
+      "stage_timing": {
+        "first": {
+          "stages": {
+            "compute": {
+              "completed": 843,
+              "monotonic_elapsed_ns": 8772900
+            },
+            "lock_wait": {
+              "completed": 102,
+              "monotonic_elapsed_ns": 30000
+            },
+            "io": {
+              "completed": 37,
+              "monotonic_elapsed_ns": 16106100
+            },
+            "evaluation": {
+              "completed": 4,
+              "monotonic_elapsed_ns": 87063400
+            },
+            "replay": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 15035500
+            },
+            "shutdown": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 758400
+            }
+          },
+          "clock_or_saturation_warnings": [],
+          "interpretation": "inclusive overlapping hardware diagnostics; never added to declared logical task costs"
+        },
+        "restart": {
+          "stages": {
+            "compute": {
+              "completed": 977,
+              "monotonic_elapsed_ns": 28460600
+            },
+            "lock_wait": {
+              "completed": 76,
+              "monotonic_elapsed_ns": 22800
+            },
+            "io": {
+              "completed": 31,
+              "monotonic_elapsed_ns": 20033500
+            },
+            "evaluation": {
+              "completed": 2,
+              "monotonic_elapsed_ns": 24760600
+            },
+            "replay": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 37149800
+            },
+            "shutdown": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 1846300
+            }
+          },
+          "clock_or_saturation_warnings": [],
+          "interpretation": "inclusive overlapping hardware diagnostics; never added to declared logical task costs"
+        }
+      },
+      "control_execution_units": 3001100,
+      "matched_control_execution_units": 1600556,
+      "total_native_engineering_execution_units": 9825243,
+      "scientific_samples": 0,
+      "independent_host_validation": "OPEN_UNAVAILABLE",
+      "feedback": {
+        "status": "PASS_INDEPENDENT_FINITE_TASK_FEEDBACK",
+        "exchanges": [
+          {
+            "binding": {
+              "candidate_id": "fdddf9dda2cb18c2fe41ca1cdadd3ac746b066aeae2b0a8f1556fe779c277b63",
+              "decision_id": "cognition-08a6e367915a1f09da06c08fcfc1040b00998d7c3a695854c47cd4e574ee9dec",
+              "exchange_id": "cd31e48d2dc9206e3ba06b086f6d22411dab0d2501c21df307112f7eef9b0793",
+              "fixture_sha256": "9412e1c382d23f0b0f2934d5570102b6732b4d0059e07decc2b5edfb9ce95439",
+              "offered_record_sha256": "f0754daffdf108760cd0f3e2f4b2105dc65bc928044f9fa0d5dc7ae8ad9eab72",
+              "origin": "native_learning_intent",
+              "policy_sha256": "66a9068c9ebd4d78f92a00c13184977f3d1cb4713d4f102ed78b91148857e7aa",
+              "receiver_id": "symbiote-925a24708a38e798f8d7a8df",
+              "request_sha256": "8dcd835dda4e8ffbdea270e10c6fe722c0775bbca69e67d3252b773ba87e0ffe",
+              "schema_fingerprint": "2c36479849a8f6aa8e5df5beb382e0d33b7127018056b903845fdac47d523c12",
+              "scope": "reciprocal-x/v1",
+              "sender_id": "symbiote-ac6b1b754fcf0de3ee18294e"
+            },
+            "measurement_sha256": "d4fd22a5a5bae259ca004e019e4567437ec250aefc95f0ea56286bf24cafc968",
+            "outcome": {
+              "quality": "capability_extended",
+              "baseline": {
+                "kind": "measured",
+                "units": 400139,
+                "evidence_sha256": "532a29c3a48dd930dbf50b4cd9b2b0260c69b26a96c3f51794ad2efe6679ab78"
+              },
+              "candidate_cost": 305855,
+              "measured_net": 94284,
+              "verified_benefit": true,
+              "uses": 1,
+              "unit_model": "received-graph-task-sense-through-first-use/1"
+            },
+            "closed_position": 11
+          },
+          {
+            "binding": {
+              "candidate_id": "96ec6fc3d6dd0475c443acef1ac7bf9ae9dc49d2bd525a1bc3e4a0e25c3fa548",
+              "decision_id": "cognition-ada431b5e680fc00ee6b1885b439144f64981b17ec08a012edf94bacdcdf378a",
+              "exchange_id": "dde6bbaad5a47a2cb5ed48edaba2c4ca6153fd926f7f57310d0a0a41767641bd",
+              "fixture_sha256": "37ac2e789c9572e5c1efa82f3903b83c0acabdc5e172ac4c971ed8e96ff5efbb",
+              "offered_record_sha256": "b87f8d2b42814a13b58de355c9d670bf2b6e3cd251270c1cbce95ce009862285",
+              "origin": "native_learning_intent",
+              "policy_sha256": "66a9068c9ebd4d78f92a00c13184977f3d1cb4713d4f102ed78b91148857e7aa",
+              "receiver_id": "symbiote-925a24708a38e798f8d7a8df",
+              "request_sha256": "e9dd01ed8799724c26c00bd56e1a791a9f232209f824ca8b7842d9bc1292f1d9",
+              "schema_fingerprint": "2c36479849a8f6aa8e5df5beb382e0d33b7127018056b903845fdac47d523c12",
+              "scope": "reciprocal-y/v1",
+              "sender_id": "symbiote-f8c70ce08d1400725b0b5f05"
+            },
+            "measurement_sha256": "ed85736f48839f10f982753ea7c5d69212c7b0f197192653be21e23f6f18b5dc",
+            "outcome": {
+              "quality": "capability_extended",
+              "baseline": {
+                "kind": "measured",
+                "units": 400139,
+                "evidence_sha256": "532a29c3a48dd930dbf50b4cd9b2b0260c69b26a96c3f51794ad2efe6679ab78"
+              },
+              "candidate_cost": 306548,
+              "measured_net": 93591,
+              "verified_benefit": true,
+              "uses": 1,
+              "unit_model": "received-graph-task-sense-through-first-use/1"
+            },
+            "closed_position": 28
+          }
+        ],
+        "restart_choice": {
+          "peer": "symbiote-ac6b1b754fcf0de3ee18294e",
+          "scope": "reciprocal-x/v1",
+          "visits": 1,
+          "failures": 0,
+          "verified_novel": 1,
+          "resource_units": 438,
+          "feedback_prefer": 1
+        },
+        "choice_without_feedback": {
+          "peer": "symbiote-ac6b1b754fcf0de3ee18294e",
+          "scope": "reciprocal-x/v1",
+          "visits": 1,
+          "failures": 0,
+          "verified_novel": 1,
+          "resource_units": 438,
+          "feedback_prefer": 1
+        },
+        "selection_changed_by_feedback": false,
+        "accounting_limit": "Window forecast/byte counters are native instrumented receipts checked against chains/global bounds; closure, independent controls and host audit remain separately charged, not lifetime profit"
+      }
+    },
+    {
+      "status": "PASS_OPERATIONAL_RECIPROCITY",
+      "oracle_price": 1,
+      "labels": [
+        1,
+        2
+      ],
+      "cheap_indices": [
+        1,
+        1
+      ],
+      "participants": [
+        {
+          "role": "actor",
+          "baseline_kind": "measured",
+          "exchange_units": 54085,
+          "greedy_units": 286,
+          "fixed_units": [
+            286,
+            306
+          ],
+          "matched_resource_units": 286,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -53799
+        },
+        {
+          "role": "server",
+          "baseline_kind": "measured",
+          "exchange_units": 32283,
+          "greedy_units": 4337,
+          "fixed_units": [
+            4337,
+            4347
+          ],
+          "matched_resource_units": 4337,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -27946
+        },
+        {
+          "role": "client",
+          "baseline_kind": "measured",
+          "exchange_units": 32081,
+          "greedy_units": 4261,
+          "fixed_units": [
+            4261,
+            4271
+          ],
+          "matched_resource_units": 4261,
+          "matched_resource_complete": true,
+          "conditional_saving_vs_greedy": -27820
+        }
+      ],
+      "equal_query_complete": {
+        "reciprocal-x/v1": false,
+        "reciprocal-y/v1": false
+      },
+      "wrong_control_units": 4858,
+      "stage_timing": {
+        "first": {
+          "stages": {
+            "compute": {
+              "completed": 787,
+              "monotonic_elapsed_ns": 7974200
+            },
+            "lock_wait": {
+              "completed": 100,
+              "monotonic_elapsed_ns": 29200
+            },
+            "io": {
+              "completed": 37,
+              "monotonic_elapsed_ns": 15224000
+            },
+            "evaluation": {
+              "completed": 4,
+              "monotonic_elapsed_ns": 84111900
+            },
+            "replay": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 13965000
+            },
+            "shutdown": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 833700
+            }
+          },
+          "clock_or_saturation_warnings": [],
+          "interpretation": "inclusive overlapping hardware diagnostics; never added to declared logical task costs"
+        },
+        "restart": {
+          "stages": {
+            "compute": {
+              "completed": 976,
+              "monotonic_elapsed_ns": 27442600
+            },
+            "lock_wait": {
+              "completed": 76,
+              "monotonic_elapsed_ns": 20700
+            },
+            "io": {
+              "completed": 31,
+              "monotonic_elapsed_ns": 19340600
+            },
+            "evaluation": {
+              "completed": 2,
+              "monotonic_elapsed_ns": 21770700
+            },
+            "replay": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 35518500
+            },
+            "shutdown": {
+              "completed": 1,
+              "monotonic_elapsed_ns": 743300
+            }
+          },
+          "clock_or_saturation_warnings": [],
+          "interpretation": "inclusive overlapping hardware diagnostics; never added to declared logical task costs"
+        }
+      },
+      "control_execution_units": 1130,
+      "matched_control_execution_units": 572,
+      "total_native_engineering_execution_units": 125009,
+      "scientific_samples": 0,
+      "independent_host_validation": "OPEN_UNAVAILABLE",
+      "feedback": {
+        "status": "PASS_INDEPENDENT_FINITE_TASK_FEEDBACK",
+        "exchanges": [
+          {
+            "binding": {
+              "candidate_id": "0daa2ed94fe77da65efe70a80a0053edb5c7bc4c71ec3ed7f23b8bd1addb14b6",
+              "decision_id": "cognition-c42443421a10ab9833e282f1e74b4ef4d5926b5d25d073ca99c4bf957171a66a",
+              "exchange_id": "467f855f6287f508c5a16b4c395115345fac18b08c1ad2841f289f36917f2ba4",
+              "fixture_sha256": "5d4c7fab73f2e84fce6efda831d98b3f839b41b9b6e8bdc5a3797690015a07f4",
+              "offered_record_sha256": "59fe7840cf7ad774f9d96fd5341692774292de6e1c85bf6c257b70a9d6497f4c",
+              "origin": "native_learning_intent",
+              "policy_sha256": "80b8b0f08cddf070a6415fc2d476e9f374e5fcd7de3d8fe09985aa88eb380feb",
+              "receiver_id": "symbiote-458d7407ab76ba14fd358f6c",
+              "request_sha256": "c46a6da0b1c0701158db20fb9f71d10219c8a308b6217928f9bfa6e1b1167a33",
+              "schema_fingerprint": "2c36479849a8f6aa8e5df5beb382e0d33b7127018056b903845fdac47d523c12",
+              "scope": "reciprocal-y/v1",
+              "sender_id": "symbiote-448f62814f9e5cad3cc47cd7"
+            },
+            "measurement_sha256": "fb53d093c2cb8f3dd17060e3d75ba2e89046a3b9ed00688a165c1ad8fdd9ba99",
+            "outcome": {
+              "quality": "capability_extended",
+              "baseline": {
+                "kind": "measured",
+                "units": 143,
+                "evidence_sha256": "532a29c3a48dd930dbf50b4cd9b2b0260c69b26a96c3f51794ad2efe6679ab78"
+              },
+              "candidate_cost": 5858,
+              "measured_net": -5715,
+              "verified_benefit": false,
+              "uses": 1,
+              "unit_model": "received-graph-task-sense-through-first-use/1"
+            },
+            "closed_position": 13
+          },
+          {
+            "binding": {
+              "candidate_id": "d1f6ff739a52884c66a3d2d2f37e576d4a6185eefab404a7b938ca856d0e9e66",
+              "decision_id": "cognition-244043bc6a18b094c573b46c0b7f63861fcfdc602c0da719e959e250a07df8fb",
+              "exchange_id": "936cfdb42513500e0f0ee42df826ba173c91553f239b698e1c2e7ad835b35ffd",
+              "fixture_sha256": "40dba6977d0b67022f7225cabb2cad658a20ee9e0830da753b157db7e7fc73be",
+              "offered_record_sha256": "3d7394690bbb422eecd17e74d963de54e3a462da23790bef0870935c4ec8e47d",
+              "origin": "native_learning_intent",
+              "policy_sha256": "80b8b0f08cddf070a6415fc2d476e9f374e5fcd7de3d8fe09985aa88eb380feb",
+              "receiver_id": "symbiote-458d7407ab76ba14fd358f6c",
+              "request_sha256": "31db5ffbe000c16a1cf72b395fc6ef75e4eb390078ca52d95b4e7d3bea883599",
+              "schema_fingerprint": "2c36479849a8f6aa8e5df5beb382e0d33b7127018056b903845fdac47d523c12",
+              "scope": "reciprocal-x/v1",
+              "sender_id": "symbiote-8402ea894e98e3f2e08e5422"
+            },
+            "measurement_sha256": "1356d9925fb02100e69cb816ffd14aec0a575d40ec84aa0d5c1419e510cba1aa",
+            "outcome": {
+              "quality": "capability_extended",
+              "baseline": {
+                "kind": "measured",
+                "units": 143,
+                "evidence_sha256": "532a29c3a48dd930dbf50b4cd9b2b0260c69b26a96c3f51794ad2efe6679ab78"
+              },
+              "candidate_cost": 6551,
+              "measured_net": -6408,
+              "verified_benefit": false,
+              "uses": 1,
+              "unit_model": "received-graph-task-sense-through-first-use/1"
+            },
+            "closed_position": 28
+          }
+        ],
+        "restart_choice": {
+          "peer": "symbiote-448f62814f9e5cad3cc47cd7",
+          "scope": "reciprocal-x/v1",
+          "visits": 1,
+          "failures": 0,
+          "verified_novel": 0,
+          "resource_units": 10
+        },
+        "choice_without_feedback": {
+          "peer": "symbiote-448f62814f9e5cad3cc47cd7",
+          "scope": "reciprocal-y/v1",
+          "visits": 1,
+          "failures": 0,
+          "verified_novel": 1,
+          "resource_units": 438,
+          "feedback_defer": 1
+        },
+        "selection_changed_by_feedback": true,
+        "accounting_limit": "Window forecast/byte counters are native instrumented receipts checked against chains/global bounds; closure, independent controls and host audit remain separately charged, not lifetime profit"
+      }
+    }
+  ],
+  "total_native_engineering_execution_units": 9950252,
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "limitations": [
+    "finite related controls, not independent samples",
+    "local truth and instrumented counters are trusted within this same-host engineering envelope",
+    "plaintext counters are checked across both endpoints; cryptographic framing and hardware cost are separate diagnostics",
+    "observed capability extension does not imply net research-campaign profit or generalized efficiency",
+    "total native declared units include all separately executed controls and negative tests; Python audit/hardware/cryptographic work is not converted into those units"
+  ],
+  "native_binary_sha256": "4e5700f1b2a2b04e26a0afb20a7549db5253b5a6f9eab36f2ef5f03e7f490c65",
+  "service_test_executable_sha256": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4",
+  "artifact_manifest_sha256": "0e74a69f2ba2edaf3092f4c99c45c81f693a7f037d1756aba0670692226adae7",
+  "consumer_source_sha256": "40b4e51e3d08aab461dec395d47983f9faa0ff758a233ebc397eb141f5ed4a54",
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "build_proof_sha256": "2f135a0564fdfcd4d802ece975e24471b328ca1ca031503da3b3de9b1cf12f64",
+  "artifact_directory": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qn-101-6025fff",
+  "component_evidence_only": true,
+  "final_release_qualification": "CI, registered cohort, uninterrupted hour and public delivery remain separate gates"
+}

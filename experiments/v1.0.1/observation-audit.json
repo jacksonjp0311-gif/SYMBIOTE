@@ -1,0 +1,40 @@
+{
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "build_proof_sha256": "2f135a0564fdfcd4d802ece975e24471b328ca1ca031503da3b3de9b1cf12f64",
+  "artifact_directory": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qo-101-6025fff",
+  "component_evidence_only": true,
+  "schema": "symbiote.independent-observation-development-audit/1",
+  "status": "PASS",
+  "classification": "source-pinned finite observation component evidence; complete release qualification remains separate",
+  "artifact_manifest_sha256": "8a0ff2e48317b62703a9191c8915a5282492ea5c6580b2ea0c6f8df97fdfdc4e",
+  "audit_source_sha256": "6834b3d80feca2e08db63c3779248cbe9304601ebb84c3eacce7e81c0b51b162",
+  "binaries": {
+    "native_binary": "4e5700f1b2a2b04e26a0afb20a7549db5253b5a6f9eab36f2ef5f03e7f490c65",
+    "service_tests": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4"
+  },
+  "cases": [
+    {
+      "width": 3,
+      "actual_queries": 5,
+      "training_queries": 4,
+      "heldout_queries": 1,
+      "exact_gf2_units": 203,
+      "restart_queries": 0,
+      "restart_gf2_units": 39,
+      "finite_domain_predictions_checked": 8
+    },
+    {
+      "width": 8,
+      "actual_queries": 10,
+      "training_queries": 9,
+      "heldout_queries": 1,
+      "exact_gf2_units": 28439,
+      "restart_queries": 0,
+      "restart_gf2_units": 179,
+      "finite_domain_predictions_checked": 256
+    }
+  ],
+  "scientific_samples": 0,
+  "economic_benefit": "NOT_CLAIMED",
+  "independent_host_validation": "OPEN_UNAVAILABLE"
+}

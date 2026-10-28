@@ -8,6 +8,30 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 
 ## Current qualification status
 
+The corrective v1.0.1 native source is `6025fff`. Its three-platform software
+gate, independently consumed normal-learning/observation components and 64-cell
+operational cohort pass. The fresh one-host hour records PASS_LOCAL_HOUR and
+passes independent data review. Public binary/archive delivery remains pending.
+Their results must be recorded before the bounded corrective
+release is qualified. Exact pins and current evidence are in the
+[corrective account](CORRECTIVE_RELEASE_101.md#qualification-evidence).
+
+Normal reciprocal contribution extends validated capability, but the full
+recorded participant comparisons lose to isolation and matched-resource controls
+reproduce the coverage. Positive finite task-window nets cannot close the broader
+reciprocal-efficiency goal. Harmful feedback changes one later choice; favorable
+preference does not change its fixture's winner. Broader stable qualification,
+independent two-host deployment and generalization therefore remain open.
+
+Incoming local feedback closes, while return adoption/use is demonstrated by
+separately authorized receiver CLI/test-harness checks. The live outbound
+`partner_benefits_verified` counter stays zero without witnessed receiver-owned
+feedback. A fully autonomous network return-benefit protocol and an advantage
+over answer caching are not established; matched-resource controls explain
+coverage. Next work must reduce/amortize measured evaluation overhead without
+weakening checks, add an authorized receiver-outcome channel and test an
+unfamiliar independent observation adapter.
+
 The public v1.0.0 tag is `426f054`. Its [release audit](V1_RELEASE_AUDIT.md)
 records native delivery PASS and full stable qualification HOLD: tagged benefit
 API defects, no useful configured return contribution and missing final public
@@ -17,6 +41,12 @@ cases; that green software gate did not detect the reproduced API defects.
 
 | Gate | Recorded status | Scope or remaining work |
 | --- | --- | --- |
+| Corrective v1.0.1 source software | PASS | [CI 40733730717](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717), source `6025fff`, Windows/Ubuntu/macOS; replacement delivery is separate |
+| Normal reciprocal contribution and causal feedback | PASS, component evidence | Independent adoption/use/restart, explicit normal capability goal, finite positive/negative task windows and one actual harm-conditioned choice change |
+| Observation-driven learning and retained use | PASS, component evidence | Widths 3 and 8, distinct held-out checks, complete finite-domain predictions and zero source queries on restart |
+| New 64-cell engineering cohort | PASS_OPERATIONAL_RECIPROCITY | 64/64 in 237.344 seconds; aggregate participant costs lose to isolation and every fixed order; matched controls explain all coverage; efficiency NOT_DEMONSTRATED |
+| Fresh hour on corrective source | PASS_LOCAL_HOUR; independent data audit PASS | 120 cycles, measurement 3,602,431 ms, live main listener 3,592,105 ms, maximum maintenance 2,057 ms, verified cleanup; server two models/client unchanged genesis; zero source-watch failures |
+| Public v1.0.1 binary and evidence delivery | PENDING | Anonymous download, exact native acceptance and checksum-bound evidence package |
 | v0.5.1 default software checks | PASS | 292 Rust test executions, 53 Python tests and 6,093 BRUTE parity cases |
 | Fixed local continuity campaign | PASS, S5 | One separately executed ignored test; 24 cycles, one PC, two fixed fixtures |
 | Reviewed policy/credential lifecycle | PASS within local checks | Explicit offline transitions, old-pin rejection, denial retention and reviewed regrant |
@@ -28,7 +58,8 @@ cases; that green software gate did not detect the reproduced API defects.
 | Duration reliability | PASS, one host | Fresh 120-cycle hour on `31b9418`, registration `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`, campaign report `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`. The cancelled 71/120 run remains HOLD. This hour does not establish production or two-host reliability |
 | Broader scientific criteria | OPEN | Transfer/generalization and better partner selection require new predeclared evidence |
 | Public v1.0.0 native delivery | PASS within audit | Four ZIPs/checksums, actual Windows install/restart/restore and public-binary cognition; evidence archive missing |
-| Stable v1.0 qualification | HOLD | Tagged verification API defects, absent configured reciprocal contribution and incomplete public evidence; a local software PASS is insufficient |
+| Historical tagged v1.0.0 stable qualification | HOLD | Its API defects, absent configured reciprocal contribution and incomplete public evidence remain recorded against that tag |
+| Broader stable qualification | HOLD / OPEN | Independent environments, wider failure envelope and general reciprocal efficiency are not established by the bounded corrective patch |
 
 S5 completed in 83.969 seconds using 66 root commands, with fixed limits and an
 independent read-only audit. Its 16 named regression repeats are existing tests,

@@ -1,0 +1,65 @@
+{
+  "schema": "symbiote.compact-index-provenance/1",
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "role": "derived Git index copies; original raw receipts and their external hashes remain authoritative",
+  "files": [
+    {
+      "index_file": "software-ci.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qp-101-6025fff\\ci-final\\ci-receipt.json",
+      "raw_source_sha256": "d3e2e1f4ad2e32388f76c62a581d1641d0d6fde558f325562434d3f23c37cfe8",
+      "index_sha256": "d3e2e1f4ad2e32388f76c62a581d1641d0d6fde558f325562434d3f23c37cfe8",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "normal-feedback-audit.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qe-6025fff-rhjvvxuy\\independent-normal.json",
+      "raw_source_sha256": "e69fdc5da69d1a06bb58761c5c2661d3d8eda846b7008cce652e002ccd75d5fc",
+      "index_sha256": "8235fe3af4c40e517c280f1e126aa4e109e93cce5a6460ef4a4eb3f05d3301ee",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "observation-audit.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qe-6025fff-rhjvvxuy\\independent-observation.json",
+      "raw_source_sha256": "6a8051cd56a755b7103573c71883e25d82994c85f64923ccd1bee5cdef4a2993",
+      "index_sha256": "69e499bac3d035bb803a5e3f3341fb7d12e4cf8d64907d05fcaf8d0be6e2d2c1",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "cohort-audit.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qa64-6025fff-82f7cd\\audit-receipt.json",
+      "raw_source_sha256": "b521f5abf2300c2bba29b094299e5b610683bffb28c1b19a971dd90667f11072",
+      "index_sha256": "19bb6cbaccccb46bd68d87079e78307cc5fdef73cbe3659c1aa2d1c55945bd0e",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "cohort-costs.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qe-6025fff-rhjvvxuy\\cohort-cost-audit.json",
+      "raw_source_sha256": "a483921cbcff42ff656b65199fa3b496a4f54fdc96b0031f65c839493e22ade6",
+      "index_sha256": "ad310e477c3dc0ea047d39c8120681f8ac14ff0ab405778c42eb201fa62651d5",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "hour-audit.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qah-6025fff-62e9ba\\audit-receipt.json",
+      "raw_source_sha256": "5807b2857c752bb4951ea038f2ec3edc799c991107a9e04ab22f667e969160ea",
+      "index_sha256": "d13ff43a1f55e99ba62c90db5197bc1cd000da01cabd730eccd651895ef33d3c",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    },
+    {
+      "index_file": "backend-benchmark.json",
+      "raw_source": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qg-101-e7ad4c7\\benchmark-proof.json",
+      "raw_source_sha256": "4062641c38f92f608fff9756bd1f871464befb69e7c532bedfa1adad614ed318",
+      "index_sha256": "4062641c38f92f608fff9756bd1f871464befb69e7c532bedfa1adad614ed318",
+      "same_decoded_json": true,
+      "transformation": "physical CRLF to LF only; no decoded fields changed"
+    }
+  ],
+  "derived_source_manifest": "source-manifest.json is the exact manifest object extracted from the pinned build proof; its own version2 body digest validates source bytes",
+  "original_files_modified": false
+}

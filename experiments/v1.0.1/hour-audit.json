@@ -1,0 +1,100 @@
+{
+  "schema": "symbiote.independent-closed-hour-audit/1",
+  "status": "PASS_DATA_ONLY_LOCAL_HOUR",
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "source_manifest_sha256": "aedf4208a3630b31ec9e7383dd018120d4b021f54e70140e63b4f01e91564aad",
+  "source_files_checked": 128,
+  "registration_sha256": "79ffc55542bb255dc9736f15b8aa202f00b3c83b4f07be36e70ea8ac00031f68",
+  "outer_report_sha256": "3ee2142db41a4042aa8501bc879135793a53dd83197137f46ff163c5bd96f3d4",
+  "native_report_sha256": "aa487075d36c1a58ce84f559e562e5b98b5327254e679e4ab475e382bc450c1d",
+  "consumer_source_sha256": "f51696c58ade4a7068a1ddf0229dac102ed83159193677b08ada91acc8e7a475",
+  "audit_script_sha256": "37e1690940b7f8bb9510b49839358ccdc7201f933c360e95c421463de15c5e1d",
+  "independent_verification_sha256": "bb4a2f9faec5ff0434601ef76d3c9bc239155be5170e59477942eecca15aaabd",
+  "binaries": {
+    "native": "4e5700f1b2a2b04e26a0afb20a7549db5253b5a6f9eab36f2ef5f03e7f490c65",
+    "service_tests": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4"
+  },
+  "source_and_binaries_unchanged_before_after": true,
+  "process": {
+    "label": "hour-soak",
+    "argv": [
+      "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\release\\deps\\service-a3d1225024fb4296.exe",
+      "soak::hour_120_cycle_local_soak",
+      "--ignored",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "pid": 32496,
+    "exit_code": 0,
+    "outcome": "completed",
+    "elapsed_seconds": 3604.4530000000377,
+    "error": null,
+    "cleanup_verified": true,
+    "output_truncated": false,
+    "cleanup_elapsed_seconds": 0.0470000000204891,
+    "containment": "windows-job-suspended-before-execution",
+    "process_receipt": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.process.json",
+    "stdout": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.stdout",
+    "stderr": "p-hour-soak-676ff1e93951c35e973f1b30390c1604dcddd0245db76f0a5acabe91ab7732c8.stderr",
+    "stdout_sha256": "ab209c05c9c71c9d83324c3d5c7c50857409ab774bc5c3519bd6758dd6883c0f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 160,
+    "stderr_bytes": 0
+  },
+  "root_total_elapsed_seconds": 3607.3589999999967,
+  "host_awake_guard": {
+    "platform": "windows",
+    "global_policy_changed": false,
+    "display_setting_changed": false,
+    "idle_sleep_inhibited": true,
+    "released": true,
+    "suspension_tolerance_ms": 1000,
+    "max_observed_suspension_ms": 3,
+    "suspension_detection": "GetTickCount64 minus QueryUnbiasedInterruptTime"
+  },
+  "raw_timing": {
+    "measurement_origin_ms": 1262,
+    "measurement_elapsed_ms": 3602431,
+    "main_listener_span_ms": 3592105,
+    "max_maintenance_gap_ms": 2057,
+    "max_observed_idle_gap_ms": 1101,
+    "timing_basis": "ordered raw main readiness/positive stops, idle liveness and actual request/output/reply events"
+  },
+  "cycles": 120,
+  "wire_keys": 483,
+  "durable_candidate_keys": 3,
+  "service_starts": 10,
+  "owned_stops": 10,
+  "retained_models": 2,
+  "owners": [
+    "symbiote-2e0178a053f6f4e56bf9cdfc",
+    "symbiote-e9cac96ae21ad29cc17e7bce"
+  ],
+  "model_digests": [
+    "dae267e7382b9486ddccb340706ce0b589e8778ef56d81fe877055881a7d95ff",
+    "e503651ec0731c0a089071bd01049ae61d9df881fb7c4ae44e1ae18f12169c4a"
+  ],
+  "activation_guard": "POLICY_CHANGE_HOLD",
+  "independent_outer_verification_exact_match": true,
+  "relocation": {
+    "status": "PASS_BYTE_IDENTICAL_DATA_ONLY",
+    "directory": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qah-6025fff-62e9ba\\relocated-native",
+    "files": 1073,
+    "bytes": 2716135,
+    "inventory_sha256": "295c1a5ea6956d32ece7b8db9cdec0eccab91182a887d485e3fdbcb4db495e78",
+    "original_absolute_provenance_preserved": true,
+    "reads_from_original_native_root": 0,
+    "verification_exact_match": true
+  },
+  "qualification_scope": "ONE_HOST_BOUNDED_HOUR; retained initial affine/graph models and authorized lifecycle operations, not new capability gain",
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "original_raw_evidence_modified": false,
+  "native_processes_launched": 0,
+  "limitations": [
+    "trusted local evaluator/native instrumentation; process restart is not OS reboot",
+    "no two-host qualification or generalized reliability claim",
+    "historical cancelled hour remains HOLD; this independent registered run supplies the bounded hour proof"
+  ],
+  "elapsed_seconds": 7.796
+}

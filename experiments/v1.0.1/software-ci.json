@@ -1,0 +1,90 @@
+{
+  "schema": "symbiote.corrective-ci-evidence/1",
+  "status": "PASS_THREE_OS_SOFTWARE_GATES",
+  "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "run_id": 40733730717,
+  "run_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717",
+  "event": "push",
+  "workflow": ".github/workflows/ci.yml",
+  "attempt": 1,
+  "completed_conclusion": "success",
+  "retrieved_utc": "2026-10-28T17:29:36.649Z",
+  "files": [
+    {
+      "path": "workflow-run.json",
+      "bytes": 14725,
+      "sha256": "1c39db263c9544118db1af5a267a9b5f4cb456c83da8ef5bea4c901246e219c0"
+    },
+    {
+      "path": "workflow-jobs.json",
+      "bytes": 4438,
+      "sha256": "b088f7e925ffa7337b2b267a481aa8be5d4838dba592f2836a39c1b89a6400a4"
+    },
+    {
+      "path": "mac-122976583460.log",
+      "bytes": 44725,
+      "sha256": "2249ee80775ddc57b8397031f50186ae919d89ddebecbff0fe850d0ff342f613"
+    },
+    {
+      "path": "mac-summary.json",
+      "bytes": 2034,
+      "sha256": "076edee787ca424a04547b84d16e186f6ee82f6cb2734517268ba7d9db41d4c5"
+    },
+    {
+      "path": "windows-122976583936.log",
+      "bytes": 44337,
+      "sha256": "d44aca68b4181c5ff6c36a6f3f9f4516f86264e6354b312e5e0e9fcaa5207570"
+    },
+    {
+      "path": "windows-summary.json",
+      "bytes": 2043,
+      "sha256": "d48ccf48e1c5b8ffcb4e13c0b97d1c4c15e9c1f8d9b3fec0a09f106173dbd3e7"
+    },
+    {
+      "path": "ubuntu-122976584204.log",
+      "bytes": 44082,
+      "sha256": "65d3a6533b35f3273de3da77d68a96a92bb39cf5743a5892fe091ad6d8b4e3b6"
+    },
+    {
+      "path": "ubuntu-summary.json",
+      "bytes": 2040,
+      "sha256": "9ec47da1f9ffa2bfb35deb85ab61d18918707349c80f83285ebadab1a3015698"
+    }
+  ],
+  "platforms": [
+    {
+      "platform": "mac",
+      "job_id": 122976583460,
+      "native_tests_passed": 410,
+      "python_tests_passed": 125,
+      "release_tool_tests_passed": 35,
+      "parity_cases": 6093,
+      "legacy_source_sha256": "fb946a313caf9c284ecd6e253ba6b58150d3ba6efb30e77f91f9bf4eca4d9ef8"
+    },
+    {
+      "platform": "windows",
+      "job_id": 122976583936,
+      "native_tests_passed": 408,
+      "python_tests_passed": 125,
+      "release_tool_tests_passed": 35,
+      "parity_cases": 6093,
+      "legacy_source_sha256": "1d69844b466f271443f50ddabd699be62dcc53561ed9a23d3c72aa8477eae56a"
+    },
+    {
+      "platform": "ubuntu",
+      "job_id": 122976584204,
+      "native_tests_passed": 410,
+      "python_tests_passed": 125,
+      "release_tool_tests_passed": 35,
+      "parity_cases": 6093,
+      "legacy_source_sha256": "fb946a313caf9c284ecd6e253ba6b58150d3ba6efb30e77f91f9bf4eca4d9ef8"
+    }
+  ],
+  "historical_failures_regraded": false,
+  "automatic_retry_performed": false,
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "interpretation": "Three current-source hosted software suites; no two-host deployment or interrupted-hour qualification claim",
+  "capture_preparation": "Initial combined local write request exceeded tool64KiB review limit and was not executed; each exact decoded job log was then preserved separately without altering any characters."
+}
