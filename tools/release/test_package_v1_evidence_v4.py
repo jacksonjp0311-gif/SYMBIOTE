@@ -56,6 +56,21 @@ class MembershipInterfaceTests(unittest.TestCase):
         receipt = json.loads((output / "v1-packaging-receipt.json").read_text(encoding="utf-8"))
         self.assertEqual(receipt["status"], "HOLD")
 
+    def test_os_owned_temp_alias_is_resolved_before_the_strict_boundary_check(self):
+        config,_=self.config("os-temp-alias")
+        alias=self.root/"os-owned-temp-alias";real=Path(tempfile.gettempdir()).resolve(strict=True)
+        original_resolve=Path.resolve;original_plain=adapter.base.plain
+        def resolve(path,*args,**kwargs):
+            return real if path==alias else original_resolve(path,*args,**kwargs)
+        def plain(path,*args,**kwargs):
+            self.assertNotEqual(Path(path),alias,"OS alias must not reach strict no-link input validation")
+            return original_plain(path,*args,**kwargs)
+        with mock.patch.object(adapter.tempfile,"gettempdir",return_value=str(alias)), \
+                mock.patch.object(Path,"resolve",autospec=True,side_effect=resolve), \
+                mock.patch.object(adapter.base,"plain",side_effect=plain):
+            plan=adapter.make_v1_plan(config)
+        self.assertEqual(json.loads(plan[3])["source_commit"],"a"*40)
+
     def test_late_addition_during_writer_rejects_its_otherwise_successful_byte_receipt(self):
         config, output = self.config("late")
         expected = self.plan_pin(config)

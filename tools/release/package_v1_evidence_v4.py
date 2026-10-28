@@ -277,7 +277,7 @@ def make_v1_plan(config_path):
     source = config["source_commit"]
     base.need(isinstance(source, str) and re.fullmatch(r"[0-9a-f]{40}", source), "actual frozen source commit required")
     configure_classifications(config["format_classifications"])
-    temporary = base.plain(tempfile.gettempdir(), True)
+    temporary = base.plain(Path(tempfile.gettempdir()).resolve(strict=True), True)
     anchors = {}
     for item in bounded_list(config["anchors"], 1, 128, "bounded explicit JSON anchors required"):
         base.fields(item, ("id", "path", "sha256", "expect", "source_commit_pointer", "source_commit"))

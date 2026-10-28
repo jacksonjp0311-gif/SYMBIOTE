@@ -120,7 +120,7 @@ From a Windows checkout, the single entrypoint also supports:
 
 ```powershell
 .\SYMBIOTE-All-One.ps1 -Run
-.\SYMBIOTE-All-One.ps1 -ObserveDemo
+.\SYMBIOTE-All-One.ps1 -ObserveDemo -State state/observation
 .\SYMBIOTE-All-One.ps1 -Research
 .\SYMBIOTE-All-One.ps1 -GraphResearch
 .\SYMBIOTE-All-One.ps1 -AdaptiveResearch
