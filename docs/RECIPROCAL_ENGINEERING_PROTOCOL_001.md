@@ -59,7 +59,7 @@ execution of this registered cohort.
 ## Controls and accounting
 
 For each cell and each participant report the isolated native greedy policy,
-all four fixed branch-order policies selected without target truth, equal-query
+all 24 fixed branch-order policies selected without target truth, equal-query
 isolated exploration, a matched-total-resource isolated control, and reciprocal
 transfer. Also retain an incompatible/wrong-map rejection control. No per-world
 hindsight choice is an available selector; report that bound separately if used.
