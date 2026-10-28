@@ -100,16 +100,23 @@ isolated check bounds, so those submissions are not sent.
 
 `symbiote_memory::reciprocal` seals a receiver-originated receipt. Schema
 `symbiote.reciprocal-evaluation/2` binds a SHA-256 digest over the canonical
-body. That digest is not benefit. Benefit is true only when `seal_promoted`
+body. That digest is not benefit. On corrected main, benefit is true only when
+`receiver_benefit_verified(store, witness)` reseals against the actual receiver
+ledger. `seal_promoted`
 finds a completed promotion between the receiver's validated anchors, the
 active payload for that scope changed, and the stored exchange total is
 strictly below the stored isolated baseline. Those facts are copied from the
 ledger. A content digest, a declined value plan, and a receipt resealed
-against a different owner stay false. Durable benefit also requires
-`persisted_after_restart` to be true. Mutual research success requires two
-such receipts with crossed identities and the same transferred record. Missing
-restart evidence is not durability. The stored affine fixture can satisfy this
-predicate; that is not a generalized reciprocal-learning result.
+against a different owner stay false. Identical payloads from another source
+add provenance without changing the capability set, and the sender must match
+the promoted record's source. `persisted_after_restart` is informational only.
+`retained_benefit_after_store_reopen` actually opens an existing stopped ledger
+and requires that exact promoted record to remain active. This is store replay,
+not proof of an OS restart. Mutual success requires both independently witnessed
+directional receipts, crossed identities and crossed initial knowledge anchors.
+The [release audit](V1_RELEASE_AUDIT.md) documents defects in the published
+v1.0.0 predicates; main fixes do not change those binaries or establish a
+generalized reciprocal-learning result.
 
 The configured cognitive episode emits `VALUE` before any contribution payload
 and reconciles that prediction with whether a payload was sent. Its summary

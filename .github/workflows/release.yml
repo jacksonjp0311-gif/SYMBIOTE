@@ -100,6 +100,7 @@ jobs:
           if-no-files-found: error
 
   publish:
+    name: Stage native bundles for qualification
     needs: [prepare, build]
     runs-on: ubuntu-latest
     permissions:
@@ -124,7 +125,7 @@ jobs:
           --require-target x86_64-unknown-linux-gnu
           --require-target aarch64-apple-darwin
           --require-target x86_64-apple-darwin
-      - name: Publish verified assets without replacing existing files
+      - name: Stage verified assets without replacing existing files
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
@@ -149,4 +150,5 @@ jobs:
             fi
             gh release upload "$RELEASE_TAG" "$local_asset" --repo "$GITHUB_REPOSITORY"
           done
-          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "Native bundles are staged. New releases remain draft until independent delivery and qualification checks finish."
+          echo "Existing assets are not replaced and public releases are not unpublished; this workflow does not grant stable qualification."

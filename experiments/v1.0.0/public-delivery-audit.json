@@ -1,0 +1,96 @@
+{
+  "schema": "symbiote.public-delivery-audit/1",
+  "audited_on": "2026-10-28",
+  "release_tag": "v1.0.0",
+  "source_commit": "426f054771395dcbe1b8711d7128b90ef0c704de",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.0",
+  "status": "PASS_NATIVE_DELIVERY_ONLY",
+  "full_stable_qualification": "HOLD",
+  "assets": [
+    {
+      "name": "SHA256SUMS",
+      "id": 684693053,
+      "bytes": 433,
+      "sha256": "f84f1294794e19c5ec260be2c1341599069341382600288897a0be82be37da7d"
+    },
+    {
+      "name": "symbiote-v1.0.0-aarch64-apple-darwin.zip",
+      "id": 684692699,
+      "bytes": 3995982,
+      "sha256": "70f2ca015dd678808b9c49ae96a02cdc44b3c9c6d97fcedaa1ebcd6f752477e4"
+    },
+    {
+      "name": "symbiote-v1.0.0-x86_64-apple-darwin.zip",
+      "id": 684692861,
+      "bytes": 4269108,
+      "sha256": "d27cc2da3d47468de6f50acd939728188f76401b65a2f9799e41eccbe2d13107"
+    },
+    {
+      "name": "symbiote-v1.0.0-x86_64-pc-windows-msvc.zip",
+      "id": 684692912,
+      "bytes": 4083816,
+      "sha256": "0ccc48251ea8300eeac61afee0fbd135f89d589518f4d3dce983fe1326b98b1b"
+    },
+    {
+      "name": "symbiote-v1.0.0-x86_64-unknown-linux-gnu.zip",
+      "id": 684692988,
+      "bytes": 4411782,
+      "sha256": "22bce71f7e178f9e15cad3e49a52c3f09a559416e1471c0efd27ce0a56bf7858"
+    }
+  ],
+  "exact_native_asset_set": true,
+  "architectures_verified": 4,
+  "public_assets_and_tag_unchanged": true,
+  "release_workflow_run": 40674286304,
+  "ci": {
+    "windows_rust_test_executions": 357,
+    "python_tests": 98,
+    "brute_parity_cases": 6093,
+    "all_four_release_platforms": "PASS",
+    "compiler": "rustc 1.99.1",
+    "python": "3.13.16"
+  },
+  "installed_windows": {
+    "status": "PASS_WINDOWS_INSTALL_AND_BOUNDED_SMOKE",
+    "version": {
+      "build_source_commit": "426f054771395dcbe1b8711d7128b90ef0c704de",
+      "name": "SYMBIOTE",
+      "version": "1.0.0"
+    },
+    "binary_sha256": "88fd14bc693ef93296046e960080aaa8f43eb3cf21cf1514aa53d546755544b5",
+    "isolated_installation": true,
+    "path_changed": false,
+    "first_demo_promotions": 2,
+    "actual_restart_reused": 2,
+    "offline_prediction_tables_verified": true,
+    "offline_exact_history_restore": true,
+    "backup_manifest_sha256": "d4dc011a062c6b0dbe59e731f8ca9d65ba5cdc2a2ab64eaeb3b106238e1ad9a4",
+    "all_owned_process_cleanup_verified": true
+  },
+  "configured_cognition": {
+    "status": "PASS_INSTALLED_PUBLIC_BINARY_CONFIGURED_COGNITION",
+    "native_binary_sha256": "88fd14bc693ef93296046e960080aaa8f43eb3cf21cf1514aa53d546755544b5",
+    "test_binary_sha256": "5c00e57f3b9601c40025451fff16cc81c51f948e4043b1bc419a0c49a675d2b3",
+    "manifest_sha256": "278f32aaea3a9a8cbd8ec491f648554555b50e4549a507e6346a6f0aa4bdd779",
+    "first_fresh_promotions": 2,
+    "restart_fresh_promotions": 0,
+    "active_models": 2,
+    "quarantined_contributions": 0,
+    "partner_benefits_verified": 0
+  },
+  "raw_operation_sha256": "06aa4d2b8baee88f63a965e5a618fbadaa2e10d4e990c1367c17f57147bd6729",
+  "local_evidence": "experiments/local/v1-release-audit-20261028/public-success/",
+  "public_raw_evidence_archive": "MISSING",
+  "preserved_attempts": [
+    "Draft publisher rejected repository output; no output written",
+    "Draft publisher failed on missing GitHub release creator field",
+    "Initial native installer smoke failed under inherited PowerShell Core module path; owned cleanup verified",
+    "Successful audit lets Windows PowerShell initialize its own default module path"
+  ],
+  "limitations": [
+    "No installed public-binary execution on Linux or macOS in this local audit",
+    "Current configured runtime declines outbound contributions",
+    "Tagged benefit-verification API defects require a separately qualified patch",
+    "No reciprocal-efficiency gain, independent two-host deployment or general intelligence established"
+  ]
+}

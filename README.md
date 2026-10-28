@@ -19,15 +19,14 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
-> **Development handoff — v1.0.0 candidate, not a stable v1 release.**
-> CI run [40545912958](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40545912958)
-> at `4da99383` passed Ubuntu, Windows, and macOS. A fresh one-host hour passed
-> 120 cycles on `31b9418`. The cancelled 71/120 attempt remains HOLD. The
-> verified public binary remains v0.5.1.
-> [Start with the Grok handoff](docs/GROK_HANDOFF.md).
-> A value-of-symbiosis check declines a non-positive exchange before a payload
-> is sent. A content digest cannot verify benefit. Neither result establishes
-> a reciprocal-efficiency gain.
+> **v1.0.0 is public; full stable qualification is HOLD.**
+> [The release audit](docs/V1_RELEASE_AUDIT.md) verifies all four platform
+> archives and the installed Windows binary, including configured learning and
+> restart. CI passed on all release platforms, and the separate local hour
+> passed 120 cycles. The audit also found incorrect benefit-verification APIs
+> in the tagged source, missing public evidence packaging, and no outbound
+> contribution in the current configured fixtures. Main contains corrective
+> work; the published tag stays unchanged. Two-host testing remains open.
 
 
 ## Get started
@@ -41,7 +40,7 @@ binary. Release installation does not need Rust, Python, or a model service.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v0.5.1 -AddToPath
+.\tools\install.ps1 -Version v1.0.0 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -49,7 +48,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v0.5.1
+sh tools/install.sh --version v1.0.0
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
@@ -249,14 +248,16 @@ behavior explicit without fragmenting the system into placeholder packages.
 [Architecture](docs/ARCHITECTURE.md) · [Compatibility](docs/COMPATIBILITY.md) · [Reasoning](docs/REASONING.md) ·
 [Protocol](docs/PROTOCOL.md) · [Operations](docs/OPERATIONS.md)
 
-### v1 candidate under qualification
+### Published v1 and continuing qualification
 
-Development is continuing beyond v0.5.1. The candidate adds a configured native
+The public v1.0.0 source adds a configured native
 cognitive runtime, portable query strategies with durable revocation, controlled
 three-peer TLS topology, outcome-conditioned exploration and strategy-aware
 backup/migration. The runtime can also score a proposed exchange against an
-equal-query isolated control and refuse to call quarantine a benefit. These are
-focused engineering checks. Query-transfer protocol 001 remains
+equal-query isolated control and refuses non-positive outbound fixture offers.
+The [release audit](docs/V1_RELEASE_AUDIT.md) found incorrect tagged benefit
+helpers; corrections on main need a separately qualified patch. These are
+bounded engineering checks. Query-transfer protocol 001 remains
 `NOT_DEMONSTRATED`. The fresh one-host hour passed; the cancelled 71/120
 attempt remains HOLD. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
 is preregistered and has not been run.

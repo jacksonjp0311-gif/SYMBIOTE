@@ -1,10 +1,18 @@
 # Compatibility and release boundary
 
-The unreleased v1 candidate adds the [public runtime API](RUST_API.md), native
-cognitive profile events and a separate strategy ledger. Its minimum compiler
-is declared as Rust 1.98.1 and must pass the final 1.98.1 local build. The tables
-below retain the published v0.5.1 qualification; they are not candidate results.
-Final candidate platform and duration evidence will be recorded separately.
+Public v1.0.0 adds the [runtime API](RUST_API.md), native cognitive profile events
+and a separate strategy ledger. Its [release audit](V1_RELEASE_AUDIT.md) records
+passing four-platform builds, downloaded bundle integrity, installed Windows
+cognition and the frozen one-host hour. Full stable qualification remains HOLD.
+The tagged benefit-verification helpers have defects; corrected main deliberately
+changes unsafe Rust signatures while retaining receipt schema `/2`. Resolve this
+API break before publishing a replacement; no compatible patch is implied.
+The older tables below retain their v0.5.1 scope rather than becoming v1 evidence.
+
+The v1 release workflow used Rust 1.99.1 and Python 3.13.16. Local source checks
+use Rust 1.98.1, the declared minimum. Public ZIP inspection does not establish
+installed Linux/macOS execution on this PC, and store replay does not establish
+OS-process restart or independent two-host operation.
 
 **v0.5.1 remains a research preview.** It adds owner backups and an offline
 policy lifecycle to v0.5.0's configured services. S5 passed bounded local

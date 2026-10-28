@@ -1,19 +1,45 @@
 # Changelog
 
-## v1 candidate — unreleased
+## Unreleased — post-v1.0.0 corrections
+
+- Independent release audit: four public native bundles and checksums pass;
+  the installed Windows executable passes demo, actual restart, offline
+  predictions, backup/restore and configured native cognition. Full stable
+  qualification remains HOLD; see [the audit](docs/V1_RELEASE_AUDIT.md).
+- Future bundle workflows leave new releases in draft until independent delivery
+  and qualification checks finish. Existing public tags and assets are preserved.
+- Correct the fresh-hour account: the server retained two models; the client
+  retained its unchanged genesis. Reconcile release status and source provenance.
+- Benefit predicates now require the receiver ledger and exact promotion witness;
+  fabricated receipt JSON and recomputed hashes cannot verify adoption or benefit.
+  Distinct-source duplicate payloads no longer count as changed capability, and
+  the receipt sender must match the promoted record's stored source.
+- Replace flag-only `durable_benefit_verified` with
+  `retained_benefit_after_store_reopen`, which opens an existing stopped owner and
+  checks retained active knowledge. This observes store replay, not process restart.
+  Mutual verification requires both directional witnesses and crossed knowledge
+  anchors. Receipt schema `/2` stays readable, but unsafe Rust helper signatures
+  intentionally change. Resolve release/API compatibility before publishing a
+  replacement version; no new release is approved here.
+
+## v1.0.0 — one-host bounded engine — 2026-10-28
+
+Published source: `426f054771395dcbe1b8711d7128b90ef0c704de`. This release
+number does not close the stable qualification, deployment or research gates.
+The subsequent [audit](docs/V1_RELEASE_AUDIT.md) records tagged API defects and
+the remaining reciprocal-contribution and evidence-delivery requirements.
 
 - One-host hour qualification `PASS_LOCAL_HOUR` on source `31b9418`.
   Registration `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`.
   Campaign report `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`.
   120 cycles, measurement 3,601,880 ms, two retained models, zero scientific
   samples. The cancelled 71/120 run remains HOLD. Two-host deployment and
-  public v1 delivery remain open.
+  final public evidence packaging remain open.
 - Reciprocal receipt schema `symbiote.reciprocal-evaluation/2`. A content
-  digest is not benefit. Benefit requires a completed promotion between the
-  receiver's anchors, a derived behavior change, and stored trial totals with
-  a strict cost improvement. Mutual success requires two crossed receipts for
-  the same transferred record. A declined value plan cannot turn a verifying
-  receipt into benefit. The width-3 affine cycle remains negative. Protocol
+  digest is not benefit. The intended contract requires a completed promotion
+  between the receiver's anchors, a derived behavior change and a strict stored
+  cost improvement. The subsequent audit found that the tagged public predicates
+  do not enforce that contract. The width-3 affine cycle remains negative. Protocol
   002 stays `NOT_RUN`. This is not a reciprocal-efficiency result.
 - Pre-exchange value decisions. Unqualified gain is not utility zero. Connect
   requires both existing authorizations and does not send knowledge. Negative
@@ -24,7 +50,7 @@
 - Value-of-symbiosis decisions and receiver-originated reciprocal receipts.
   Benefit requires local evidence, adoption, a behavior change, a strictly
   lower declared cost than the equal-resource isolated control, and no
-  certification bypass. Restart durability is a separate flag. Quarantine,
+  certification bypass. The tagged restart flag is a declaration, not proof. Quarantine,
   agreement and promotion are not benefit.
 - Width-3 affine mechanism check: all 16 canonical truths take 4 oracle queries
   under independent maximin, fixed basis, a true hint and a bias-flipped hint.

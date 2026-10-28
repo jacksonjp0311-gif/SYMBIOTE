@@ -1,0 +1,32 @@
+{
+  "schema": "symbiote.local-hour-evidence-audit/1",
+  "audited_on": "2026-10-28",
+  "status": "PASS_LOCAL_HOUR",
+  "source_commit": "31b9418789db067f405738ed06f9a39d9463794c",
+  "release_source": "426f054771395dcbe1b8711d7128b90ef0c704de",
+  "release_delta": "five documentation files; no selected source changes",
+  "source_manifest": {
+    "files": 115,
+    "sha256": "c50d590eb59e1f17b88935f4db10e88bc1b287e9fa672b1b1ee1fc7776160181"
+  },
+  "registration_sha256": "97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca",
+  "campaign_report_sha256": "fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72",
+  "native_report_sha256": "d29db5077d8d15f0fdf57ccc340ea4df6cd741049a0024e9bf8650c7c7db9886",
+  "events_sha256": "c13a4e0ffa3d83b5af19e31377db4141253608e502633ebdc4d18cb253ebc623",
+  "read_only_consumer_rerun": true,
+  "campaign_rerun": false,
+  "cycles": 120,
+  "measurement_elapsed_ms": 3601880,
+  "wire_request_keys": 483,
+  "service_starts": 10,
+  "service_stops": 10,
+  "server_retained_models": 2,
+  "client_retained_models": 0,
+  "client_genesis_unchanged": true,
+  "cleanup_verified": true,
+  "source_watch_failures": [],
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "public_raw_evidence_archive": "MISSING",
+  "interpretation": "Valid local frozen-source duration evidence; no reciprocal capability, efficiency or changed-source qualification"
+}

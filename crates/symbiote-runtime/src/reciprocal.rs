@@ -138,8 +138,8 @@ pub fn attributed_benefit(
 ) -> bool {
     payload_sent
         && exchange_plan.exchanges_knowledge
-        && receipt.receiver_benefit_verified()
-        && receipt.confirmed_benefit(store, witness)
+        && exchange_plan.decision.exchanges_knowledge()
+        && receipt.receiver_benefit_verified(store, witness)
 }
 
 #[cfg(test)]
@@ -154,12 +154,13 @@ mod tests {
         assert!(report.local_utility < 0);
         assert!(report.remote_utility < 0);
         assert!(!report.research_success);
-        assert!(!report.receiver_receipt.receiver_benefit_verified());
-        assert!(!report.return_receipt.receiver_benefit_verified());
-        assert!(!report.receiver_receipt.durable_benefit_verified());
-        assert!(!ReciprocalReceipt::mutual_research_success(
-            &report.receiver_receipt,
-            &report.return_receipt
+        assert!(matches!(
+            report.receiver_receipt.attribution,
+            symbiote_memory::reciprocal::ReceiptAttribution::ContentDigest
+        ));
+        assert!(matches!(
+            report.return_receipt.attribution,
+            symbiote_memory::reciprocal::ReceiptAttribution::ContentDigest
         ));
         assert!(report.receiver_receipt.verify_binding().is_ok());
         assert!(report.return_receipt.verify_binding().is_ok());
@@ -247,7 +248,7 @@ mod tests {
             before: &before,
             after: &after,
         };
-        assert!(receipt.receiver_benefit_verified());
+        assert!(receipt.receiver_benefit_verified(&store, witness));
 
         let saved = TransferMeasurement {
             isolated_checks: Some(8),
@@ -268,6 +269,15 @@ mod tests {
         let offer = plan(offer_local, offer_remote).unwrap();
         assert!(offer.exchanges_knowledge);
         assert!(attributed_benefit(&offer, true, &receipt, &store, witness));
+        let mut inconsistent = offer.clone();
+        inconsistent.decision = SymbiosisDecision::Defer;
+        assert!(!attributed_benefit(
+            &inconsistent,
+            true,
+            &receipt,
+            &store,
+            witness
+        ));
         assert!(!attributed_benefit(
             &offer, false, &receipt, &store, witness
         ));
@@ -304,7 +314,7 @@ mod tests {
             certification_bypassed: false,
         })
         .unwrap();
-        assert!(!digest.receiver_benefit_verified());
+        assert!(!digest.receiver_benefit_verified(&store, witness));
         assert!(!attributed_benefit(&offer, true, &digest, &store, witness));
 
         let other = std::env::temp_dir().join(format!(

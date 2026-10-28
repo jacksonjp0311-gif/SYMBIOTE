@@ -8,9 +8,16 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 
 ## Current qualification status
 
+The public v1.0.0 tag is `426f054`. Its [release audit](V1_RELEASE_AUDIT.md)
+records native delivery PASS and full stable qualification HOLD: tagged benefit
+API defects, no useful configured return contribution and missing final public
+evidence. The older counts below retain their v0.5.1 scope. The v1 release's
+Windows CI reports 357 Rust executions and 98 Python tests, with 6,093 parity
+cases; that green software gate did not detect the reproduced API defects.
+
 | Gate | Recorded status | Scope or remaining work |
 | --- | --- | --- |
-| Default software checks | PASS | 292 Rust test executions, 53 Python tests and 6,093 BRUTE parity cases |
+| v0.5.1 default software checks | PASS | 292 Rust test executions, 53 Python tests and 6,093 BRUTE parity cases |
 | Fixed local continuity campaign | PASS, S5 | One separately executed ignored test; 24 cycles, one PC, two fixed fixtures |
 | Reviewed policy/credential lifecycle | PASS within local checks | Explicit offline transitions, old-pin rejection, denial retention and reviewed regrant |
 | Verified owner portability | PASS within local checks | One stopped owner, same OS, new destination and explicit service relocation review |
@@ -20,7 +27,8 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 | Independent two-host deployment | OPEN_UNAVAILABLE | Same-host TLS and private-IP tests do not close this gate |
 | Duration reliability | PASS, one host | Fresh 120-cycle hour on `31b9418`, registration `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`, campaign report `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`. The cancelled 71/120 run remains HOLD. This hour does not establish production or two-host reliability |
 | Broader scientific criteria | OPEN | Transfer/generalization and better partner selection require new predeclared evidence |
-| Stable v1.0 qualification | OPEN | A local software PASS alone is insufficient |
+| Public v1.0.0 native delivery | PASS within audit | Four ZIPs/checksums, actual Windows install/restart/restore and public-binary cognition; evidence archive missing |
+| Stable v1.0 qualification | HOLD | Tagged verification API defects, absent configured reciprocal contribution and incomplete public evidence; a local software PASS is insufficient |
 
 S5 completed in 83.969 seconds using 66 root commands, with fixed limits and an
 independent read-only audit. Its 16 named regression repeats are existing tests,

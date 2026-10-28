@@ -1,6 +1,7 @@
 # Embedding the native runtime
 
-The v1 candidate's public runtime is being qualified with the same owner,
+The public v1.0.0 runtime and subsequent main corrections are qualified separately.
+They use the same owner,
 authorization and evaluation boundaries as the command-line program. It has no
 language-model dependency. No crates.io publication is implied; use the pinned
 workspace source.
@@ -34,6 +35,28 @@ documentation with
 Research controllers such as `transfer`, `topology_research` and
 `exploration_research` are experimental, versioned receipt producers; they are
 not a promise of stable study design or broad scientific applicability.
+
+## Post-v1.0.0 receipt API correction
+
+The tagged benefit helpers accept self-contained claims without sufficient
+evidence; see [the release audit](V1_RELEASE_AUDIT.md). On corrected main,
+`receiver_benefit_verified(&store, witness)` requires a `PromotionWitness` naming
+the exact record, stored evaluation and before/after anchors. `confirmed_benefit`
+also validates that witness. `mutual_research_success` takes both receipts and
+both receiver store/witness pairs, with crossed identities and initial anchors.
+The artifacts may differ between directions. The sender must match the stored
+record's source; forwarded credit requires separately supported custody evidence.
+
+The flag-only `durable_benefit_verified` method is removed. Use
+`retained_benefit_after_store_reopen(directory, witness)` only after closing all
+writers; it opens the existing ledger and verifies retained active knowledge.
+It neither initializes missing history nor establishes an OS-process restart.
+The producer's `persisted_after_restart` field is informational.
+
+Receipt schema `/2` remains readable, but these Rust signatures intentionally
+change. Consumers of pinned source must update their calls. Do not publish this
+as a compatible patch without resolving that API break. No crates.io package or
+replacement binary release is published by this audit.
 
 ## Cancellation and ownership
 

@@ -47,10 +47,10 @@ below must be updated from the actual completed receipt, including failures.
 | v0.1–v0.3 foundation, exchange, adaptive memory | Published bounded native learning, exact parity, private owner histories, restart, migration and rollback evidence; later format changes need new compatibility checks |
 | v0.4 reciprocal improvement | Conditional affine and graph benefits in the published declared cost models; cheap-observation and matched-budget controls limit the interpretation |
 | v0.5 adaptive relationships | Primary remains HOLD; engineering reproduction completed the same worlds; scores changed without changed actions and fixed-peer selection was cheaper; better unfamiliar-partner selection remains unachieved |
-| v0.6 transferable knowledge | New exact policy representation and retention checks implemented; prospective matched-control utility result is pending; `NOT_DEMONSTRATED` leaves the strong gain criterion unachieved |
-| v0.7 controlled topology | Three-peer native implementation and focused consent/custody tests; full source-frozen evidence is pending; negative aggregate utility is reported as a loss |
+| v0.6 transferable knowledge | Protocol 001 completed as `NOT_DEMONSTRATED`; the strong gain criterion remains unachieved; protocol 002 is not run |
+| v0.7 controlled topology | Three-peer native implementation and source-frozen controls completed; aggregate saving of −428 declared work units is a loss; full public evidence packaging remains open |
 | v0.8 bounded exploration | Native outcome-conditioned choice and restart control implemented; equality with the observation-budget control does not establish greater acquisition efficiency |
-| v0.9 stability and generalization | Adversarial regression envelope implemented; new duration qualification pending; generalization beyond the declared finite families remains unverified |
+| v0.9 stability and generalization | Adversarial regression envelope implemented; fresh local hour passed 120 cycles on `31b9418`; generalization beyond the declared finite families remains unverified |
 | v1.0 stable bounded software | Requires the operational gates above, published compatibility limits and verified delivery; it does not close unmet research criteria by renaming them |
 
 The two-host gate stays open because evidence is unavailable. Restricting the

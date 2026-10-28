@@ -1,7 +1,10 @@
 # v1 operational qualification
 
-Status: **PAUSED FOR HANDOFF — not a stable release approval.** The public verified release
-remains v0.5.1 until the candidate's outstanding gates and delivery checks finish.
+Status: **v1.0.0 PUBLISHED — stable qualification HOLD.** Source `426f054`
+is public. The independent [release audit](V1_RELEASE_AUDIT.md) records passing
+native delivery checks, incorrect tagged benefit-verification APIs and remaining
+reciprocal-contribution and evidence-packaging requirements. Main corrections
+do not change that tag or qualify a replacement release.
 
 CI run `40545912958` at `4da99383e9081767f4f0e08eda671323a76629fa` passed
 Ubuntu, Windows and macOS. Later source, including the value-of-symbiosis
@@ -72,7 +75,7 @@ The independent verifier receipt SHA256 is
 `35c274903c1f60bfa062011ce0468097f5fa09a4406ff36e8a455ce26c9e3ab2`.
 No rerun replaces this cohort.
 
-## Duration and delivery gates still pending
+## Duration passed locally; final delivery remains incomplete
 
 The one-hour protocol has been registered and started once. Its external
 registration digest is
@@ -98,9 +101,13 @@ single-PC scope. A passing local campaign cannot close it. Power-loss durability
 network filesystems, cross-OS state restoration, automatic credential renewal,
 arbitrary-agent truth and general intelligence remain unqualified.
 
-Public platform bundles, exact asset sets, installation and downloaded-binary
-cognitive checks are pending. The release test driver must bind those checks
-to the actual public executable rather than substitute the frozen study binary.
+The independent audit downloaded all four v1.0.0 platform bundles and their
+checksum manifest, verified architectures and hashes, and installed the actual
+Windows release executable in an isolated directory. Demo/restart, predictions,
+backup/restore and configured cognition passed with that exact public binary.
+The configured episode promoted two models and sent zero contributions. The
+public evidence archive and its checksum file remain absent. These native checks
+close neither the reciprocal capability gap nor full stable qualification.
 
 ## Preserve failures and the release delta
 
@@ -116,7 +123,10 @@ while the studied worktree remains unchanged. The fixed installer checks use
 release binaries with the original size cap and require the workspace version.
 The macOS process-state investigation preserves permission/uncertainty failures.
 
-At this stage, release-development changes affect verification helpers and test
-drivers. Production Rust, Cargo manifests/lockfile and frozen protocol documents
-are identical to the studied implementation. The final release delta and CI
-results must be recorded explicitly before publication.
+Relative to the older `ddd63d7` study, the tag changes production Rust: it adds
+value decisions and reciprocal receipts and changes cognitive contribution
+behavior. Do not transfer the older reciprocal-adoption result to this runtime.
+The fresh hour instead uses `31b9418`; its delta to release `426f054` consists
+only of five documentation files. The registered 115-file source manifest matches
+the release source. Post-audit production fixes on main require their own checks;
+neither the old hour nor public v1 binaries qualify changed code automatically.

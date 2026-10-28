@@ -12,14 +12,18 @@
 //! Benefit additionally requires a behavior change and a stored exchange total
 //! strictly below the stored isolated baseline. The component breakdown is
 //! already included in that total, so it is not added again. Mutual success
-//! requires two such receipts with crossed identities and the same transferred
-//! record. One receipt cannot certify the other participant.
+//! requires two independently witnessed directional receipts with crossed
+//! identities and initial knowledge anchors. One receipt cannot certify the
+//! other participant. Serialized attribution and restart flags are claims;
+//! verification always reads the receiver ledger. A stopped-store replay check
+//! observes retained knowledge after reopening, not an OS process restart.
 //!
 //! A host that can rewrite a ledger and recompute these digests is outside
 //! this module's threat model. The hash chain detects accidental corruption.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::path::Path;
 
 use crate::knowledge::{KnowledgeAnchor, KnowledgeRecord, KnowledgeStore, TrialCosts};
 
@@ -74,6 +78,7 @@ pub struct ReciprocalReceipt {
     pub isolated_control_cost: u64,
     pub exchange_path_cost: u64,
     pub sender_return_net: Option<i128>,
+    /// Informational producer claim; never sufficient restart or durability evidence.
     pub persisted_after_restart: Option<bool>,
     pub certification_bypassed: bool,
     pub attribution: ReceiptAttribution,
@@ -97,7 +102,9 @@ pub struct ReceiptDraft {
     pub certification_bypassed: bool,
 }
 
-/// Caller-supplied names for a ledger seal. Costs, adoption and behavior are not fields.
+/// Sender must match the stored record's source. Forwarded custody needs a separate
+/// authenticated provenance witness and is not inferred here. Costs, adoption and
+/// behavior are derived; `persisted_after_restart` remains an informational claim.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PromotionSeal {
     pub sender_identity: String,
@@ -224,6 +231,9 @@ impl ReciprocalReceipt {
         if !is_sha256(&seal.sender_knowledge_before_sha256) {
             return Err("sender knowledge binding must be a SHA-256 digest".into());
         }
+        if seal.sender_identity != witness.record.source {
+            return Err("receipt sender must match the promoted record's stored source".into());
+        }
         store.validate_anchor(witness.before)?;
         store.validate_anchor(witness.after)?;
         let transferred = witness.record.digest()?;
@@ -274,7 +284,7 @@ impl ReciprocalReceipt {
         ) else {
             return false;
         };
-        self == &resealed && resealed.receiver_benefit_verified()
+        self == &resealed && resealed.claims_benefit()
     }
 
     pub fn verify_binding(&self) -> Result<(), String> {
@@ -296,8 +306,60 @@ impl ReciprocalReceipt {
         Ok(i128::from(self.isolated_control_cost) - i128::from(self.exchange_path_cost))
     }
 
-    /// True only for a completed ledger promotion with a derived strict cost improvement.
-    pub fn receiver_benefit_verified(&self) -> bool {
+    /// Verify the receiver's actual ledger; serialized attribution alone is not proof.
+    pub fn receiver_benefit_verified(
+        &self,
+        store: &KnowledgeStore,
+        witness: PromotionWitness<'_>,
+    ) -> bool {
+        self.confirmed_benefit(store, witness)
+    }
+
+    /// Reopen a stopped owner's existing ledger and verify that this exact beneficial
+    /// promotion remains active. A live writer, missing/corrupt history, a revoked
+    /// record, or a fabricated receipt returns false. The producer's restart flag is
+    /// informational and has no effect. This proves store replay, not process restart,
+    /// power-loss durability or deployment qualification. No missing ledger is created.
+    pub fn retained_benefit_after_store_reopen(
+        &self,
+        directory: &Path,
+        witness: PromotionWitness<'_>,
+    ) -> bool {
+        if !self.claims_benefit() || !directory.join("knowledge.jsonl").is_file() {
+            return false;
+        }
+        let Ok(store) = KnowledgeStore::open(directory, &self.evaluator_identity) else {
+            return false;
+        };
+        self.receiver_benefit_verified(&store, witness)
+            && store.active().iter().any(|record| {
+                record.digest().as_deref() == Ok(self.transferred_record_sha256.as_str())
+            })
+    }
+
+    /// Each direction must independently match its own receiver ledger. Crossed
+    /// initial knowledge anchors bind the two directional artifacts to the same
+    /// participant states; the artifacts need not be identical. This does not verify
+    /// an OS restart or authenticate the truth of an arbitrary remote ledger.
+    pub fn mutual_research_success(
+        left: &Self,
+        left_store: &KnowledgeStore,
+        left_witness: PromotionWitness<'_>,
+        right: &Self,
+        right_store: &KnowledgeStore,
+        right_witness: PromotionWitness<'_>,
+    ) -> bool {
+        left.receiver_benefit_verified(left_store, left_witness)
+            && right.receiver_benefit_verified(right_store, right_witness)
+            && left.evaluator_identity == right.sender_identity
+            && left.sender_identity == right.evaluator_identity
+            && left.sender_knowledge_before_sha256 == right.receiver_knowledge_before_sha256
+            && right.sender_knowledge_before_sha256 == left.receiver_knowledge_before_sha256
+    }
+
+    /// Internal arithmetic/shape predicate. Never expose this as verification of
+    /// untrusted receipts: a caller can recompute every hash in a serialized body.
+    fn claims_benefit(&self) -> bool {
         self.verify_binding().is_ok()
             && self.completed_promotion()
             && self.validation == ValidationOutcome::LocalEvidence
@@ -305,21 +367,6 @@ impl ReciprocalReceipt {
             && self.behavior_changed
             && !self.certification_bypassed
             && self.exchange_path_cost < self.isolated_control_cost
-    }
-
-    /// Persistence is a separate measurement. Absence is not durability.
-    pub fn durable_benefit_verified(&self) -> bool {
-        self.receiver_benefit_verified() && self.persisted_after_restart == Some(true)
-    }
-
-    /// Both receivers improved on the same transferred record. A sender net on
-    /// one receipt is not the other receiver's evidence.
-    pub fn mutual_research_success(left: &Self, right: &Self) -> bool {
-        left.receiver_benefit_verified()
-            && right.receiver_benefit_verified()
-            && left.evaluator_identity == right.sender_identity
-            && left.sender_identity == right.evaluator_identity
-            && left.transferred_record_sha256 == right.transferred_record_sha256
     }
 
     fn finish_ledger(
@@ -542,6 +589,8 @@ fn scope_behavior_digest(
         .map(|record| record.payload)
         .collect();
     payloads.sort_by_key(|payload| payload.to_string());
+    // Another source's identical model adds provenance, not predictive capability.
+    payloads.dedup();
     super::digest(&payloads)
 }
 
@@ -590,9 +639,7 @@ fn is_sha256(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::knowledge::{
-        affine_schema_fingerprint, assess, KnowledgeStore, TrialCase, TrialCosts, TrialEvidence,
-    };
+    use crate::knowledge::{affine_schema_fingerprint, assess, TrialCase, TrialEvidence};
     use serde_json::json;
     use std::fs;
     use std::path::PathBuf;
@@ -604,37 +651,31 @@ mod tests {
         store: Option<KnowledgeStore>,
         dir: PathBuf,
     }
-
     impl TempOwner {
         fn open(identity: &str) -> Self {
             let n = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
             let dir = std::env::temp_dir()
                 .join(format!("symbiote-reciprocal-{}-{n}", std::process::id()));
             fs::create_dir_all(&dir).unwrap();
-            let store = KnowledgeStore::open(&dir, identity).unwrap();
             Self {
-                store: Some(store),
+                store: Some(KnowledgeStore::open(&dir, identity).unwrap()),
                 dir,
             }
         }
-
         fn store(&mut self) -> &mut KnowledgeStore {
             self.store.as_mut().unwrap()
         }
     }
-
     impl Drop for TempOwner {
         fn drop(&mut self) {
             self.store.take();
             let _ = fs::remove_dir_all(&self.dir);
         }
     }
-
     fn digest(byte: u8) -> String {
         format!("{byte:02x}{}", "ab".repeat(31))
     }
-
-    fn draft(adopted: bool, changed: bool, isolated: u64, exchange: u64) -> ReceiptDraft {
+    fn draft() -> ReceiptDraft {
         ReceiptDraft {
             evaluator_identity: "receiver-b".into(),
             sender_identity: "sender-a".into(),
@@ -642,16 +683,15 @@ mod tests {
             sender_knowledge_before_sha256: digest(2),
             transferred_record_sha256: digest(3),
             validation: ValidationOutcome::LocalEvidence,
-            adopted,
-            behavior_changed: changed,
-            isolated_control_cost: isolated,
-            exchange_path_cost: exchange,
+            adopted: true,
+            behavior_changed: true,
+            isolated_control_cost: 100,
+            exchange_path_cost: 40,
             sender_return_net: Some(4),
             persisted_after_restart: Some(true),
             certification_bypassed: false,
         }
     }
-
     fn record() -> KnowledgeRecord {
         KnowledgeRecord {
             id: "xor-context-a".into(),
@@ -663,7 +703,6 @@ mod tests {
             provenance: "observed training trace; independent held-out lab checks".into(),
         }
     }
-
     fn evidence(costs: TrialCosts) -> TrialEvidence {
         TrialEvidence {
             evaluator: "independent-lab".into(),
@@ -681,7 +720,6 @@ mod tests {
             costs,
         }
     }
-
     fn positive_costs() -> TrialCosts {
         TrialCosts {
             acquisition: 2,
@@ -691,7 +729,6 @@ mod tests {
             candidate: 10,
         }
     }
-
     struct Promoted {
         owner: TempOwner,
         record: KnowledgeRecord,
@@ -699,25 +736,28 @@ mod tests {
         before: KnowledgeAnchor,
         after: KnowledgeAnchor,
     }
-
-    fn promote_costs(identity: &str, costs: TrialCosts) -> Promoted {
-        let record = record();
+    fn promote_from(identity: &str, source: &str, costs: TrialCosts) -> Promoted {
+        let mut record = record();
+        record.source = source.into();
         let trial = evidence(costs);
-        let assessment = assess(&record, &trial).unwrap();
-        let evidence = serde_json::to_value(&trial).unwrap();
         let mut owner = TempOwner::open(identity);
         let before = owner.store().history_anchor();
-        owner.store().promote(record.clone(), assessment).unwrap();
+        owner
+            .store()
+            .promote(record.clone(), assess(&record, &trial).unwrap())
+            .unwrap();
         let after = owner.store().history_anchor();
         Promoted {
             owner,
             record,
-            evidence,
+            evidence: serde_json::to_value(trial).unwrap(),
             before,
             after,
         }
     }
-
+    fn promote_costs(identity: &str, costs: TrialCosts) -> Promoted {
+        promote_from(identity, "partner-a", costs)
+    }
     fn witness(promoted: &Promoted) -> PromotionWitness<'_> {
         PromotionWitness {
             record: &promoted.record,
@@ -726,10 +766,9 @@ mod tests {
             after: &promoted.after,
         }
     }
-
     fn seal_for(
         promoted: &Promoted,
-        sender: &str,
+        sender_anchor: &str,
         persisted: Option<bool>,
         completed: bool,
     ) -> ReciprocalReceipt {
@@ -737,112 +776,122 @@ mod tests {
             promoted.owner.store.as_ref().unwrap(),
             witness(promoted),
             &PromotionSeal {
-                sender_identity: sender.into(),
-                sender_knowledge_before_sha256: digest(9),
+                sender_identity: promoted.record.source.clone(),
+                sender_knowledge_before_sha256: sender_anchor.into(),
                 persisted_after_restart: persisted,
                 completed,
             },
         )
         .unwrap()
     }
+    fn benefit(receipt: &ReciprocalReceipt, promoted: &Promoted) -> bool {
+        receipt.receiver_benefit_verified(promoted.owner.store.as_ref().unwrap(), witness(promoted))
+    }
+    fn mutual(
+        left: &ReciprocalReceipt,
+        lp: &Promoted,
+        right: &ReciprocalReceipt,
+        rp: &Promoted,
+    ) -> bool {
+        ReciprocalReceipt::mutual_research_success(
+            left,
+            lp.owner.store.as_ref().unwrap(),
+            witness(lp),
+            right,
+            rp.owner.store.as_ref().unwrap(),
+            witness(rp),
+        )
+    }
 
     #[test]
     fn content_digest_is_not_benefit_and_tamper_breaks_the_binding() {
-        let receipt = ReciprocalReceipt::seal(draft(true, true, 100, 40)).unwrap();
+        let promoted = promote_costs("receiver-b", positive_costs());
+        let receipt = ReciprocalReceipt::seal(draft()).unwrap();
         assert!(matches!(
             receipt.attribution,
             ReceiptAttribution::ContentDigest
         ));
-        assert!(!receipt.receiver_benefit_verified());
-        assert!(!receipt.durable_benefit_verified());
+        assert!(receipt.verify_binding().is_ok());
         assert_eq!(receipt.receiver_net().unwrap(), 60);
-        let peer = ReciprocalReceipt::seal(draft(true, true, 100, 40)).unwrap();
-        assert!(!ReciprocalReceipt::mutual_research_success(&receipt, &peer));
-
-        let mut equal = draft(true, true, 100, 100);
-        equal.sender_return_net = Some(0);
-        equal.persisted_after_restart = None;
-        let equal = ReciprocalReceipt::seal(equal).unwrap();
-        assert!(!equal.receiver_benefit_verified());
-
-        let mut rejected = draft(false, false, 100, 40);
+        assert!(!benefit(&receipt, &promoted));
+        assert!(
+            !receipt.retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted))
+        );
+        assert!(!mutual(&receipt, &promoted, &receipt, &promoted));
+        let mut rejected = draft();
+        rejected.adopted = false;
         rejected.validation = ValidationOutcome::Rejected;
-        assert!(!ReciprocalReceipt::seal(rejected)
-            .unwrap()
-            .receiver_benefit_verified());
-        assert!(ReciprocalReceipt::seal({
-            let mut adopted_bypass = draft(true, true, 100, 40);
-            adopted_bypass.certification_bypassed = true;
-            adopted_bypass
-        })
-        .is_err());
-
+        assert!(!benefit(
+            &ReciprocalReceipt::seal(rejected).unwrap(),
+            &promoted
+        ));
+        let mut bypass = draft();
+        bypass.certification_bypassed = true;
+        assert!(ReciprocalReceipt::seal(bypass).is_err());
         let mut tampered = receipt.clone();
         tampered.exchange_path_cost = 1;
         assert!(tampered.verify_binding().is_err());
-        assert!(!tampered.receiver_benefit_verified());
         assert!(tampered.receiver_net().is_err());
-
-        let mut swapped = receipt.clone();
+        assert!(!benefit(&tampered, &promoted));
+        let mut swapped = receipt;
         swapped.sender_identity = "other-sender".into();
         assert!(swapped.verify_binding().is_err());
-        assert!(!swapped.receiver_benefit_verified());
+        assert!(!benefit(&swapped, &promoted));
     }
 
     #[test]
-    fn sender_cannot_receipt_itself_and_restart_absence_is_not_durable() {
-        let mut same = draft(true, true, 10, 1);
+    fn sender_cannot_receipt_itself_and_flags_are_not_evidence() {
+        let mut same = draft();
         same.sender_identity = same.evaluator_identity.clone();
         assert!(ReciprocalReceipt::seal(same).is_err());
-        let mut missing_restart = draft(true, true, 10, 1);
-        missing_restart.persisted_after_restart = None;
-        missing_restart.sender_return_net = None;
-        let receipt = ReciprocalReceipt::seal(missing_restart).unwrap();
-        assert!(!receipt.receiver_benefit_verified());
-        assert!(!receipt.durable_benefit_verified());
+        let promoted = promote_costs("receiver-b", positive_costs());
+        for flag in [None, Some(false), Some(true)] {
+            let mut claimed = draft();
+            claimed.persisted_after_restart = flag;
+            let receipt = ReciprocalReceipt::seal(claimed).unwrap();
+            assert!(!benefit(&receipt, &promoted));
+            assert!(!receipt
+                .retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted)));
+        }
     }
 
     #[test]
     fn ledger_promotion_attributes_strict_improvement_only() {
         let promoted = promote_costs("owner-a", positive_costs());
-        let receipt = seal_for(&promoted, "partner-a", Some(true), true);
-        assert!(receipt.receiver_benefit_verified());
-        assert!(receipt.durable_benefit_verified());
+        let receipt = seal_for(&promoted, &digest(9), Some(true), true);
+        assert!(benefit(&receipt, &promoted));
         assert!(
             receipt.confirmed_benefit(promoted.owner.store.as_ref().unwrap(), witness(&promoted))
         );
-        assert_eq!(receipt.isolated_control_cost, 20);
-        assert_eq!(receipt.exchange_path_cost, 10);
+        assert_eq!(
+            (receipt.isolated_control_cost, receipt.exchange_path_cost),
+            (20, 10)
+        );
         assert_eq!(receipt.sender_return_net, None);
-        assert!(receipt.adopted);
-        assert!(receipt.behavior_changed);
+        assert!(receipt.adopted && receipt.behavior_changed);
         assert_eq!(receipt.evaluator_identity, "owner-a");
-
-        let interrupted = seal_for(&promoted, "partner-a", Some(true), false);
-        assert!(!interrupted.receiver_benefit_verified());
+        let interrupted = seal_for(&promoted, &digest(9), Some(true), false);
+        assert!(!benefit(&interrupted, &promoted));
         assert!(!interrupted.adopted);
         assert_eq!(interrupted.validation, ValidationOutcome::Abstained);
-        assert!(!interrupted
-            .confirmed_benefit(promoted.owner.store.as_ref().unwrap(), witness(&promoted)));
-
         let mut replayed = promoted.before.clone();
         replayed.records = promoted.after.records;
         replayed.head_sha256 = promoted.after.head_sha256.clone();
+        let seal = PromotionSeal {
+            sender_identity: "partner-a".into(),
+            sender_knowledge_before_sha256: digest(9),
+            persisted_after_restart: None,
+            completed: true,
+        };
         assert!(ReciprocalReceipt::seal_promoted(
             promoted.owner.store.as_ref().unwrap(),
             PromotionWitness {
                 before: &replayed,
                 ..witness(&promoted)
             },
-            &PromotionSeal {
-                sender_identity: "partner-a".into(),
-                sender_knowledge_before_sha256: digest(9),
-                persisted_after_restart: Some(true),
-                completed: true,
-            },
+            &seal
         )
         .is_err());
-
         let mut incompatible = promoted.evidence.clone();
         incompatible["evaluator"] = json!("other-lab");
         assert!(ReciprocalReceipt::seal_promoted(
@@ -851,67 +900,54 @@ mod tests {
                 evidence: &incompatible,
                 ..witness(&promoted)
             },
-            &PromotionSeal {
-                sender_identity: "partner-a".into(),
-                sender_knowledge_before_sha256: digest(9),
-                persisted_after_restart: None,
-                completed: true,
-            },
+            &seal
         )
         .is_err());
-        assert!(ReciprocalReceipt::seal_promoted(
-            promoted.owner.store.as_ref().unwrap(),
-            witness(&promoted),
-            &PromotionSeal {
-                sender_identity: "owner-a".into(),
-                sender_knowledge_before_sha256: digest(9),
-                persisted_after_restart: None,
-                completed: true,
-            },
-        )
-        .is_err());
-        let mut tampered = receipt.clone();
+        let mut tampered = receipt;
         tampered.isolated_control_cost = 100;
-        assert!(tampered.verify_binding().is_err());
-        assert!(!tampered.receiver_benefit_verified());
+        tampered.binding_sha256 = tampered.calculated_binding().unwrap();
+        assert!(tampered.verify_binding().is_ok());
         assert!(
-            !tampered.confirmed_benefit(promoted.owner.store.as_ref().unwrap(), witness(&promoted))
+            !benefit(&tampered, &promoted),
+            "rehashing changed costs cannot change the ledger"
         );
     }
 
     #[test]
     fn neutral_negative_same_payload_and_rejected_are_not_benefit() {
-        let neutral = promote_costs(
-            "owner-neutral",
-            TrialCosts {
-                acquisition: 2,
-                verification: 6,
-                adoption: 1,
-                baseline: 20,
-                candidate: 20,
-            },
-        );
-        let neutral_receipt = seal_for(&neutral, "partner-a", Some(true), true);
-        assert_eq!(neutral_receipt.receiver_net().unwrap(), 0);
-        assert!(!neutral_receipt.receiver_benefit_verified());
-
-        let negative = promote_costs(
-            "owner-negative",
-            TrialCosts {
-                acquisition: 2,
-                verification: 6,
-                adoption: 1,
-                baseline: 20,
-                candidate: 30,
-            },
-        );
-        let negative_receipt = seal_for(&negative, "partner-a", None, true);
-        assert!(negative_receipt.receiver_net().unwrap() < 0);
-        assert!(!negative_receipt.receiver_benefit_verified());
-        assert!(!negative_receipt.durable_benefit_verified());
-
+        for total in [20, 30] {
+            let mut costs = positive_costs();
+            costs.candidate = total;
+            let promoted = promote_costs("owner-neutral", costs);
+            let receipt = seal_for(&promoted, &digest(9), None, true);
+            assert!(receipt.receiver_net().unwrap() <= 0);
+            assert!(!benefit(&receipt, &promoted));
+        }
+        let mut promoted = promote_costs("owner-same", positive_costs());
+        let first_receipt = seal_for(&promoted, &digest(9), None, true);
+        assert!(benefit(&first_receipt, &promoted));
+        let mut next = promoted.record.clone();
+        next.revision = 2;
+        next.provenance = "same payload, next revision".into();
+        let mut trial = evidence(positive_costs());
+        for case in &mut trial.cases {
+            case.baseline = Some(case.expected);
+        }
+        promoted.before = promoted.after;
+        promoted
+            .owner
+            .store()
+            .promote(next.clone(), assess(&next, &trial).unwrap())
+            .unwrap();
+        promoted.after = promoted.owner.store().history_anchor();
+        promoted.record = next;
+        promoted.evidence = serde_json::to_value(trial).unwrap();
+        let unchanged = seal_for(&promoted, &digest(9), None, true);
+        assert!(unchanged.adopted);
+        assert!(!unchanged.behavior_changed);
+        assert!(!benefit(&unchanged, &promoted));
         let rejected = ReciprocalReceipt::seal_observed(ObservedDraft {
-            evaluator_identity: "owner-negative".into(),
+            evaluator_identity: "owner-same".into(),
             sender_identity: "partner-a".into(),
             receiver_knowledge_before_sha256: digest(4),
             sender_knowledge_before_sha256: digest(5),
@@ -922,101 +958,153 @@ mod tests {
             persisted_after_restart: Some(true),
         })
         .unwrap();
-        assert_eq!(rejected.validation, ValidationOutcome::Rejected);
-        assert!(!rejected.receiver_benefit_verified());
-        assert!(!rejected.durable_benefit_verified());
-
-        let mut owner = TempOwner::open("owner-same");
-        let original = record();
-        let first = evidence(positive_costs());
-        let before = owner.store().history_anchor();
-        owner
-            .store()
-            .promote(original.clone(), assess(&original, &first).unwrap())
-            .unwrap();
-        let middle = owner.store().history_anchor();
-        let mut next = original.clone();
-        next.revision = 2;
-        next.provenance = "same payload, next revision".into();
-        let mut second = evidence(positive_costs());
-        for case in &mut second.cases {
-            case.baseline = Some(case.expected);
-        }
-        owner
-            .store()
-            .promote(next.clone(), assess(&next, &second).unwrap())
-            .unwrap();
-        let after = owner.store().history_anchor();
-        let evidence = serde_json::to_value(&second).unwrap();
-        let unchanged = ReciprocalReceipt::seal_promoted(
-            owner.store.as_ref().unwrap(),
-            PromotionWitness {
-                record: &next,
-                evidence: &evidence,
-                before: &middle,
-                after: &after,
-            },
-            &PromotionSeal {
-                sender_identity: "partner-a".into(),
-                sender_knowledge_before_sha256: digest(9),
-                persisted_after_restart: Some(true),
-                completed: true,
-            },
-        )
-        .unwrap();
-        assert!(unchanged.adopted);
-        assert!(!unchanged.behavior_changed);
-        assert!(!unchanged.receiver_benefit_verified());
-        let first_receipt = ReciprocalReceipt::seal_promoted(
-            owner.store.as_ref().unwrap(),
-            PromotionWitness {
-                record: &original,
-                evidence: &serde_json::to_value(&first).unwrap(),
-                before: &before,
-                after: &middle,
-            },
-            &PromotionSeal {
-                sender_identity: "partner-a".into(),
-                sender_knowledge_before_sha256: digest(9),
-                persisted_after_restart: Some(true),
-                completed: true,
-            },
-        )
-        .unwrap();
-        assert!(first_receipt.behavior_changed);
-        assert!(first_receipt.receiver_benefit_verified());
+        assert!(!benefit(&rejected, &promoted));
     }
 
     #[test]
-    fn mutual_success_needs_two_crossed_ledger_receipts() {
-        let left = promote_costs("owner-a", positive_costs());
-        let right = promote_costs("owner-b", positive_costs());
-        let left_receipt = seal_for(&left, "owner-b", Some(true), true);
-        let right_receipt = seal_for(&right, "owner-a", Some(true), true);
-        assert!(ReciprocalReceipt::mutual_research_success(
-            &left_receipt,
-            &right_receipt
-        ));
-        assert!(ReciprocalReceipt::mutual_research_success(
-            &right_receipt,
-            &left_receipt
-        ));
-        assert!(!ReciprocalReceipt::mutual_research_success(
-            &left_receipt,
-            &left_receipt
-        ));
-        let same_sender = seal_for(&right, "partner-a", Some(true), true);
-        assert!(!ReciprocalReceipt::mutual_research_success(
-            &left_receipt,
-            &same_sender
-        ));
+    fn mutual_success_needs_two_crossed_witnessed_directional_receipts() {
+        let left = promote_from("owner-a", "owner-b", positive_costs());
+        let right = promote_from("owner-b", "owner-a", positive_costs());
+        let lr = seal_for(&left, &right.before.head_sha256, None, true);
+        let rr = seal_for(&right, &left.before.head_sha256, None, true);
+        assert_ne!(lr.transferred_record_sha256, rr.transferred_record_sha256);
+        assert!(mutual(&lr, &left, &rr, &right));
+        assert!(mutual(&rr, &right, &lr, &left));
+        assert!(!mutual(&lr, &left, &lr, &left));
         assert!(
-            !left_receipt.confirmed_benefit(right.owner.store.as_ref().unwrap(), witness(&right))
+            !mutual(&lr, &right, &rr, &left),
+            "foreign ledgers cannot validate the pair"
         );
-        let claimed = ReciprocalReceipt::seal(draft(true, true, 100, 40)).unwrap();
-        assert!(!ReciprocalReceipt::mutual_research_success(
-            &left_receipt,
-            &claimed
-        ));
+        let wrong_anchor = seal_for(&right, &digest(9), None, true);
+        assert!(benefit(&wrong_anchor, &right));
+        assert!(!mutual(&lr, &left, &wrong_anchor, &right));
+        let claimed = ReciprocalReceipt::seal(draft()).unwrap();
+        assert!(!mutual(&lr, &left, &claimed, &right));
+    }
+
+    #[test]
+    fn fabricated_ledger_json_with_a_fresh_hash_is_not_verified_benefit() {
+        let mut claimed = ReciprocalReceipt::seal(draft()).unwrap();
+        claimed.attribution = ReceiptAttribution::LedgerPromotion {
+            promotion_sha256: digest(10),
+            records_before: 1,
+            records_after: 2,
+            behavior_before_sha256: digest(11),
+            behavior_after_sha256: digest(12),
+            completed: true,
+        };
+        claimed.binding_sha256 = claimed.calculated_binding().unwrap();
+        let untrusted: ReciprocalReceipt =
+            serde_json::from_slice(&serde_json::to_vec(&claimed).unwrap()).unwrap();
+        assert!(untrusted.verify_binding().is_ok());
+        let mut owner = TempOwner::open("receiver-b");
+        let anchor = owner.store().history_anchor();
+        let record = record();
+        let evidence = serde_json::to_value(evidence(positive_costs())).unwrap();
+        let witness = PromotionWitness {
+            record: &record,
+            evidence: &evidence,
+            before: &anchor,
+            after: &anchor,
+        };
+        assert!(!untrusted.receiver_benefit_verified(owner.store.as_ref().unwrap(), witness));
+        assert!(!untrusted.retained_benefit_after_store_reopen(&owner.dir, witness));
+        owner.store.take();
+        assert!(!untrusted.retained_benefit_after_store_reopen(&owner.dir, witness));
+    }
+
+    #[test]
+    fn an_identical_payload_from_another_source_is_not_changed_behavior() {
+        let mut promoted = promote_costs("owner-a", positive_costs());
+        let mut duplicate = promoted.record.clone();
+        duplicate.id = "same-model-new-source".into();
+        duplicate.source = "partner-b".into();
+        let trial = evidence(positive_costs());
+        promoted.before = promoted.owner.store().history_anchor();
+        promoted
+            .owner
+            .store()
+            .promote(duplicate.clone(), assess(&duplicate, &trial).unwrap())
+            .unwrap();
+        promoted.after = promoted.owner.store().history_anchor();
+        promoted.record = duplicate;
+        promoted.evidence = serde_json::to_value(trial).unwrap();
+        let receipt = seal_for(&promoted, &digest(9), Some(true), true);
+        assert!(receipt.adopted);
+        assert!(!receipt.behavior_changed);
+        assert!(!benefit(&receipt, &promoted));
+    }
+
+    #[test]
+    fn promoted_receipt_cannot_assign_credit_to_an_unrelated_sender() {
+        let promoted = promote_costs("owner-a", positive_costs());
+        for sender in ["unrelated-sender", "owner-a"] {
+            assert!(ReciprocalReceipt::seal_promoted(
+                promoted.owner.store.as_ref().unwrap(),
+                witness(&promoted),
+                &PromotionSeal {
+                    sender_identity: sender.into(),
+                    sender_knowledge_before_sha256: digest(9),
+                    persisted_after_restart: None,
+                    completed: true
+                }
+            )
+            .is_err());
+        }
+        let mut reassigned = seal_for(&promoted, &digest(9), None, true);
+        reassigned.sender_identity = "unrelated-sender".into();
+        reassigned.binding_sha256 = reassigned.calculated_binding().unwrap();
+        assert!(reassigned.verify_binding().is_ok());
+        assert!(!benefit(&reassigned, &promoted));
+    }
+
+    #[test]
+    fn a_caller_restart_flag_is_not_a_reopen_observation() {
+        for flag in [None, Some(false), Some(true)] {
+            let mut promoted = promote_costs("owner-a", positive_costs());
+            let receipt = seal_for(&promoted, &digest(9), flag, true);
+            assert!(benefit(&receipt, &promoted));
+            assert!(
+                !receipt
+                    .retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted)),
+                "a live writer cannot substitute a caller flag for reopening"
+            );
+            let missing = promoted.owner.dir.join("missing");
+            assert!(!receipt.retained_benefit_after_store_reopen(&missing, witness(&promoted)));
+            assert!(
+                !missing.exists(),
+                "verification must not initialize missing state"
+            );
+            promoted.owner.store.take();
+            assert!(receipt
+                .retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted)));
+            fs::write(
+                promoted.owner.dir.join("knowledge.jsonl"),
+                b"invalid-history\n",
+            )
+            .unwrap();
+            assert!(!receipt
+                .retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted)));
+        }
+    }
+
+    #[test]
+    fn later_revocation_preserves_historical_benefit_but_not_retention() {
+        let mut promoted = promote_costs("owner-a", positive_costs());
+        let receipt = seal_for(&promoted, &digest(9), Some(true), true);
+        let id = promoted.record.id.clone();
+        promoted
+            .owner
+            .store()
+            .revoke(&id, "independent counterexample")
+            .unwrap();
+        assert!(
+            benefit(&receipt, &promoted),
+            "a historical promotion remains auditable"
+        );
+        promoted.owner.store.take();
+        assert!(
+            !receipt.retained_benefit_after_store_reopen(&promoted.owner.dir, witness(&promoted))
+        );
     }
 }

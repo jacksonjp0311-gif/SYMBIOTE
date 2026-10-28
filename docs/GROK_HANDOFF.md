@@ -1,8 +1,9 @@
 # SYMBIOTE: Grok handoff
 
-**Stable v1.0 is not qualified or published.** Cargo's `1.0.0` is the candidate
-version; no stable v1 tag should be inferred from it. The verified public
-binary release remains v0.5.1.
+**v1.0.0 is public; stable qualification is HOLD.** The immutable source
+reference is `426f054771395dcbe1b8711d7128b90ef0c704de`. Read the subsequent
+[release audit](V1_RELEASE_AUDIT.md) before relying on benefit-verification APIs.
+Post-audit main fixes do not replace the published tag or its recorded results.
 
 ## Source-grounded assessment
 
@@ -10,9 +11,10 @@ What is implemented: four crates for exact reasoning, authorized exchange,
 durable memory and a configured cognitive runtime. Query policies, three-peer
 custody, bounded exploration, backup and migration are in the tree. The new
 `symbiosis` and `reciprocal` modules add a participant-specific value function
-and a receiver-bound receipt. Benefit now requires a completed promotion
-between the receiver's own anchors. A content digest, a caller-supplied sender
-net, and a declined value plan cannot verify it. The cognitive episode records
+and a receiver-bound receipt. The intended contract requires a completed promotion
+between the receiver's own anchors. The release audit reproduced incorrect
+tagged helper predicates and duplicate-capability/durability attribution; main
+corrections require their own qualification. The cognitive episode records
 `MEASURE`. `partner_benefits_verified` remains 0.
 
 What verified evidence supports: CI run `40545912958` at
@@ -23,14 +25,15 @@ inside that control, and the negative utility results below. On this Windows
 machine, `cargo test --workspace --locked` for the receipt-attribution tree
 passed 357 tests and left the 3 registered duration tests ignored. Clippy with
 `-D warnings` passed for the workspace crates. An earlier local count of 351
-belongs to the tree before this receipt change. Python is not installed here,
-so local `tools/verify.py` was not re-run and the committed parity receipt was
-not rewritten. CI run `40557119693` at `b7f46a63bd1268458124aaf05cf6097a6d44c841`
+belongs to the tree before this receipt change. That earlier handoff reported
+Python unavailable to its local check, so it did not rerun `tools/verify.py` or
+rewrite parity evidence. The subsequent release audit uses the bundled Python
+runtime. CI run `40557119693` at `b7f46a63bd1268458124aaf05cf6097a6d44c841`
 then passed Ubuntu, Windows and macOS, including `tools/verify.py`. Run
 `40545912958` remains the record for `4da99383` only. A later documentation
 commit is not covered by `40557119693`.
 
-What is incomplete: independent two-host deployment, public v1 assets, and any
+What is incomplete: independent two-host deployment, final public evidence packaging, and any
 reciprocal-efficiency gain. The fresh one-host hour is recorded below. Protocol 002 is preregistered
 and not run. The configured `run` path now plans a value decision before
 `candidate.submit`. Full-fixture affine and graph transfers are deferred, so
@@ -118,7 +121,8 @@ Do not resume or regrade this attempt.
 A separate registration on source `31b9418789db067f405738ed06f9a39d9463794c`
 finished **PASS_LOCAL_HOUR**. It does not change the cancelled attempt above.
 One PC, 120 cycles, measurement elapsed 3,601,880 ms from the main listener
-readiness event at 571 ms. Both owners retained two models. Ten service starts
+readiness event at 571 ms. The server retained two models; the client retained
+its unchanged genesis without learning. Ten service starts
 and ten owned stops were recorded. The unreviewed peer command was rejected.
 Source-watch failures were empty. `scientific_samples` is 0.
 `independent_host_validation` remains **OPEN_UNAVAILABLE**.
@@ -134,9 +138,11 @@ must not be committed.
 
 ## Current release-development changes
 
-The release checkout branches from the frozen source. Production Rust, Cargo
-and protocol documents remain unchanged. Later changes are verification helpers,
-test drivers and documentation:
+The release checkout branches from the older frozen source. Production Rust
+changed after `ddd63d7`, including value decisions, reciprocal receipt logic and
+the configured contribution policy. The fresh hour used the newer `31b9418`;
+only documentation differs between that source and the published `426f054`.
+The following list describes earlier verification repairs, not the full Rust delta:
 
 - Installer tests now build/use release binaries without increasing the size cap
   and reject a binary version different from the workspace.
@@ -146,30 +152,23 @@ test drivers and documentation:
   which passed Ubuntu, Windows and macOS. Preserve the earlier macOS failure at
   `5fd63ad` (run `40537061291`); it was not regraded.
 - The public-cognition test driver has a thread-scoped executable selector.
-  Only its positive test reads `SYMBIOTE_COGNITION_TEST_BINARY`. Public v1
-  assets are still unpublished, so that installed-binary check has not run.
+  Only its positive test reads `SYMBIOTE_COGNITION_TEST_BINARY`. The independent
+  release audit passed this check using the actual public v1 Windows binary.
 - Value-of-symbiosis and reciprocal receipts are later than `4da99383`. Their
   CI is the run for the commit that contains them, not run `40545912958`.
 
 ## Next actions, in order
 
-1. CI for `b7f46a6` passed on Ubuntu, Windows and macOS in run `40557119693`.
-   Fix any later failure without weakening gates or frozen receipts.
-2. Build source-stamped native and service-test executables from a clean
-   commit. Select paths from Cargo JSON, not guessed filenames.
-3. Register a fresh `tools/soak_campaign.py` run. Keep source, HEAD and
-   executables unchanged throughout its 60-minute/120-cycle envelope. Preserve
-   every HOLD, including the cancelled 71/120 run. Repeated cycles are not new
-   scientific samples.
-4. Update qualification from that campaign's actual result. Keep the v0.5
-   primary, S3/S4, protocol 001 and the cancelled hour unchanged.
-5. Publish stable v1 only after the declared software gates pass. Two-host
-   qualification stays **OPEN_UNAVAILABLE** on this PC's scope.
-6. Verify public assets in a temporary directory. Point
-   `SYMBIOTE_COGNITION_TEST_BINARY` at the downloaded binary and
-   `SYMBIOTE_COGNITION_ARTIFACTS` at a fresh directory. The frozen study
-   executable cannot perform that substitution.
-7. Execute protocol 002 only from a new registration pin. Do not describe a
+1. Read the release audit and finish qualifying the benefit-verification fixes
+   on main. Preserve the original public tag and every historical result.
+2. Demonstrate a real useful return transfer with independent receiver evaluation;
+   declining every current fixture offer does not satisfy that milestone.
+3. Review the full evidence classification, scanner and publisher before using
+   any write mode. Publish the required evidence archive and checksum pair.
+4. Qualify changed production source and replacement public binaries separately;
+   the existing hour and installed-binary audit apply to the old source only.
+5. Keep two-host qualification **OPEN_UNAVAILABLE** on this PC's scope.
+6. Execute protocol 002 only from a new registration pin. Do not describe a
    negative or unrun result as a gain.
 
 ## Tooling and evidence
@@ -177,8 +176,9 @@ test drivers and documentation:
 `tools/release/` contains byte-pinned evidence packaging helpers and an explicitly
 draft publisher. The V3 packager passed 14 disposable interface tests plus narrow
 independent review; it requires stopped writers and a separately reviewed manifest
-digest. The publisher has only offline/mocked checks, not live qualification.
-Do not blindly run its publishing mode. No v1 assets have been published.
+digest. The publisher's write modes remain unqualified; its live read path failed
+on a GitHub metadata assumption. Do not blindly run its publishing mode. Five
+native v1 assets are public and independently audited; the evidence pair is absent.
 
 Original PC locations:
 
