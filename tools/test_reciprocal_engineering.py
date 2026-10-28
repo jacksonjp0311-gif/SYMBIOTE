@@ -187,6 +187,15 @@ class PreservedExecutableTests(unittest.TestCase):
 
 
 class FiniteFeedbackTests(unittest.TestCase):
+    def test_distinct_exchange_ids_cannot_credit_one_scope_promotion_candidate_or_sense_twice(self):
+        credits=[dict(scope=scope,promotion_sha256=letter*64,candidate_id=letter*64,sense_decision_id="sense-"+letter)
+                 for scope,letter in zip(r.SCOPES,("a","b"))]
+        r.verify_normal_credits(credits)
+        for field in ("scope","promotion_sha256","candidate_id","sense_decision_id"):
+            changed=copy.deepcopy(credits);changed[1][field]=changed[0][field]
+            with self.subTest(field=field),self.assertRaises(RuntimeError):r.verify_normal_credits(changed)
+        with self.assertRaises(RuntimeError):r.verify_normal_credits(credits[:1])
+
     def test_unrecognized_feedback_versions_cannot_disappear_from_the_independent_history(self):
         row=dict(event="partner_decision_recorded",decision=dict(details=dict(schema="symbiote.learning-feedback/2",event={})))
         with self.assertRaisesRegex(RuntimeError,"unsupported learning feedback namespace"):

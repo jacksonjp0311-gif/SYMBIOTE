@@ -71,12 +71,24 @@ impl Counters {
         }
     }
     fn add(&self, target: &AtomicU64, value: u64) {
-        let _ = target.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
-            if current.checked_add(value).is_none() {
-                self.saturated.store(true, Ordering::SeqCst);
+        // Compatible with both the declared 1.98 minimum and newer stable Rust.
+        let mut current = target.load(Ordering::SeqCst);
+        loop {
+            match target.compare_exchange_weak(
+                current,
+                current.saturating_add(value),
+                Ordering::SeqCst,
+                Ordering::SeqCst,
+            ) {
+                Ok(_) => {
+                    if current.checked_add(value).is_none() {
+                        self.saturated.store(true, Ordering::SeqCst);
+                    }
+                    break;
+                }
+                Err(observed) => current = observed,
             }
-            Some(current.saturating_add(value))
-        });
+        }
     }
 }
 static COUNTERS: [Counters; COUNT] = [const { Counters::new() }; COUNT];
@@ -115,17 +127,18 @@ impl Timer {
         let started = Instant::now();
         let wall_started = wall_now(counters);
         if let Some(value) = wall_started {
-            let _ = counters.first_wall_unix_ns.fetch_update(
-                Ordering::SeqCst,
-                Ordering::SeqCst,
-                |previous| {
-                    Some(if previous == 0 {
-                        value
-                    } else {
-                        previous.min(value)
-                    })
-                },
-            );
+            let mut previous = counters.first_wall_unix_ns.load(Ordering::SeqCst);
+            while previous == 0 || value < previous {
+                match counters.first_wall_unix_ns.compare_exchange_weak(
+                    previous,
+                    value,
+                    Ordering::SeqCst,
+                    Ordering::SeqCst,
+                ) {
+                    Ok(_) => break,
+                    Err(observed) => previous = observed,
+                }
+            }
         }
         Self {
             stage,

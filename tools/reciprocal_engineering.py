@@ -805,6 +805,12 @@ def verify_bound_receipts(receipts,results):
         equal(receipt["verified_scoped_benefit"],matches[0]["outcome"]["verified_benefit"],"public verifier agrees with independently derived scoped outcome")
 
 
+def verify_normal_credits(credits):
+    equal(sorted(item["scope"] for item in credits),sorted(SCOPES),"exact distinct normal feedback scope coverage")
+    for field in ("promotion_sha256","candidate_id","sense_decision_id"):
+        require(len({item[field] for item in credits})==2,"duplicate normal promotion/candidate/SENSE credit: "+field)
+
+
 def verify_normal_feedback(root,cell):
     root=Path(root);owner=cell["identity"];price=cell["oracle_price"]
     _,raw=safety.operational_chain(root/"actor-state/operations.jsonl",owner)
@@ -814,7 +820,7 @@ def verify_normal_feedback(root,cell):
     _,history=safety.knowledge_chain(root/"actor-state/knowledge.jsonl")
     first_events=verify_run_files(root,"native-first",cell["native_first"])
     restart_events=verify_run_files(root,"native-restart",cell["native_restart"])
-    policy=load(root/"run-policy.json");config=load(root/"actor.json");results=[]
+    policy=load(root/"run-policy.json");config=load(root/"actor.json");results=[];credits=[]
     def one(predicate,before,label):
         matches=[(i,row) for i,row in enumerate(rows[:before]) if predicate(row)]
         require(len(matches)==1,"one exact prior "+label+" required")
@@ -910,7 +916,9 @@ def verify_normal_feedback(root,cell):
         require(len(matches)==1,"one actual stdout feedback completion required")
         equal(matches[0]["actual_use"],use,"actual stdout use receipt");equal(matches[0]["measurement"],m,"actual stdout cost receipt");equal(matches[0]["outcome"],outcome,"actual stdout outcome")
         results.append(dict(binding=binding,measurement_sha256=safety.digest(m),outcome=outcome,closed_position=group[-1][0]))
+        credits.append(dict(scope=scope,promotion_sha256=promotion["sha256"],candidate_id=binding["candidate_id"],sense_decision_id=sense["decision_id"]))
         last_lookup,last_direct,last_checks,last_forecast=(a[field] for field in ("lookups","direct_model_work","provider_checks","graph_forecast_work"))
+    verify_normal_credits(credits)
     verify_bound_receipts(cell["bound_verification"]["receipts"],results)
     first_sense=next(event for event in restart_events if event["phase"]=="SENSE")
     equal(cell["restart_first_sense"],first_sense,"actual restarted first choice")
