@@ -18,6 +18,23 @@ Maintain failed criteria and matched-cost controls for every release.
 | v0.9 Generalization and Stability | Adversarial and drift stress | Wrong/malicious knowledge, dishonest APIs, long-running stability, drift, resource exhaustion and recovery |
 | v1.0 Stable SYMBIOTE | Reliable embeddable Rust system | Secure nonlocal transports, reproducible reciprocal learning across multiple independent controlled environments, compatibility and documented failure envelope |
 
+The published v1.0.0 number does not close that final objective. Its
+[release audit](V1_RELEASE_AUDIT.md) records defects in the tagged benefit helpers.
+The [1.0.1 corrective candidate](CORRECTIVE_RELEASE_101.md) first closes exact
+attribution, actual observation-driven inference, durable good/harm feedback,
+partial-certificate contribution and exact compact reasoning. Qualification
+requires the complete software gate, frozen one-host hour, finite reciprocal
+engineering controls, sanitized public evidence and actual downloaded replacement
+binary checks. Each is recorded independently; historical HOLDs remain.
+
+After the corrective release, the next milestone is an independently implemented
+observation/receiver adapter with a prospectively frozen evaluation contract.
+Test drift, useful and harmful transfer, fresh-task reuse and receiver-originated
+feedback under its own costs. Independent two-host testing remains explicitly
+open until another machine or endpoint is authorized. Wider environments and
+general reciprocal efficiency require new evidence rather than another version
+number.
+
 The v0.2 implementation now exercises two different native learning algorithms,
 exact active queries, held-out inputs and reciprocal verified evidence reuse.
 Its trusted local oracle and declared cost model are explicit limitations; both

@@ -4,9 +4,9 @@
   "upstream_brute_files": 890,
   "upstream_brute_root_entries": 41,
   "upstream_brute_bytes": 574798515,
-  "symbiote_files_excluding_report": 244,
+  "symbiote_files_excluding_report": 264,
   "symbiote_root_entries": 14,
-  "symbiote_bytes_excluding_report": 7128081,
-  "active_byte_reduction_percent": 98.7599,
+  "symbiote_bytes_excluding_report": 7689305,
+  "active_byte_reduction_percent": 98.6623,
   "root_entry_reduction_percent": 65.85
 }

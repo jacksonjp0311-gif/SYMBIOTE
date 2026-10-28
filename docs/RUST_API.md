@@ -27,9 +27,12 @@ The reusable reasoning, protocol and memory types are documented in their Rust
 sources. `symbiote_reasoning::symbiosis` (`decide`, `plan`, `reconcile`) and
 `symbiote_memory::reciprocal` are part of that surface.
 `symbiote_runtime::reciprocal::redundant_affine_exchange` runs the width-bounded
-mechanism check. `attributed_benefit` is true only when that plan sent knowledge
-and `confirmed_benefit` reseals the receipt against the receiver ledger. A plan
-does not grant access, and a content digest is not verified benefit. Build the
+mechanism check. Legacy `attributed_benefit` is deprecated and always false:
+its arguments cannot bind a particular outcome to a particular decision.
+Use `bound_attributed_benefit` with the operational journal, receiver store,
+exact exchange ID, receipt and promotion witness. It requires the recorded causal
+chain, actual subsequent use and measured outcome. A plan does not grant access,
+and a content digest is not verified benefit. Build the
 documentation with
 `cargo doc --workspace --no-deps --locked`.
 Research controllers such as `transfer`, `topology_research` and
@@ -40,23 +43,52 @@ not a promise of stable study design or broad scientific applicability.
 
 The tagged benefit helpers accept self-contained claims without sufficient
 evidence; see [the release audit](V1_RELEASE_AUDIT.md). On corrected main,
-`receiver_benefit_verified(&store, witness)` requires a `PromotionWitness` naming
-the exact record, stored evaluation and before/after anchors. `confirmed_benefit`
-also validates that witness. `mutual_research_success` takes both receipts and
+`confirmed_benefit(&store, witness)` requires a `PromotionWitness` naming
+the exact record, stored evaluation and before/after anchors.
+`witnessed_mutual_research_success` takes both receipts and
 both receiver store/witness pairs, with crossed identities and initial anchors.
 The artifacts may differ between directions. The sender must match the stored
 record's source; forwarded credit requires separately supported custody evidence.
 
-The flag-only `durable_benefit_verified` method is removed. Use
+The legacy zero-argument `receiver_benefit_verified`, `durable_benefit_verified`
+and two-receipt `mutual_research_success` signatures remain for compatibility;
+they are deprecated and always return false because their arguments cannot
+establish evidence. Use
 `retained_benefit_after_store_reopen(directory, witness)` only after closing all
 writers; it opens the existing ledger and verifies retained active knowledge.
 It neither initializes missing history nor establishes an OS-process restart.
 The producer's `persisted_after_restart` field is informational.
 
-Receipt schema `/2` remains readable, but these Rust signatures intentionally
-change. Consumers of pinned source must update their calls. Do not publish this
-as a compatible patch without resolving that API break. No crates.io package or
-replacement binary release is published by this audit.
+Receipt schema `/2` and the v1.0 Rust signatures remain readable/compilable.
+Consumers should migrate positive verification to the witnessed APIs. A source
+correction alone does not qualify replacement release binaries; qualification
+and public delivery are recorded separately. No crates.io publication is implied.
+
+## Observation and feedback additions in 1.0.1
+
+`service::observation::infer_from_source` accepts a bounded `ObservationSource`,
+an explicit `ObservationPermit`, a cumulative usage counter, cancellation,
+deadline and progress callback. It returns an inert conditional model and audit;
+the caller separately controls persistence and adoption. The native runtime uses
+the same boundary. `CompactAffineLearner` is additive; `AffineLearner` remains the
+enumerating reference and its snapshot format is unchanged.
+
+`service::feedback` records bound decisions, promotions, uses and one-time
+outcomes in the existing operational journal. Measured, estimated and unknown
+baselines are typed separately. Historical closed outcomes are auditable after
+revocation, while positive current benefit still requires the active exact record.
+`reciprocal::bound_attributed_benefit` verifies the original stored-assessment
+receipt contract. Its baseline must not be replaced by the newer task-window
+measurement. For that distinct claim, use `reciprocal::bound_scoped_benefit` with
+the exact `Binding` and the measurement SHA returned by the replayed
+`FeedbackIndex::scoped_measurement_sha256`. It accepts no caller-supplied cost
+numbers and requires the current active record and actual capability-extending
+use. `capture_local_execution` binds its non-cloneable counter token to the
+owner's exact journal prefix and immediately following SENSE decision; a token
+captured late cannot claim work from an earlier SENSE.
+See [the corrective release account](CORRECTIVE_RELEASE_101.md) for task-window
+accounting and experimental scope. Newly typed histories must not be opened by
+an older writer that cannot validate them.
 
 ## Cancellation and ownership
 

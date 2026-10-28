@@ -1,8 +1,30 @@
 # Changelog
 
-## Unreleased — post-v1.0.0 corrections
+## v1.0.1 — under qualification
 
-- Independent release audit: four public native bundles and checksums pass;
+- Close the configured decision→artifact→evaluation→promotion→use→outcome
+  chain with durable, one-time attribution. Swapped receipts, active-record
+  revocation, duplicate capability and unsupported restart claims fail closed.
+  Legacy public helper signatures compile; positive claims use witnessed APIs.
+- Preserve measured, estimated and unknown baselines separately. Record actual
+  private-source control work and scoped operational costs; never copy local
+  utility into a purported independent partner measurement. Retained favorable
+  and harmful outcomes inform bounded source selection across restart.
+- Add a normal, explicitly authorized partial-graph capability contribution,
+  independently evaluated by the recipient. Discovery, validation, reuse and
+  control costs remain visible. Full-fixture economic declines are preserved.
+- Learn from a bounded `ObservationSource` using the same native inference
+  boundary in configured runs and the easy `observe-demo` command. Persistent
+  reuse makes zero source queries; contradictions and budget failures hold.
+- Add exact incremental GF(2) affine inference with exhaustive-reference parity.
+  Width remains 1–8; work units are versioned separately from enumeration.
+- Compare inventory semantics, retain bounded proposal backoff and fingerprint
+  evaluator code for cache invalidation. Add computation, lock, I/O, evaluation,
+  replay and shutdown diagnostics inside the existing crates.
+- Add a preregistered reciprocal engineering cohort and independent consumer;
+  it does not execute or regrade research Protocol 002. Evidence packaging checks
+  exact mixed-source manifests and freezes archive bytes before publication.
+- Historical v1.0.0 release audit: four public native bundles and checksums pass;
   the installed Windows executable passes demo, actual restart, offline
   predictions, backup/restore and configured native cognition. Full stable
   qualification remains HOLD; see [the audit](docs/V1_RELEASE_AUDIT.md).
@@ -10,17 +32,21 @@
   and qualification checks finish. Existing public tags and assets are preserved.
 - Correct the fresh-hour account: the server retained two models; the client
   retained its unchanged genesis. Reconcile release status and source provenance.
-- Benefit predicates now require the receiver ledger and exact promotion witness;
+- Positive benefit verification requires the receiver ledger and exact promotion witness;
   fabricated receipt JSON and recomputed hashes cannot verify adoption or benefit.
   Distinct-source duplicate payloads no longer count as changed capability, and
   the receipt sender must match the promoted record's stored source.
-- Replace flag-only `durable_benefit_verified` with
+- Deprecate flag-only `durable_benefit_verified` in favor of
   `retained_benefit_after_store_reopen`, which opens an existing stopped owner and
   checks retained active knowledge. This observes store replay, not process restart.
   Mutual verification requires both directional witnesses and crossed knowledge
-  anchors. Receipt schema `/2` stays readable, but unsafe Rust helper signatures
-  intentionally change. Resolve release/API compatibility before publishing a
-  replacement version; no new release is approved here.
+  anchors through `witnessed_mutual_research_success`. Receipt schema `/2` and
+  legacy Rust signatures stay compatible; unchecked helpers return false. A
+  compile-time signature regression protects existing callers.
+- Diagnose the topology test delay as lid-triggered Windows Modern Standby.
+  Check wall and monotonic deadlines before accepting child completion and after
+  validation/cleanup. Qualification holds on suspension and temporarily inhibits
+  idle sleep without changing the global power policy or display settings.
 
 ## v1.0.0 — one-host bounded engine — 2026-10-28
 

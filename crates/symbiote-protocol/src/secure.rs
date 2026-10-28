@@ -614,8 +614,12 @@ fn write_frame<S: FramedTls, T: Serialize>(
     serde_json::to_writer(&mut buffer, value).map_err(|error| error.to_string())?;
     buffer.bytes.push(b'\n');
     stream.reset_deadline(timeout);
-    stream.write_all(&buffer.bytes).map_err(io_error)?;
-    stream.flush().map_err(io_error)
+    stream
+        .write_all(&buffer.bytes)
+        .map_err(|error| io_phase("frame-write", error))?;
+    stream
+        .flush()
+        .map_err(|error| io_phase("frame-flush", error))
 }
 
 fn read_frame<S: FramedTls, T: DeserializeOwned>(
@@ -633,7 +637,9 @@ fn read_frame<S: FramedTls, T: DeserializeOwned>(
         // Clip TLS plaintext delivery before BufReader prefetches. At the exact
         // cap without a newline, reject without reading even one extra byte.
         stream.get_mut().set_read_allowance(remaining);
-        let available = stream.fill_buf().map_err(io_error)?;
+        let available = stream
+            .fill_buf()
+            .map_err(|error| io_phase("frame-read", error))?;
         if available.is_empty() {
             return Err("secure peer closed before a complete JSONL frame".into());
         }
@@ -776,9 +782,14 @@ where
     F: Fn(&SecureSession, &str, Value) -> Result<Value, String> + Send + 'static,
 {
     validate_negotiation_limit(negotiation_limit, config.limits.max_frame_bytes)?;
-    let listener = TcpListener::bind(config.bind_address).map_err(io_error)?;
-    listener.set_nonblocking(true).map_err(io_error)?;
-    let address = listener.local_addr().map_err(io_error)?;
+    let listener =
+        TcpListener::bind(config.bind_address).map_err(|error| io_phase("server-bind", error))?;
+    listener
+        .set_nonblocking(true)
+        .map_err(|error| io_phase("server-listener-config", error))?;
+    let address = listener
+        .local_addr()
+        .map_err(|error| io_phase("server-listener-address", error))?;
     let stopped = Arc::new(AtomicBool::new(false));
     let state = Arc::new(Mutex::new(ServerState {
         revoked: BTreeSet::new(),
@@ -862,7 +873,7 @@ where
                 }
                 Err(error) => {
                     if let Ok(mut last) = last_failure.lock() {
-                        *last = Some(io_error(error));
+                        *last = Some(io_phase("server-accept", error));
                     }
                     break;
                 }
@@ -896,7 +907,7 @@ where
     stream
         .conn
         .complete_io(&mut stream.sock)
-        .map_err(io_error)?;
+        .map_err(|error| io_phase("server-tls-handshake", error))?;
     check_negotiated_tls(stream.conn.protocol_version(), stream.conn.alpn_protocol())?;
     let peer_certificate = stream
         .conn
@@ -918,7 +929,8 @@ where
         }
     }
     let mut stream = BufReader::new(MeteredTls::new(stream, traffic.clone(), Some(aggregate)));
-    let hello: Hello = read_frame(&mut stream, negotiation_limit, config.limits.timeout)?;
+    let hello: Hello = read_frame(&mut stream, negotiation_limit, config.limits.timeout)
+        .map_err(|error| io_context("server-negotiation-read", error))?;
     if hello.version != SECURE_PROTOCOL_VERSION
         || hello.server_id != config.server_id
         || hello.client_id != grant.id
@@ -975,7 +987,8 @@ where
         &agreement,
         agreement.max_frame_bytes.min(negotiation_limit),
         config.limits.timeout,
-    )?;
+    )
+    .map_err(|error| io_context("server-negotiation-write", error))?;
     stream.get_mut().begin_rpc();
     let context = SecureSession {
         peer_id: grant.id.clone(),
@@ -990,7 +1003,8 @@ where
             &mut stream,
             agreement.max_frame_bytes,
             config.limits.timeout,
-        )?;
+        )
+        .map_err(|error| io_context("server-request-read", error))?;
         if request.version != SECURE_PROTOCOL_VERSION
             || request.scope != context.scope
             || request.request_id != expected_id
@@ -1019,7 +1033,8 @@ where
                 },
                 agreement.max_frame_bytes,
                 config.limits.timeout,
-            )?;
+            )
+            .map_err(|error| io_context("server-revoke-write", error))?;
             return Ok(());
         }
         if !context.operations.contains(&request.operation) || expected_id > agreement.max_requests
@@ -1065,7 +1080,8 @@ where
             &response,
             agreement.max_frame_bytes,
             config.limits.timeout,
-        )?;
+        )
+        .map_err(|error| io_context("server-response-write", error))?;
         expected_id += 1;
     }
 }
@@ -1078,7 +1094,9 @@ pub struct SecureCancellation {
 impl SecureCancellation {
     pub fn cancel(&self) -> Result<(), String> {
         self.stopped.store(true, Ordering::Release);
-        self.socket.shutdown(Shutdown::Both).map_err(io_error)
+        self.socket
+            .shutdown(Shutdown::Both)
+            .map_err(|error| io_phase("cancel-shutdown", error))
     }
 }
 
@@ -1122,7 +1140,7 @@ impl SecureClient {
             .map_err(|_| "invalid TLS server name")?;
         traffic.connection_attempt();
         let socket = TcpStream::connect_timeout(&endpoint.address, endpoint.limits.timeout)
-            .map_err(io_error)?;
+            .map_err(|error| io_phase("client-tcp-connect", error))?;
         let stopped = Arc::new(AtomicBool::new(false));
         let socket = DeadlineSocket::new(socket, endpoint.limits.timeout, Arc::clone(&stopped))?;
         let connection = ClientConnection::new(Arc::clone(&config.tls), server_name)
@@ -1131,7 +1149,7 @@ impl SecureClient {
         stream
             .conn
             .complete_io(&mut stream.sock)
-            .map_err(io_error)?;
+            .map_err(|error| io_phase("client-tls-handshake", error))?;
         check_negotiated_tls(stream.conn.protocol_version(), stream.conn.alpn_protocol())?;
         let peer = stream
             .conn
@@ -1158,10 +1176,12 @@ impl SecureClient {
             &hello,
             negotiation_limit,
             endpoint.limits.timeout,
-        )?;
+        )
+        .map_err(|error| io_context("client-negotiation-write", error))?;
         let mut stream = BufReader::new(stream);
         let agreement: SecureAgreement =
-            read_frame(&mut stream, negotiation_limit, endpoint.limits.timeout)?;
+            read_frame(&mut stream, negotiation_limit, endpoint.limits.timeout)
+                .map_err(|error| io_context("client-negotiation-read", error))?;
         if agreement.version != SECURE_PROTOCOL_VERSION
             || agreement.server_id != endpoint.server_id
             || agreement.client_id != config.client_id
@@ -1247,12 +1267,32 @@ impl SecureClient {
                 },
                 self.agreement.max_frame_bytes,
                 self.timeout,
-            )?;
+            )
+            .map_err(|error| {
+                io_context(
+                    if operation == REVOKE_OPERATION {
+                        "client-revoke-write"
+                    } else {
+                        "client-request-write"
+                    },
+                    error,
+                )
+            })?;
             let response: Response = read_frame(
                 &mut self.stream,
                 self.agreement.max_frame_bytes,
                 self.timeout,
-            )?;
+            )
+            .map_err(|error| {
+                io_context(
+                    if operation == REVOKE_OPERATION {
+                        "client-revoke-read"
+                    } else {
+                        "client-response-read"
+                    },
+                    error,
+                )
+            })?;
             if self.stopped.load(Ordering::Acquire) {
                 return Err("secure session cancelled".into());
             }
@@ -1290,7 +1330,7 @@ impl SecureClient {
             .sock
             .socket
             .shutdown(Shutdown::Both)
-            .map_err(io_error)
+            .map_err(|error| io_phase("client-shutdown", error))
     }
 }
 
@@ -1433,6 +1473,23 @@ fn validate_negotiation_limit(limit: usize, rpc_limit: usize) -> Result<(), Stri
         return Err("secure negotiation frame limit must be positive and no larger than the application frame cap".into());
     }
     Ok(())
+}
+
+// Only static phase labels and the existing OS error are added. No endpoint,
+// request body, credential or retry is introduced by these diagnostics.
+fn io_phase(phase: &'static str, error: io::Error) -> String {
+    format!(
+        "secure transport I/O: [phase={phase}; kind={:?}; os_code={:?}] {error}",
+        error.kind(),
+        error.raw_os_error()
+    )
+}
+fn io_context(phase: &'static str, error: String) -> String {
+    if let Some(detail) = error.strip_prefix("secure transport I/O: ") {
+        format!("secure transport I/O: [phase={phase}] {detail}")
+    } else {
+        error
+    }
 }
 
 fn io_error(error: io::Error) -> String {
@@ -2040,6 +2097,10 @@ mod tests {
         // Accepting the next TLS session happens after the prior failure has
         // been recorded; this avoids racing the listener thread's bookkeeping.
         assert!(server.session_failures() >= 1);
+        assert!(server
+            .last_failure()
+            .unwrap()
+            .contains("phase=server-tls-handshake"));
         client
             .stream
             .get_mut()
@@ -2183,7 +2244,7 @@ mod tests {
             jsonl_bytes(client.agreement())
         );
         assert_eq!(initial.rpc_sent_bytes, 0);
-        let payload = json!({"utf8":"é🧬","escaped":"line\nline","n":3});
+        let payload = json!({"utf8":"ÃƒÂ©Ã°Å¸Â§Â¬","escaped":"line\nline","n":3});
         assert_eq!(client.call("echo", &payload).unwrap(), payload);
         let provider = received.recv_timeout(Duration::from_secs(1)).unwrap();
         let request = Request {
@@ -2468,6 +2529,118 @@ mod tests {
         )
         .is_err());
         assert_eq!(invalid.snapshot().connection_attempts, 0);
+    }
+
+    #[test]
+    fn controlled_stalled_client_tls_handshake_is_phase_tagged_and_bounded_without_retry() {
+        let fixture = Fixtures::new();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let (release_tx, release_rx) = mpsc::channel();
+        let (accepted_tx, accepted_rx) = mpsc::channel();
+        let peer = thread::spawn(move || {
+            let deadline = Instant::now() + Duration::from_secs(2);
+            let socket = loop {
+                match listener.accept() {
+                    Ok((socket, _)) => break socket,
+                    Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
+                        assert!(
+                            Instant::now() < deadline,
+                            "controlled listener was not connected"
+                        );
+                        thread::sleep(Duration::from_millis(1));
+                    }
+                    Err(error) => panic!("controlled accept failed: {error}"),
+                }
+            };
+            accepted_tx.send(()).unwrap();
+            // TCP is accepted, but this peer deliberately supplies no TLS bytes.
+            let _ = release_rx.recv_timeout(Duration::from_secs(2));
+            drop(socket);
+        });
+        let endpoint = SecureEndpoint {
+            server_id: "server".into(),
+            address,
+            server_name: "localhost".into(),
+            server_certificate_sha256: fingerprint(
+                &parse_certificates(&fixture.server_cert).unwrap()[0],
+            ),
+            scope: "task/v1".into(),
+            operations: vec!["echo".into()],
+            limits: SecureLimits {
+                timeout: Duration::from_millis(100),
+                ..SecureLimits::default()
+            },
+        };
+        let meter = SecureTraffic::default();
+        let started = Instant::now();
+        let result = SecureClient::connect_with_metering(
+            &endpoint,
+            &fixture.client_config(),
+            meter.clone(),
+            1024,
+        );
+        let elapsed = started.elapsed();
+        let _ = release_tx.send(());
+        peer.join().unwrap();
+        accepted_rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        let error = result
+            .err()
+            .expect("stalled TLS handshake must not succeed");
+        assert!(error.starts_with("secure transport I/O: "));
+        assert!(error.contains("phase=client-tls-handshake"));
+        assert!(
+            elapsed < Duration::from_secs(2),
+            "configured timeout must remain bounded"
+        );
+        assert_eq!(
+            meter.snapshot().connection_attempts,
+            1,
+            "no hidden reconnect or retry"
+        );
+        assert_eq!(
+            meter.snapshot().negotiation_sent_bytes,
+            0,
+            "no application data before TLS authentication"
+        );
+    }
+
+    #[test]
+    fn controlled_stalled_rpc_response_is_distinct_from_handshake_and_never_retried() {
+        let fixture = Fixtures::new();
+        let (entered_tx, entered_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        let calls = Arc::new(AtomicU64::new(0));
+        let observed = Arc::clone(&calls);
+        let mut server = fixture.start(SecureLimits::default(), move |_, _, _| {
+            observed.fetch_add(1, Ordering::AcqRel);
+            entered_tx.send(()).unwrap();
+            let _ = release_rx.recv_timeout(Duration::from_secs(2));
+            Ok(Value::Null)
+        });
+        let mut client =
+            SecureClient::connect(&fixture.endpoint(&server), &fixture.client_config()).unwrap();
+        // Authentication already completed. This narrows only this test's next
+        // RPC, isolating response waiting from listener/TLS startup scheduling.
+        client.timeout = Duration::from_millis(100);
+        let started = Instant::now();
+        let result = client.call("wait", &Value::Null);
+        let elapsed = started.elapsed();
+        let _ = release_tx.send(());
+        server.shutdown().unwrap();
+        entered_rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        let error = result.expect_err("stalled authenticated response must fail");
+        assert!(error.starts_with("secure transport I/O: "));
+        assert!(error.contains("phase=client-response-read"));
+        assert!(!error.contains("phase=client-tls-handshake"));
+        assert!(elapsed < Duration::from_secs(2));
+        assert_eq!(
+            calls.load(Ordering::Acquire),
+            1,
+            "the admitted request cannot be retried silently"
+        );
+        assert_eq!(client.traffic().snapshot().connection_attempts, 1);
     }
 
     #[test]

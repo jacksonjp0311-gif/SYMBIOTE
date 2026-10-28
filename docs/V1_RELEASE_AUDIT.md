@@ -53,17 +53,29 @@ Corrections require actual receiver-ledger witnesses for verified predicates,
 distinct capability sets for behavior comparison, binding the sender to the
 stored source, and an actual stopped-store replay for the bounded durability
 check. Such replay is explicitly weaker than an OS-process restart. The receipt
-wire schema remains readable while unsafe Rust helper signatures change.
+wire schema remains readable. The first source correction changed unsafe helper
+signatures; the release follow-up restores those signatures as deprecated,
+always-false methods and adds witnessed verification without breaking compilation.
 These changes must not retrospectively regrade the release or any experiment.
-The regressions and fixes are on main, not in the tagged binaries. Publishing a
-replacement also requires resolving the intentional Rust API signature break.
+The regressions and fixes are on main, not in the tagged binaries. Compatibility
+is covered by a regression that type-checks the original function signatures.
 
 Four reproducer cases failed before the fix. Afterward, all 12 focused memory
 and runtime receipt tests pass, followed by the full Rust workspace suite
 (three registered duration tests remain ignored), strict Clippy and formatting.
-The topology integration test passed but reported 2,217.94 seconds, an unexplained
-wall-time anomaly; no repeat or higher timeout was used. This local software pass
-does not supply new duration, research or cross-platform qualification.
+The original topology invocation reported 2,217.94 seconds. Subsequent Windows
+events identify 2,213.6976616 seconds of lid-triggered Modern Standby during that
+interval. The corrected fixture checks wall time before accepting an exited
+child and after validation/cleanup; three focused tests pass in 1.56 seconds.
+[Timing evidence](../experiments/v1.0.0/timing-topology-modern-standby.json)
+preserves the incident and its limits. No historical result is regraded.
+
+The earlier hosted Windows CI timeout is a separate incident. Its old log
+establishes OS error 10060 during the initial candidate submission but cannot
+identify the failed transport phase. [The investigation](../experiments/v1.0.0/windows-ci-timeout-investigation.json)
+retains that unresolved cause; neither the local standby finding nor a later
+successful CI attempt explains it. New phase diagnostics improve future evidence
+without automatically retrying the failed operation.
 
 The configured contribution limitation is not repaired by ignoring transfer
 costs. Affine full-fixture utility is `width − 2^width`, and graph utility is
@@ -83,6 +95,14 @@ Raw public-audit results and failed attempts are retained under ignored local
 `experiments/local/v1-release-audit-20261028/`. The fresh hour remains at
 `%TEMP%\sh-31b9418`. Private owner material must pass explicit classification
 and credential scanning before any evidence archive is published.
+
+The subsequent custody check could not locate the original `31b9418` hour's
+exact executable pair after development builds replaced the target files.
+Its original source, registered hashes and raw receipts are retained; a newer
+executable must not be substituted for those bytes. The corrective release
+therefore requires a new frozen-source hour with separately preserved native
+and test executables. The old passing receipt remains historical evidence with
+this reproduction limitation.
 
 The preserved draft publisher failed before downloading because it expects a
 nonexistent GitHub `creator` field and a workflow-only creator assumption. A

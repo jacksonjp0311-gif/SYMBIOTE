@@ -325,7 +325,6 @@ fn validate_manifest(manifest: &Manifest) -> Result<(), String> {
         || !label(&manifest.identity)
         || manifest.bind_address.ip().is_unspecified()
         || manifest.bind_address.ip().is_multicast()
-        || manifest.peers.is_empty()
         || manifest.peers.len() > 32
         || manifest.contexts.is_empty()
         || manifest.contexts.len() > 8

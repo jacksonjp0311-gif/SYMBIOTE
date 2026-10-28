@@ -2,6 +2,7 @@
 param(
     [switch]$Build,
     [switch]$Run,
+    [switch]$ObserveDemo,
     [switch]$Cognitive,
     [switch]$Test,
     [switch]$Verify,
@@ -57,6 +58,7 @@ try {
     if ($Recover) { Invoke-Symbiote -Arguments @('recover', '--state', $State) }
     if ($Migrate) { Invoke-Symbiote -Arguments @('migrate', '--state', $State) }
     if ($Run) { Invoke-Symbiote -Arguments @('demo', '--state', $State) }
+    if ($ObserveDemo) { Invoke-Symbiote -Arguments @('observe-demo', '--state', $State) }
     if ($Cognitive) { Invoke-Symbiote -Arguments @('run', '--config', $Config, '--run-policy', $RunPolicy, '--receipts', $Receipts) }
     if ($Research) { Invoke-Symbiote -Arguments @('research', '--state', $State) }
     if ($GraphResearch) { Invoke-Symbiote -Arguments @('graph-research', '--state', $State) }
@@ -91,10 +93,11 @@ try {
         Invoke-Checked { git log -1 --oneline }
         Invoke-Checked { git remote -v }
     }
-    if (-not ($Build -or $Run -or $Cognitive -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $AdaptiveResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
+    if (-not ($Build -or $Run -or $ObserveDemo -or $Cognitive -or $Test -or $Verify -or $Benchmark -or $Research -or $GraphResearch -or $AdaptiveResearch -or $NetworkResearch -or $PrepareTlsState -or $InspectState -or $Recover -or $Migrate -or $Doctor -or $Install -or $GitStatus)) {
         Write-Output 'SYMBIOTE - native reasoning, evaluated learning, reciprocal exchange'
         Write-Output ''
         Write-Output 'Start:      .\SYMBIOTE-All-One.ps1 -Run'
+        Write-Output 'Observe:    .\SYMBIOTE-All-One.ps1 -ObserveDemo'
         Write-Output 'Agent:      .\SYMBIOTE-All-One.ps1 -Cognitive -Config FILE -RunPolicy FILE -Receipts NEW_DIR'
         Write-Output 'Research:   .\SYMBIOTE-All-One.ps1 -Research'
         Write-Output 'Routes:     .\SYMBIOTE-All-One.ps1 -GraphResearch'

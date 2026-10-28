@@ -9,6 +9,35 @@ from unittest import mock
 import soak_campaign as soak
 
 
+class AwakeIntegrationTests(unittest.TestCase):
+    def test_guard_exit_failure_preserves_completed_owned_process_receipt(self):
+        class InterruptedGuard:
+            report = dict(released=True, max_observed_suspension_ms=30000)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                raise RuntimeError('Host suspension interrupted qualification')
+
+            def check(self):
+                pass
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            process = dict(process_receipt='owned.process.json', exit_code=0, cleanup_verified=True)
+            soak.write_new(root / process['process_receipt'], process)
+            with mock.patch.object(soak, 'QualificationAwake', return_value=InterruptedGuard()), \
+                    mock.patch.object(soak, 'pins_unchanged'), \
+                    mock.patch.object(soak.safety, 'execute', return_value=process):
+                report = soak.launch(root, {'service_tests': {'path': 'owned-not-executed.exe'}}, {}, False)
+            self.assertEqual(report['status'], 'HOLD')
+            self.assertEqual(report['process'], process)
+            self.assertTrue((root / process['process_receipt']).is_file())
+            self.assertTrue(report['host_awake_guard']['released'])
+            self.assertIn('suspension interrupted', report['failure'])
+
+
 def timing_fixture(qualification):
     selected=soak.mode(qualification);origin=1000;events=[];cycles=[];gaps=[]
     points=sorted([*selected["rotations"],*selected["denials"],selected["lost"],selected["restore"]])

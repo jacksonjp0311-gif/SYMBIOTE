@@ -14,6 +14,7 @@ import time
 
 import stability_campaign as safety
 import source_fingerprint
+from qualification_awake import QualificationAwake
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = "SYMBIOTE-LOCAL-SOAK-001"
@@ -202,25 +203,30 @@ def live_candidate_check(directory,pins,sources,qualification,commit):
 
 def launch(directory,pins,sources,qualification,registration_pin=None,commit=None):
     selected=mode(qualification);cancel=threading.Event();done=threading.Event();errors=[]
+    awake=QualificationAwake()
     def watch():
         while not done.wait(BOUNDS["source_check_seconds"]):
             try:
                 live_candidate_check(directory,pins,sources,qualification,commit)
+                awake.check()
             except Exception as failure:errors.append(str(failure));cancel.set();return
     observer=threading.Thread(target=watch,daemon=True);old={}
     for signum in (signal.SIGINT,signal.SIGTERM):old[signum]=signal.signal(signum,lambda *_:cancel.set())
     report=dict(schema="symbiote.local-soak-campaign/1",protocol=PROTOCOL,status="HOLD",mode=selected["name"],
                 registration_sha256=registration_pin,independent_host_validation="OPEN_UNAVAILABLE",scientific_samples=0)
-    started=time.monotonic();observer.start()
+    started=time.monotonic()
     try:
         pins_unchanged(pins,sources)
         if qualification:git_unchanged(commit)
         native=directory/"native";require(not native.exists(),"native evidence must be new")
         case=HOUR_TEST if qualification else FIXTURE_TEST
-        process=safety.execute([pins["service_tests"]["path"],case,"--ignored","--exact","--test-threads=1"],directory,
-                               "hour-soak" if qualification else "short-soak-fixture",
-                               timeout=BOUNDS["hour_seconds"] if qualification else BOUNDS["fixture_seconds"],
-                               cancelled=cancel.is_set,environment={"SYMBIOTE_SOAK_ARTIFACTS":str(native)})
+        with awake:
+            observer.start()
+            process=safety.execute([pins["service_tests"]["path"],case,"--ignored","--exact","--test-threads=1"],directory,
+                                   "hour-soak" if qualification else "short-soak-fixture",
+                                   timeout=BOUNDS["hour_seconds"] if qualification else BOUNDS["fixture_seconds"],
+                                   cancelled=cancel.is_set,environment={"SYMBIOTE_SOAK_ARTIFACTS":str(native)})
+            report['process']=process
         report["process"]=process;safety.check_exit(process);safety.check_native_test(safety.output(process,directory))
         require(not cancel.is_set() and not errors,"soak cancelled or source watch failed")
         report["verification"]=verify_soak(native,pins,selected)
@@ -233,7 +239,9 @@ def launch(directory,pins,sources,qualification,registration_pin=None,commit=Non
         report["status"]="PASS_LOCAL_HOUR" if qualification else "PASS_ENGINEERING_FIXTURE_NOT_HOUR_QUALIFICATION"
     except Exception as failure:report["failure"]=str(failure)
     finally:
-        done.set();observer.join(timeout=2)
+        done.set()
+        if observer.ident is not None:observer.join(timeout=2)
+        report['host_awake_guard']=awake.report
         for signum,handler in old.items():signal.signal(signum,handler)
         report["elapsed_seconds"]=time.monotonic()-started;report["source_watch_failures"]=errors
         if cancel.is_set() or errors or observer.is_alive():report["status"]="HOLD";report.setdefault("failure","cancelled or source monitor incomplete")

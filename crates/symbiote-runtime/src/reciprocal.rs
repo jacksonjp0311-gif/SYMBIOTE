@@ -125,25 +125,86 @@ fn digest_json<T: Serialize>(value: &T) -> Result<String, String> {
     Ok(format!("{:x}", Sha256::digest(bytes)))
 }
 
-/// A receipt verifies benefit only when this plan sent knowledge and the
-/// receiver ledger reseals that same receipt. A declined plan stays false
-/// even if the receipt itself verifies. This is an attribution gate, not a
-/// reciprocal-efficiency result.
+/// Legacy signature retained for source compatibility. Caller-supplied plans
+/// and payload flags cannot prove which exchange caused a promotion. Always
+/// returns false; use `bound_attributed_benefit` with actual operational history.
+#[deprecated(
+    since = "1.0.1",
+    note = "caller flags cannot establish causal attribution; use bound_attributed_benefit"
+)]
 pub fn attributed_benefit(
-    exchange_plan: &ExchangePlan,
-    payload_sent: bool,
-    receipt: &ReciprocalReceipt,
+    _exchange_plan: &ExchangePlan,
+    _payload_sent: bool,
+    _receipt: &ReciprocalReceipt,
+    _store: &KnowledgeStore,
+    _witness: PromotionWitness<'_>,
+) -> bool {
+    false
+}
+
+/// Require the exact receiver decision/request/quarantine/evaluation/promotion
+/// and a later actual certified use reconstructed from both receiver ledgers.
+/// This verifies declared local assessment costs, not arbitrary remote honesty
+/// or full machine-level economic utility. It preserves the original stored
+/// assessment/ReciprocalReceipt semantics; use `bound_scoped_benefit` for a new
+/// finite received-task measurement, whose legacy trial baseline may be unknown.
+pub fn bound_attributed_benefit(
+    journal: &symbiote_memory::operational::OperationalJournal,
     store: &KnowledgeStore,
+    exchange_id: &str,
+    receipt: &ReciprocalReceipt,
     witness: PromotionWitness<'_>,
 ) -> bool {
-    payload_sent
-        && exchange_plan.exchanges_knowledge
-        && exchange_plan.decision.exchanges_knowledge()
-        && receipt.receiver_benefit_verified(store, witness)
+    let Ok(index) = crate::service::feedback::replay_index(journal, store) else {
+        return false;
+    };
+    let Some(experience) = index.experience(exchange_id) else {
+        return false;
+    };
+    let crate::service::feedback::ExperienceProof::Promotion {
+        localized_record_sha256,
+        before,
+        after,
+        evidence_sha256,
+        ..
+    } = &experience.proof
+    else {
+        return false;
+    };
+    experience.currently_active
+        && experience.outcome.verified_benefit
+        && localized_record_sha256 == &witness.record.digest().unwrap_or_default()
+        && witness.before == before
+        && witness.after == after
+        && digest_json(witness.evidence).ok().as_ref() == Some(evidence_sha256)
+        && &receipt.transferred_record_sha256 == localized_record_sha256
+        && receipt.evaluator_identity == experience.binding.receiver_id
+        && receipt.sender_identity == experience.binding.sender_id
+        && witness.record.scope == experience.binding.scope
+        && witness.record.schema_fingerprint == experience.binding.schema_fingerprint
+        && receipt.confirmed_benefit(store, witness)
+}
+
+/// Verify the exact native SENSE-through-first-use receipt from the receiver's
+/// current ledgers. This does not reinterpret a legacy unknown trial baseline.
+/// The measurement SHA binds all recorded cost components and the task boundary.
+pub fn bound_scoped_benefit(
+    journal: &symbiote_memory::operational::OperationalJournal,
+    store: &KnowledgeStore,
+    expected_binding: &crate::service::feedback::Binding,
+    expected_measurement_sha256: &str,
+) -> bool {
+    crate::service::feedback::verified_scoped_benefit(
+        journal,
+        store,
+        expected_binding,
+        expected_measurement_sha256,
+    )
 }
 
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
     use super::*;
 
     #[test]
@@ -248,7 +309,7 @@ mod tests {
             before: &before,
             after: &after,
         };
-        assert!(receipt.receiver_benefit_verified(&store, witness));
+        assert!(receipt.confirmed_benefit(&store, witness));
 
         let saved = TransferMeasurement {
             isolated_checks: Some(8),
@@ -267,8 +328,7 @@ mod tests {
             family_terms: saved,
         });
         let offer = plan(offer_local, offer_remote).unwrap();
-        assert!(offer.exchanges_knowledge);
-        assert!(attributed_benefit(&offer, true, &receipt, &store, witness));
+        assert!(!attributed_benefit(&offer, true, &receipt, &store, witness));
         let mut inconsistent = offer.clone();
         inconsistent.decision = SymbiosisDecision::Defer;
         assert!(!attributed_benefit(
@@ -314,7 +374,7 @@ mod tests {
             certification_bypassed: false,
         })
         .unwrap();
-        assert!(!digest.receiver_benefit_verified(&store, witness));
+        assert!(!digest.confirmed_benefit(&store, witness));
         assert!(!attributed_benefit(&offer, true, &digest, &store, witness));
 
         let other = std::env::temp_dir().join(format!(

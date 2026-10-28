@@ -1,9 +1,10 @@
-"""External, explicit v1 publication/verification draft; importing does nothing.
+"""Explicit release verification/evidence upload; importing performs no operation.
 
 This never creates a tag/release or replaces an asset. Use only after Root closes
 qualification and CI. Native smoke runs only with --install-windows in verify.
 """
 import argparse
+from contextlib import contextmanager
 import hashlib
 import http.client
 import json
@@ -25,7 +26,7 @@ import urllib.request
 import zipfile
 
 REPOSITORY = "jacksonjp0311-gif/SYMBIOTE"
-TAG = "v1.0.0"
+TAG = "v1.0.1"
 BASE = "https://api.github.com/repos/" + REPOSITORY
 TARGETS = {
     "x86_64-pc-windows-msvc": ("pe", 0x8664, "symbiote.exe"),
@@ -35,6 +36,34 @@ TARGETS = {
 }
 ZIP_NAMES = {"symbiote-" + TAG + "-" + target + ".zip" for target in TARGETS}
 NATIVE_NAMES = ZIP_NAMES | {"SHA256SUMS"}
+
+
+@contextmanager
+def windows_powershell_modules():
+    """Let Windows PowerShell initialize its own compatible module path.
+
+    A path inherited from PowerShell Core can hide Get-FileHash in the isolated
+    installer. Only this child-launch window is changed; restore even on failure.
+    """
+    previous = os.environ.pop("PSModulePath", None)
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("PSModulePath", None)
+        else:
+            os.environ["PSModulePath"] = previous
+
+
+def configure_tag(tag):
+    """One explicit final semantic-version tag per CLI operation."""
+    global TAG, ZIP_NAMES, NATIVE_NAMES
+    need(isinstance(tag, str) and re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag),
+         "explicit final release tag required")
+    TAG = tag
+    ZIP_NAMES = {"symbiote-" + TAG + "-" + target + ".zip" for target in TARGETS}
+    NATIVE_NAMES = ZIP_NAMES | {"SHA256SUMS"}
+
 CDN_HOSTS = {"github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"}
 LIMITS = dict(asset_bytes=2 * 1024**3, downloads_bytes=3 * 1024**3,
               binary_bytes=100 * 1024**2, text_bytes=128 * 1024,
@@ -192,9 +221,13 @@ def resolve_tag(expected):
 
 def asset_map(release):
     need(release["tag_name"] == TAG and release["draft"] is False and release["prerelease"] is False,
-         "workflow-created public final-tag release required")
+         "public final-tag release required")
     need(type(release["id"]) is int and release["id"] > 0, "actual release ID required")
-    need(release["creator"]["login"] == "github-actions[bot]", "release must be created by the configured GitHub workflow")
+    # GitHub REST returns author, not creator. A manual release author is not
+    # build provenance; successful exact-source release workflow + asset uploader
+    # checks below establish the narrower origin used by this tool.
+    need(isinstance(release.get("author"), dict) and isinstance(release["author"].get("login"), str)
+         and bool(release["author"]["login"]), "actual REST release author metadata required")
     need(release["html_url"] == "https://github.com/" + REPOSITORY + "/releases/tag/" + TAG,
          "release page belongs to another repository/tag")
     assets = release["assets"]
@@ -206,11 +239,27 @@ def asset_map(release):
              "duplicate or unsafe release asset name")
         need(type(item["id"]) is int and item["id"] > 0 and type(item["size"]) is int
              and 0 < item["size"] <= LIMITS["asset_bytes"], "asset identity/size bound")
+        if name in NATIVE_NAMES:
+            need(item.get("uploader", {}).get("login") == "github-actions[bot]",
+                 "native asset was not uploaded by the release workflow")
         expected = "https://github.com/" + REPOSITORY + "/releases/download/" + TAG + "/" + urllib.parse.quote(name)
         need(item["browser_download_url"] == expected, "asset download URL belongs to another origin/tag/name")
         result[name] = item
     need(NATIVE_NAMES <= set(result), "workflow has not completed the exact four native bundles and SHA256SUMS")
     return result
+
+
+def verify_release_workflow(run_id, commit):
+    need(type(run_id) is int and run_id > 0, "explicit release workflow run ID required")
+    run = metadata("/repos/" + REPOSITORY + "/actions/runs/" + str(run_id))
+    need(run.get("repository", {}).get("full_name") == REPOSITORY
+         and run.get("path") == ".github/workflows/release.yml"
+         and run.get("head_sha") == commit and run.get("head_branch") == TAG
+         and run.get("event") == "push"
+         and run.get("status") == "completed" and run.get("conclusion") == "success",
+         "release workflow has not passed for the exact tag/source")
+    return dict(run_id=run_id, source_commit=commit, tag=TAG,
+                url=run["html_url"], conclusion="success", qualification="workflow build/test origin only")
 
 
 def wait_release(commit, seconds):
@@ -226,7 +275,7 @@ def wait_release(commit, seconds):
             resolve_tag(commit)
             return release
         remaining = deadline - time.monotonic()
-        need(remaining > 0, "workflow-created release did not appear within the fixed wait")
+        need(remaining > 0, "public release did not appear within the fixed wait")
         time.sleep(min(LIMITS["poll_seconds"], remaining))
 
 
@@ -477,13 +526,14 @@ def windows_smoke(args, out, downloads, bundles):
         return parse(call(command + "-" + str(len(calls)), [binary, command, "--state", state, "--json", *options]).encode())
     try:
         install = out / "installed"
-        call("windows-public-installer-no-path", ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-                                                 "-File", installer, "-Version", TAG, "-BundleDirectory", downloads, "-InstallDir", install])
+        with windows_powershell_modules():
+            call("windows-public-installer-no-path", ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                                                     "-File", installer, "-Version", TAG, "-BundleDirectory", downloads, "-InstallDir", install])
         binary = plain(install / "symbiote.exe")
         windows = next(row for row in bundles if row["target"] == "x86_64-pc-windows-msvc")
         need(sha(binary) == windows["binary_sha256"], "installed binary differs from verified Windows ZIP")
         version = parse(call("installed-version", [binary, "version", "--json"]).encode())
-        need(version["name"] == "SYMBIOTE" and version["version"] == "1.0.0" and version["build_source_commit"] == args.commit, "installed executable version/source stamp mismatch")
+        need(version["name"] == "SYMBIOTE" and version["version"] == TAG[1:] and version["build_source_commit"] == args.commit, "installed executable version/source stamp mismatch")
         state = out / "demo-owner"
         doctor = native("doctor", state)
         need(not state.exists() and doctor["network_requests"] == 0 and doctor["state_modified"] is False, "doctor changed new state")
@@ -656,6 +706,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("status", "verify-native", "publish", "verify"))
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--tag", required=True)
+    parser.add_argument("--release-run-id", required=True, type=int)
     parser.add_argument("--archive", type=Path)
     parser.add_argument("--evidence-sha256")
     parser.add_argument("--body", type=Path)
@@ -672,12 +724,13 @@ def main():
     args = parser.parse_args()
     out = None; stage = "validate-explicit-inputs"
     try:
+        configure_tag(args.tag)
         pin(args.commit, 40)
         archive = None
         if args.mode in {"publish", "verify"}:
             need(args.archive is not None and args.evidence_sha256 is not None, "final archive path and external SHA required")
             pin(args.evidence_sha256); archive = plain(args.archive)
-            need(re.fullmatch(r"SYMBIOTE-v1\.0\.0-[A-Za-z0-9._-]{1,100}\.tar\.gz", archive.name), "explicit portable v1 qualification archive name required")
+            need(re.fullmatch(r"SYMBIOTE-" + re.escape(TAG) + r"-[A-Za-z0-9._-]{1,100}\.tar\.gz", archive.name), "explicit portable tag-bound qualification archive name required")
             need(sha(archive) == args.evidence_sha256, "archive differs from externally reviewed evidence digest")
         else:
             need(args.archive is None and args.evidence_sha256 is None, "five-native/status mode does not consume the later evidence archive")
@@ -709,6 +762,9 @@ def main():
                   installer_sha256=args.installer_sha256, containment_source_sha256=args.safety_sha256,
                   cognition_test_executable_sha256=args.cognition_tests_sha256,
                   creates_tag_or_release=False, replaces_assets=False)))
+        stage = "verify-exact-source-release-workflow"
+        workflow = verify_release_workflow(args.release_run_id, args.commit)
+        write_new(out / "release-workflow.json", encode(workflow))
         stage = "wait-for-workflow-release"
         release = wait_release(args.commit, args.wait_seconds); assets = asset_map(release)
         write_new(out / "public-release-metadata.json", encode(release))
@@ -720,7 +776,7 @@ def main():
             stage = "verify-public-assets-and-optional-native-install"; result = verify(args, out, release, assets, archive, body)
         result.update(schema="symbiote.public-v1-release-operation/1", repository=REPOSITORY, tag=TAG,
                       source_commit=args.commit, release_url=release["html_url"], completed_at_unix=time.time(),
-                      evidence_sha256=args.evidence_sha256)
+                      evidence_sha256=args.evidence_sha256, release_workflow=workflow)
         write_new(out / "operation-receipt.json", encode(result)); print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (Exception, KeyboardInterrupt) as error:

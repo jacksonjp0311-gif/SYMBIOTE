@@ -57,6 +57,9 @@ def main():
     packaged = execute([sys.executable, "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"])
     package_tests = count_python_tests(packaged.stderr)
     print("PASS release packaging and native installer integrity tests", flush=True)
+    release_tools = execute([sys.executable, "-m", "unittest", "discover", "-s", "tools/release", "-p", "test_*.py"])
+    release_tool_tests = count_python_tests(release_tools.stderr)
+    print("PASS evidence packaging and release workflow provenance tests", flush=True)
     binary = ROOT / "target" / "debug" / ("symbiote.exe" if sys.platform == "win32" else "symbiote")
     with tempfile.TemporaryDirectory(prefix="symbiote-verification-") as directory:
         base = Path(directory)
@@ -117,7 +120,7 @@ def main():
     sources = sorted(set(ROOT.glob("crates/**/*.rs")) | set(ROOT.glob("crates/**/Cargo.toml")) | set(ROOT.glob("tools/*.py")) | set(ROOT.glob("tools/*.ps1")) | set(ROOT.glob("tools/*.sh")) | {ROOT / "Cargo.toml", ROOT / "Cargo.lock", ROOT / "SYMBIOTE-All-One.ps1"})
     for source in sources:
         digest.update(source.relative_to(ROOT).as_posix().encode()+b"\0"+source.read_bytes().replace(b"\r\n",b"\n"))
-    summary = dict(schema="symbiote.software-verification/1", status="PASS", source_sha256=digest.hexdigest(), platform=platform.system(), architecture=platform.machine(), native_tests_passed=native_tests, packaging_and_installation_tests_passed=package_tests, legacy_parity_executed=not args.skip_parity, cargo_gates_executed=not args.skip_cargo, genesis_compatibility=True, structural_exchange=True, deployed_processes_migration_and_recovery=True, graph_exchange_and_retained_routes=True, stable_v1_criteria="remain separate from software gate")
+    summary = dict(schema="symbiote.software-verification/1", status="PASS", source_sha256=digest.hexdigest(), platform=platform.system(), architecture=platform.machine(), native_tests_passed=native_tests, packaging_and_installation_tests_passed=package_tests, release_tool_tests_passed=release_tool_tests, legacy_parity_executed=not args.skip_parity, cargo_gates_executed=not args.skip_cargo, genesis_compatibility=True, structural_exchange=True, deployed_processes_migration_and_recovery=True, graph_exchange_and_retained_routes=True, stable_v1_criteria="remain separate from software gate")
     args.summary.parent.mkdir(parents=True, exist_ok=True)
     args.summary.write_text(json.dumps(summary, indent=2)+"\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))

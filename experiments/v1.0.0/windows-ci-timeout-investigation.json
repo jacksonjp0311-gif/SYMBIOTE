@@ -1,0 +1,89 @@
+{
+  "schema": "symbiote.windows-ci-timeout-investigation/1",
+  "status": "HOLD_CAUSE_UNRESOLVED",
+  "source_commit": "426f054771395dcbe1b8711d7128b90ef0c704de",
+  "run_id": 40672547256,
+  "attempt": 1,
+  "job_id": 122762724103,
+  "run_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40672547256/attempts/1",
+  "job_conclusion": "failure",
+  "failed_step": "Run python tools/verify.py",
+  "failed_test": "completed_operational_history_allows_a_legitimate_later_knowledge_revocation",
+  "test_binary_result": {
+    "passed": 34,
+    "failed": 1,
+    "ignored": 3,
+    "elapsed_seconds": 58.7
+  },
+  "error": {
+    "prefix": "SYMBIOTE failure: secure transport I/O",
+    "os_error": 10060,
+    "reported_stdout_empty": true
+  },
+  "stage": {
+    "known": "initial candidate.submit CLI connect before independent local evaluation or revocation",
+    "basis": "the pinned test has exactly one network call; remaining calls are local evaluate/peers",
+    "unresolved": [
+      "TCP connect",
+      "TLS handshake",
+      "application negotiation",
+      "candidate RPC",
+      "session revoke"
+    ]
+  },
+  "source_bounds": {
+    "configured_socket_timeout_ms": 500,
+    "listener_lifetime_ms": 15000,
+    "deadline_scope": "TCP connect bounded separately; TLS/frame absolute remaining-time read/write deadlines",
+    "retry_in_test": false
+  },
+  "runner": {
+    "provider": "GitHub-hosted Azure westus2",
+    "os": "Windows Server 2025",
+    "image": "windows-2025-vs2026",
+    "image_version": "20261021.278.1"
+  },
+  "later_attempt": {
+    "attempt": 2,
+    "windows_job_id": 122765250910,
+    "conclusion": "success",
+    "same_source": true,
+    "interpretation": "later success does not identify or repair the first failure"
+  },
+  "inspected_source_risks": [
+    {
+      "issue": "parallel native test scheduling can consume a 500ms I/O allowance",
+      "classification": "plausible_unproven",
+      "evidence": "CI has no RUST_TEST_THREADS limit or per-socket phase/timing record"
+    },
+    {
+      "issue": "unused_address releases its ephemeral listener before the child server binds",
+      "classification": "source_race_window_not_attributed",
+      "evidence": "test source has a port reservation gap; no bind collision is recorded in this failure"
+    }
+  ],
+  "sleep_attribution": "No evidence links this hosted-runner failure to the separate local-PC standby event; CI sleep telemetry was not retained.",
+  "missing_evidence": [
+    "failed socket phase and endpoint",
+    "per-attempt native monotonic/wall timing",
+    "server last_failure at failing call",
+    "runner scheduling/port-pressure measurements"
+  ],
+  "recommended_next_step": "Retain phase-specific transport error context and bounded stage timing, then validate concurrency explicitly. Do not add automatic retries or raise scientific budgets to hide the failure.",
+  "automatic_retry_performed": false,
+  "code_changed": false,
+  "original_failure_regraded": false,
+  "log": {
+    "path": "windows-job-122762724103.log",
+    "bytes": 84484,
+    "sha256": "f76282e077ecebb5e9998c983471e3f6a8b27cb77737cfd8252cfb79efe91fb4",
+    "basis": "GitHub connector decoded log preserved as UTF-8"
+  },
+  "excerpt": {
+    "path": "failure-excerpt.txt",
+    "sha256": "df14f30b185c9960e6a4677b1c02343848eb6aadecbfa400eee6abe17f015308",
+    "line_start": 766,
+    "line_end": 780
+  },
+  "secrets_included": false
+}

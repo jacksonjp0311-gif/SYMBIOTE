@@ -639,6 +639,48 @@ impl KnowledgeStore {
     pub fn ledger_path(&self) -> PathBuf {
         self.directory.join("knowledge.jsonl")
     }
+    /// Exact original assessment evidence for one validated historical promotion.
+    /// This accessor preserves the distinction between history and current use;
+    /// callers claiming a current capability must also require active membership.
+    pub fn promotion_evidence_between(
+        &self,
+        record: &KnowledgeRecord,
+        before: &KnowledgeAnchor,
+        after: &KnowledgeAnchor,
+    ) -> Result<(String, Value), String> {
+        self.validate_anchor(before)?;
+        self.validate_anchor(after)?;
+        let expected = record.digest()?;
+        for receipt in self
+            .receipts
+            .iter()
+            .take(after.records)
+            .skip(before.records)
+        {
+            let (stored, evidence) = match &receipt.payload {
+                Event::Promote {
+                    record, assessment, ..
+                } => (
+                    record,
+                    serde_json::to_value(&assessment.evidence)
+                        .map_err(|error| error.to_string())?,
+                ),
+                Event::PromoteGraph {
+                    record, assessment, ..
+                } => (
+                    record,
+                    serde_json::to_value(&assessment.evidence)
+                        .map_err(|error| error.to_string())?,
+                ),
+                _ => continue,
+            };
+            if stored.digest()? == expected {
+                let promotion = self.promotion_between(record, &evidence, before, after)?;
+                return Ok((promotion, evidence));
+            }
+        }
+        Err("exact historical promotion evidence is unavailable".into())
+    }
     pub fn promote(
         &mut self,
         record: KnowledgeRecord,

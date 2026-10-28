@@ -295,14 +295,11 @@ pub fn outbound_views(evidence: OutboundEvidence) -> (ParticipantView, Option<Pa
         remote_has_unshared_evidence: false,
         discriminating_experiment_available: false,
     };
-    let remote = ParticipantView {
-        authorization_present: evidence.remote_authorized,
-        prior_negative_exchanges: 0,
-        local_has_unshared_evidence: false,
-        remote_has_unshared_evidence: false,
-        ..local
-    };
-    (local, Some(remote))
+    // Authorization is not a measurement of the partner's economics. The
+    // legacy input contains only our family terms; do not duplicate them into
+    // a purported independent remote estimate. Callers with actual remote
+    // evidence can pass its separately constructed view directly to `plan`.
+    (local, None)
 }
 
 /// The decision and the estimates that produced it. Utility is absent when the
@@ -882,13 +879,14 @@ mod tests {
             family_terms: saved,
         });
         let selected = plan(local, remote).unwrap();
-        assert_eq!(selected.decision, SymbiosisDecision::OfferKnowledge);
-        assert!(selected.exchanges_knowledge);
+        assert_eq!(selected.decision, SymbiosisDecision::Observe);
+        assert!(!selected.exchanges_knowledge);
         assert!(!selected.opens_connection);
         assert_eq!(selected.local_utility, Some(6));
-        assert!(selected.bilateral_authorization);
+        assert!(!selected.bilateral_authorization);
+        assert_eq!(selected.remote_utility, None);
         let selected_reconciliation = reconcile(&selected, true, None);
-        assert!(selected_reconciliation.action_matched);
+        assert!(!selected_reconciliation.action_matched);
         assert!(!selected_reconciliation.benefit_verified);
 
         let (local, remote) = outbound_views(OutboundEvidence {

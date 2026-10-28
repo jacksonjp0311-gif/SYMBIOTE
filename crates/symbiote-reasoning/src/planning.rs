@@ -119,6 +119,15 @@ impl RouteLearner {
     pub fn model_work(&self) -> usize {
         self.work
     }
+    /// Narrow a remaining operational allowance without changing any evidence.
+    /// An exhausted or contradicted learner is never reactivated by this call.
+    pub fn restrict_work_budget(&mut self, ceiling: usize) -> Result<(), String> {
+        if ceiling > self.budget || ceiling < self.work {
+            return Err("route work ceiling must only decrease and retain spent work".into());
+        }
+        self.budget = ceiling;
+        Ok(())
+    }
     fn reserve(&mut self, count: usize) -> bool {
         if self.status != "supported" {
             return false;
@@ -169,7 +178,7 @@ impl RouteLearner {
         self.history.push((edge_id, cost));
         Ok(())
     }
-    fn shortest(&mut self, start: usize, goal: usize) -> Option<Route> {
+    fn shortest(&mut self, start: usize, goal: usize, observed_only: bool) -> Option<Route> {
         let mut distances = vec![u64::MAX; self.schema.nodes];
         let mut previous = vec![None; self.schema.nodes];
         let mut queue = BinaryHeap::new();
@@ -187,7 +196,7 @@ impl RouteLearner {
                     return None;
                 }
                 let edge = &self.schema.edges[id];
-                if edge.from != node {
+                if edge.from != node || (observed_only && self.observed[id].is_none()) {
                     continue;
                 }
                 let cost = u64::from(self.observed[id].unwrap_or(edge.lower));
@@ -228,11 +237,31 @@ impl RouteLearner {
         })
     }
     pub fn assess(&mut self, start: usize, goal: usize) -> Result<RouteAssessment, String> {
+        self.assess_with_observed_witness(start, goal, true)
+    }
+    /// Preserve the original one-search assessment used by frozen adaptive
+    /// experiments. It may abstain when an observed alternative ties the chosen
+    /// optimistic path. Its certificate is still exact; each assessment scans
+    /// at most `nodes * edges` edge entries. Normal reasoning should use `assess`,
+    /// which can perform a separately metered observed-path witness search.
+    pub fn assess_optimistic_reference(
+        &mut self,
+        start: usize,
+        goal: usize,
+    ) -> Result<RouteAssessment, String> {
+        self.assess_with_observed_witness(start, goal, false)
+    }
+    fn assess_with_observed_witness(
+        &mut self,
+        start: usize,
+        goal: usize,
+        allow_observed_witness: bool,
+    ) -> Result<RouteAssessment, String> {
         if start >= self.schema.nodes || goal >= self.schema.nodes || start == goal {
             return Err("choose distinct declared start and goal nodes".into());
         }
         let candidate = if self.status == "supported" {
-            self.shortest(start, goal)
+            self.shortest(start, goal, false)
         } else {
             None
         };
@@ -247,6 +276,16 @@ impl RouteLearner {
                     .copied();
                 if next.is_none() {
                     certified = Some(route.clone());
+                } else if allow_observed_witness {
+                    // An observed path may tie a different optimistic path whose
+                    // edges remain unknown. Matching the unchanged global lower
+                    // bound certifies it for every remaining interval completion.
+                    if let Some(observed) = self.shortest(start, goal, true) {
+                        if observed.cost == route.cost {
+                            certified = Some(observed);
+                            next = None;
+                        }
+                    }
                 }
             }
         }
@@ -306,6 +345,74 @@ mod tests {
                 },
             ],
         }
+    }
+    #[test]
+    fn reducing_work_budget_preserves_evidence_and_cannot_expand_or_erase_spending() {
+        let mut learner = RouteLearner::new(diamond(), 1000).unwrap();
+        learner.observe(0, 1).unwrap();
+        learner.observe(1, 1).unwrap();
+        let expected = learner.clone().assess(0, 3).unwrap().certified;
+        let observations = learner.observations().to_vec();
+        learner.restrict_work_budget(500).unwrap();
+        assert_eq!(learner.observations(), observations);
+        assert_eq!(learner.assess(0, 3).unwrap().certified, expected);
+        assert!(learner.restrict_work_budget(501).is_err());
+        assert!(learner.restrict_work_budget(0).is_err());
+        let spent = learner.model_work();
+        learner.restrict_work_budget(spent).unwrap();
+        assert_eq!(learner.assess(0, 3).unwrap().status, "budget_exhausted");
+        assert!(learner.restrict_work_budget(500).is_err());
+    }
+    #[test]
+    fn observed_route_tying_an_unknown_optimistic_path_is_exactly_certified() {
+        let schema = diamond();
+        let mut learner = RouteLearner::new(schema.clone(), 1000).unwrap();
+        learner.observe(2, 1).unwrap();
+        learner.observe(3, 1).unwrap();
+        let mut reference = learner.clone();
+        let reference_before = reference.model_work();
+        let old = reference.assess_optimistic_reference(0, 3).unwrap();
+        let reference_work = reference.model_work() - reference_before;
+        assert!(
+            old.certified.is_none(),
+            "frozen method preserves its original sound abstention"
+        );
+        assert_eq!(old.next_observation, Some(0));
+        assert!(reference_work <= schema.nodes * schema.edges.len());
+        let enhanced_before = learner.model_work();
+        let result = learner.assess(0, 3).unwrap();
+        let enhanced_work = learner.model_work() - enhanced_before;
+        assert!(
+            enhanced_work > reference_work,
+            "the additional exact search is charged"
+        );
+        assert!(enhanced_work <= 2 * schema.nodes * schema.edges.len());
+        assert_eq!(learner.observations(), reference.observations());
+        assert_eq!(result.candidate.as_ref().unwrap().edges, vec![0, 1]);
+        let certified = result.certified.unwrap();
+        assert_eq!(certified.edges, vec![2, 3]);
+        assert_eq!(certified.cost, 2);
+        assert_eq!(learner.observations().len(), 2);
+        for first in 1..=3 {
+            for second in 1..=3 {
+                assert_eq!(
+                    independent_best(&schema, &[first, second, 1, 1], 0, 3),
+                    certified.cost
+                );
+            }
+        }
+        assert!(result.model_work > 2);
+    }
+    #[test]
+    fn an_observed_route_above_a_cheaper_unknown_bound_still_abstains() {
+        let mut learner = RouteLearner::new(diamond(), 1000).unwrap();
+        learner.observe(2, 2).unwrap();
+        learner.observe(3, 1).unwrap();
+        let result = learner.assess(0, 3).unwrap();
+        assert_eq!(result.optimistic_cost, Some(2));
+        assert!(result.certified.is_none());
+        assert_eq!(learner.observations().len(), 2);
+        assert_eq!(result.next_observation, Some(0));
     }
     fn independent_best(schema: &GraphSchema, weights: &[u16], start: usize, goal: usize) -> u64 {
         let mut cost = vec![u64::MAX / 2; schema.nodes];

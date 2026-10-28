@@ -157,7 +157,10 @@ impl ExactModel {
         let before = self.work();
         let (candidate, certified, next) = match &mut self.engine {
             Engine::Dijkstra(model) => {
-                let result = model.assess(start, goal)?;
+                // Frozen adaptive study: preserve its original one-search
+                // method and N*E reservation. The normal/new partial-graph
+                // runtime uses the additional exact observed-witness search.
+                let result = model.assess_optimistic_reference(start, goal)?;
                 if result.status != "supported" {
                     return Err(format!("native route model {}", result.status));
                 }

@@ -144,6 +144,7 @@ Extract all three files into a writable folder. Open a terminal in that folder.
 ```powershell
 .\\symbiote.exe doctor
 .\\symbiote.exe demo
+.\\symbiote.exe observe-demo --state state/observation
 .\\symbiote.exe predict
 ```
 
@@ -153,6 +154,7 @@ Extract all three files into a writable folder. Open a terminal in that folder.
 chmod +x ./symbiote
 ./symbiote doctor
 ./symbiote demo
+./symbiote observe-demo --state state/observation
 ./symbiote predict
 ```
 
@@ -161,6 +163,11 @@ folder: default state is `state/demo` beneath it. Use `--state PATH` to select a
 persistent location explicitly. `predict` uses retained knowledge without network
 requests. `--help` lists commands; `--json` provides machine-readable receipts.
 `network-research` runs separately supervised local peers.
+
+Run `observe-demo` again with the same state to reuse its inferred affine model
+with zero new source queries. It uses the normal compact observation backend
+against an explicitly owned finite source, without TLS setup or another agent.
+Its conditional capability result is separate from an economic improvement claim.
 
 This is bounded research software. A passing demonstration does not establish
 general intelligence, better partner selection or universal transfer efficiency.

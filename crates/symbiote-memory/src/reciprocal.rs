@@ -272,6 +272,9 @@ impl ReciprocalReceipt {
 
     /// Re-seal against the receiver ledger and require the same binding.
     pub fn confirmed_benefit(&self, store: &KnowledgeStore, witness: PromotionWitness<'_>) -> bool {
+        if !store.active().iter().any(|record| record == witness.record) {
+            return false;
+        }
         let Ok(resealed) = Self::seal_promoted(
             store,
             witness,
@@ -306,13 +309,30 @@ impl ReciprocalReceipt {
         Ok(i128::from(self.isolated_control_cost) - i128::from(self.exchange_path_cost))
     }
 
-    /// Verify the receiver's actual ledger; serialized attribution alone is not proof.
-    pub fn receiver_benefit_verified(
-        &self,
-        store: &KnowledgeStore,
-        witness: PromotionWitness<'_>,
-    ) -> bool {
-        self.confirmed_benefit(store, witness)
+    /// Legacy receipt-only predicate, retained for source compatibility.
+    ///
+    /// A serialized receipt cannot supply an independent ledger witness. This
+    /// method therefore always returns false, including for an honestly produced
+    /// receipt. Use `confirmed_benefit` with the receiver's store and witness.
+    #[deprecated(
+        since = "1.0.1",
+        note = "receipt fields cannot verify benefit; use confirmed_benefit(store, witness)"
+    )]
+    pub fn receiver_benefit_verified(&self) -> bool {
+        false
+    }
+
+    /// Legacy receipt-only durability predicate, retained for source compatibility.
+    ///
+    /// Producer restart flags are claims, so this method always returns false.
+    /// Use `retained_benefit_after_store_reopen` for a stopped-store replay check;
+    /// that check does not itself prove an operating-system process restart.
+    #[deprecated(
+        since = "1.0.1",
+        note = "restart flags are not evidence; use retained_benefit_after_store_reopen"
+    )]
+    pub fn durable_benefit_verified(&self) -> bool {
+        false
     }
 
     /// Reopen a stopped owner's existing ledger and verify that this exact beneficial
@@ -331,17 +351,28 @@ impl ReciprocalReceipt {
         let Ok(store) = KnowledgeStore::open(directory, &self.evaluator_identity) else {
             return false;
         };
-        self.receiver_benefit_verified(&store, witness)
+        self.confirmed_benefit(&store, witness)
             && store.active().iter().any(|record| {
                 record.digest().as_deref() == Ok(self.transferred_record_sha256.as_str())
             })
+    }
+
+    /// Legacy receipt-only mutual predicate, retained for source compatibility.
+    /// Neither participant's serialized claims witness the other's ledger, so
+    /// this method always returns false. Use `witnessed_mutual_research_success`.
+    #[deprecated(
+        since = "1.0.1",
+        note = "receipts alone cannot verify mutual benefit; use witnessed_mutual_research_success"
+    )]
+    pub fn mutual_research_success(_left: &Self, _right: &Self) -> bool {
+        false
     }
 
     /// Each direction must independently match its own receiver ledger. Crossed
     /// initial knowledge anchors bind the two directional artifacts to the same
     /// participant states; the artifacts need not be identical. This does not verify
     /// an OS restart or authenticate the truth of an arbitrary remote ledger.
-    pub fn mutual_research_success(
+    pub fn witnessed_mutual_research_success(
         left: &Self,
         left_store: &KnowledgeStore,
         left_witness: PromotionWitness<'_>,
@@ -349,8 +380,8 @@ impl ReciprocalReceipt {
         right_store: &KnowledgeStore,
         right_witness: PromotionWitness<'_>,
     ) -> bool {
-        left.receiver_benefit_verified(left_store, left_witness)
-            && right.receiver_benefit_verified(right_store, right_witness)
+        left.confirmed_benefit(left_store, left_witness)
+            && right.confirmed_benefit(right_store, right_witness)
             && left.evaluator_identity == right.sender_identity
             && left.sender_identity == right.evaluator_identity
             && left.sender_knowledge_before_sha256 == right.receiver_knowledge_before_sha256
@@ -785,7 +816,7 @@ mod tests {
         .unwrap()
     }
     fn benefit(receipt: &ReciprocalReceipt, promoted: &Promoted) -> bool {
-        receipt.receiver_benefit_verified(promoted.owner.store.as_ref().unwrap(), witness(promoted))
+        receipt.confirmed_benefit(promoted.owner.store.as_ref().unwrap(), witness(promoted))
     }
     fn mutual(
         left: &ReciprocalReceipt,
@@ -793,7 +824,7 @@ mod tests {
         right: &ReciprocalReceipt,
         rp: &Promoted,
     ) -> bool {
-        ReciprocalReceipt::mutual_research_success(
+        ReciprocalReceipt::witnessed_mutual_research_success(
             left,
             lp.owner.store.as_ref().unwrap(),
             witness(lp),
@@ -983,6 +1014,32 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
+    fn v1_receipt_only_signatures_stay_compatible_and_fail_closed() {
+        // These function-pointer types are the original public v1.0 signatures.
+        let receiver_check: fn(&ReciprocalReceipt) -> bool =
+            ReciprocalReceipt::receiver_benefit_verified;
+        let durability_check: fn(&ReciprocalReceipt) -> bool =
+            ReciprocalReceipt::durable_benefit_verified;
+        let mutual_check: fn(&ReciprocalReceipt, &ReciprocalReceipt) -> bool =
+            ReciprocalReceipt::mutual_research_success;
+        let left = promote_from("owner-a", "owner-b", positive_costs());
+        let right = promote_from("owner-b", "owner-a", positive_costs());
+        let lr = seal_for(&left, &right.before.head_sha256, Some(true), true);
+        let rr = seal_for(&right, &left.before.head_sha256, Some(true), true);
+        assert!(benefit(&lr, &left));
+        assert!(benefit(&rr, &right));
+        assert!(mutual(&lr, &left, &rr, &right));
+        // Even genuine receipts cannot verify themselves without the ledgers.
+        for receipt in [&lr, &rr] {
+            assert!(!receiver_check(receipt));
+            assert!(!durability_check(receipt));
+        }
+        assert!(!mutual_check(&lr, &rr));
+        assert!(!mutual_check(&rr, &lr));
+    }
+
+    #[test]
     fn fabricated_ledger_json_with_a_fresh_hash_is_not_verified_benefit() {
         let mut claimed = ReciprocalReceipt::seal(draft()).unwrap();
         claimed.attribution = ReceiptAttribution::LedgerPromotion {
@@ -1007,7 +1064,7 @@ mod tests {
             before: &anchor,
             after: &anchor,
         };
-        assert!(!untrusted.receiver_benefit_verified(owner.store.as_ref().unwrap(), witness));
+        assert!(!untrusted.confirmed_benefit(owner.store.as_ref().unwrap(), witness));
         assert!(!untrusted.retained_benefit_after_store_reopen(&owner.dir, witness));
         owner.store.take();
         assert!(!untrusted.retained_benefit_after_store_reopen(&owner.dir, witness));
@@ -1089,7 +1146,7 @@ mod tests {
     }
 
     #[test]
-    fn later_revocation_preserves_historical_benefit_but_not_retention() {
+    fn later_revocation_preserves_auditable_history_but_not_verified_current_benefit() {
         let mut promoted = promote_costs("owner-a", positive_costs());
         let receipt = seal_for(&promoted, &digest(9), Some(true), true);
         let id = promoted.record.id.clone();
@@ -1098,9 +1155,21 @@ mod tests {
             .store()
             .revoke(&id, "independent counterexample")
             .unwrap();
+        assert!(!benefit(&receipt, &promoted));
         assert!(
-            benefit(&receipt, &promoted),
-            "a historical promotion remains auditable"
+            promoted
+                .owner
+                .store
+                .as_ref()
+                .unwrap()
+                .promotion_between(
+                    &promoted.record,
+                    &promoted.evidence,
+                    &promoted.before,
+                    &promoted.after
+                )
+                .is_ok(),
+            "historical promotion remains auditable after revocation"
         );
         promoted.owner.store.take();
         assert!(

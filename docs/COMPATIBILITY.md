@@ -4,9 +4,9 @@ Public v1.0.0 adds the [runtime API](RUST_API.md), native cognitive profile even
 and a separate strategy ledger. Its [release audit](V1_RELEASE_AUDIT.md) records
 passing four-platform builds, downloaded bundle integrity, installed Windows
 cognition and the frozen one-host hour. Full stable qualification remains HOLD.
-The tagged benefit-verification helpers have defects; corrected main deliberately
-changes unsafe Rust signatures while retaining receipt schema `/2`. Resolve this
-API break before publishing a replacement; no compatible patch is implied.
+The tagged benefit-verification helpers have defects. Corrected main preserves
+their signatures as deprecated, fail-closed methods and provides positive
+verification only through ledger-witnessed APIs. Receipt schema `/2` is retained.
 The older tables below retain their v0.5.1 scope rather than becoming v1 evidence.
 
 The v1 release workflow used Rust 1.99.1 and Python 3.13.16. Local source checks

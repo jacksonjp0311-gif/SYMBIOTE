@@ -102,6 +102,22 @@ tree and record HOLD. Windows uses the existing suspended-before-assignment,
 kill-on-close Job Object helper; POSIX uses an owned process group. Host power
 loss or an uncatchable runner kill is not a certified cleanup mechanism.
 
+For newly registered candidates, the Windows runner holds a thread-scoped idle
+sleep request only during its owned command. It changes neither global power
+policy nor display behavior and restores the original thread request afterward.
+Explicit lid/suspend remains possible and invalidates qualification: compare
+sleep-inclusive GetTickCount64 with sleep-exclusive QueryUnbiasedInterruptTime
+at startup, source-watch checks and completion; over 1,000 ms divergence is HOLD.
+Clock failure/backward movement and failed request release are also HOLD. Retain
+the completed owned process receipt even if the final suspension check fails.
+This new wrapper rule does not alter or regrade prior registered campaign bytes.
+
+The clock distinction follows the Win32 documentation for
+[sleep-inclusive ticks](https://learn.microsoft.com/en-us/windows/win32/sysinfo/windows-time)
+and [unbiased interrupt time](https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-queryunbiasedinterrupttime).
+[Thread execution state](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate)
+inhibits idle sleep while respecting an explicit user suspension or lid action.
+
 Use a fresh short OS-temp artifact directory. Store owner ledgers, public
 fixtures/policies/certificates, bounded outputs and ordered JSONL events there
 before activation. Private fixture keys stay outside it. Failures preserve

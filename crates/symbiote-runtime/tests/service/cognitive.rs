@@ -1,6 +1,11 @@
 //! Operational native cognition checks; no study sample or generalized benefit claims.
 use super::*;
 
+#[path = "graph_reciprocal.rs"]
+mod graph_reciprocal;
+#[path = "observation_native.rs"]
+mod observation_native;
+
 struct CognitiveFixture {
     fixture: Fixture,
     actor: Value,

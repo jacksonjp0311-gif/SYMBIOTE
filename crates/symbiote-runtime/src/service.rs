@@ -6,7 +6,11 @@ pub use cognitive::run;
 #[allow(unused_imports)]
 pub use cognitive::run_with_cancel;
 mod evaluation;
+pub mod feedback;
 mod lifecycle;
+pub mod observation;
+mod selection;
+pub mod timing;
 mod wire;
 
 use config::Config;
@@ -36,6 +40,7 @@ const OPERATIONS: &[&str] = &[
 ];
 
 fn digest<T: Serialize>(value: &T) -> Result<String, String> {
+    let _compute = timing::Timer::start(timing::Stage::Compute);
     Ok(format!(
         "{:x}",
         Sha256::digest(serde_json::to_vec(value).map_err(|_| "cannot canonicalize service data")?)
@@ -65,6 +70,7 @@ pub fn prepare(state: &Path) -> Result<Value, String> {
     )
 }
 fn owner(config: &Config) -> Result<Arc<Store>, String> {
+    let _io = timing::Timer::start(timing::Stage::Io);
     if symbiote_memory::maintenance::inspect(&config.state)?
         .identity
         .as_deref()
@@ -85,6 +91,7 @@ struct State {
     journal: OperationalJournal,
     requests: BTreeMap<String, u64>,
     work: usize,
+    exact_graph_work: u64,
 }
 impl State {
     /// Cognition never recovers unfinished evaluations outside its explicit episode budgets.
@@ -106,6 +113,7 @@ impl State {
         Ok(state)
     }
     fn load(config: Config) -> Result<Self, String> {
+        let _replay = timing::Timer::start(timing::Stage::Replay);
         let owner = owner(&config)?;
         let registered = config
             .state
@@ -132,23 +140,46 @@ impl State {
         {
             return Err("HOLD: registered service knowledge ledger is missing; state was preserved without reinitialization".into());
         }
-        let knowledge = KnowledgeStore::open(&config.state, owner.identity())?;
-        let journal =
-            OperationalJournal::open(owner, "configured-service/v1", &config.policy_digest)?;
+        let (knowledge, journal) = timing::io(|| -> Result<_, String> {
+            let knowledge = KnowledgeStore::open(&config.state, owner.identity())?;
+            let journal =
+                OperationalJournal::open(owner, "configured-service/v1", &config.policy_digest)?;
+            Ok((knowledge, journal))
+        })?;
         let state = Self {
             config,
             knowledge,
             journal,
             requests: BTreeMap::new(),
             work: 0,
+            exact_graph_work: 0,
         };
         state.validate_replay()?;
         Ok(state)
     }
     fn validate_replay(&self) -> Result<(), String> {
+        let _compute = timing::Timer::start(timing::Stage::Compute);
         lifecycle::check_context_history(&self.config, &self.journal, None)?;
         let mut policy = lifecycle::initial_policy(&self.config, &self.journal)?;
         for (event_index, event) in self.journal.events().iter().enumerate() {
+            if feedback::handles(event) {
+                feedback::validate_profile_event(
+                    &policy,
+                    event,
+                    &self.journal.events()[..event_index],
+                    &self.knowledge,
+                )?;
+                continue;
+            }
+            if selection::handles(event) {
+                selection::validate_event(
+                    &policy,
+                    event,
+                    &self.journal.events()[..event_index],
+                    &self.knowledge,
+                )?;
+                continue;
+            }
             match event {
                 OperationalEvent::Quarantined {
                     key,
@@ -443,9 +474,17 @@ impl State {
         }
         *count += 1;
         match &request.body {
-            Operation::Capabilities => Ok(
-                json!({"schema":"symbiote.service-capabilities/1","identity":self.config.identity,"context":request.scope,"schema_fingerprint":self.config.context(&request.scope)?.schema_fingerprint,"families":["affine","graph-map"],"operations":session.operations,"max_offer_bytes":self.config.limits.max_offer_bytes,"remote_promotion":false,"truth_basis":"local operator fixtures only"}),
-            ),
+            Operation::Capabilities => {
+                let mut response = json!({"schema":"symbiote.service-capabilities/1","identity":self.config.identity,"context":request.scope,"schema_fingerprint":self.config.context(&request.scope)?.schema_fingerprint,"families":["affine","graph-map"],"operations":session.operations,
+                    "authorized_operations":self.config.peer(&session.peer_id)?.access(&request.scope,"capabilities")?.operations,
+                    "max_offer_bytes":self.config.limits.max_offer_bytes,"remote_promotion":false,"truth_basis":"local operator fixtures only"});
+                if let Some(contract) =
+                    evaluation::public_task_contract(&self.config, &request.scope)?
+                {
+                    response["public_task_contract"] = contract;
+                }
+                Ok(response)
+            }
             Operation::List { after } => {
                 let access = self
                     .config
@@ -499,40 +538,86 @@ impl State {
             }
             Operation::Predict { artifact, input } => {
                 let record = self.record(artifact, &request.scope)?;
-                let charge = if matches!(
-                    record.typed_payload()?,
-                    symbiote_memory::knowledge::KnowledgePayload::Affine { .. }
-                ) {
-                    1
-                } else {
-                    1024
-                };
-                if self
-                    .work
-                    .checked_add(charge)
-                    .is_none_or(|work| work > self.config.limits.model_work)
-                {
-                    return Err("service reasoning work budget exhausted".into());
-                }
-                self.work += charge;
-                let route = if charge == 1024 {
-                    record.graph_forecast(*input)?
-                } else {
-                    None
-                };
-                let prediction = if charge == 1024 {
-                    route
-                        .as_ref()
-                        .map(|route| {
-                            u8::try_from(route.cost).map_err(|_| "bounded route cost overflow")
-                        })
-                        .transpose()?
-                } else {
-                    record.predict_if_certified(*input)?
-                };
-                Ok(
-                    json!({"schema":"symbiote.service-prediction/1","artifact":record.id,"record_sha256":record.digest()?,"input":input,"prediction":prediction,"route":route,"conditional":true,"physical_certificate_authorized":false}),
-                )
+                let feedback_before = symbiote_memory::knowledge::graph::forecast_work_units()?;
+                let result = (|| -> Result<Value, String> {
+                    let has_feedback = self.journal.events().iter().any(feedback::handles);
+                    let pending = if has_feedback {
+                        feedback::pending_use(&self.journal, &self.knowledge, &record.digest()?)?
+                    } else {
+                        None
+                    };
+                    let feedback_quote = if pending.is_some() {
+                        feedback::use_work_quote(&self.journal, &self.knowledge)?
+                    } else {
+                        0
+                    };
+                    let charge = if matches!(
+                        record.typed_payload()?,
+                        symbiote_memory::knowledge::KnowledgePayload::Affine { .. }
+                    ) {
+                        1
+                    } else {
+                        1024
+                    } + feedback_quote;
+                    if self
+                        .work
+                        .checked_add(charge)
+                        .is_none_or(|work| work > self.config.limits.model_work)
+                    {
+                        return Err("service reasoning work budget exhausted".into());
+                    }
+                    self.work += charge;
+                    let is_graph = matches!(
+                        record.typed_payload()?,
+                        symbiote_memory::knowledge::KnowledgePayload::GraphMap(_)
+                    );
+                    let route_result = if is_graph {
+                        record.graph_forecast(*input)
+                    } else {
+                        Ok(None)
+                    };
+                    let route = route_result?;
+                    let prediction = if is_graph {
+                        route
+                            .as_ref()
+                            .map(|route| {
+                                u8::try_from(route.cost).map_err(|_| "bounded route cost overflow")
+                            })
+                            .transpose()?
+                    } else {
+                        record.predict_if_certified(*input)?
+                    };
+                    let feedback_outcome =
+                        if let (Some(exchange), Some(prediction)) = (pending, prediction) {
+                            let use_receipt = feedback::record_use(
+                                &mut self.journal,
+                                &self.knowledge,
+                                &exchange,
+                                *input,
+                            )?;
+                            if use_receipt["output"].as_u64() != Some(u64::from(prediction)) {
+                                return Err(
+                                    "feedback actual use differs from service prediction".into()
+                                );
+                            }
+                            Some(feedback::complete(
+                                &mut self.journal,
+                                &self.knowledge,
+                                &exchange,
+                            )?)
+                        } else {
+                            None
+                        };
+                    let mut result = json!({"schema":"symbiote.service-prediction/1","artifact":record.id,"record_sha256":record.digest()?,"input":input,"prediction":prediction,"route":route,"conditional":true,"physical_certificate_authorized":false});
+                    if let Some(outcome) = feedback_outcome {
+                        result["learning_feedback"] =
+                            serde_json::to_value(outcome).map_err(|e| e.to_string())?;
+                    }
+                    Ok(result)
+                })();
+                self.exact_graph_work +=
+                    symbiote_memory::knowledge::graph::forecast_work_units()? - feedback_before;
+                result
             }
             Operation::Submit { .. } => self.submit(&session.peer_id, &request),
             Operation::CandidateStatus { candidate } => {
@@ -640,8 +725,23 @@ impl State {
         }
         // Missing or changed operator authority is an operational HOLD, not
         // counterevidence against an otherwise untested received candidate.
-        self.config
-            .fixture(self.config.context(&offer.record.scope)?)?;
+        let context = self.config.context(&offer.record.scope)?;
+        let fixture = self.config.fixture(context)?;
+        let feedback_enabled = serde_json::from_slice::<Value>(&fixture)
+            .map_err(|_| "local fixture rejected")?["schema"]
+            == "symbiote.local-truth/2";
+        if feedback_enabled {
+            feedback::begin_evaluation(
+                &mut self.journal,
+                &self.knowledge,
+                candidate,
+                context
+                    .truth_sha256
+                    .as_deref()
+                    .ok_or("feedback fixture pin absent")?,
+            )?;
+        }
+        let before = self.knowledge.history_anchor();
         let prepared = match evaluation::prepare(&self.config, &self.knowledge, &peer, &offer) {
             Ok(value) => value,
             Err(reason) => {
@@ -649,12 +749,16 @@ impl State {
                     candidate_id: candidate.into(),
                     reason: reason.clone(),
                 })?;
+                if feedback_enabled {
+                    feedback::rejected(&mut self.journal, &self.knowledge, candidate)?;
+                }
                 return self
                     .completed(candidate)
                     .ok_or_else(|| "cannot replay rejection receipt".into());
             }
         };
         let response = prepared.response()?;
+        let promoted_record = prepared.record.clone();
         let record_sha256 = prepared.record.digest()?;
         self.journal.append(OperationalEvent::EvaluationPrepared {
             candidate_id: candidate.into(),
@@ -673,6 +777,20 @@ impl State {
             record_sha256,
             response: response.clone(),
         })?;
+        if feedback_enabled && response["promoted"] == true {
+            let costs: feedback::CandidateCosts =
+                serde_json::from_value(response["feedback_costs"].clone())
+                    .map_err(|_| "typed local feedback costs absent")?;
+            feedback::promoted(
+                &mut self.journal,
+                &self.knowledge,
+                candidate,
+                &promoted_record,
+                before,
+                self.knowledge.history_anchor(),
+                costs,
+            )?;
+        }
         Ok(response)
     }
 }
@@ -684,7 +802,8 @@ fn quarantine_response(candidate: &str) -> Value {
 }
 
 pub fn serve(path: &Path) -> Result<Value, String> {
-    let state = State::open(Config::load(path)?)?;
+    let graph_before = symbiote_memory::knowledge::graph::forecast_work_units()?;
+    let state = State::open(timing::io(|| Config::load(path))?)?;
     let identity = state.config.identity.clone();
     let policy = state.config.policy_digest.clone();
     if state
@@ -694,7 +813,7 @@ pub fn serve(path: &Path) -> Result<Value, String> {
         .all(|peer| state.journal.denied_peers().contains(&peer.id))
     {
         return Ok(
-            json!({"schema":"symbiote.service-stop/1","status":"STOPPED","identity":identity,"reason":"no-authorized-peers","requests":0,"connections":0,"operational_records":state.journal.record_count(),"active_knowledge":state.knowledge.active().len(),"listener_opened":false}),
+            json!({"schema":"symbiote.service-stop/1","status":"STOPPED","identity":identity,"reason":"no-authorized-peers","requests":0,"connections":0,"operational_records":state.journal.record_count(),"active_knowledge":state.knowledge.active().len(),"listener_opened":false,"stage_timing":timing::snapshot()}),
         );
     }
     let lease = Duration::from_millis(state.config.limits.lifetime_ms);
@@ -702,26 +821,22 @@ pub fn serve(path: &Path) -> Result<Value, String> {
     let state = Arc::new(Mutex::new(state));
     let handler = Arc::clone(&state);
     let mut server = spawn_secure_server(server_config, move |session, operation, payload| {
-        handler
-            .lock()
-            .map_err(|_| "service state unavailable")?
-            .handle(session, operation, payload)
+        let mut state = timing::lock(&handler).map_err(|_| "service state unavailable")?;
+        let _compute = timing::Timer::start(timing::Stage::Compute);
+        state.handle(session, operation, payload)
     })?;
     println!(
         "{}",
         json!({"schema":"symbiote.service-ready/1","identity":identity,"pid":std::process::id(),"address":server.address(),"policy_sha256":policy,"lifetime_ms":lease.as_millis(),"protocol":"symbiote/2"})
     );
-    std::io::stdout()
-        .flush()
-        .map_err(|_| "cannot publish service readiness")?;
+    timing::io(|| std::io::stdout().flush()).map_err(|_| "cannot publish service readiness")?;
     let (tx, rx) = mpsc::sync_channel(1);
     std::thread::spawn(move || {
         let mut reader = BufReader::new(std::io::stdin().lock());
         let result = (|| {
             let mut bytes = Vec::new();
             loop {
-                let available = reader
-                    .fill_buf()
+                let available = timing::io(|| reader.fill_buf())
                     .map_err(|_| "service owner control pipe failed")?;
                 if available.is_empty() {
                     return Ok("owner-eof");
@@ -754,10 +869,14 @@ pub fn serve(path: &Path) -> Result<Value, String> {
         Err(mpsc::RecvTimeoutError::Timeout) => "lifetime-budget",
         Err(_) => "owner-channel-closed",
     };
-    server.shutdown()?;
-    let state = state.lock().map_err(|_| "cannot summarize service state")?;
+    {
+        let _shutdown = timing::Timer::start(timing::Stage::Shutdown);
+        server.shutdown()?;
+    }
+    let state = timing::lock(&state).map_err(|_| "cannot summarize service state")?;
     Ok(
-        json!({"schema":"symbiote.service-stop/1","status":"STOPPED","identity":identity,"reason":reason,"requests":server.request_count(),"connections":server.connection_count(),"failed_sessions":server.session_failures(),"operational_records":state.journal.record_count(),"active_knowledge":state.knowledge.active().len(),"model_work_units":state.work}),
+        json!({"schema":"symbiote.service-stop/1","status":"STOPPED","identity":identity,"reason":reason,"requests":server.request_count(),"connections":server.connection_count(),"failed_sessions":server.session_failures(),"operational_records":state.journal.record_count(),"active_knowledge":state.knowledge.active().len(),"model_work_units":state.work,
+            "plaintext_traffic":server.traffic().snapshot(),"graph_forecast_work":symbiote_memory::knowledge::graph::forecast_work_units()?-graph_before+state.exact_graph_work,"stage_timing":timing::snapshot()}),
     )
 }
 pub fn peers(path: &Path) -> Result<Value, String> {
@@ -769,10 +888,12 @@ pub fn peers(path: &Path) -> Result<Value, String> {
     )
 }
 pub fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Result<Value, String> {
-    let state = State::open(Config::load(path)?)?;
+    let graph_before = symbiote_memory::knowledge::graph::forecast_work_units()?;
+    let state = State::open(timing::io(|| Config::load(path))?)?;
     let config = &state.config;
-    let request: Request = serde_json::from_slice(&config::read_bounded(request_path, 65_536)?)
-        .map_err(|_| "typed service request rejected")?;
+    let request: Request =
+        serde_json::from_slice(&timing::io(|| config::read_bounded(request_path, 65_536))?)
+            .map_err(|_| "typed service request rejected")?;
     request.validate(config)?;
     let peer = config.peer_alias(peer_alias)?;
     if state.journal.denied_peers().contains(&peer.id) {
@@ -786,19 +907,49 @@ pub fn connect(path: &Path, peer_alias: &str, request_path: &Path) -> Result<Val
     {
         return Err("artifact is outside the outbound operator grant".into());
     }
-    let mut client = SecureClient::connect(
-        &config.endpoint(peer, &request.scope, request.body.name()),
-        &config.client()?,
-    )?;
-    let response = client.call(
-        request.body.name(),
-        &serde_json::to_value(&request).map_err(|_| "cannot encode typed service request")?,
-    )?;
-    client.revoke()?;
+    let mut client = timing::io(|| {
+        SecureClient::connect(
+            &config.endpoint(peer, &request.scope, request.body.name()),
+            &config.client()?,
+        )
+    })?;
+    let mut response = timing::io(|| {
+        client.call(
+            request.body.name(),
+            &serde_json::to_value(&request).map_err(|_| "cannot encode typed service request")?,
+        )
+    })?;
+    {
+        let _shutdown = timing::Timer::start(timing::Stage::Shutdown);
+        timing::io(|| client.revoke())?;
+    }
+    let context = config.context(&request.scope)?;
+    if context.truth_fixture.is_some()
+        && serde_json::from_slice::<Value>(&config.fixture(context)?)
+            .is_ok_and(|fixture| fixture["schema"] == "symbiote.local-truth/2")
+    {
+        response["client_execution"] = json!({"plaintext_traffic":client.traffic().snapshot(),"graph_forecast_work":symbiote_memory::knowledge::graph::forecast_work_units()?-graph_before});
+        response["stage_timing"] = timing::snapshot();
+    }
     Ok(response)
 }
 pub fn evaluate(path: &Path, candidate: &str) -> Result<Value, String> {
-    State::open(Config::load(path)?)?.evaluate(candidate)
+    let evaluation = timing::Timer::start(timing::Stage::Evaluation);
+    let before = crate::graph_transfer::execution_snapshot();
+    let forecast_before = symbiote_memory::knowledge::graph::forecast_work_units()?;
+    let mut response = State::open(timing::io(|| Config::load(path))?)?.evaluate(candidate)?;
+    let after = crate::graph_transfer::execution_snapshot();
+    let diagnostic =
+        after.lookups.len() != before.lookups.len() || response["graph_measurement"].is_object();
+    if diagnostic {
+        response["execution_meter"] =
+            crate::graph_transfer::execution_receipt(&before, forecast_before)?;
+    }
+    evaluation.finish();
+    if diagnostic {
+        response["stage_timing"] = timing::snapshot();
+    }
+    Ok(response)
 }
 pub fn peer_revoke(path: &Path, peer: &str, reason: &str) -> Result<Value, String> {
     if reason.trim().is_empty() || reason.len() > 1024 {

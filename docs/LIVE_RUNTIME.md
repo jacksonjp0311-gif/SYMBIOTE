@@ -1,9 +1,10 @@
 # Configured SYMBIOTE runtime
 
-The new `run` path is being qualified for the v1 candidate. It turns an explicitly
+The `run` path turns an explicitly
 configured identity, peer registry and local evaluators into a bounded cognitive
-episode. It does not require a language model. Until the new integration and
-release gates pass, the published v0.5.1 remains the verified public release.
+episode. It does not require a language model. Public v1.0.0 and the corrective
+1.0.1 candidate have separate qualification; see the [release audit](V1_RELEASE_AUDIT.md)
+and [corrective account](CORRECTIVE_RELEASE_101.md).
 
 ## Operator setup
 
@@ -70,8 +71,8 @@ evaluation budget or count recovered old learning as a new result.
   unqualified gain is not utility zero. `Connect` does not send knowledge.
   Full-fixture affine and graph checks cost more than their isolated lower
   bounds, so those offers are deferred and no payload is sent. Quarantine and
-  promotion remain delivery, not benefit. A receipt verifies benefit only when
-  the value plan actually sent knowledge and the receiver ledger reseals it.
+  promotion remain delivery, not benefit. Current benefit requires the exact
+  causal chain, receiver ledger witness and measured later outcome.
   `partner_benefits_verified` stays 0.
 - **Reassess:** retain decisions, transport/application outcomes, failures and
   learning receipts. Later choices can use this history without resetting identity.
@@ -87,3 +88,84 @@ graph families. It does not prove arbitrary remote honesty or AI behavior.
 Plaintext application/negotiation counters exclude TLS cryptographic wire
 overhead. Independent two-host deployment remains open under the current
 single-PC authorization.
+
+## Observation-driven learning
+
+For the easiest local start, use `symbiote observe-demo --state state/observation`
+twice. The first process chooses observations; the second uses the retained
+conditional model with no source queries. No credentials or network are needed.
+
+A configured operator source uses a separately pinned fixture, for example:
+
+```json
+{
+  "schema": "symbiote.local-truth/3",
+  "scope": "affine/v1",
+  "family": {
+    "kind": "affine",
+    "width": 3,
+    "outputs": [0, 1, 1, 0, 0, 1, 1, 0]
+  }
+}
+```
+
+This example is a deterministic laboratory source. Its complete table is private
+to the adapter; the learner obtains values only through admitted observations.
+Bind the file's SHA256 and matching affine schema to the service context. Add
+this field to a cognition policy whose `scopes` contains `affine/v1`:
+
+```json
+"observation": {
+  "schema": "symbiote.observation-permit/1",
+  "scopes": ["affine/v1"],
+  "max_queries_total": 8,
+  "max_gf2_work_total": 100000,
+  "heldout_cases": 1
+}
+```
+
+Use `peers: []` and `contribute: false` for local observation alone. The configured
+owner still needs its valid service configuration; the standalone command avoids
+that setup. Query and work ceilings must fit the narrower run/service budgets.
+The retained model is conditional on the declared stationary affine family.
+
+## Optional normal capability contribution
+
+The corrective runtime adds an explicitly opted-in objective. In a policy that
+already enables contribution, set:
+
+```json
+"contribute": true,
+"capability_contributions": true
+```
+
+The recipient must authorize `candidate.submit`; the sender must authorize the
+same peer and context. Both use independently pinned `symbiote.local-truth/2`
+graph task contracts. The private fixture contains the graph schema and private
+edge costs, plus:
+
+```json
+"task_contract": {
+  "schema": "symbiote.partial-graph-task/1",
+  "training_inputs": [5, 41],
+  "heldout_inputs": [6],
+  "oracle_price": 100000,
+  "experiment_authorized": false,
+  "max_experimental_offers": 0
+}
+```
+
+These encoded pairs are an example for seven nodes (`input = from*nodes + to`):
+training 0→5 and 5→6, held-out 0→6. They must match the actual independently
+configured graph and have disjoint training/target sets. Only prices 1 and
+100000 are supported in this bounded engineering family. A price is a declared
+simulated observation cost, not money or elapsed time.
+
+Capabilities publish the pinned scope/schema/fixture identifiers and target
+inputs, never edge costs or an answer table. The normal engine checks whether
+the recipient's compatible inventory already certifies that target. A bounded
+offer carries inert partial knowledge; the recipient independently observes the
+transferred edges and decides whether to adopt. A useful fresh certificate is
+reported separately from cost benefit. With the flag absent or false, the old
+economic gate continues to decline the full-fixture transfers. Neither path
+counts delivery as verified partner benefit.

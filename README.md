@@ -19,14 +19,13 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
-> **v1.0.0 is public; full stable qualification is HOLD.**
-> [The release audit](docs/V1_RELEASE_AUDIT.md) verifies all four platform
-> archives and the installed Windows binary, including configured learning and
-> restart. CI passed on all release platforms, and the separate local hour
-> passed 120 cycles. The audit also found incorrect benefit-verification APIs
-> in the tagged source, missing public evidence packaging, and no outbound
-> contribution in the current configured fixtures. Main contains corrective
-> work; the published tag stays unchanged. Two-host testing remains open.
+> **Corrective release v1.0.1 is under qualification.**
+> The public v1.0.0 benefit helpers have documented defects. Main adds witnessed
+> outcome attribution, observation-driven learning, exact compact affine inference
+> and durable feedback. Replacement binaries require their own tests and evidence;
+> the v1.0.0 tag remains unchanged. See the [corrective release account](docs/CORRECTIVE_RELEASE_101.md)
+> and [original release audit](docs/V1_RELEASE_AUDIT.md). Independent two-host
+> deployment remains open.
 
 
 ## Get started
@@ -70,6 +69,7 @@ You can also download a matching archive directly, extract it, and run
 
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
+symbiote observe-demo --state state/observation # Corrective candidate/source build
 symbiote status     # Inspect retained identity and knowledge
 symbiote predict    # Use retained models without network requests
 symbiote doctor     # Inspect readiness without changing local state
@@ -83,6 +83,12 @@ reports are written under `experiments/local/`. Both are ignored by Git.
 Run `demo` twice to observe retained knowledge being rechecked and reused. Run
 `status` or `predict` to inspect and use the retained state. Optional experiments
 exercise the broader native system:
+
+On the corrective candidate, `observe-demo` starts from empty memory, chooses
+bounded queries through the engine's observation interface and stores a
+conditional affine model. Repeat the same command to reuse it with zero source
+queries. It needs no network, credentials or model service. Keep its state path
+separate from `demo`.
 
 | Command | What it runs |
 | --- | --- |
@@ -114,6 +120,7 @@ From a Windows checkout, the single entrypoint also supports:
 
 ```powershell
 .\SYMBIOTE-All-One.ps1 -Run
+.\SYMBIOTE-All-One.ps1 -ObserveDemo
 .\SYMBIOTE-All-One.ps1 -Research
 .\SYMBIOTE-All-One.ps1 -GraphResearch
 .\SYMBIOTE-All-One.ps1 -AdaptiveResearch
@@ -140,16 +147,32 @@ because a partner supplied it or because it matches a few examples.
    with identity, applicability, provenance and evidence. Corruption or an
    unsupported claim fails explicitly.
 4. **Contribute, measure and reassess.** Offer useful knowledge to the partner,
-   which retains adoption authority. A configured episode records a `MEASURE`
-   event when no receiver-originated receipt is available. Quarantine and
-   promotion are not partner benefit. Counterexamples revoke invalidated
-   knowledge without deleting its history.
+   which retains adoption authority. Bind a decision to its exact offer,
+   evaluation, promotion, subsequent use and outcome. Measured, estimated and
+   unknown costs remain distinct. Durable favorable and unfavorable outcomes
+   inform bounded future exploration. Quarantine and promotion alone are not
+   partner benefit. Counterexamples revoke invalidated knowledge without
+   deleting its history.
+
+The corrective candidate also supports a narrowly authorized capability goal:
+transfer a partial routing certificate that the recipient can independently
+check and use on a fresh target. That objective is separate from an economic
+claim. Unknown partner costs stay unknown; receiver validation and measured
+task-window costs determine the outcome. Equivalent knowledge is suppressed,
+and changed artifacts, evaluator code or policy invalidate the relevant cached
+decision. [Measurement and limits](docs/CORRECTIVE_RELEASE_101.md).
 
 The structural experiment uses two separate learning algorithms: exact hypothesis
 enumeration and Gaussian elimination over binary observations. It evaluates
 unobserved inputs across configured widths 3–8 and seeds 7, 19, 43 and 101.
 Transferred observations supply evidence; hints never silently restrict the
 candidate family or authorize a prediction.
+
+Native observation-driven inference uses an incremental exact binary constraint
+system while retaining the enumerator as its reference. The compact reasoner
+supports widths 1–8; observation promotion also needs a distinct held-out input
+(currently widths 2–8). Row-operation counters and enumerated-model checks are explicitly different
+work units; a smaller representation alone is not a measured learning advantage.
 
 The local protocol provides mutual authentication, revocation, sequence checks,
 bounded JSONL frames and request budgets. It is scoped to trusted loopback use;
@@ -296,8 +319,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 6.66 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.84% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 7.69 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.66% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

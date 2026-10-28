@@ -288,8 +288,92 @@ fn doctor_and_empty_status_are_nonmutating() {
         let value: Value = serde_json::from_slice(&output.stdout).unwrap();
         assert_eq!(value["network_requests"], 0);
         assert_eq!(value["state_modified"], false);
+        if command == "doctor" {
+            assert_eq!(
+                value["verification"]["status"],
+                "EXTERNAL_EVIDENCE_REQUIRED"
+            );
+            assert_eq!(
+                value["verification"]["online_verification_performed"],
+                false
+            );
+            assert_eq!(
+                value["verification"]["release_tag"],
+                format!("v{}", env!("CARGO_PKG_VERSION"))
+            );
+        }
         assert!(!sandbox.0.join("untouched").exists());
     }
+}
+
+#[test]
+fn standalone_observation_uses_the_engine_then_restarts_without_source_queries() {
+    let sandbox = Sandbox::new();
+    let run = |receipt: &str| {
+        let output = sandbox.run(&[
+            "observe-demo",
+            "--state",
+            "observed",
+            "--receipts",
+            receipt,
+            "--json",
+        ]);
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        serde_json::from_slice::<Value>(&output.stdout).unwrap()
+    };
+    let first = run("first.json");
+    assert_eq!(first["fresh_promotions"], 1);
+    assert_eq!(first["source_queries"], 5);
+    assert_eq!(first["network_requests"], 0);
+    assert_eq!(first["baseline"]["kind"], "unknown");
+    let expected = [1, 0, 1, 0, 0, 1, 0, 1];
+    for (case, wanted) in first["predictions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .zip(expected)
+    {
+        assert_eq!(case["prediction"], wanted);
+    }
+    let original = fs::read(sandbox.0.join("observed/knowledge.jsonl")).unwrap();
+    let restarted = run("restart.json");
+    assert_eq!(restarted["fresh_promotions"], 0);
+    assert_eq!(restarted["source_queries"], 0);
+    assert_eq!(first["identity"], restarted["identity"]);
+    assert_eq!(first["record_sha256"], restarted["record_sha256"]);
+    assert_eq!(first["predictions"], restarted["predictions"]);
+    assert_eq!(
+        original,
+        fs::read(sandbox.0.join("observed/knowledge.jsonl")).unwrap()
+    );
+    let revoked = sandbox.run(&[
+        "revoke",
+        "--state",
+        "observed",
+        "--artifact",
+        "standalone-active-affine",
+        "--json",
+    ]);
+    assert!(revoked.status.success());
+    let revoked_bytes = fs::read(sandbox.0.join("observed/knowledge.jsonl")).unwrap();
+    let rejected = sandbox.run(&[
+        "observe-demo",
+        "--state",
+        "observed",
+        "--receipts",
+        "held.json",
+        "--json",
+    ]);
+    assert!(!rejected.status.success());
+    assert_eq!(
+        revoked_bytes,
+        fs::read(sandbox.0.join("observed/knowledge.jsonl")).unwrap(),
+        "revocation cannot be silently relearned"
+    );
 }
 
 #[test]

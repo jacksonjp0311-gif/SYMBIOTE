@@ -1,0 +1,61 @@
+{
+  "schema": "symbiote.local-timing-incident/1",
+  "status": "DEADLINE_GAP_CORRECTED_ENGINEERING_CHECK",
+  "source_before_correction": "5e5d5de",
+  "incident": {
+    "test": "three_owned_tls_agents_forward_validate_retain_and_revoke_with_negative_costs",
+    "original_reported_tool_elapsed_seconds": 2217.94,
+    "original_duration_source": "parent tool invocation output; not an independently observed per-test elapsed time; preserved without regrading",
+    "windows_event_source": "System event log read on the authorized PC",
+    "events": [
+      {
+        "event_id": 506,
+        "record_id": 84642,
+        "provider": "Microsoft-Windows-Kernel-Power",
+        "time_utc": "2026-10-28T11:17:56.4304563Z",
+        "message": "The system is entering Modern Standby",
+        "reason": "Lid"
+      },
+      {
+        "event_id": 507,
+        "record_id": 84660,
+        "provider": "Microsoft-Windows-Kernel-Power",
+        "time_utc": "2026-10-28T11:54:50.1281179Z",
+        "message": "The system is exiting Modern Standby",
+        "reason": "Lid"
+      }
+    ],
+    "standby_span_seconds": 2213.6976616,
+    "interpretation": "Modern Standby accounts for nearly the entire reported duration. The exact paused instruction was not observed. The old test accepted child exit before checking its deadline, and left validation, retry and directory cleanup outside that check."
+  },
+  "correction": {
+    "fixture_budget_seconds": 30,
+    "clock_checks": [
+      "monotonic elapsed",
+      "wall elapsed including host sleep",
+      "backwards wall-clock movement"
+    ],
+    "exit_acceptance": "Budget checked before polling and again before accepting a completed child",
+    "retry": "File-backed output and owned-child polling under the same fixture budget",
+    "finish": "Budget rechecked after validation and verified directory removal",
+    "failed_child_cleanup_seconds": 5
+  },
+  "verification": {
+    "parent_command_timeout_seconds": 60,
+    "command": ["cargo", "test", "--locked", "-p", "symbiote-runtime", "--test", "topology", "--", "--test-threads=1"],
+    "tests_passed": 3,
+    "test_harness_elapsed_seconds": 1.56,
+    "regressions": [
+      "expired wall budget rejects an already exited child",
+      "simulated host sleep cannot extend the fixture",
+      "backwards wall-clock movement is rejected",
+      "monotonic expiry is rejected",
+      "native three-owner topology still completes with negative costs"
+    ],
+    "strict_clippy": "PASS for the topology integration target",
+    "format_and_diff_checks": "PASS"
+  },
+  "scientific_samples": 0,
+  "historical_hour_and_research_receipts": "UNCHANGED",
+  "independent_host_validation": "OPEN_UNAVAILABLE"
+}

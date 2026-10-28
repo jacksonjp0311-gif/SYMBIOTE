@@ -87,8 +87,6 @@ jobs:
           python-version: '3.13'
       - name: Reproduce software and research gates
         run: python tools/verify.py
-      - name: Test packaging, native installation and failure preservation
-        run: python -m unittest discover -s tools -p test_*.py
       - name: Build native release executable
         run: cargo build --release --locked -p symbiote-runtime --bin symbiote --target ${{ matrix.target }}
       - name: Create architecture-checked bundle and checksums

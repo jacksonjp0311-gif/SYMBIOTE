@@ -1,6 +1,7 @@
 //! Independent, bounded, LLM-free SYMBIOTE genesis runtime.
 mod adaptive_research;
 mod graph_research;
+mod observation_demo;
 mod research;
 use symbiote_runtime::service;
 
@@ -15,6 +16,15 @@ use symbiote_protocol::{spawn_server, Client, EchoBuffer, Sensor, ServerConfig, 
 use symbiote_reasoning::SymbolicLearner;
 
 const SCOPE: &str = "finite-boolean-v1";
+fn release_verification() -> Value {
+    json!({"status":"EXTERNAL_EVIDENCE_REQUIRED","source_commit":option_env!("SYMBIOTE_SOURCE_COMMIT").unwrap_or("unknown"),
+        "release_tag":format!("v{}",env!("CARGO_PKG_VERSION")),
+        "evidence_url":format!("https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v{}",env!("CARGO_PKG_VERSION")),
+        "receipt_api":"ledger-and-exchange-witnessed; legacy unchecked predicates fail closed",
+        "scope":"bounded single-host affine and graph modes; independent two-host operation is not qualified",
+        "basis":"version and local state health are not release qualification; compare this exact source and downloaded binary with published receipts",
+        "online_verification_performed":false})
+}
 const OPERATIONS: &[&str] = &[
     "telemetry",
     "offer",
@@ -514,6 +524,7 @@ impl Cli {
             "help",
             "version",
             "demo",
+            "observe-demo",
             "run",
             "benchmark",
             "research",
@@ -570,6 +581,7 @@ impl Cli {
                 .contains(&command.as_str()),
                 "--receipts" => [
                     "demo",
+                    "observe-demo",
                     "benchmark",
                     "research",
                     "graph-research",
@@ -1117,6 +1129,9 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     if command == "demo" || command == "benchmark" {
         return demo(state, receipts, &cli.fault);
     }
+    if command == "observe-demo" {
+        return observation_demo::run(state, receipts);
+    }
     if command == "doctor" {
         let inspection = symbiote_memory::maintenance::inspect(state)?;
         let state_exists = path_exists(state)?;
@@ -1125,7 +1140,7 @@ fn execute(cli: &Cli) -> Result<Value, String> {
         let knowledge_exists = path_exists(&state.join("knowledge.jsonl"))?;
         let knowledge_lock_exists = path_exists(&state.join("knowledge.writer.lock"))?;
         return Ok(
-            json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":inspection.status,"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"ledger_integrity":inspection.ledger_integrity,"locks":inspection.locks,"network_requests":0,"state_modified":false}),
+            json!({"schema":"symbiote.doctor/1","version":env!("CARGO_PKG_VERSION"),"status":inspection.status,"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"state":state,"state_exists":state_exists,"ledger_exists":ledger_exists,"writer_lock_exists":lock_exists,"knowledge_exists":knowledge_exists,"knowledge_writer_lock_exists":knowledge_lock_exists,"ledger_integrity":inspection.ledger_integrity,"locks":inspection.locks,"network_requests":0,"state_modified":false,"verification":release_verification()}),
         );
     }
     if command == "route" || (command == "predict" && cli.artifact.is_some()) {
@@ -1244,12 +1259,12 @@ fn execute(cli: &Cli) -> Result<Value, String> {
     }
     if command == "version" {
         return Ok(
-            json!({"name":"SYMBIOTE","version":env!("CARGO_PKG_VERSION"),"build_source_commit":option_env!("SYMBIOTE_SOURCE_COMMIT").unwrap_or("unknown")}),
+            json!({"name":"SYMBIOTE","version":env!("CARGO_PKG_VERSION"),"build_source_commit":option_env!("SYMBIOTE_SOURCE_COMMIT").unwrap_or("unknown"),"verification":release_verification()}),
         );
     }
     if command == "help" {
         return Ok(
-            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","run --config FILE --run-policy FILE --receipts NEW_DIR","transfer-register --state FRESH_DIR --receipts REGISTRATION","transfer-research --state DIR --registration FILE --registration-sha256 SHA256 --receipts FILE","topology-research --state FRESH_DIR --receipts FILE","exploration-research --state FRESH_DIR --receipts FILE","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","policy-status --config FILE","policy-transition --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT [--review-permission-change] [--review-relocation]","peer-regrant --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","backup-state --state DIR --backup NEW_DIR [--graph-context-registry FILE --graph-context-sha256 SHA256]","verify-backup --backup DIR --manifest-sha256 SHA256","restore-state --backup DIR --manifest-sha256 SHA256 --state NEW_DIR","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
+            json!({"SYMBIOTE":env!("CARGO_PKG_VERSION"),"commands":["demo [--state DIR] [--receipts FILE]","observe-demo [--state DIR] [--receipts FILE]","run --config FILE --run-policy FILE --receipts NEW_DIR","transfer-register --state FRESH_DIR --receipts REGISTRATION","transfer-research --state DIR --registration FILE --registration-sha256 SHA256 --receipts FILE","topology-research --state FRESH_DIR --receipts FILE","exploration-research --state FRESH_DIR --receipts FILE","research [--state DIR] [--receipts FILE]","graph-research [--state DIR] [--receipts FILE]","network-research [--state DIR] [--receipts FILE] [--tls-config FILE]","adaptive-research --reproduce [--state FRESH_DIR --receipts FILE] [--setup-catalogue FILE --setup-sha256 SHA256]","adaptive-research --registration FILE --state FRESH_DIR --receipts FILE","prepare-tls-state [--state DIR]","route --artifact ID --from NODE --to NODE [--state DIR]","prepare-service --state DIR","serve --config FILE","peers --config FILE","connect --config FILE --peer ALIAS --request FILE","evaluate --config FILE --candidate SHA256","peer-revoke --config FILE --peer ALIAS --reason TEXT","policy-status --config FILE","policy-transition --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT [--review-permission-change] [--review-relocation]","peer-regrant --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change","benchmark --state FRESH_DIR","status [--state DIR]","predict [--state DIR]","doctor [--state DIR]","inspect-state [--state DIR]","recover [--state DIR]","migrate [--state DIR]","backup-state --state DIR --backup NEW_DIR [--graph-context-registry FILE --graph-context-sha256 SHA256]","verify-backup --backup DIR --manifest-sha256 SHA256","restore-state --backup DIR --manifest-sha256 SHA256 --state NEW_DIR","verify-memory [--state DIR]","revoke --artifact ID [--state DIR]"],"options":["--json","--help","--version"],"fault_injection":["--fault wrong-artifact","--fault drift"]}),
         );
     }
     Err(format!("unknown command: {command}"))
@@ -1296,10 +1311,23 @@ fn display(report: &Value, cli: &Cli) -> String {
         return format!("SYMBIOTE {version}");
     }
     if cli.command == "help" {
-        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  run            Drive an authorized cognitive episode: --config FILE --run-policy FILE --receipts NEW_DIR\n  transfer-register  Freeze a new query-policy experiment before targets\n  transfer-research  Execute one externally pinned registration\n  topology-research  Three owned native peers with consented TLS links\n  exploration-research  Native retained-outcome experiment-selection control\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  policy-status  Inspect policy/head without old private keys\n  policy-transition  Offline rotation: --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT\n  peer-regrant   Offline regrant: --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change\n  backup-state   Snapshot one offline owner: --state DIR --backup NEW_DIR\n  verify-backup  Check an archive: --backup DIR --manifest-sha256 SHA256\n  restore-state  Restore stopped state: --backup DIR --manifest-sha256 SHA256 --state NEW_DIR\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
+        return format!("SYMBIOTE {version} — Symbiotic Adaptive Intelligence\n\nUsage: symbiote COMMAND [OPTIONS]\n\n  demo           Run the authorized two-agent learning demonstration\n  observe-demo   Learn from owned observations; no agents or credentials needed\n  run            Drive an authorized cognitive episode: --config FILE --run-policy FILE --receipts NEW_DIR\n  transfer-register  Freeze a new query-policy experiment before targets\n  transfer-research  Execute one externally pinned registration\n  topology-research  Three owned native peers with consented TLS links\n  exploration-research  Native retained-outcome experiment-selection control\n  research       Run structural-transfer experiments and matched controls\n  graph-research Run route-planning exchange and all paired controls\n  adaptive-research  Compare partner selection: --reproduce (fresh temporary study)\n  network-research  Run separately deployed native research agents\n  prepare-tls-state  Initialize public role IDs for TLS provisioning\n  route          Query a retained graph: --artifact ID --from N --to N\n  prepare-service  Create an identity for configured TLS deployment\n  serve          Serve granted native knowledge: --config FILE\n  peers          List an explicit registry: --config FILE\n  connect        One granted operation: --config FILE --peer ALIAS --request FILE\n  evaluate       Check a quarantined offer: --config FILE --candidate SHA256\n  peer-revoke    Persist denial: --config FILE --peer ALIAS --reason TEXT\n  policy-status  Inspect policy/head without old private keys\n  policy-transition  Offline rotation: --previous-config OLD --config NEW --expected-policy SHA --expected-head SHA --reason TEXT\n  peer-regrant   Offline regrant: --config FILE --peer ALIAS --expected-policy SHA --expected-head SHA --reason TEXT --review-permission-change\n  backup-state   Snapshot one offline owner: --state DIR --backup NEW_DIR\n  verify-backup  Check an archive: --backup DIR --manifest-sha256 SHA256\n  restore-state  Restore stopped state: --backup DIR --manifest-sha256 SHA256 --state NEW_DIR\n  inspect-state  Inspect integrity and writer liveness without mutation\n  recover        Remove only verified-dead writer locks\n  migrate        Register legacy state with byte-preserving backups\n  status         Show identity and retained knowledge\n  predict        Display retained predictions without network access\n  doctor         Inspect local readiness without changing state\n  benchmark      Run the Genesis comparison (use a fresh state directory)\n  verify-memory  Validate the persistent knowledge ledger\n  revoke         Revoke knowledge: --artifact ID\n\nOptions:\n  --state DIR      State directory (default: state/demo)\n  --receipts FILE  Receipt output for learning experiments\n  --tls-config FILE  Explicit mTLS manifest for network-research\n  --reproduce       New adaptive study in a fresh temporary directory\n  --registration FILE  Immutable primary-study registration\n  --setup-catalogue FILE --setup-sha256 SHA256  Restore a recorded empty setup for reproduction\n  --artifact ID --input N  Query one retained model with predict\n  --json           Machine-readable output\n  --help, -h       Show this help\n  --version, -V    Show the version\n\nStart here: symbiote demo\nThen:       symbiote status\nNo language model or API key is required for the local demonstrations.");
     }
     let status = report["status"].as_str().unwrap_or("COMPLETE");
     let mut lines = vec![format!("SYMBIOTE {version} | {} | {status}", cli.command)];
+    if cli.command == "observe-demo" {
+        lines.push(format!(
+            "Models learned: {} | Source queries: {}",
+            report["fresh_promotions"], report["source_queries"]
+        ));
+        lines.push(format!(
+            "Identity: {}",
+            report["identity"].as_str().unwrap_or("unknown")
+        ));
+        lines.push("Learns from an owned finite source. Run it again to reuse the model without another source query.".into());
+        lines.push("Exactness is conditional on the declared affine family; no efficiency advantage is inferred.".into());
+        return lines.join("\n");
+    }
     if cli.command == "transfer-research" {
         lines.push(format!(
             "Completed cells: {} / {}",
@@ -1331,6 +1359,19 @@ fn display(report: &Value, cli: &Cli) -> String {
         );
     }
     if cli.command == "doctor" {
+        lines.push(format!(
+            "Build source: {}",
+            report["verification"]["source_commit"]
+                .as_str()
+                .unwrap_or("unknown")
+        ));
+        lines.push("Qualification: check the published evidence for this exact build; local health alone is not verification.".into());
+        lines.push(format!(
+            "Evidence: {}",
+            report["verification"]["evidence_url"]
+                .as_str()
+                .unwrap_or("unavailable")
+        ));
         lines.push(format!(
             "Platform: {} / {}",
             report["os"].as_str().unwrap_or("unknown"),
