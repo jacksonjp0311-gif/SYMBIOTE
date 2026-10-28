@@ -1,0 +1,150 @@
+{
+  "schema": "symbiote.public-corrective-delivery-index/1",
+  "status": "PASS_PUBLIC_CORRECTIVE_DELIVERY",
+  "tag": "v1.0.1",
+  "release_source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "local_native_qualification_source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+  "recorded_at_utc": "2026-10-28T19:57:20.161116+00:00",
+  "source_distinction": "All 128 selected native-source files are identical; source stamps/toolchains and local/public executable bytes remain separately pinned. Later documentation commits do not become native campaign sources.",
+  "native_source_manifest_sha256": "aedf4208a3630b31ec9e7383dd018120d4b021f54e70140e63b4f01e91564aad",
+  "public_windows_binary_sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c",
+  "local_test_driver": {
+    "source_commit": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+    "sha256": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4"
+  },
+  "verification": {
+    "main_ci_run": 40749407383,
+    "tag_ci_run": 40751116594,
+    "release_workflow_run": 40751115124,
+    "all_success": true,
+    "platform_bundles": [
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin"
+    ],
+    "public_asset_count": 7,
+    "anonymous_downloads_verified": true,
+    "windows_installation_and_recovery": "PASS",
+    "public_normal_and_observation": "PASS",
+    "standalone_source_queries_first": 5,
+    "standalone_source_queries_restart": 0
+  },
+  "evidence_archive": {
+    "name": "SYMBIOTE-v1.0.1-qualified-evidence.tar.gz",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.0.1/SYMBIOTE-v1.0.1-qualified-evidence.tar.gz",
+    "bytes": 118070460,
+    "sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+    "manifest_sha256": "ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878",
+    "members_including_manifest": 5405,
+    "source_bytes": 344457949,
+    "original_records_unchanged": true,
+    "portable_replays": 6,
+    "original_source_process_network_access_during_replay": "DENIED; zero attempts; data-only"
+  },
+  "archived_receipts": {
+    "native_operation": {
+      "sha256": "1642e21335807930407c422f539f66c662385f430e7237ca733966bd84270c96",
+      "archive_members": [
+        "evidence/public-native/qd-101-c55fc37/acceptance/download-gate.json",
+        "evidence/public-native/qd-101-c55fc37/operation-receipt.json"
+      ]
+    },
+    "component_acceptance": {
+      "sha256": "059229d0f877d45269994fc5d6291103e1da61d4e6d11e4db6f4fd83e233eff2",
+      "archive_members": [
+        "evidence/public-native/qd-101-c55fc37/acceptance/acceptance-report.json"
+      ]
+    },
+    "independent_normal": {
+      "sha256": "537469ce7707cb42778eb0e8c9abd07231b54e23fd588007c6cc65b49ca8695e",
+      "archive_members": [
+        "evidence/public-native/qd-101-c55fc37/acceptance/independent-normal-public.json"
+      ]
+    },
+    "independent_observation": {
+      "sha256": "98773ae52882250619c71a9711f5b359ed1ca1f818695563ec10fd1967fa3ddb",
+      "archive_members": [
+        "evidence/public-native/qd-101-c55fc37/acceptance/public-observation-audit.json",
+        "evidence/public-native/qd-101-c55fc37/acceptance/public-observation-audit.stdout"
+      ]
+    },
+    "second_public_review": {
+      "sha256": "5053d6f7d1606c8e6e621527327185a38ed918479a98e52e9924c5a356486e92",
+      "archive_members": [
+        "evidence/preserved-receipts/qp-101-6025fff/independent-public-review/audit-receipt.json"
+      ]
+    }
+  },
+  "external_publication_transcripts": {
+    "public-native.json": {
+      "path": "experiments/v1.0.1/delivery/public-native.json",
+      "sha256": "1642e21335807930407c422f539f66c662385f430e7237ca733966bd84270c96",
+      "bytes": 21282,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\operation-receipt.json",
+      "inside_closed_archive": false
+    },
+    "evidence-upload.json": {
+      "path": "experiments/v1.0.1/delivery/evidence-upload.json",
+      "sha256": "c85c04143f04c595220d84d938982943ddca13dcf838c014c2cb57d814513599",
+      "bytes": 1347,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qup-101-c55fc37\\operation-receipt.json",
+      "inside_closed_archive": false
+    },
+    "final-downloads.json": {
+      "path": "experiments/v1.0.1/delivery/final-downloads.json",
+      "sha256": "639e1b1b49e553cb3b39bf24a507988423406d3a90350883d9a53e4020bcc288",
+      "bytes": 4130,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qfinal-101-c55fc37\\operation-receipt.json",
+      "inside_closed_archive": false
+    },
+    "publication.json": {
+      "path": "experiments/v1.0.1/delivery/publication.json",
+      "sha256": "0f08cf215f1a0fc187c09286e765636d5f88a1389f0aa24bc8a4d25a2a3c096d",
+      "bytes": 1163,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qlatest-101-c55fc37\\receipt.json",
+      "inside_closed_archive": false
+    },
+    "packaging.json": {
+      "path": "experiments/v1.0.1/delivery/packaging.json",
+      "sha256": "8f2c6c55b330d2bc1d8aa4e97f618ca18bb0aa5068c7420384a4f500b0085208",
+      "bytes": 2218,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qpk-101-c55fc37\\v1-packaging-receipt.json",
+      "inside_closed_archive": false
+    },
+    "manifest-review.json": {
+      "path": "experiments/v1.0.1/delivery/manifest-review.json",
+      "sha256": "947e54ecff56d661537ec77c9f8516ce61228d4e6371a5b10d60fe88bd8b4be9",
+      "bytes": 2863,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qpm-c55fc37-f91ed2\\review-receipt.json",
+      "inside_closed_archive": false
+    },
+    "portable-replay.json": {
+      "path": "experiments/v1.0.1/delivery/portable-replay.json",
+      "sha256": "6717d9f11f9ceb68a2fd7d391afaddc1584133dbbd1a7e3002acff4a1a0440d8",
+      "bytes": 1222,
+      "copied_exactly": true,
+      "source_file": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qrp-101-c55fc37\\final-replay-receipt.json",
+      "inside_closed_archive": false
+    }
+  },
+  "boundaries": {
+    "broader_stable_qualification": "HOLD",
+    "independent_two_host": "OPEN_UNAVAILABLE",
+    "host_power_loss": "NOT_QUALIFIED",
+    "general_reciprocal_efficiency": "NOT_DEMONSTRATED",
+    "protocol002": "NOT_RUN",
+    "scientific_samples_added": 0,
+    "full_participant_costs": "Complete exchange costs exceed isolated greedy costs; matched controls reproduce coverage at no greater cost. Scoped task-window gains do not overturn complete costs.",
+    "outbound_verified_partner_benefits": "Live counter remains zero without an authorized receiver-originated outcome channel.",
+    "favorable_feedback": "Retained preference; no changed winning choice versus no-feedback comparator in this fixture.",
+    "harmful_feedback": "Changed later winning choice across restart."
+  }
+}

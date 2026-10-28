@@ -1,0 +1,35 @@
+{
+  "status": "EVIDENCE_UPLOADED_AWAITING_FINAL_PUBLIC_DOWNLOAD_VERIFICATION_AND_BODY",
+  "assets": [
+    {
+      "name": "SYMBIOTE-v1.0.1-qualified-evidence.tar.gz",
+      "sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+      "bytes": 118070460,
+      "action": "UPLOADED_WITHOUT_REPLACEMENT"
+    },
+    {
+      "name": "EVIDENCE_SHA256SUMS",
+      "sha256": "a75497be7415af18d8759d5808dd26212e3a3fbab2c87ac39baddeddb374e873",
+      "bytes": 108,
+      "action": "UPLOADED_WITHOUT_REPLACEMENT"
+    }
+  ],
+  "release_body_changed": false,
+  "no_asset_replacement": true,
+  "created_tag_or_release": false,
+  "schema": "symbiote.public-v1-release-operation/1",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "tag": "v1.0.1",
+  "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+  "completed_at_unix": 1793217120.895574,
+  "evidence_sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+  "release_workflow": {
+    "run_id": 40751115124,
+    "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+    "tag": "v1.0.1",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124",
+    "conclusion": "success",
+    "qualification": "workflow build/test origin only"
+  }
+}

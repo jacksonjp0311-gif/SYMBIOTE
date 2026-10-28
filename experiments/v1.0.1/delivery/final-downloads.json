@@ -1,0 +1,104 @@
+{
+  "status": "PASS_PUBLIC_FINAL_BYTES",
+  "assets": [
+    {
+      "name": "EVIDENCE_SHA256SUMS",
+      "asset_id": 686154055,
+      "bytes": 108,
+      "sha256": "a75497be7415af18d8759d5808dd26212e3a3fbab2c87ac39baddeddb374e873",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "asset_id": 686069953,
+      "bytes": 433,
+      "sha256": "18f1a64f37721a9fd363507aa61240449e10c530b1dde37ac9c9c366b1fd917c",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "SYMBIOTE-v1.0.1-qualified-evidence.tar.gz",
+      "asset_id": 686151517,
+      "bytes": 118070460,
+      "sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-aarch64-apple-darwin.zip",
+      "asset_id": 686069574,
+      "bytes": 4429039,
+      "sha256": "9ddffd5333b6e3f880ddddf162e5248a04bdf4f8fb3e90d3c54913f57fee2f48",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-apple-darwin.zip",
+      "asset_id": 686069667,
+      "bytes": 4719003,
+      "sha256": "1517be0d1d8a9038fa20a4311da72298f64a31ac0acf677f892dec0b7b818c50",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-pc-windows-msvc.zip",
+      "asset_id": 686069737,
+      "bytes": 4547847,
+      "sha256": "45246ef7e2756ab4364c3175ce0fc495794ac72a6e849577571736170c60a38b",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-unknown-linux-gnu.zip",
+      "asset_id": 686069860,
+      "bytes": 4884434,
+      "sha256": "4f363030b390036b3811e3ab4e393bdc2e492ee9a93ccba7a995d14e75474c5b",
+      "anonymous_public_download": true
+    }
+  ],
+  "bundles": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "binary_sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c",
+      "binary_bytes": 13083648,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "binary_sha256": "0ffd010819314e7338184b42b8d649383a673cd5bed30cfb08d56c8e99ab1e68",
+      "binary_bytes": 14332512,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "binary_sha256": "80df9f5ada314c4f950f651dd8308ea130eb2afc19ff7581ef58cd82434717cd",
+      "binary_bytes": 12168592,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "x86_64-apple-darwin",
+      "binary_sha256": "1b4e0fc7e8918581d6db4d56608cca87fedbb02bdba91d73d749e17240433487",
+      "binary_bytes": 13175264,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    }
+  ],
+  "exact_asset_count": 7,
+  "checksum_manifest_sets_exact": true,
+  "native_installation": "NOT_RUN",
+  "release_body_changed": true,
+  "body_sha256": "e4bbc3f02369590be41ed38dfcb5b03b5d89f760a927bb33ff5528a226e66a40",
+  "schema": "symbiote.public-v1-release-operation/1",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "tag": "v1.0.1",
+  "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+  "completed_at_unix": 1793217254.039625,
+  "evidence_sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+  "release_workflow": {
+    "run_id": 40751115124,
+    "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+    "tag": "v1.0.1",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124",
+    "conclusion": "success",
+    "qualification": "workflow build/test origin only"
+  }
+}

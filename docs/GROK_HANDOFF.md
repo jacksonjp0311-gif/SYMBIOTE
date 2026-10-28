@@ -4,11 +4,21 @@ The corrective 1.0.1 engine descends from BRUTE and remains a four-crate Rust
 workspace. Continue the existing engine. Its purpose is persistent learning from
 authorized evidence and reciprocal interaction, without a language-model dependency.
 
-Current native source: `6025fff43ad4b508b94977eeff801aeebf549fd9`.
+Qualified native implementation source (F1): `6025fff43ad4b508b94977eeff801aeebf549fd9`.
 The 128-file `symbiote.source-manifest/2` digest is
 `aedf4208a3630b31ec9e7383dd018120d4b021f54e70140e63b4f01e91564aad`.
 Release documentation, downloaded executables and their qualification have separate
-pins. The new hour passes independent data verification. Public binary/archive delivery remains pending in this working draft.
+pins. The new hour passes independent data verification.
+Anonymous public native installation, independent component audits and public evidence-archive delivery pass.
+
+Published `v1.0.1` tag source (F2) is
+[`c55fc37fd6de38d7d1af4088bbdce616f0446470`](https://github.com/jacksonjp0311-gif/SYMBIOTE/commit/c55fc37fd6de38d7d1af4088bbdce616f0446470),
+from [release workflow 40751115124](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124).
+The actual public Windows executable SHA256 is `a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c`.
+Evidence archive SHA256 is `53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a`, with extracted manifest
+`ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878`. [External receipts and public component audits](../experiments/v1.0.1/public-delivery.json)
+bind those later events; they do not relabel F1's cohort/hour. The installed native
+and source6025 test driver remain separately identified. The demonstrated operating envelope is a finite, bounded one-host engine.
 
 ## What is working
 

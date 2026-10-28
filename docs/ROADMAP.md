@@ -20,12 +20,13 @@ Maintain failed criteria and matched-cost controls for every release.
 
 The published v1.0.0 number does not close that final objective. Its
 [release audit](V1_RELEASE_AUDIT.md) records defects in the tagged benefit helpers.
-The [1.0.1 corrective candidate](CORRECTIVE_RELEASE_101.md) first closes exact
+The [1.0.1 corrective release](CORRECTIVE_RELEASE_101.md) closes bounded exact
 attribution, actual observation-driven inference, durable good/harm feedback,
-partial-certificate contribution and exact compact reasoning. Qualification
-requires the complete software gate, frozen one-host hour, finite reciprocal
-engineering controls, sanitized public evidence and actual downloaded replacement
-binary checks. Each is recorded independently; historical HOLDs remain.
+partial-certificate contribution and exact compact reasoning. Its software gate,
+source-bound one-host hour, finite reciprocal engineering controls, public
+evidence archive and downloaded replacement-binary checks pass within the
+[declared scope](../experiments/v1.0.1/public-delivery.json). Each is recorded
+independently; historical HOLDs and broader stable criteria remain.
 
 After the corrective release, the next milestone is an independently implemented
 observation/receiver adapter with a prospectively frozen evaluation contract.

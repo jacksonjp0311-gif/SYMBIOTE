@@ -1,0 +1,460 @@
+{
+  "status": "PASS_PUBLIC_NATIVE_BYTES",
+  "assets": [
+    {
+      "name": "SHA256SUMS",
+      "asset_id": 686069953,
+      "bytes": 433,
+      "sha256": "18f1a64f37721a9fd363507aa61240449e10c530b1dde37ac9c9c366b1fd917c",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-aarch64-apple-darwin.zip",
+      "asset_id": 686069574,
+      "bytes": 4429039,
+      "sha256": "9ddffd5333b6e3f880ddddf162e5248a04bdf4f8fb3e90d3c54913f57fee2f48",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-apple-darwin.zip",
+      "asset_id": 686069667,
+      "bytes": 4719003,
+      "sha256": "1517be0d1d8a9038fa20a4311da72298f64a31ac0acf677f892dec0b7b818c50",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-pc-windows-msvc.zip",
+      "asset_id": 686069737,
+      "bytes": 4547847,
+      "sha256": "45246ef7e2756ab4364c3175ce0fc495794ac72a6e849577571736170c60a38b",
+      "anonymous_public_download": true
+    },
+    {
+      "name": "symbiote-v1.0.1-x86_64-unknown-linux-gnu.zip",
+      "asset_id": 686069860,
+      "bytes": 4884434,
+      "sha256": "4f363030b390036b3811e3ab4e393bdc2e492ee9a93ccba7a995d14e75474c5b",
+      "anonymous_public_download": true
+    }
+  ],
+  "bundles": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "binary_sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c",
+      "binary_bytes": 13083648,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "binary_sha256": "0ffd010819314e7338184b42b8d649383a673cd5bed30cfb08d56c8e99ab1e68",
+      "binary_bytes": 14332512,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "binary_sha256": "80df9f5ada314c4f950f651dd8308ea130eb2afc19ff7581ef58cd82434717cd",
+      "binary_bytes": 12168592,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    },
+    {
+      "target": "x86_64-apple-darwin",
+      "binary_sha256": "1b4e0fc7e8918581d6db4d56608cca87fedbb02bdba91d73d749e17240433487",
+      "binary_bytes": 13175264,
+      "license_sha256": "b6d4704bf81089953c41856cc44738cd91dd725372862a66985cb2d89aeb8fe9",
+      "readme_sha256": "16211e268ed1a4684ad526df7b3b31d8cc89764ff7f2ceb4f534b83a1c41c77d"
+    }
+  ],
+  "exact_asset_count": 5,
+  "checksum_manifest_sets_exact": true,
+  "native_installation": {
+    "status": "PASS_WINDOWS_INSTALL_AND_BOUNDED_SMOKE",
+    "version": {
+      "build_source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+      "name": "SYMBIOTE",
+      "verification": {
+        "basis": "version and local state health are not release qualification; compare this exact source and downloaded binary with published receipts",
+        "evidence_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+        "online_verification_performed": false,
+        "receipt_api": "ledger-and-exchange-witnessed; legacy unchecked predicates fail closed",
+        "release_tag": "v1.0.1",
+        "scope": "bounded single-host affine and graph modes; independent two-host operation is not qualified",
+        "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+        "status": "EXTERNAL_EVIDENCE_REQUIRED"
+      },
+      "version": "1.0.1"
+    },
+    "binary_sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c",
+    "installed_into_temp": true,
+    "add_to_path": false,
+    "calls": [
+      {
+        "label": "windows-public-installer-no-path",
+        "argv": [
+          "powershell.exe",
+          "-NoLogo",
+          "-NoProfile",
+          "-NonInteractive",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\install.ps1",
+          "-Version",
+          "v1.0.1",
+          "-BundleDirectory",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\downloads",
+          "-InstallDir",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed"
+        ],
+        "pid": 49876,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 3.5619999999762513,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.031000000017229468,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-windows-publ-67fbfa889d0d4fb257da94fe4ed86e2b505febda359520758e675d740f4653ad.process.json",
+        "stdout": "p-windows-publ-67fbfa889d0d4fb257da94fe4ed86e2b505febda359520758e675d740f4653ad.stdout",
+        "stderr": "p-windows-publ-67fbfa889d0d4fb257da94fe4ed86e2b505febda359520758e675d740f4653ad.stderr",
+        "stdout_sha256": "2cf2035162de226f7ffd80585392b87f636884ee19e121caa173db2c678ecd27",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 250,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "installed-version",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "version",
+          "--json"
+        ],
+        "pid": 39352,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.29599999997299165,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.045999999972991645,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-installed-ve-0a64c69fb4b98cb94567cb2f00ad009d7748fbf64065dc3171d553adbdad00e0.process.json",
+        "stdout": "p-installed-ve-0a64c69fb4b98cb94567cb2f00ad009d7748fbf64065dc3171d553adbdad00e0.stdout",
+        "stderr": "p-installed-ve-0a64c69fb4b98cb94567cb2f00ad009d7748fbf64065dc3171d553adbdad00e0.stderr",
+        "stdout_sha256": "1209afa540e5732fd3295499644b24abb0e909885132dea293cab9c46a15b7c4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 762,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "doctor-2",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "doctor",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\demo-owner",
+          "--json"
+        ],
+        "pid": 20228,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.32900000002700835,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.0470000000204891,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-doctor-2-a38386a0b805f7becae12799ddda1cf7070d7f0f29473846ec4a04c4682fe10a.process.json",
+        "stdout": "p-doctor-2-a38386a0b805f7becae12799ddda1cf7070d7f0f29473846ec4a04c4682fe10a.stdout",
+        "stderr": "p-doctor-2-a38386a0b805f7becae12799ddda1cf7070d7f0f29473846ec4a04c4682fe10a.stderr",
+        "stdout_sha256": "c2c4c0e7cd6cbb923c49b38071c66b5e60724e9ccebba9b7ea75dd69972bef4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 1109,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "demo-3",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "demo",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\demo-owner",
+          "--json",
+          "--receipts",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\first-demo.json"
+        ],
+        "pid": 30820,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.375,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.015000000013969839,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-demo-3-85961c6be2cfc730781518508f58b9cdcf0d9e177de0fb2910a31c3c73e4d0ef.process.json",
+        "stdout": "p-demo-3-85961c6be2cfc730781518508f58b9cdcf0d9e177de0fb2910a31c3c73e4d0ef.stdout",
+        "stderr": "p-demo-3-85961c6be2cfc730781518508f58b9cdcf0d9e177de0fb2910a31c3c73e4d0ef.stderr",
+        "stdout_sha256": "55c991105094bae7c7fb6d53f97444895da6ecececab1f2985e1dfe23140a99c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 7238,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "predict-4",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "predict",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\demo-owner",
+          "--json"
+        ],
+        "pid": 29516,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.34399999998277053,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.01600000000325963,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-predict-4-a2f5c8d3dc4cf4a02df00b4761e2570b28fcabe682c94fe3fff20ac1cc798437.process.json",
+        "stdout": "p-predict-4-a2f5c8d3dc4cf4a02df00b4761e2570b28fcabe682c94fe3fff20ac1cc798437.stdout",
+        "stderr": "p-predict-4-a2f5c8d3dc4cf4a02df00b4761e2570b28fcabe682c94fe3fff20ac1cc798437.stderr",
+        "stdout_sha256": "5766d87958aeea1c5ae87fede805722eb9a091d1623bae67dcba326075405d07",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 671,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "demo-5",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "demo",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\demo-owner",
+          "--json",
+          "--receipts",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\restarted-demo.json"
+        ],
+        "pid": 29232,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.34399999998277053,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.01600000000325963,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-demo-5-0a5d8bcc49c89b9d638b3dd0e026fdafefa07cab7605a0d9ed366912c816bfa4.process.json",
+        "stdout": "p-demo-5-0a5d8bcc49c89b9d638b3dd0e026fdafefa07cab7605a0d9ed366912c816bfa4.stdout",
+        "stderr": "p-demo-5-0a5d8bcc49c89b9d638b3dd0e026fdafefa07cab7605a0d9ed366912c816bfa4.stderr",
+        "stdout_sha256": "41ea1e48a667505744bb5677eb87534854611ba1a07fbba72111a8de76563998",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 6905,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "backup-state",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "backup-state",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\demo-owner",
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\owner-backup",
+          "--json"
+        ],
+        "pid": 37464,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.26500000001396984,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.031000000017229468,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-backup-state-0a40054777534c507c7375b2e23a5800949da70713a993b9080010db00f41c84.process.json",
+        "stdout": "p-backup-state-0a40054777534c507c7375b2e23a5800949da70713a993b9080010db00f41c84.stdout",
+        "stderr": "p-backup-state-0a40054777534c507c7375b2e23a5800949da70713a993b9080010db00f41c84.stderr",
+        "stdout_sha256": "f8a15c8637c644bd6f25affe698f15ce76bbc6fe5c7047de1fbcc44264e06111",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 576,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "verify-backup",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "verify-backup",
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\owner-backup",
+          "--manifest-sha256",
+          "8fbe37f9cd66d2c10c4d04a4e4e71f05639a81f75cb7472b8a1fda0063c49614",
+          "--json"
+        ],
+        "pid": 25976,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.3279999999795109,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.045999999972991645,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-verify-backu-95dcf049075d12e9570f67e74a66286fc4791fcadcd9cfbcfa7438249938268a.process.json",
+        "stdout": "p-verify-backu-95dcf049075d12e9570f67e74a66286fc4791fcadcd9cfbcfa7438249938268a.stdout",
+        "stderr": "p-verify-backu-95dcf049075d12e9570f67e74a66286fc4791fcadcd9cfbcfa7438249938268a.stderr",
+        "stdout_sha256": "f8a15c8637c644bd6f25affe698f15ce76bbc6fe5c7047de1fbcc44264e06111",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 576,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "restore-state",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "restore-state",
+          "--backup",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\owner-backup",
+          "--manifest-sha256",
+          "8fbe37f9cd66d2c10c4d04a4e4e71f05639a81f75cb7472b8a1fda0063c49614",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\restored-owner",
+          "--json"
+        ],
+        "pid": 43204,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.3600000000442378,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.031000000017229468,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-restore-stat-5a585f72bed43c14584adce55e54ed53f7c06726000ce294a968c8b14e307d09.process.json",
+        "stdout": "p-restore-stat-5a585f72bed43c14584adce55e54ed53f7c06726000ce294a968c8b14e307d09.stdout",
+        "stderr": "p-restore-stat-5a585f72bed43c14584adce55e54ed53f7c06726000ce294a968c8b14e307d09.stderr",
+        "stdout_sha256": "d589361dd5adf6ab4cd8869130e0eafde48fe29f45280d6f6427f7bad9be2aa7",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 764,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "predict-9",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\installed\\symbiote.exe",
+          "predict",
+          "--state",
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qd-101-c55fc37\\restored-owner",
+          "--json"
+        ],
+        "pid": 32692,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 0.3119999999762513,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.031000000017229468,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-predict-9-c45dbf59830f380e014b0fbf05842e9549d0ac057b53143a90590480188ec684.process.json",
+        "stdout": "p-predict-9-c45dbf59830f380e014b0fbf05842e9549d0ac057b53143a90590480188ec684.stdout",
+        "stderr": "p-predict-9-c45dbf59830f380e014b0fbf05842e9549d0ac057b53143a90590480188ec684.stderr",
+        "stdout_sha256": "5766d87958aeea1c5ae87fede805722eb9a091d1623bae67dcba326075405d07",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 671,
+        "stderr_bytes": 0
+      },
+      {
+        "label": "installed-public-binary-configured-cognition",
+        "argv": [
+          "C:\\Users\\jacks\\AppData\\Local\\Temp\\qb-101-6025fff\\binaries\\service-a3d1225024fb4296.exe",
+          "cognitive::native_cognition_learns_two_families_cross_contributes_and_restarts_without_relearning",
+          "--nocapture",
+          "--exact",
+          "--test-threads=1"
+        ],
+        "pid": 14320,
+        "exit_code": 0,
+        "outcome": "completed",
+        "elapsed_seconds": 3.4060000000172295,
+        "error": null,
+        "cleanup_verified": true,
+        "output_truncated": false,
+        "cleanup_elapsed_seconds": 0.10899999999674037,
+        "containment": "windows-job-suspended-before-execution",
+        "process_receipt": "p-installed-pu-6ca2c4229013390bceba224d37d5e1e9383bfb60777d298da1f45d1aac7e663f.process.json",
+        "stdout": "p-installed-pu-6ca2c4229013390bceba224d37d5e1e9383bfb60777d298da1f45d1aac7e663f.stdout",
+        "stderr": "p-installed-pu-6ca2c4229013390bceba224d37d5e1e9383bfb60777d298da1f45d1aac7e663f.stderr",
+        "stdout_sha256": "b178d409dd0d58f1e51ed8ea8e6b5e6b7c4e11da7875e63f77d95ba65b2283df",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 223,
+        "stderr_bytes": 0
+      }
+    ],
+    "exact_prediction_tables": true,
+    "retained_identity": "symbiote-449f8e7a73b58231d42b5f67",
+    "backup_manifest_sha256": "8fbe37f9cd66d2c10c4d04a4e4e71f05639a81f75cb7472b8a1fda0063c49614",
+    "offline_exact_history_restore": true,
+    "configured_cognition_public_binary": {
+      "status": "PASS_INSTALLED_PUBLIC_BINARY_CONFIGURED_COGNITION",
+      "manifest_sha256": "72b57f153e98e9e9bf881e706257dd47f8577b3bb5d014343e572aa6307a094a",
+      "native_binary_sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c",
+      "roles": {
+        "actor": {
+          "identity": "symbiote-8b5723eff0b7089fb64e2f1b",
+          "model_count": 2,
+          "model_sha256": [
+            "78c5d3f328020ecd2134943896a808bfd9ab3329beaad75b1b7b5d3ed20ffdb0",
+            "c24ccd0ef9a9db6168a28dc7dfb345db2d79c2fc1a5a7dc873c870c9bc20df3e"
+          ]
+        },
+        "server": {
+          "identity": "symbiote-be90497e18597ef6ee529031",
+          "model_count": 1,
+          "model_sha256": [
+            "cd7372d00ff60974dc6bc9ea19838b482aa61ad027541c337f0acb67ff53074a"
+          ]
+        },
+        "client": {
+          "identity": "symbiote-b227b5782d9bc9e031d5d093",
+          "model_count": 1,
+          "model_sha256": [
+            "bcb24dc92885ed4b5e540bbc40706fa1871ecaedf593e931f782f4573f970967"
+          ]
+        }
+      },
+      "first_fresh_promotions": 2,
+      "restart_fresh_promotions": 0,
+      "active_models": 2,
+      "quarantined_contributions": 0,
+      "partner_evaluations": "none; pre-exchange value declined non-positive transfers",
+      "interpretation": "bounded operational integration; declined exchanges are not a reciprocal-efficiency gain",
+      "test_binary": "C:\\Users\\jacks\\AppData\\Local\\Temp\\qb-101-6025fff\\binaries\\service-a3d1225024fb4296.exe",
+      "test_binary_sha256": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4",
+      "exact_test": "cognitive::native_cognition_learns_two_families_cross_contributes_and_restarts_without_relearning",
+      "process_receipt": "p-installed-pu-6ca2c4229013390bceba224d37d5e1e9383bfb60777d298da1f45d1aac7e663f.process.json"
+    },
+    "interpretation": "Public Windows binary installation and bounded smoke only; no study rerun, hour qualification or two-host evidence"
+  },
+  "release_body_changed": false,
+  "schema": "symbiote.public-v1-release-operation/1",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "tag": "v1.0.1",
+  "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+  "completed_at_unix": 1793215402.9795363,
+  "evidence_sha256": null,
+  "release_workflow": {
+    "run_id": 40751115124,
+    "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+    "tag": "v1.0.1",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124",
+    "conclusion": "success",
+    "qualification": "workflow build/test origin only"
+  }
+}

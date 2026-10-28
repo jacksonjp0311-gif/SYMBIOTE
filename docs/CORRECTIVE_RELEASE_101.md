@@ -1,10 +1,10 @@
 # Corrective release 1.0.1
 
-Status: **corrective bounded one-host candidate; final qualification pending**.
+Status: **Qualified corrective bounded one-host release**.
 The source-pinned normal learning, observation components and registered 64-cell
 operational cohort pass independent consumer checks. The fresh hour records
-PASS_LOCAL_HOUR, with separate independent data review passing. Actual public
-binary and archive delivery remain pending. The public 1.0.0 tag and its original
+PASS_LOCAL_HOUR, with separate independent data review passing.
+Anonymous public native installation, independent component audits and public evidence-archive delivery pass. The public 1.0.0 tag and its original
 evidence remain unchanged. Neither this patch number nor a local PASS closes the
 broader stable, two-host or generalization gates.
 
@@ -24,16 +24,42 @@ retroactively change the compiled source pin.
 | Observation-driven native learning | PASS, component evidence | Widths 3 and 8; held-out checks and zero new source queries after restart |
 | Registered 64-cell engineering cohort | PASS_OPERATIONAL_RECIPROCITY | 64/64 cells; full-cost efficiency remains NOT_DEMONSTRATED against isolation, every fixed order and matched resources |
 | Fresh one-host hour on this source | PASS_LOCAL_HOUR; independent data audit PASS | Completed 120-cycle campaign, measurement 3,602,431 ms, verified cleanup and no source-watch failure; an earlier source's hour was not substituted |
-| Anonymous public v1.0.1 binary acceptance | PENDING | Downloaded replacement bytes must pass the declared native and recovery checks |
-| Public evidence delivery | PENDING | Exact source, binaries, sanitized raw records, consumers and preserved failures must be linked and checked |
+| Anonymous public v1.0.1 binary acceptance | PASS_PUBLIC_NATIVE_BYTES; actual component and independent audit PASS | Anonymous Windows installation, restart, offline prediction, backup/restore and configured cognition pass. The actual public binary passes both new normal/observation fixtures and retained observe-demo use; independent contract audit `5053d6f7d1606c8e6e621527327185a38ed918479a98e52e9924c5a356486e92` passes. |
+| Public evidence delivery | PASS_PUBLIC_FINAL_BYTES; six portable data-only replays PASS | Archive `53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a`, manifest `ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878`, [actual receipts](../experiments/v1.0.1/public-delivery.json) |
 | Broader stable qualification and independent two-host deployment | HOLD / OPEN_UNAVAILABLE | No generalized transfer-efficiency, power-loss or independent-host claim |
 
-The CI summaries report 408 Rust test executions on Windows and 410 on Ubuntu
+### Public release and external transcripts
+
+The published `v1.0.1` tag resolves to
+[`c55fc37fd6de38d7d1af4088bbdce616f0446470`](https://github.com/jacksonjp0311-gif/SYMBIOTE/commit/c55fc37fd6de38d7d1af4088bbdce616f0446470).
+The native F1 evidence above remains bound to `6025fff`; the public executable
+and later documentation have their own pins. No report is relabeled onto a
+different source or substituted for an unavailable executable.
+
+| Public item | Exact checked evidence |
+| --- | --- |
+| Release workflow | [Run 40751115124](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124), exact tag/source and push event |
+| Tag-source CI | [Run 40751116594](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751116594), Windows, Ubuntu and macOS green on exact tag source c55fc37; main-source [CI 40749407383](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40749407383) also green |
+| Anonymous installed Windows executable | SHA256 `a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c`; public operation receipt `1642e21335807930407c422f539f66c662385f430e7237ca733966bd84270c96` |
+| Actual public normal/observation acceptance | Raw acceptance receipt `059229d0f877d45269994fc5d6291103e1da61d4e6d11e4db6f4fd83e233eff2` |
+| Independent normal audit | `537469ce7707cb42778eb0e8c9abd07231b54e23fd588007c6cc65b49ca8695e` |
+| Independent observation audit | `98773ae52882250619c71a9711f5b359ed1ca1f818695563ec10fd1967fa3ddb` |
+| Downloaded evidence archive | [Release asset](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.0.1/SYMBIOTE-v1.0.1-qualified-evidence.tar.gz), SHA256 `53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a` |
+| Extracted archive manifest | SHA256 `ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878` |
+| Portable data-only replay | Receipt `6717d9f11f9ceb68a2fd7d391afaddc1584133dbbd1a7e3002acff4a1a0440d8`; no native/study execution |
+| External publication/verification transcripts | [Receipt index](../experiments/v1.0.1/public-delivery.json), index SHA256 `56dafd887a7b2bdfafdfd27d945521441949bd02b63069e1f87cc1139819e26b` |
+
+The demonstrated operating envelope is a finite, bounded one-host engine. Broader stable, independent-host,
+power-loss, generalization and general reciprocal-efficiency criteria remain
+HOLD/open. The aggregate losses, matched-control explanations and outbound
+feedback limitations below remain part of the release account.
+
+The qualification-source CI run 40733730717 reports 408 Rust test executions on Windows and 410 on Ubuntu
 and macOS, plus 125 Python tool tests and 35 release-tool tests per job. These
 reported job counts may include repeated invocations or platform skips; they are
 not counts of unique tests or independent scientific samples.
 
-The normal and observation receipts are component evidence, not a completed
+The normal and observation receipts alone are component evidence, not the full
 release verdict. The source build proof has SHA256
 `2f135a0564fdfcd4d802ece975e24471b328ca1ca031503da3b3de9b1cf12f64`.
 Final release evidence must preserve the raw receipts and identify their exact
@@ -161,7 +187,8 @@ The complete `soak-report.json` has SHA256
 `3ee2142db41a4042aa8501bc879135793a53dd83197137f46ff163c5bd96f3d4`.
 Its exact native and service-test executable hashes are the preserved Windows
 pins in the qualification table above. Public replacement-binary acceptance and
-evidence-archive delivery remain separate pending checks. Historical cancelled,
+evidence-archive delivery are bound separately in the publication table.
+Historical cancelled,
 failed and suspension-affected attempts retain their original status.
 
 The independent audit receipt has SHA256

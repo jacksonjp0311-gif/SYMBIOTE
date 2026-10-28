@@ -1,0 +1,25 @@
+{
+  "schema": "symbiote.qualified-corrective-publication/1",
+  "status": "PASS_PUBLIC_CORRECTIVE_DELIVERY",
+  "tag": "v1.0.1",
+  "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "release_id": 427091112,
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.0.1",
+  "final_download_operation_sha256": "639e1b1b49e553cb3b39bf24a507988423406d3a90350883d9a53e4020bcc288",
+  "public_native_operation_sha256": "1642e21335807930407c422f539f66c662385f430e7237ca733966bd84270c96",
+  "body_sha256": "e4bbc3f02369590be41ed38dfcb5b03b5d89f760a927bb33ff5528a226e66a40",
+  "evidence_sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+  "release_workflow": {
+    "run_id": 40751115124,
+    "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+    "tag": "v1.0.1",
+    "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124",
+    "conclusion": "success",
+    "qualification": "workflow build/test origin only"
+  },
+  "asset_count": 7,
+  "broader_stable_qualification": "HOLD",
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "replaced_assets": false,
+  "moved_tag": false
+}

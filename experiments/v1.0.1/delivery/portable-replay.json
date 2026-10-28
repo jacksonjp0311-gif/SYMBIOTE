@@ -1,0 +1,28 @@
+{
+  "schema": "symbiote.final-archive-portable-replay/1",
+  "status": "PASS_SIX_DATA_REPLAYS_WITH_ORIGINAL_IO_DENIED",
+  "source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "archive_sha256": "53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a",
+  "manifest_sha256": "ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878",
+  "adapter_sha256": "e75352869dc98c867a851ba4fdb27409bad9bf46492b6586ccb3bd8266173991",
+  "script_sha256": "b5aa8220644e153f1e84e2d4198137bad11dd8d47fa4b5d387e9d1b89e5e0250",
+  "families": [
+    "local-cohort",
+    "local-normal",
+    "local-hour",
+    "local-observation",
+    "public-normal",
+    "public-observation"
+  ],
+  "original_io_attempts": [],
+  "native_process_attempts": [],
+  "network_attempts": [],
+  "denial_basis": "Python audit hooks deny original source opens/directory access plus OS stat/lstat guards; subprocess/network events denied",
+  "all_original_receipt_comparisons_passed": true,
+  "post_replay_full_extracted_census_reverified": true,
+  "compressed_archive_sha_rechecked": true,
+  "raw_records_modified": false,
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "elapsed_seconds": 37.06199999997625
+}

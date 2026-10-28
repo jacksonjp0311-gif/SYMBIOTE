@@ -35,9 +35,15 @@ object including its digest field (`f4f30a5d…`). The version-2 manifest's own 
 digest remains `aedf4208…`; these are different declared framing operations over
 the same source evidence, not different source trees.
 
-**Public replacement-binary acceptance and archive delivery are pending.** Their
-actual receipts will be added after anonymous download, installation, native
-checks and exact asset verification. No future evidence is implied by these links.
+**Public replacement-binary acceptance and archive delivery pass.** The
+[delivery index](public-delivery.json) binds release source `c55fc37`, the actually
+installed Windows image, both new native component checks and independent audits.
+All seven public assets were anonymously downloaded and verified. The closed
+archive contains 5,405 files; all six extracted data replays passed with original
+folders, process launches and network access denied. Its SHA256 is
+`53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a`.
+The [external transcripts](delivery/) record packaging, independent manifest
+review, replay, upload, final downloads and publication outside the closed archive.
 
 Scientific samples remain zero. Independent two-host validation remains
 `OPEN_UNAVAILABLE`; broader stable and general-efficiency criteria remain open.

@@ -1,0 +1,57 @@
+{
+  "schema": "symbiote.independent-final-plan-review/1",
+  "status": "PASS_EXACT_MANIFEST_FOR_PACKAGE",
+  "release_source_commit": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "config_sha256": "29ba7c92474d60b40310b959de82eb3fc0caad9e49ff8489c8b79bfafd9faa4b",
+  "manifest_sha256": "ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878",
+  "plan_receipt_sha256": "9c99c1f93b0cc3a092fcafdacee1bc500c404ab3a3b4b92a06a668596244933f",
+  "review_script_sha256": "6b734816793972ec551be84699701cb7eaa094619d16266f141bb64b39cb3ac4",
+  "selected_members_including_manifest": 5405,
+  "selected_bytes": 344457949,
+  "collections": 16,
+  "anchors_checked": 38,
+  "registered_executables": {
+    "frozen-native-B": {
+      "source": "ddd63d7954917c949ea1173a90f30343bcb16397",
+      "sha256": "bf787d167e6108c3f884132b860baf94d295ebcf2718f5ddcd52a1c125b211be"
+    },
+    "frozen-service-test-B": {
+      "source": "ddd63d7954917c949ea1173a90f30343bcb16397",
+      "sha256": "fc049030d34635ef2ba2d665489c543a8485d22d1e1736d913cd7f9eeb7d09a2"
+    },
+    "final-build-native": {
+      "source": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+      "sha256": "4e5700f1b2a2b04e26a0afb20a7549db5253b5a6f9eab36f2ef5f03e7f490c65"
+    },
+    "final-build-service-tests": {
+      "source": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+      "sha256": "ed2ce760e89655a731be37c9c66dc743438449ae688c34b6ec55a8902cd2efc4"
+    },
+    "final-build-reasoning-tests": {
+      "source": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+      "sha256": "64a57f1c520ca049ec638029c40aea719eb2d4105102eec8003412fda202601e"
+    },
+    "public-build-native": {
+      "source": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+      "sha256": "a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c"
+    }
+  },
+  "full_tree_censuses_checked_before_after": true,
+  "source_occurrences_hashed": 5404,
+  "source_bytes_hashed": 344457949,
+  "native_source_files": 128,
+  "compiled_source": "6025fff43ad4b508b94977eeff801aeebf549fd9",
+  "historical_source": "ddd63d7954917c949ea1173a90f30343bcb16397",
+  "public_native_source": "c55fc37fd6de38d7d1af4088bbdce616f0446470",
+  "bytecache_selected": false,
+  "historical_hold_and_bridge_holds_preserved": true,
+  "historical_missing_image_not_substituted": true,
+  "credential_scan_scope": "Reviewed pinned scanner/adapter passed this exact manifest in plan-only; this independent review rehashes all same source bytes and censuses without changing scan exceptions",
+  "archive_created": false,
+  "native_processes_launched": 0,
+  "original_raw_evidence_modified": false,
+  "evidence_scope": "Byte/source/census/provenance approval before packaging; not archive byte verification, public seven-asset delivery or broader stable qualification",
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "elapsed_seconds": 6.64
+}

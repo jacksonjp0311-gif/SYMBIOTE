@@ -1,13 +1,21 @@
 # Changelog
 
-## v1.0.1 — under qualification
+## v1.0.1 — corrective bounded one-host release — 2026-10-28
 
 Native source `6025fff43ad4b508b94977eeff801aeebf549fd9` passes
 [Windows, Ubuntu and macOS CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717).
 Source-pinned native learning components and the completed 64-cell operational
 cohort pass separate consumers. The fresh hour records PASS_LOCAL_HOUR and passes
-independent data review; public binary/archive delivery remains pending. This is a
+independent data review. Anonymous public native installation, independent component audits and public evidence-archive delivery pass. This is a
 corrective bounded one-host release, not closure of broader stable criteria.
+
+- Publish tag `v1.0.1` at exact source
+  `c55fc37fd6de38d7d1af4088bbdce616f0446470` through
+  [release workflow 40751115124](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124).
+  Anonymous Windows installation, restart, offline prediction, backup/restore and configured cognition pass. The actual public binary passes both new normal/observation fixtures and retained observe-demo use; independent contract audit `5053d6f7d1606c8e6e621527327185a38ed918479a98e52e9924c5a356486e92` passes. Independent normal/observation audits and
+  external publication transcripts are indexed in [the receipt account](experiments/v1.0.1/public-delivery.json).
+  Evidence archive SHA256: `53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a`; extracted manifest SHA256:
+  `ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878`. Preserve all per-source pins and broader HOLDs.
 
 - Demonstrate normal two-way capability contribution with experiments disabled,
   independent receiver adoption, actual retained-model use and process restarts.

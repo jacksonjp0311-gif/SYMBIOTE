@@ -21,7 +21,7 @@ local demonstrations.
 
 > **v1.0.1 is a corrective release for a bounded, one-host engine.**
 > Source, native component, 64-cell operational and fresh-hour checks pass.
-> Independent hour review passes; public binary and archive delivery remain pending. Corrected verification,
+> Independent hour review, anonymous public native acceptance and public evidence delivery pass. Corrected verification,
 > observation-driven learning and useful reciprocal contribution do not establish
 > general intelligence or general transfer efficiency. The v1.0.0 tag and its
 > [original audit](docs/V1_RELEASE_AUDIT.md) remain unchanged.
@@ -52,7 +52,7 @@ sh tools/install.sh --version v1.0.1
 ~/.local/bin/symbiote demo
 ```
 
-These commands target the v1.0.1 assets once published. Installers require the matching binary bundle on the
+Install the published v1.0.1 native bundle from the exact tag release. Installers require the matching binary bundle on the
 [release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases). If a bundle
 has not been published for your version or architecture, build from source:
 
@@ -198,7 +198,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 | Useful normal reciprocal contribution and feedback | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): two-way independent adoption, actual later use, retained knowledge and harmful feedback changing a later choice |
 | Registered 64-cell engineering cohort | [Operational PASS, efficiency NOT_DEMONSTRATED](docs/CORRECTIVE_RELEASE_101.md#registered-engineering-cohort): all participant aggregate costs exceed isolation; each fixed order is cheaper in aggregate and matched controls reproduce coverage |
 | Fresh one-host hour | [PASS_LOCAL_HOUR with independent data audit](docs/CORRECTIVE_RELEASE_101.md#fresh-one-host-hour): 120 cycles, measured 3,602,431 ms; server retains two models and client remains unchanged genesis |
-| v1.0.1 public binary and archive delivery | [Qualification evidence](docs/CORRECTIVE_RELEASE_101.md#qualification-evidence): pending actual downloads and delivery checks; broader stable and two-host gates remain open |
+| v1.0.1 public binary and archive delivery | PASS_PUBLIC_CORRECTIVE_DELIVERY, [actual receipt index](experiments/v1.0.1/public-delivery.json); exact tag source [`c55fc37`](https://github.com/jacksonjp0311-gif/SYMBIOTE/commit/c55fc37fd6de38d7d1af4088bbdce616f0446470), [release workflow](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124); broader stable and two-host gates remain open |
 | Original BRUTE algorithm preserved exactly | [Byte-identical Python reference](docs/reference/brute/symbolic.py) and [parity receipt](experiments/parity.json): 6,093 cases, 20,843 checkpoints |
 | Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
 | Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
@@ -311,8 +311,8 @@ helpers; v1.0.1 qualifies the corrections separately. These are
 bounded engineering checks. Query-transfer protocol 001 remains
 `NOT_DEMONSTRATED`. The historical hour on source `31b9418` passed; the cancelled
 71/120 attempt remains HOLD. The replacement source's fresh hour records
-PASS_LOCAL_HOUR on `6025fff`, with independent data review passing; public delivery
-remains pending. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
+PASS_LOCAL_HOUR on `6025fff`, with independent data review passing.
+Anonymous public native installation, independent component audits and public evidence-archive delivery pass. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
 is preregistered and has not been run.
 
 [Native architecture](docs/NATIVE_ARCHITECTURE.md) ·
@@ -349,8 +349,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 7.81 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.64% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 7.85 MB across 14 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.63% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

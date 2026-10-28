@@ -8,12 +8,12 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 
 ## Current qualification status
 
-The corrective v1.0.1 native source is `6025fff`. Its three-platform software
+The corrective native implementation was qualified on source `6025fff`; the published tag is `c55fc37`. Its three-platform software
 gate, independently consumed normal-learning/observation components and 64-cell
 operational cohort pass. The fresh one-host hour records PASS_LOCAL_HOUR and
-passes independent data review. Public binary/archive delivery remains pending.
-Their results must be recorded before the bounded corrective
-release is qualified. Exact pins and current evidence are in the
+passes independent data review. Anonymous public native installation, independent component audits and public evidence-archive delivery pass.
+This bounded corrective qualification does not close broader stable criteria.
+Exact pins and current evidence are in the
 [corrective account](CORRECTIVE_RELEASE_101.md#qualification-evidence).
 
 Normal reciprocal contribution extends validated capability, but the full
@@ -46,7 +46,7 @@ cases; that green software gate did not detect the reproduced API defects.
 | Observation-driven learning and retained use | PASS, component evidence | Widths 3 and 8, distinct held-out checks, complete finite-domain predictions and zero source queries on restart |
 | New 64-cell engineering cohort | PASS_OPERATIONAL_RECIPROCITY | 64/64 in 237.344 seconds; aggregate participant costs lose to isolation and every fixed order; matched controls explain all coverage; efficiency NOT_DEMONSTRATED |
 | Fresh hour on corrective source | PASS_LOCAL_HOUR; independent data audit PASS | 120 cycles, measurement 3,602,431 ms, live main listener 3,592,105 ms, maximum maintenance 2,057 ms, verified cleanup; server two models/client unchanged genesis; zero source-watch failures |
-| Public v1.0.1 binary and evidence delivery | PENDING | Anonymous download, exact native acceptance and checksum-bound evidence package |
+| Public v1.0.1 binary and evidence delivery | PASS_PUBLIC_CORRECTIVE_DELIVERY | Anonymous installed binary, independent component audits and checksum-bound archive replay; [actual receipts](../experiments/v1.0.1/public-delivery.json), tag `c55fc37`, workflow 40751115124 |
 | v0.5.1 default software checks | PASS | 292 Rust test executions, 53 Python tests and 6,093 BRUTE parity cases |
 | Fixed local continuity campaign | PASS, S5 | One separately executed ignored test; 24 cycles, one PC, two fixed fixtures |
 | Reviewed policy/credential lifecycle | PASS within local checks | Explicit offline transitions, old-pin rejection, denial retention and reviewed regrant |
