@@ -18,7 +18,7 @@ remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible
 | Earlier local attempts | S3 and S4 remain HOLD | Their checker failures and original bytes are retained; no posthoc regrading |
 | v0.5 research primary | HOLD | Engineering reproduction of the same worlds does not replace the failed primary |
 | Independent two-host deployment | OPEN_UNAVAILABLE | Same-host TLS and private-IP tests do not close this gate |
-| Duration reliability | OPEN | A finite 24-cycle check is not long-term or unattended operation |
+| Duration reliability | PASS, one host | Fresh 120-cycle hour on `31b9418`, registration `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`, campaign report `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`. The cancelled 71/120 run remains HOLD. This hour does not establish production or two-host reliability |
 | Broader scientific criteria | OPEN | Transfer/generalization and better partner selection require new predeclared evidence |
 | Stable v1.0 qualification | OPEN | A local software PASS alone is insufficient |
 

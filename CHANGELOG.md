@@ -2,6 +2,12 @@
 
 ## v1 candidate — unreleased
 
+- One-host hour qualification `PASS_LOCAL_HOUR` on source `31b9418`.
+  Registration `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`.
+  Campaign report `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`.
+  120 cycles, measurement 3,601,880 ms, two retained models, zero scientific
+  samples. The cancelled 71/120 run remains HOLD. Two-host deployment and
+  public v1 delivery remain open.
 - Reciprocal receipt schema `symbiote.reciprocal-evaluation/2`. A content
   digest is not benefit. Benefit requires a completed promotion between the
   receiver's anchors, a derived behavior change, and stored trial totals with

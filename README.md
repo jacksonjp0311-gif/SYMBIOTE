@@ -21,8 +21,9 @@ local demonstrations.
 
 > **Development handoff — v1.0.0 candidate, not a stable v1 release.**
 > CI run [40545912958](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40545912958)
-> at `4da99383` passed Ubuntu, Windows, and macOS. The cancelled hour campaign
-> remains HOLD at 71/120 cycles. The verified public binary remains v0.5.1.
+> at `4da99383` passed Ubuntu, Windows, and macOS. A fresh one-host hour passed
+> 120 cycles on `31b9418`. The cancelled 71/120 attempt remains HOLD. The
+> verified public binary remains v0.5.1.
 > [Start with the Grok handoff](docs/GROK_HANDOFF.md).
 > A value-of-symbiosis check declines a non-positive exchange before a payload
 > is sent. A content digest cannot verify benefit. Neither result establishes
@@ -256,8 +257,8 @@ three-peer TLS topology, outcome-conditioned exploration and strategy-aware
 backup/migration. The runtime can also score a proposed exchange against an
 equal-query isolated control and refuse to call quarantine a benefit. These are
 focused engineering checks. Query-transfer protocol 001 remains
-`NOT_DEMONSTRATED`. The source-frozen one-hour campaign remains HOLD. Neither
-is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
+`NOT_DEMONSTRATED`. The fresh one-host hour passed; the cancelled 71/120
+attempt remains HOLD. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
 is preregistered and has not been run.
 
 [Native architecture](docs/NATIVE_ARCHITECTURE.md) ·

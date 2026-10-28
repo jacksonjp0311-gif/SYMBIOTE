@@ -80,8 +80,18 @@ registration digest is
 The user requested a clean stop at 71/120 cycles, after 2,133.187 seconds.
 The installed cancellation handler stopped the owned process tree; cleanup was
 verified, source/binary pins remained unchanged, and the result is HOLD. This
-is not an hour qualification. Preserve it and use a new registration/state for
-a future full campaign.
+is not an hour qualification. Preserve it. Do not resume or regrade it.
+
+A later registration on source `31b9418789db067f405738ed06f9a39d9463794c`
+completed separately. Its registration digest is
+`97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`.
+The consumer result is `PASS_LOCAL_HOUR`: 120 cycles, measurement elapsed
+3,601,880 ms, two retained models, campaign report SHA256
+`fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`,
+native continuity report SHA256
+`d29db5077d8d15f0fdf57ccc340ea4df6cd741049a0024e9bf8650c7c7db9886`.
+`scientific_samples` is 0. This does not close two-host deployment or public
+v1 delivery.
 
 Independent two-host deployment remains **OPEN_UNAVAILABLE** under the accepted
 single-PC scope. A passing local campaign cannot close it. Power-loss durability,

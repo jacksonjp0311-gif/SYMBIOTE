@@ -30,8 +30,8 @@ then passed Ubuntu, Windows and macOS, including `tools/verify.py`. Run
 `40545912958` remains the record for `4da99383` only. A later documentation
 commit is not covered by `40557119693`.
 
-What is incomplete: the hour campaign, independent two-host deployment, public
-v1 assets, and any reciprocal-efficiency gain. Protocol 002 is preregistered
+What is incomplete: independent two-host deployment, public v1 assets, and any
+reciprocal-efficiency gain. The fresh one-host hour is recorded below. Protocol 002 is preregistered
 and not run. The configured `run` path now plans a value decision before
 `candidate.submit`. Full-fixture affine and graph transfers are deferred, so
 those episodes send no contribution payload. `partner_benefits_verified`
@@ -53,16 +53,15 @@ place to test that. It is not a license to rerun protocol 001.
 
 Highest-value next work, in order:
 
-1. Run the fresh source-frozen hour campaign on a commit whose software gate
-   has passed, with a new registration. Do not resume the cancelled run.
-   Python is not installed on this PC, so `tools/soak_campaign.py` cannot be
-   executed here. Do not shorten the campaign and call it the hour gate.
+1. Verify and publish the public v1 engine only after the release assets,
+   installation, checksums, and supported platform scope pass. Two-host
+   qualification stays **OPEN_UNAVAILABLE**.
 2. Execute protocol 002 only after a registration pin. Report a negative net
    as negative. Its receipt predicate now names
    `symbiote.reciprocal-evaluation/2`. Status remains `NOT_RUN`.
-3. Publish stable v1 only after the declared software gates pass. Two-host
-   qualification stays **OPEN_UNAVAILABLE**. Do not claim reciprocal-efficiency
-   superiority from the receipt predicate or the width-3 mechanism check.
+3. Do not claim reciprocal-efficiency superiority from the receipt predicate,
+   the width-3 mechanism check, or the hour campaign. The hour has
+   `scientific_samples` 0.
 
 ## Start here
 
@@ -112,8 +111,26 @@ before cancellation. This partial run is not an hour PASS.
 
 Report SHA256: `73dd0319d24e16352a92b557ef65b259773101f7696cc1ec381387e062bcd1d3`.
 Raw events SHA256: `8770a927791f9f190a533d30400ccea7b10c6c89f716f6851aad2fef94cac4e6`.
-Do not resume/regrade this attempt. A future full campaign needs fresh state,
-registration, external digest and a clean source freeze.
+Do not resume or regrade this attempt.
+
+## Fresh one-host hour
+
+A separate registration on source `31b9418789db067f405738ed06f9a39d9463794c`
+finished **PASS_LOCAL_HOUR**. It does not change the cancelled attempt above.
+One PC, 120 cycles, measurement elapsed 3,601,880 ms from the main listener
+readiness event at 571 ms. Both owners retained two models. Ten service starts
+and ten owned stops were recorded. The unreviewed peer command was rejected.
+Source-watch failures were empty. `scientific_samples` is 0.
+`independent_host_validation` remains **OPEN_UNAVAILABLE**.
+
+Registration SHA256: `97af2bda0bae10a4eecfdabb41507f5448ed3e58a802d05c201224738b4861ca`.
+Campaign report SHA256: `fa582756fe0055ed876d093055a8e03baa0a332ceca58faa82d37e862c96de72`.
+Native continuity report SHA256: `d29db5077d8d15f0fdf57ccc340ea4df6cd741049a0024e9bf8650c7c7db9886`.
+Raw events SHA256: `c13a4e0ffa3d83b5af19e31377db4141253608e502633ebdc4d18cb253ebc623`.
+Native binary SHA256:
+`74e8de55fb10dd87f63a59c067d26d05780ebfcdacf13d6dfa1551ad5f79b761`.
+Evidence remains at `%TEMP%\sh-31b9418`. It contains private owner material and
+must not be committed.
 
 ## Current release-development changes
 
