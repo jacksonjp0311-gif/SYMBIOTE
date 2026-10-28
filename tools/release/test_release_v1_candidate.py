@@ -103,7 +103,7 @@ class OfflineDraftTests(unittest.TestCase):
 
     def test_four_synthetic_native_header_shapes_and_flat_zip_contract(self):
         with tempfile.TemporaryDirectory(prefix="rv-static-") as directory:
-            root = Path(directory)
+            root = Path(directory).resolve(strict=True)
             for target, (kind, machine, binary_name) in module.TARGETS.items():
                 data = bytearray(80)
                 if kind == "pe":
@@ -127,7 +127,7 @@ class OfflineDraftTests(unittest.TestCase):
 
     def test_checksum_sets_and_actual_finite_prediction_contract(self):
         with tempfile.TemporaryDirectory(prefix="rv-check-") as directory:
-            root = Path(directory); image = root / "fixture.zip"; image.write_bytes(b"not executed")
+            root = Path(directory).resolve(strict=True); image = root / "fixture.zip"; image.write_bytes(b"not executed")
             checksum = hashlib.sha256(image.read_bytes()).hexdigest()
             path = root / "SHA256SUMS"; path.write_text(checksum + "  fixture.zip\n", encoding="ascii")
             self.assertEqual(module.checksum_manifest(path, {image.name}), {image.name: checksum})
