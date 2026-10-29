@@ -79,7 +79,7 @@ class Fixture:
                 source_commit="a"*40,target=target,binary_sha256=platform["embedding_sha256"]))
         if role=="linux-enospc":
             evidence_json("enospc-native",dict(schema="symbiote.engine-enospc/1",status="PASS_ACTUAL_ENOSPC",source_commit="a"*40,
-                version="1.1.0",test_executable_sha256=subject,raw_errno=28,filesystem_capacity_bytes=1048576,retain_error_kind="storage",reopen_error_kind="hold",
+                version=m.TAG[1:],test_executable_sha256=subject,raw_errno=28,filesystem_capacity_bytes=1048576,retain_error_kind="storage",reopen_error_kind="hold",
                 committed_ledgers_unchanged=True,fill_file_removed=True,native_mount_or_unmount_performed=False))
         if not evidence:evidence_json("raw-fixture",{"controlled":"offline gate, no actual run claimed"})
         if public is not None:
@@ -174,12 +174,103 @@ class OfflinePublicationTests(unittest.TestCase):
         path.write_bytes(m.encode(value));self.assertEqual(m.public_gates(path,m.sha(path),self.f.plan,binding)["release_id"],9)
         value["release_id"]=10;path.write_bytes(m.encode(value))
         with self.assertRaises(m.transport.ReleaseError):m.public_gates(path,m.sha(path),self.f.plan,binding)
+
+    def draft(self):
+        body=Path(self.f.plan["body"]["path"]).read_bytes().decode("utf-8")+"\n\nPublication plan SHA256: "+self.f.pin+"\n"
+        release=dict(id=9,tag_name=m.TAG,target_commitish="a"*40,draft=True,prerelease=True,body=body,assets=[])
+        for item in self.f.assets.values():
+            release["assets"].append(dict(name=item["name"],id=len(release["assets"])+1,size=item["bytes"],digest="sha256:"+item["sha256"]))
+        return release
+
+    def http(self,routes,calls):
+        """Fake HTTP only; exercise the real authenticated route/body guard."""
+        class Connection:
+            def __init__(instance,host,timeout):
+                self.assertEqual(host,"api.github.com");self.assertEqual(timeout,60)
+            def request(instance,method,path,body=None,headers=None):
+                self.assertEqual(headers["Authorization"],"Bearer offline-not-secret")
+                calls.append((method,path));instance.key=(method,path)
+            def getresponse(instance):
+                self.assertIn(instance.key,routes,"unregistered HTTP route; no network permitted")
+                status,value=routes[instance.key]
+                if callable(value):value=value()
+                raw=m.encode(value)
+                return types.SimpleNamespace(status=status,read=lambda maximum:raw[:maximum])
+            def close(instance):pass
+        return mock.patch.object(m.http.client,"HTTPSConnection",Connection)
+
+    def draft_routes(self,release,listed=None):
+        base="/repos/"+m.REPO+"/releases"
+        return {("GET",base+"/tags/"+m.TAG):(404,{"message":"Not Found"}),
+                ("GET",base+"?per_page=100&page=1"):(200,[dict(id=9,tag_name=m.TAG)] if listed is None else listed),
+                ("GET",base+"/9"):(200,release)}
+
+    def test_real_http_guard_finds_existing_draft_after_tag404_without_post(self):
+        release=self.draft();calls=[]
+        with self.http(self.draft_routes(release),calls):
+            actual=m.find_release(self.f.plan,self.f.assets,release["body"],"offline-not-secret")
+        self.assertEqual(actual,release);self.assertEqual(len(calls),3)
+        self.assertTrue(all(method=="GET" for method,_ in calls))
+
+    def test_draft_absence_requires_complete_unambiguous_owner_listing(self):
+        release=self.draft()
+        variants=[([dict(id=i+1,tag_name="other") for i in range(100)],False),
+                  ([dict(id=9,tag_name=m.TAG),dict(id=10,tag_name=m.TAG)],False),
+                  ({"message":"not a complete listing"},False),([],True)]
+        for listed,absent in variants:
+            calls=[]
+            with self.subTest(absent=absent),self.http(self.draft_routes(release,listed),calls):
+                if absent:self.assertIsNone(m.find_release(self.f.plan,self.f.assets,release["body"],"offline-not-secret"))
+                else:
+                    with self.assertRaises(m.transport.ReleaseError):m.find_release(self.f.plan,self.f.assets,release["body"],"offline-not-secret")
+            self.assertTrue(all(method=="GET" for method,_ in calls))
+
+    def test_known_draft_rejects_foreign_id_source_body_state_or_asset(self):
+        original=self.draft()
+        for key,value in (("id",10),("target_commitish","b"*40),("body","unreviewed"),("draft",False),("prerelease",False)):
+            bad=copy.deepcopy(original);bad[key]=value;calls=[]
+            with self.subTest(key=key),self.http(self.draft_routes(bad),calls):
+                with self.assertRaises(m.transport.ReleaseError):m.find_release(self.f.plan,self.f.assets,original["body"],"offline-not-secret")
+            self.assertTrue(all(method=="GET" for method,_ in calls))
+        bad=copy.deepcopy(original);bad["assets"][0]["digest"]="sha256:"+"0"*64
+        with self.http(self.draft_routes(bad),[]):
+            with self.assertRaises(m.transport.ReleaseError):m.find_release(self.f.plan,self.f.assets,original["body"],"offline-not-secret")
+
+    def test_complete_existing_draft_stage_uses_final_id_read_and_zero_writes(self):
+        self.f.plan["_plan_sha256"]=self.f.pin;release=self.draft();calls=[]
+        out=self.root/"http-resumed-stage";out.mkdir()
+        with self.http(self.draft_routes(release),calls),mock.patch.object(m.transport,"resolve_tag"),\
+             mock.patch.object(m,"check_run",return_value={"run":{"repository":{"id":777}}}),\
+             mock.patch.object(m,"cryptographic_checks",return_value=[]),mock.patch.object(m.transport,"credential",return_value="offline-not-secret"),\
+             mock.patch.object(m.transport,"metadata",return_value={"tag_name":m.PREVIOUS}),\
+             mock.patch.object(m.transport,"authenticated",side_effect=AssertionError("no upload/PATCH/delete for complete draft")):
+            result=m.operate("stage",self.f.plan,self.f.assets,out)
+        self.assertEqual(result["status"],"PASS_EXACT_DRAFT_STAGED")
+        self.assertEqual(calls[-1],("GET","/repos/"+m.REPO+"/releases/9"))
+        self.assertEqual(sum("/tags/"in path for _,path in calls),1)
+        self.assertTrue(all(method=="GET"for method,_ in calls))
+
+    def test_replaced_upload_id_is_detected_even_with_identical_bytes(self):
+        self.f.plan["_plan_sha256"]=self.f.pin;release=self.draft();calls=[];reads=[0]
+        def id_response():
+            reads[0]+=1;result=copy.deepcopy(release)
+            if reads[0]>1:result["assets"][0]["id"]+=1000
+            return result
+        routes=self.draft_routes(id_response);out=self.root/"changed-upload-id";out.mkdir()
+        with self.http(routes,calls),mock.patch.object(m.transport,"resolve_tag"),\
+             mock.patch.object(m,"check_run",return_value={"run":{"repository":{"id":777}}}),\
+             mock.patch.object(m,"cryptographic_checks",return_value=[]),mock.patch.object(m.transport,"credential",return_value="offline-not-secret"),\
+             mock.patch.object(m.transport,"metadata",return_value={"tag_name":m.PREVIOUS}),\
+             mock.patch.object(m.transport,"authenticated",side_effect=AssertionError("no mutation")):
+            with self.assertRaisesRegex(m.transport.ReleaseError,"upload IDs changed"):m.operate("stage",self.f.plan,self.f.assets,out)
     def test_stage_provisional_final_are_separate_and_public_failure_cannot_promote(self):
         self.f.plan["_plan_sha256"]=self.f.pin
         remote={"release":None,"latest":m.PREVIOUS};mutations=[]
         def release_request(method,suffix,body,token):
             self.assertEqual(token,"offline-not-secret")
-            if method=="GET":return copy.deepcopy(remote["release"])
+            if method=="GET":
+                if suffix=="?per_page=100&page=1":return [] if remote["release"] is None else [copy.deepcopy(remote["release"])]
+                return copy.deepcopy(remote["release"])
             self.assertEqual((method,suffix),("POST",""));self.assertIs(body["draft"],True);self.assertEqual(body["make_latest"],"false")
             remote["release"]=dict(id=9,assets=[],**copy.deepcopy(body));mutations.append(("CREATE",True));return copy.deepcopy(remote["release"])
         def authenticated(url,method,body,token,**kwargs):

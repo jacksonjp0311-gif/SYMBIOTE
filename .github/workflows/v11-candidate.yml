@@ -47,8 +47,8 @@ jobs:
           if not re.fullmatch(r'[0-9a-f]{40}', expected) or expected != sha or sha != os.environ['GITHUB_SHA']:
               raise SystemExit('Selected candidate must be this exact workflow HEAD; no different checkout ref is allowed')
           package = tomllib.loads(Path('Cargo.toml').read_text())['workspace']['package']
-          if package['rust-version'] != '1.98.1' or package['version'] != '1.1.0':
-              raise SystemExit('Candidate must declare v1.1.0 and Rust 1.98.1')
+          if package['rust-version'] != '1.98.1' or package['version'] != '1.1.1':
+              raise SystemExit('Candidate must declare v1.1.1 and Rust 1.98.1')
           if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
               raise SystemExit('Candidate checkout changed')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
@@ -321,7 +321,7 @@ jobs:
           assert report['reopen_error_kind'] == 'hold' and report['committed_ledgers_unchanged'] is True
           assert report['fill_file_removed'] is True and report['native_mount_or_unmount_performed'] is False
           import hashlib, subprocess
-          assert report['source_commit'] == os.environ['SYMBIOTE_SOURCE_COMMIT'] and report['version'] == '1.1.0'
+          assert report['source_commit'] == os.environ['SYMBIOTE_SOURCE_COMMIT'] and report['version'] == '1.1.1'
           # Preserve the exact executed fault-test image without rebuilding or
           # selecting a filename as authority. The receipt's actual image SHA
           # must match one bounded Cargo output before any copy is qualified.

@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.1.1 corrective candidate — 2026-10-29
+
+Fresh qualification and public delivery are pending under the
+[corrective release contract](docs/CORRECTIVE_RELEASE_111.md).
+
+- Preserve the failed v1.1.0 public release, tag, assets and first-attempt run.
+  All four public jobs stopped at a delivery-checker API route guard before
+  any download or native execution. Earlier source, installed-platform and
+  one-hour qualifications remain evidence for their original binaries.
+- Correct public acceptance metadata and owned-draft discovery. Add regressions
+  against the real transport route guard and immutable uploaded asset identities.
+- Admit explicitly pinned pure Cargo JSON streams through the existing raw and
+  decoded credential checks; preserve original evidence bytes and file names.
+- Advance the four crate versions to 1.1.1 without changing their Rust algorithms,
+  embedding interfaces, state schemas, or dependency resolutions.
+
+The v1.1.0 entry below is the historical freeze-time description. It does not
+override the subsequently failed public delivery or claim stable qualification.
+
 ## v1.1.0 candidate — qualified embedding target — 2026-10-29
 
 Qualification and publication are pending in the [current support table](docs/V11_ENGINE_STATUS.md).

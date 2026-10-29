@@ -43,6 +43,8 @@ def load_base():
 base = load_base()
 ORIGINAL_FINGERPRINT = base.fingerprint
 CLASSIFICATIONS = {}
+PURE_CARGO_FORMAT = "cargo-json-stream/1"
+CARGO_REASONS = frozenset({"compiler-artifact", "compiler-message", "build-script-executed", "build-finished"})
 HUMAN_CARGO = re.compile(
     rb"(?:running [0-9]+ tests?|test [A-Za-z0-9_:]+ \.\.\. (?:ok|FAILED|ignored(?:, [A-Za-z0-9 .:;()/_-]{1,200})?)|"
     rb"test result: (?:ok|FAILED)\. [0-9]+ passed; [0-9]+ failed; [0-9]+ ignored; [0-9]+ measured; [0-9]+ filtered out; finished in [0-9.]+s)\Z"
@@ -93,11 +95,61 @@ def scan_json(value, label, depth=0, document_schema=None, location=(), cognitio
 # Keep the qualified raw scanner; extend only exact public consent semantics.
 base.scan_json = scan_json
 
+def cargo_stream_fingerprint(path, item):
+    path = base.plain(path, False)
+    before = base.signature(path)
+    base.need(path.suffix.lower() == ".stdout", "pure Cargo admission requires actual STDOUT suffix")
+    base.need(before[2] <= base.LIMITS["file_bytes"], "Cargo stream exceeds individual byte bound")
+    expected = base.pin(item["sha256"])
+    # Preserve the qualified continuous raw-block scanner and PEM overlap, not
+    # merely per-line scans. Decoded JSON scanning occurs in a second pass.
+    hashed = hashlib.sha256(); count = 0; tail = b""
+    with path.open("rb") as source:
+        while True:
+            block = source.read(base.BLOCK)
+            if not block:
+                break
+            count += len(block)
+            base.need(count <= before[2], "Cargo stream grew during raw scan")
+            hashed.update(block)
+            base.scan_bytes(tail + block, str(path))
+            tail = (tail + block)[-base.PEM_OVERLAP:]
+    base.need(count == before[2] and hashed.hexdigest() == expected and base.signature(path) == before,
+              "Cargo stream raw bytes/pin changed")
+    decoded_hash = hashlib.sha256(); decoded_count = messages = finished = 0; last = None
+    with path.open("rb") as source:
+        while True:
+            line = source.readline(base.LIMITS["json_line_bytes"] + 1)
+            if not line:
+                break
+            decoded_count += len(line); decoded_hash.update(line)
+            base.need(decoded_count <= before[2] and len(line) <= base.LIMITS["json_line_bytes"],
+                      "Cargo stream line or byte scan bound exceeded")
+            if not line.strip():
+                continue
+            line.decode("utf-8", errors="strict")
+            document = base.parse(line)
+            base.need(isinstance(document, dict) and document.get("reason") in CARGO_REASONS,
+                      "not a pure admitted Cargo JSON message")
+            base.need(finished == 0, "Cargo messages appear after build-finished")
+            if document["reason"] == "build-finished":
+                base.need(type(document.get("success")) is bool, "Cargo finish lacks boolean result")
+                finished += 1
+            base.scan_json(document, str(path))
+            messages += 1; last = document["reason"]
+    base.need(messages > 0 and finished == 1 and last == "build-finished", "Cargo final message missing/duplicated")
+    base.need(decoded_count == before[2] and decoded_hash.hexdigest() == expected
+              and base.signature(path) == before, "Cargo stream changed during decoded scan")
+    return dict(bytes=before[2], sha256=expected, signature=before)
+
+
 def classified_fingerprint(path):
     path = base.plain(path, False)
     classification = CLASSIFICATIONS.get(str(path))
     if classification is None:
         return ORIGINAL_FINGERPRINT(path)
+    if classification["format"] == PURE_CARGO_FORMAT:
+        return cargo_stream_fingerprint(path, classification)
     before = base.signature(path)
     base.need(path.suffix.lower() == ".jsonl" and before[2] <= base.LIMITS["file_bytes"],
               "Cargo transcript must be an explicitly pinned bounded JSONL-named file")
@@ -140,8 +192,11 @@ def configure_classifications(items):
     CLASSIFICATIONS = {}
     for item in bounded_list(items, 0, 64, "bounded explicit format classifications required"):
         base.fields(item, ("path", "sha256", "format"))
-        base.need(item["format"] == "cargo-json-and-rust-test-output/1", "unsupported explicit scan format")
+        base.need(item["format"] in {"cargo-json-and-rust-test-output/1", PURE_CARGO_FORMAT},
+                  "unsupported explicit scan format")
         path = base.plain(item["path"], False)
+        if item["format"] == PURE_CARGO_FORMAT:
+            base.need(path.suffix.lower() == ".stdout", "pure Cargo requires STDOUT path")
         base.need(str(path) not in CLASSIFICATIONS, "duplicate format classification")
         base.pin(item["sha256"])
         CLASSIFICATIONS[str(path)] = item

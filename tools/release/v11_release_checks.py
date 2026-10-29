@@ -718,7 +718,7 @@ def selected_install_input(downloads,out,tag,target,bundle_sha256):
 
 
 def public_acceptance(args):
-    require(args.tag=="v1.1.0" and args.target==host_target(),"fixed v1.1.0 matching-host public acceptance required")
+    require(args.tag=="v1.1.1" and args.target==host_target(),"fixed v1.1.1 matching-host public acceptance required")
     pin(args.bundle_sha256);pin(args.plan_sha256);pin(args.gh_sha256)
     require(re.fullmatch(r"[0-9a-f]{40}",args.commit),"full source commit required")
     require(type(args.candidate_run_id) is int and args.candidate_run_id>0,"candidate workflow ID required")
@@ -736,11 +736,13 @@ def public_acceptance(args):
                 public_workflow_run_id=int(public_run),
                 gh_sha256=args.gh_sha256,publisher_helper_sha256=publisher_sha,anonymous_downloads=[])
     try:
-        repository=transport.metadata("/repos/"+REPOSITORY)
+        candidate_run=publisher.check_run(args.candidate_run_id,args.commit,".github/workflows/v11-candidate.yml","workflow_dispatch")
+        repository=candidate_run["run"]["repository"]
+        require(isinstance(repository,dict) and repository.get("full_name")==REPOSITORY
+                and type(repository.get("id")) is int and repository["id"]>0,"validated candidate repository identity differs")
         release=transport.metadata("/repos/"+REPOSITORY+"/releases/tags/"+args.tag)
         require(release["tag_name"]==args.tag and release["draft"] is False,"actual public release required")
         transport.resolve_tag(args.commit)
-        publisher.check_run(args.candidate_run_id,args.commit,".github/workflows/v11-candidate.yml","workflow_dispatch")
         prefix="symbiote-"+args.tag+"-"+args.target
         names=[prefix+suffix for suffix in publisher.SUFFIXES]+["STAGED_SHA256SUMS-"+args.target,"SHA256SUMS"]
         assets={}

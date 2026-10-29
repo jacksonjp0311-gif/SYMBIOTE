@@ -170,3 +170,52 @@ do not silently treat the changed helpers as equal. All other crate Rust/Cargo,
 independent-consumer inputs and task specification still require exact equality.
 This exception precedes any qualification reproduction; it permits no task,
 algorithm, concurrency, timeout or experiment-budget change.
+
+
+## v1.1.1 delivery-compatibility reproduction — prospective amendment
+
+The original B46 primary and the closed `9016624` qualification reproduction are
+preserved. The latter registration is
+`59099a0b7d0bd37f1780f9e99c05c9190f4e9fd3db17d2b906571c67f72559db`
+and report is
+`2e00bc9a22b18a729b99ff5219ea09a59f8f34ab0004454c59ff90df94d2104b`.
+Neither becomes a fresh primary or v1.1.1 result. The v1.1.0 public attempt
+`40893604489` failed before downloading or running SYMBIOTE; release `427964205`
+is flagged FAILED and remains a prerelease, with its tag and 35 assets unchanged.
+
+Before any new reproduction opens, the
+[v1.1.1 corrective contract](CORRECTIVE_RELEASE_111.md) permits **one**
+`delivery-compatibility-reproduction` in fresh owners/output on a clean newly
+frozen source. Its externally pinned build proof and registration must declare
+both preceding source/registration/report/image pins, that these exact targets
+have already been opened, `not_a_new_primary: true`, and `scientific_samples: 0`.
+Pin the unchanged machine specification, source/supervisor helpers, compiler,
+actual consumer executable and all raw per-file equality/difference witnesses
+before registration. The new build-source/version strings are not old-image
+byte equality.
+
+Relative to `9016624`, every production Rust file, transfer and independent
+consumer source, source adapter, task generator and machine task specification
+must remain byte-identical. Delivery helper/workflow/tests/docs may differ as
+reviewed. Only these Cargo values may change from 1.1.0 to 1.1.1: root
+`[workspace.package].version` and the four local `symbiote-*` package versions
+in root and independent-consumer lockfiles. Compare parsed Cargo values after
+normalizing only those named fields; preserve the actual raw old/new digests
+and exact diff. No dependency, feature, checksum, API, algorithm, task, truth,
+control, price, decision threshold, concurrency or experiment-budget change is
+allowed. An unexplained difference holds admission and requires a new reviewed
+protocol; it is not covered by this amendment.
+
+Keep the same two width-eight case pairs, 32 fresh inputs per case/owner,
+horizons 1/16/32, four arms, 600-second/128-MiB supervisor bounds, once-only guard,
+source privacy, freeze/reveal/commit-before-grade ordering, actual owned kill,
+verified-dead recovery, 32 conditional uses, receiver-owned outcome and once-only
+reconciliation. Preserve ordinary work separately from the additional
+repeat-reconciliation control. Retain the full cost vectors and unknowns;
+correctness or persistent reuse cannot mint measured positive economics.
+
+The new result must be labelled delivery-compatibility reproduction of already
+opened tasks, independently audited with its own source/image/registration
+pins, and must not overwrite prior results. Its failure stays HOLD with no
+silent retry or retuning. This amendment authorizes no target execution until
+its final source, build/equivalence proof and registration have been reviewed.

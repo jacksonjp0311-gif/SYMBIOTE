@@ -1,4 +1,18 @@
-# SYMBIOTE v1.1.0: prospective bounded engine contract
+# SYMBIOTE v1.1: bounded engine contract and corrective delivery status
+
+Current delivery status: **v1.1.0 PUBLIC HOLD / FAILED PRERELEASE** after all four
+public checks failed before download in run `40893604489`. Stable remains
+**v1.0.1**. The prospective [v1.1.1 corrective contract](CORRECTIVE_RELEASE_111.md)
+requires a new source/version, four new staged platform images, a fresh hour on
+the actual new Windows image and all four actual public acceptances. Its new
+qualification/delivery gates are **PENDING**. The closed `9016624` engineering
+and hour evidence remains valid for its own source/images, without public
+acceptance or stable-release promotion.
+
+## Original prospective declaration — historical
+
+The declaration below records its original acceptance boundary and baseline;
+its initial TARGET wording is historical, not the current release status.
 
 Status: **TARGET / NOT YET QUALIFIED**. Baseline main is
 `3239f4e13e44c2a3576069445ceb27a40d32220f`; the packaged release is v1.0.1.

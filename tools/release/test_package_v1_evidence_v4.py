@@ -385,5 +385,117 @@ class MembershipInterfaceTests(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ValueError):adapter.scan_json(value,"rejected normal declaration")
 
 
+    def test_pure_cargo_stdout_round_trip_keeps_explicit_format_and_raw_suffix(self):
+        transcript = self.data / "compile.stdout"
+        transcript.write_bytes(b'{"reason":"compiler-artifact","package_id":"owned-unit"}\n{"reason":"build-finished","success":true}\n')
+        config, output = self.config("pure-cargo")
+        with self.assertRaises(json.JSONDecodeError):
+            adapter.make_v1_plan(config)
+        classification = dict(path=str(transcript), sha256=sha(transcript), format=adapter.PURE_CARGO_FORMAT)
+        self.rewrite_config(config, lambda body: body.update(format_classifications=[classification]))
+        result = adapter.package_v1(config, self.plan_pin(config))
+        self.assertEqual(result["status"], "PASS")
+        extracted = output / "x/evidence/synthetic/data/compile.stdout"
+        self.assertEqual(extracted.read_bytes(), transcript.read_bytes())
+        manifest = json.loads((output / "x/MANIFEST.json").read_bytes())
+        self.assertEqual(manifest["format_classifications"], [classification])
+        self.assertEqual(manifest["packager_base"]["sha256"], adapter.BASE_SHA256)
+
+
+def stream(*documents):
+    return b"".join(json.dumps(document, separators=(",", ":")).encode() + b"\n" for document in documents)
+
+
+def valid():
+    return stream({"reason": "compiler-artifact", "package_id": "unit-owned"}, {"reason": "build-finished", "success": True})
+
+
+class PureCargoStreamTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="cargo-format-unit-")
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve(strict=True)
+        self.module = adapter
+        self.path = self.root / "owned.stdout"
+
+    def admit(self, raw, pin=None):
+        self.path.write_bytes(raw)
+        item = dict(path=str(self.path), sha256=pin or hashlib.sha256(raw).hexdigest(), format=adapter.PURE_CARGO_FORMAT)
+        self.module.configure_classifications([item])
+        return self.module.base.fingerprint(self.path)
+
+    def test_actual_pure_jsonl_stdout_is_preserved(self):
+        raw = valid()
+        result = self.admit(raw)
+        self.assertEqual(result["bytes"], len(raw))
+        self.assertEqual(result["sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.path.read_bytes(), raw)
+        self.assertIn(str(self.path), self.module.CLASSIFICATIONS)
+
+    def test_wrong_sha_rejected(self):
+        with self.assertRaisesRegex(ValueError, "pin changed"):
+            self.admit(valid(), "0" * 64)
+
+    def test_malformed_json_rejected(self):
+        with self.assertRaises(ValueError):
+            self.admit(b'{"reason":"compiler-artifact"\n' + valid())
+
+    def test_unknown_reason_and_human_output_rejected(self):
+        for raw in (stream({"reason":"invented"}), valid() + b"running 2 tests\n"):
+            with self.subTest(raw_size=len(raw)), self.assertRaises(ValueError):
+                self.admit(raw)
+
+    def test_decoded_secret_rejected(self):
+        secret = "sk" + "-" + "A" * 36
+        encoded = "".join("\\u%04x" % ord(character) for character in secret)
+        raw = ('{"reason":"compiler-message","message":"' + encoded + '"}\n').encode() + stream({"reason":"build-finished","success":True})
+        with self.assertRaisesRegex(ValueError, "credential pattern"):
+            self.admit(raw)
+
+    def test_continuous_raw_overlap_rejects_cross_block_secret(self):
+        secret = "sk" + "-" + "A" * 36
+        raw = stream({"reason":"compiler-message","message":secret}, {"reason":"build-finished","success":True})
+        with mock.patch.object(self.module.base, "BLOCK", 16):
+            with self.assertRaisesRegex(ValueError, "credential pattern"):
+                self.admit(raw)
+
+    def test_unclassified_original_stdout_still_rejected(self):
+        self.path.write_bytes(valid())
+        self.module.configure_classifications([])
+        with self.assertRaises(json.JSONDecodeError):
+            self.module.base.fingerprint(self.path)
+
+    def test_change_during_decoded_scan_rejected(self):
+        original = self.module.base.scan_json
+        changed = False
+        def mutate(value, *args, **kwargs):
+            nonlocal changed
+            original(value, *args, **kwargs)
+            if not changed:
+                changed = True
+                with self.path.open("ab") as output:
+                    output.write(b" ")
+        with mock.patch.object(self.module.base, "scan_json", side_effect=mutate):
+            with self.assertRaisesRegex(ValueError, "bound exceeded|changed"):
+                self.admit(valid())
+
+    def test_finish_required_unique_and_boolean(self):
+        for raw in (stream({"reason":"compiler-artifact"}), valid() + valid(), stream({"reason":"build-finished","success":1})):
+            with self.subTest(raw_size=len(raw)), self.assertRaises(ValueError):
+                self.admit(raw)
+        result = self.admit(stream({"reason":"build-finished","success":False}))
+        self.assertGreater(result["bytes"], 0)  # Format admission never upgrades a failed build.
+
+    def test_duplicate_keys_and_oversized_line_rejected(self):
+        for raw in (b'{"reason":"build-finished","reason":"compiler-artifact","success":true}\n', valid()):
+            with self.subTest(raw_size=len(raw)):
+                if raw == valid():
+                    with mock.patch.dict(self.module.base.LIMITS, json_line_bytes=16), self.assertRaises(ValueError):
+                        self.admit(raw)
+                else:
+                    with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
+                        self.admit(raw)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -4,7 +4,13 @@ These are version objectives, not automatic capability promises. Later-feature
 prototypes in Genesis do not justify skipping the associated research gates.
 Maintain failed criteria and matched-cost controls for every release.
 
-## Current engineering target: v1.1.0
+## Current engineering target: v1.1.1 corrective delivery
+
+The v1.1.0 public workflow failed before downloading or executing any native
+program. Its tag/assets and original qualification records remain preserved.
+The [corrective contract](CORRECTIVE_RELEASE_111.md) requires a new source freeze,
+four-platform installed checks, a fresh actual-image hour, and first-attempt
+public acceptance. No old result is relabelled as qualification of the new image.
 
 Deliver a qualified, embeddable Rust reasoning-and-learning component within the
 existing four crates. [Current status](V11_ENGINE_STATUS.md) is authoritative for

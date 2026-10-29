@@ -4,10 +4,24 @@ Status: delivery tooling, **not a publication or qualification receipt**. No
 command below has been executed against a live release during its unit tests.
 The prior v1.0.1 release remains latest until the final explicit promotion.
 
+Current corrective target: **v1.1.1**. The preserved v1.1.1 prerelease failed
+public run 40893604489 before any download or native execution and is flagged
+permanently. Its tag and 35 assets are unchanged. The
+[corrective contract](CORRECTIVE_RELEASE_111.md) requires new images and gates;
+its earlier hour is not qualification of a replacement executable.
+
 `tools/release/v11_publish.py` publishes the exact already qualified staged
 bytes. It does not rebuild, execute a native image, create/move a Git tag,
 delete/replace an asset or silently change an existing release's source. Root
-creates the reviewed `v1.1.0` tag separately at the known candidate commit.
+creates the reviewed `v1.1.1` tag separately at the known candidate commit.
+
+The corrective delivery target is **v1.1.1**. The original v1.1.0 public
+attempt, source `9016624350e9dcc506b1d0d1cd82e58cadc38882`, is preserved as a
+failed prerelease after [public workflow 40893604489](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40893604489)
+failed on all four platforms before downloads. Its tag and 35 assets remain
+immutable; it must not be rerun or promoted. The correction requires fresh
+source/platform checks, an actual new staged-image hour and new public acceptance.
+The v1.0.1 stable release remains latest until that succeeds.
 
 ## Stages
 
@@ -34,6 +48,15 @@ and embedding receipts before stable/latest promotion.
 Every mutation preserves the reviewed plan and actual remote metadata in its
 output. Exact existing assets can be resumed; a mismatched asset is a HOLD.
 Failure preserves partial drafts/public bytes and never repairs their history.
+
+An authenticated tag lookup returning 404 does not establish draft absence.
+The publisher reads the fixed repository's owner-visible first page (at most 100
+releases); a full or malformed page is HOLD, not permission to create. A unique
+matching draft is re-read by its actual ID and checked against the exact source,
+body and existing asset digests. Ambiguous, foreign or flagged drafts cannot
+create a replacement. After upload, the known ID and every uploaded asset ID are
+checked directly; the final check does not depend on draft-by-tag lookup.
+
 A failed public candidate must be explicitly flagged and corrected under a new
 version, with no asset replacement or tag movement.
 `flag-failed` independently checks an actual failed/timed-out exact-source
@@ -46,7 +69,7 @@ passing receipt cannot silently turn that failed version into a stable release.
 
 The strict `symbiote.v11-publication-plan/1` object declares:
 
-- Fixed repository `jacksonjp0311-gif/SYMBIOTE`, version `v1.1.0`, full
+- Fixed repository `jacksonjp0311-gif/SYMBIOTE`, version `v1.1.1`, full
   `candidate_commit`, `candidate_run_id` and official `source_ci_run_id`.
 - Actual publisher/transport SHA-256, a pinned absolute GitHub CLI executable
   `{path, bytes, sha256}`, and the locked Cargo digest.

@@ -1,6 +1,15 @@
 # SYMBIOTE: engine evolution handoff
 
-## Current target — v1.1.0 embeddable engine
+## Current target — v1.1.1 corrective delivery
+
+The v1.1.0 public run [40893604489](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40893604489)
+failed its checker before any download or native execution. Its release is
+flagged, remains a prerelease, and retains the original tag and all 35 assets.
+v1.0.1 is still latest stable. Follow the
+[corrective contract](CORRECTIVE_RELEASE_111.md): fix the real metadata guard and
+draft lookup assumptions, keep the Rust engine intact, freeze new source, and
+qualify the new 1.1.1 images. Old source/platform/hour results retain their own
+pins and must not be called qualification of the replacement executable.
 
 Continue the implemented engine; do not rewrite it or add placeholder crates.
 The owner's Stable Engine Evolution Plan is represented by the prospective

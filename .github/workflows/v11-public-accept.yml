@@ -142,7 +142,7 @@ jobs:
         run: >-
           python -B tools/release/v11_release_checks.py public-accept
           --candidate-root candidate --candidate-run-id ${{ inputs.candidate_run_id }}
-          --target ${{ matrix.target }} --tag v1.1.0 --commit ${{ needs.bind.outputs.source }}
+          --target ${{ matrix.target }} --tag v1.1.1 --commit ${{ needs.bind.outputs.source }}
           --bundle-sha256 ${{ inputs[matrix.digest_input] }} --plan-sha256 ${{ inputs.plan_sha256 }}
           --gh "${{ steps.verifier.outputs.path }}" --gh-sha256 ${{ steps.verifier.outputs.sha256 }}
           --out "${{ steps.verifier.outputs.acceptance }}"

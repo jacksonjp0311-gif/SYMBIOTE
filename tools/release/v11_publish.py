@@ -31,7 +31,7 @@ transport = types.ModuleType("symbiote_v11_transport")
 transport.__file__ = str(_transport_path)
 exec(compile(_transport_raw, str(_transport_path), "exec"), transport.__dict__)
 REPO = "jacksonjp0311-gif/SYMBIOTE"
-TAG = "v1.1.0"
+TAG = "v1.1.1"
 PREVIOUS = "v1.0.1"
 WORKFLOW = ".github/workflows/v11-candidate.yml"
 TARGETS = tuple(transport.TARGETS)
@@ -180,7 +180,7 @@ def load_plan(path, expected):
     fields(plan, {"schema", "repository", "version", "candidate_commit", "candidate_run_id", "source_ci_run_id",
                   "publisher_sha256", "transport_sha256", "gh", "cargo_lock_sha256", "assets", "platforms", "gates", "body"})
     need(plan["schema"] == "symbiote.v11-publication-plan/1" and plan["repository"] == REPO and plan["version"] == TAG,
-         "only the reviewed v1.1.0 repository publication is supported")
+         "only the reviewed v1.1.1 repository publication is supported")
     transport.configure_tag(TAG)
     pin(plan["candidate_commit"], 40); integer(plan["candidate_run_id"]); integer(plan["source_ci_run_id"])
     need(sha(Path(__file__)) == pin(plan["publisher_sha256"]) and sha(HERE / "release_v1_candidate.py") == pin(plan["transport_sha256"])
@@ -280,7 +280,9 @@ def cryptographic_checks(plan, assets, out, repository_id):
 
 def authenticated_release(method, suffix, body, token):
     """Narrow new routes; the legacy release transport's allowlist is unchanged."""
-    need((method == "POST" and suffix == "") or (method == "GET" and suffix == "/tags/" + TAG), "unreviewed authenticated release route")
+    read_route = (suffix == "/tags/" + TAG or suffix == "?per_page=100&page=1"
+                  or re.fullmatch(r"/[1-9][0-9]*", suffix) is not None)
+    need((method == "POST" and suffix == "") or (method == "GET" and read_route), "unreviewed authenticated release route")
     if method == "POST":
         fields(body,{"tag_name","target_commitish","name","draft","prerelease","make_latest","body"})
         need(body["tag_name"] == TAG and body["name"] == "SYMBIOTE " + TAG and body["draft"] is True
@@ -306,6 +308,7 @@ def authenticated_release(method, suffix, body, token):
 
 
 def release_assets(release, plan, assets, partial=False):
+    need(isinstance(release,dict), "release metadata is absent or malformed")
     need(release.get("tag_name") == TAG and release.get("target_commitish") == plan["candidate_commit"]
          and type(release.get("id")) is int and release["id"] > 0, "release does not bind exact reviewed tag/source")
     result = {}
@@ -317,6 +320,40 @@ def release_assets(release, plan, assets, partial=False):
         result[name] = item
     need(partial or set(result) == set(assets), "public/staged asset set is incomplete")
     return result
+
+
+def release_by_id(release_id, plan, assets, token, partial=False):
+    """Owner-authenticated read of a known release, never a replacement create."""
+    release_id=integer(release_id)
+    release=authenticated_release("GET","/"+str(release_id),None,token)
+    need(isinstance(release,dict) and release.get("id")==release_id,"known release ID is missing or changed")
+    release_assets(release,plan,assets,partial)
+    return release
+
+
+def find_release(plan, assets, expected_body, token):
+    """A tag404 does not prove draft absence. Read the bounded owner listing.
+
+    A full first page is HOLD rather than an incomplete absence claim. A unique
+    matching draft is re-read by its actual ID, with exact source/body/assets.
+    No ambiguous, foreign-source, flagged or mismatched draft grants a new POST.
+    """
+    release=authenticated_release("GET","/tags/"+TAG,None,token)
+    if release is not None:
+        release_assets(release,plan,assets,True)
+        return release
+    listed=authenticated_release("GET","?per_page=100&page=1",None,token)
+    need(isinstance(listed,list) and len(listed)<100
+         and all(isinstance(item,dict) and isinstance(item.get("tag_name"),str) for item in listed),
+         "complete bounded owner release listing required before draft absence")
+    matches=[item for item in listed if item["tag_name"]==TAG]
+    need(len(matches)<=1,"ambiguous matching drafts; preserve all and resolve explicitly")
+    if not matches:return None
+    release=release_by_id(matches[0].get("id"),plan,assets,token,True)
+    need(release.get("draft") is True and release.get("prerelease") is True
+         and release.get("body")==expected_body,
+         "tag lookup absent but matching release is not this exact resumable draft")
+    return release
 
 
 def latest(tag):
@@ -374,9 +411,9 @@ def operate(mode, plan, assets, out, acceptance=None, acceptance_sha=None, faile
     body=pre_mutation(plan,assets)
     if mode=="verify": return {"status":"PASS_READ_ONLY_PREFLIGHT","crypto":crypto}
     token=transport.credential()
-    release=authenticated_release("GET","/tags/"+TAG,None,token)
-    write_new(out/"initial-release-state.json",encode(release))
     marker=f"\n\nPublication plan SHA256: {plan['_plan_sha256']}\n"
+    release=find_release(plan,assets,body+marker,token)
+    write_new(out/"initial-release-state.json",encode(release))
     if mode=="flag-failed":
         run_id=integer(failed_public_run_id)
         failed=transport.metadata(f"/repos/{REPO}/actions/runs/{run_id}")
@@ -409,6 +446,7 @@ def operate(mode, plan, assets, out, acceptance=None, acceptance_sha=None, faile
             write_new(out/"created-draft.json",encode(release))
         need(release.get("draft") is True and release.get("prerelease") is True and release.get("body")==body+marker,"existing release is not this exact resumable draft")
         current=release_assets(release,plan,assets,True)
+        staged_ids={name:item["id"] for name,item in current.items()}
         for name in sorted(assets):
             if name in current: continue
             item=assets[name]; path=checked_file(item)
@@ -417,9 +455,14 @@ def operate(mode, plan, assets, out, acceptance=None, acceptance_sha=None, faile
                 created=transport.authenticated(f"https://uploads.github.com/repos/{REPO}/releases/{release['id']}/assets?name="+urllib.parse.quote(name),"POST",upload,token,size=item["bytes"])
                 need(upload.count==item["bytes"] and upload.hash.hexdigest()==item["sha256"],"upload stream changed; preserve partial draft")
             need(created.get("name")==name and created.get("digest")=="sha256:"+item["sha256"] and created.get("size")==item["bytes"],"uploaded asset differs; no replacement admitted")
+            staged_ids[name]=integer(created.get("id"))
             write_new(out/("uploaded-"+name+".json"),encode(created))
-        release=authenticated_release("GET","/tags/"+TAG,None,token)
-        release_assets(release,plan,assets);latest(PREVIOUS)
+        release=release_by_id(release["id"],plan,assets,token)
+        need(release.get("draft") is True and release.get("prerelease") is True and release.get("body")==body+marker,
+             "staged known release state/body changed")
+        actual=release_assets(release,plan,assets)
+        need({name:item["id"] for name,item in actual.items()}==staged_ids,"staged upload IDs changed; no replacement permitted")
+        latest(PREVIOUS)
         return {"status":"PASS_EXACT_DRAFT_STAGED","release":release,"crypto":crypto}
     need(release is not None and release.get("body")==body+marker,"release draft/body is not from this exact reviewed plan")
     release_assets(release,plan,assets)
