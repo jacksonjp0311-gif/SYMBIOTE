@@ -136,7 +136,7 @@ study or independent scientific sample. The original primary is not replaced.
 
 Before reproduction, its externally pinned build proof must declare the parent
 registration/report/source, purpose `qualification-reproduction`, and exact
-per-file equality of every `crates/**` Rust/Cargo input, root `Cargo.toml` and
+per-file equality of every production `crates/**` Rust/Cargo input, root `Cargo.toml` and
 `Cargo.lock`, `tests/consumer-engine/**` source/lock/manifest and the task machine
 specification against that primary source. Only release helper/tests, candidate
 workflow, verifier timeout diagnostics/tests and documentation may differ.
@@ -146,3 +146,27 @@ algorithm, task generation, controls, thresholds, 600-second/128-MiB bounds and
 once-only execution guard unchanged. Record new source/image/registration pins
 and independent audit separately. A failed reproduction stays held; no automatic
 retry or target/policy retuning is authorized by this amendment.
+
+### Test-helper exception declared before any qualification reproduction
+
+Source CI on `51571ca` exposed an incomplete readiness-file read in the existing
+memory lifecycle test helper. Startup could panic before constructing its child
+cleanup owner; the child inherited the captured stderr pipe. The test binary
+reported failure in 0.71 seconds, but the command waited until its 300-second
+timeout. Preserve those diagnostics and do not infer that every earlier timing
+anomaly has the same cause.
+
+Only these two test-auxiliary Rust paths may differ from the original primary:
+
+- `crates/symbiote-memory/src/bin/symbiote-memory-crash-fixture.rs`
+- `crates/symbiote-memory/tests/lifecycle.rs`
+
+The correction is limited to readiness publication/parsing, immediate ownership,
+captured diagnostic output, bounded child cleanup and their deterministic
+regressions. Production library/runtime Rust, reasoning, storage formats,
+evaluation, learning and the transfer consumer remain byte-identical. Record both
+original/new helper digests and the exact reviewed diff in the new build proof;
+do not silently treat the changed helpers as equal. All other crate Rust/Cargo,
+independent-consumer inputs and task specification still require exact equality.
+This exception precedes any qualification reproduction; it permits no task,
+algorithm, concurrency, timeout or experiment-budget change.

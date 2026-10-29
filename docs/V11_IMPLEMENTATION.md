@@ -46,6 +46,17 @@ helper now adds a deterministic, content-bound standard UUID; CycloneDX 1.5,
 dependency scope, Rust engine, consumer, lock and task specification are unchanged.
 Native behavior is distinct from successful signing and final public delivery.
 
+The new timeout diagnostics subsequently expose a concrete Mac test-helper race
+on source `51571ca`: lifecycle startup reads an incomplete readiness notice and
+panics before creating its cleanup owner. The test binary reports failure in
+0.71 seconds, yet a child retaining the captured stderr pipe can keep collection
+waiting until the 300-second timeout. The corrective candidate requires atomic
+readiness publication, robust partial-frame parsing, immediate child ownership,
+bounded cleanup and retained failure diagnostics. Only the two named test-helper
+paths may differ under the prospective reproduction exception; production engine
+Rust and all task/budget definitions remain unchanged. This does not diagnose
+the separate Windows response-read timeouts or every historical timing anomaly.
+
 ## Defects found and corrected before candidate freeze
 
 - Local transfer initially used a work-unit label rejected by the existing

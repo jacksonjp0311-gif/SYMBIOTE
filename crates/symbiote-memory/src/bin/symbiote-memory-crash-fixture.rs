@@ -1,13 +1,27 @@
 //! Supervised test fixture, excluded from the distributed SYMBIOTE runtime bundle.
 //! It cannot terminate any process and refuses to start outside explicit test mode.
 use serde_json::json;
-use std::path::PathBuf;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use symbiote_memory::{
     knowledge::{affine_schema_fingerprint, KnowledgeRecord, KnowledgeStore},
     operational::{body_digest, IdempotencyKey, OperationalEvent, OperationalJournal},
     Store,
 };
+
+fn publish_ready(ready: &Path, contents: &[u8]) -> std::io::Result<()> {
+    let staging = ready.with_extension(format!("{}.publishing", std::process::id()));
+    let mut file = std::fs::OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&staging)?;
+    file.write_all(contents)?;
+    file.sync_all()?;
+    drop(file);
+    std::fs::rename(staging, ready)
+}
 
 fn main() {
     if std::env::var("SYMBIOTE_CRASH_FIXTURE").as_deref() != Ok("owned-test-child") {
@@ -22,7 +36,17 @@ fn main() {
     let state = PathBuf::from(&args[0]);
     let ready = PathBuf::from(&args[1]);
     let mode = args[2].as_str();
-    if !["both", "genesis", "knowledge", "staging", "operational"].contains(&mode) {
+    if ![
+        "both",
+        "genesis",
+        "knowledge",
+        "staging",
+        "operational",
+        "partial-ready",
+        "invalid-ready",
+    ]
+    .contains(&mode)
+    {
         eprintln!("invalid fixture mode");
         std::process::exit(2);
     }
@@ -91,8 +115,36 @@ fn main() {
         )
         .expect("test fixture staging file");
     }
-    std::fs::write(ready, format!("{}\n{}\n", std::process::id(), identity))
-        .expect("test fixture readiness");
+    if mode == "partial-ready" {
+        // Explicit regression mode: reproduce the old public partial-marker
+        // window deterministically, without changing normal atomic publication.
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&ready)
+            .expect("partial readiness fixture");
+        writeln!(file, "{}", std::process::id()).expect("partial readiness prefix");
+        file.sync_all().expect("partial readiness sync");
+        drop(file);
+        let deadline = Instant::now() + Duration::from_secs(8);
+        while !ready.with_extension("partial-observed").exists() {
+            assert!(
+                Instant::now() < deadline,
+                "parent did not acknowledge the partial readiness fixture"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+    let suffix = if mode == "invalid-ready" {
+        "extra\n"
+    } else {
+        ""
+    };
+    publish_ready(
+        &ready,
+        format!("{}\n{}\n{suffix}", std::process::id(), identity).as_bytes(),
+    )
+    .expect("atomic test fixture readiness");
     loop {
         std::thread::park();
     }

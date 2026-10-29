@@ -1,5 +1,6 @@
 use serde_json::Value;
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -76,6 +77,10 @@ impl Directory {
 }
 impl Drop for Directory {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            eprintln!("lifecycle failure evidence preserved: {}", self.0.display());
+            return;
+        }
         // Check the resolved absolute target before recursively deleting our
         // owned fixture directory, including on Windows.
         if let (Ok(path), Ok(root)) = (self.0.canonicalize(), std::env::temp_dir().canonicalize()) {
@@ -91,13 +96,129 @@ impl Drop for Directory {
     }
 }
 
-struct Fixture {
+struct OwnedChild {
     child: Child,
+}
+impl OwnedChild {
+    fn id(&self) -> u32 {
+        self.child.id()
+    }
+    fn stop(&mut self) -> std::io::Result<()> {
+        if self.child.try_wait()?.is_some() {
+            return Ok(());
+        }
+        if let Err(error) = self.child.kill() {
+            if self.child.try_wait()?.is_none() {
+                return Err(error);
+            }
+        }
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            if self.child.try_wait()?.is_some() {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    "owned fixture was not reaped within cleanup bound",
+                ));
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+}
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        if let Err(error) = self.stop() {
+            eprintln!(
+                "HOLD: owned lifecycle child {} cleanup not confirmed: {error}",
+                self.id()
+            );
+            if !std::thread::panicking() {
+                panic!("owned lifecycle child cleanup failed");
+            }
+        }
+    }
+}
+#[derive(Debug)]
+struct StartupFailure {
+    pid: Option<u32>,
+    detail: String,
+    cleanup_verified: bool,
+    stderr: PathBuf,
+}
+impl std::fmt::Display for StartupFailure {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{} (owned PID {:?}, cleanup_verified={}, stderr={})",
+            self.detail,
+            self.pid,
+            self.cleanup_verified,
+            self.stderr.display()
+        )
+    }
+}
+fn parse_ready(bytes: &[u8], pid: u32) -> Result<Option<String>, String> {
+    if bytes.len() > 256 {
+        return Err("readiness marker exceeds 256 bytes".into());
+    }
+    if bytes.is_empty() || !bytes.ends_with(b"\n") {
+        return Ok(None);
+    }
+    let text = std::str::from_utf8(bytes).map_err(|_| "readiness marker is not UTF-8")?;
+    let lines = text.lines().collect::<Vec<_>>();
+    if lines.len() < 2 {
+        return Ok(None);
+    }
+    if lines.len() != 2 {
+        return Err("readiness marker needs exactly two complete lines".into());
+    }
+    let recorded = lines[0]
+        .parse::<u32>()
+        .map_err(|_| "readiness PID is malformed")?;
+    if recorded != pid {
+        return Err("readiness PID differs from the owned child".into());
+    }
+    let identity = lines[1];
+    if identity.is_empty()
+        || identity.len() > 128
+        || !identity
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"._:/-".contains(&byte))
+    {
+        return Err("readiness identity is malformed".into());
+    }
+    Ok(Some(identity.into()))
+}
+struct Fixture {
+    child: OwnedChild,
     identity: String,
 }
 impl Fixture {
     fn spawn(directory: &Path, mode: &str) -> Self {
+        Self::try_spawn(directory, mode, |_, _, _| {})
+            .unwrap_or_else(|error| panic!("owned fixture startup failed: {error}"))
+    }
+    fn try_spawn(
+        directory: &Path,
+        mode: &str,
+        mut observed: impl FnMut(u32, &Path, &[u8]),
+    ) -> Result<Self, StartupFailure> {
         let ready = directory.join(format!("ready-{}", NEXT.fetch_add(1, Ordering::Relaxed)));
+        let stderr = ready.with_extension("stderr");
+        let errors = fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&stderr)
+            .map_err(|error| StartupFailure {
+                pid: None,
+                detail: format!("open owned child log: {error}"),
+                cleanup_verified: true,
+                stderr: stderr.clone(),
+            })?;
+        // Ownership exists before any readiness I/O, parsing, callback or panic.
+        // The child has no inherited captured Cargo output pipe to keep open.
         let mut child = Command::new(env!("CARGO_BIN_EXE_symbiote-memory-crash-fixture"))
             .env("SYMBIOTE_CRASH_FIXTURE", "owned-test-child")
             .arg(directory)
@@ -105,40 +226,182 @@ impl Fixture {
             .arg(mode)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::from(errors))
             .spawn()
-            .unwrap();
+            .map(|child| OwnedChild { child })
+            .map_err(|error| StartupFailure {
+                pid: None,
+                detail: format!("spawn owned fixture: {error}"),
+                cleanup_verified: true,
+                stderr: stderr.clone(),
+            })?;
         let deadline = Instant::now() + Duration::from_secs(8);
-        loop {
-            if let Ok(text) = fs::read_to_string(&ready) {
-                let mut lines = text.lines();
-                assert_eq!(lines.next().unwrap().parse::<u32>().unwrap(), child.id());
-                let identity = lines.next().unwrap().to_string();
-                return Self { child, identity };
+        let outcome = (|| loop {
+            match fs::File::open(&ready) {
+                Ok(file) => {
+                    let mut bytes = Vec::new();
+                    file.take(257)
+                        .read_to_end(&mut bytes)
+                        .map_err(|error| format!("read readiness: {error}"))?;
+                    observed(child.id(), &ready, &bytes);
+                    if let Some(identity) = parse_ready(&bytes, child.id())? {
+                        return Ok(identity);
+                    }
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(format!("open readiness: {error}")),
             }
-            if let Some(status) = child.try_wait().unwrap() {
-                panic!("owned fixture exited before ready: {status}");
+            if let Some(status) = child
+                .child
+                .try_wait()
+                .map_err(|error| format!("observe owned fixture: {error}"))?
+            {
+                return Err(format!("owned fixture exited before ready: {status}"));
             }
             if Instant::now() >= deadline {
-                let _ = child.kill();
-                let _ = child.wait();
-                panic!("owned fixture readiness timeout");
+                return Err("owned fixture readiness timeout".into());
             }
             std::thread::sleep(Duration::from_millis(10));
+        })();
+        match outcome {
+            Ok(identity) => Ok(Self { child, identity }),
+            Err(detail) => {
+                let pid = Some(child.id());
+                let cleanup = child.stop();
+                Err(StartupFailure {
+                    pid,
+                    cleanup_verified: cleanup.is_ok(),
+                    detail: match cleanup {
+                        Ok(()) => detail,
+                        Err(error) => format!("{detail}; cleanup failed: {error}"),
+                    },
+                    stderr,
+                })
+            }
         }
     }
     fn crash(&mut self) {
-        self.child.kill().unwrap();
-        self.child.wait().unwrap();
+        self.child
+            .stop()
+            .expect("bounded owned fixture kill and reap");
     }
 }
-impl Drop for Fixture {
-    fn drop(&mut self) {
-        if self.child.try_wait().ok().flatten().is_none() {
-            let _ = self.child.kill();
-            let _ = self.child.wait();
-        }
+
+#[test]
+fn readiness_parser_waits_for_complete_data_and_rejects_invalid_complete_markers() {
+    for bytes in [
+        b"".as_slice(),
+        b"42".as_slice(),
+        b"42\n".as_slice(),
+        b"42\nowner".as_slice(),
+    ] {
+        assert_eq!(parse_ready(bytes, 42).unwrap(), None);
     }
+    assert_eq!(
+        parse_ready(b"42\nowner\n", 42).unwrap(),
+        Some("owner".into())
+    );
+    for bytes in [
+        b"wrong\nowner\n".as_slice(),
+        b"43\nowner\n".as_slice(),
+        b"42\n\n".as_slice(),
+        b"42\nowner\nextra\n".as_slice(),
+        b"\xff\n".as_slice(),
+    ] {
+        assert!(parse_ready(bytes, 42).is_err());
+    }
+    assert!(parse_ready(&[b'x'; 257], 42).is_err());
+}
+
+#[test]
+fn an_actual_partial_ready_child_waits_for_observation_before_atomic_completion() {
+    let directory = Directory::new();
+    let mut saw_partial = false;
+    let mut fixture = Fixture::try_spawn(&directory.0, "partial-ready", |pid, ready, bytes| {
+        if parse_ready(bytes, pid).unwrap().is_none() && !saw_partial {
+            saw_partial = true;
+            fs::write(
+                ready.with_extension("partial-observed"),
+                b"parent observed incomplete marker",
+            )
+            .unwrap();
+        }
+    })
+    .unwrap_or_else(|error| panic!("partial fixture failed: {error}"));
+    assert!(
+        saw_partial,
+        "partial publication must have been read before child completes it"
+    );
+    let original = fs::read(directory.0.join("ledger.jsonl")).unwrap();
+    fixture.crash();
+    assert!(!maintenance::recover(&directory.0).unwrap().ledgers_modified);
+    assert_eq!(
+        fs::read(directory.0.join("ledger.jsonl")).unwrap(),
+        original
+    );
+    assert!(fs::read_dir(&directory.0).unwrap().all(|entry| !entry
+        .unwrap()
+        .file_name()
+        .to_string_lossy()
+        .ends_with(".publishing")));
+}
+
+#[test]
+fn malformed_readiness_and_child_exit_fail_startup_with_confirmed_owned_cleanup() {
+    let directory = Directory::new();
+    let error = Fixture::try_spawn(&directory.0, "invalid-ready", |_, _, _| {})
+        .err()
+        .expect("malformed marker must be rejected");
+    assert!(error.cleanup_verified);
+    let pid = error.pid.expect("actual child PID");
+    let inspection = maintenance::inspect(&directory.0).unwrap();
+    assert!(inspection
+        .locks
+        .iter()
+        .any(|lock| lock.process == Some(pid) && lock.state == maintenance::LockState::Dead));
+    let original = fs::read(directory.0.join("ledger.jsonl")).unwrap();
+    maintenance::recover(&directory.0).unwrap();
+    assert_eq!(
+        fs::read(directory.0.join("ledger.jsonl")).unwrap(),
+        original
+    );
+    let exited = Directory::new();
+    let error = Fixture::try_spawn(&exited.0, "not-an-allowed-mode", |_, _, _| {})
+        .err()
+        .expect("child must exit before readiness");
+    assert!(error.pid.is_some() && error.cleanup_verified);
+    assert!(!exited.0.join("ledger.jsonl").exists());
+    assert!(fs::read_to_string(error.stderr)
+        .unwrap()
+        .contains("invalid fixture mode"));
+}
+
+#[test]
+fn startup_parent_panic_reaps_child_before_any_fixture_is_returned() {
+    let directory = Directory::new();
+    let pid = std::sync::atomic::AtomicU32::new(0);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _fixture = Fixture::try_spawn(&directory.0, "genesis", |child, _, _| {
+            pid.store(child, Ordering::Relaxed);
+            assert!(maintenance::inspect(&directory.0)
+                .unwrap()
+                .locks
+                .iter()
+                .any(|lock| lock.process == Some(child)
+                    && lock.state == maintenance::LockState::Live));
+            panic!("controlled parent startup panic while owned child is live");
+        });
+    }));
+    assert!(result.is_err());
+    let child = pid.load(Ordering::Relaxed);
+    assert!(child > 0);
+    let inspection = maintenance::inspect(&directory.0).unwrap();
+    assert!(inspection
+        .locks
+        .iter()
+        .any(|lock| lock.process == Some(child) && lock.state == maintenance::LockState::Dead));
+    assert!(!maintenance::recover(&directory.0).unwrap().ledgers_modified);
+    drop(Store::open(&directory.0).unwrap());
 }
 
 #[test]
