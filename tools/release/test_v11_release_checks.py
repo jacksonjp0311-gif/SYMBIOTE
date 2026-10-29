@@ -135,17 +135,25 @@ class InstalledAcceptanceTests(unittest.TestCase):
     @staticmethod
     def observation():
         return {"schema": "symbiote.observation-demo/1", "status": "PASS", "network_requests": 0, "language_model": False,
-                "predictions": [{"input": value, "prediction": (value & 3).bit_count() % 2} for value in range(8)]}
+                "source":"explicitly owned deterministic three-bit affine observation source",
+                "source_sha256":hashlib.sha256(b"owned-synthetic-affine/3-bit-xor5-bias1/v1").hexdigest(),
+                "artifact":"standalone-active-affine","snapshot":dict(family="boolean-affine/v1",width=3,
+                    physical_certificate_authorized=False,conditional_strategy=dict(kind="affine",width=3,coefficients=5,bias=True)),
+                "predictions": [{"input": value, "prediction": ((value & 5).bit_count() % 2)^1} for value in range(8)]}
 
     def test_actual_owned_finite_domain_checked_not_producer_pass(self):
         report = self.observation()
         m.inspect_prediction(report)
         variants = []
-        altered = copy.deepcopy(report); altered["predictions"][3]["prediction"] = 1; variants.append(altered)
+        altered = copy.deepcopy(report); altered["predictions"][3]["prediction"] ^= 1; variants.append(altered)
         altered = copy.deepcopy(report); altered["predictions"].pop(); variants.append(altered)
         altered = copy.deepcopy(report); altered["predictions"][0]["input"] = False; variants.append(altered)
         altered = copy.deepcopy(report); altered["predictions"][0]["prediction"] = False; variants.append(altered)
         altered = copy.deepcopy(report); altered["network_requests"] = 1; variants.append(altered)
+        altered = copy.deepcopy(report); altered["source_sha256"] = "a"*64; variants.append(altered)
+        altered = copy.deepcopy(report); altered["artifact"] = "different-owner-fixture"; variants.append(altered)
+        altered = copy.deepcopy(report); altered["snapshot"]["physical_certificate_authorized"] = True; variants.append(altered)
+        altered = copy.deepcopy(report); altered["predictions"] = [{"input":value,"prediction":(value&3).bit_count()%2}for value in range(8)]; variants.append(altered)
         for item in variants:
             with self.subTest(item=item), self.assertRaises(ValueError):
                 m.inspect_prediction(item)

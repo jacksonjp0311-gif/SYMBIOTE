@@ -20,11 +20,13 @@ to actual use and outcomes. The native core requires no language model or Python
 [Embed in Rust](docs/ENGINE_EMBEDDING.md) · [Engine CLI](docs/ENGINE_CLI.md) ·
 [Release status](docs/V11_ENGINE_STATUS.md)
 
-> **v1.1.0 candidate: typed, embeddable engine.** This checkout adds a small Rust
+> **v1.1.0: typed, embeddable engine.** This checkout adds a small Rust
 > interface, native `engine` commands, independent consumer, role-aware counters,
 > and exact transfer/use/outcome binding. Candidate qualification and public
-> delivery are tracked in the [current support table](docs/V11_ENGINE_STATUS.md).
-> Until that table records publication, the packaged baseline remains v1.0.1.
+> delivery are tracked in the [current support table](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md).
+> This source snapshot precedes qualification and publication; the
+> [v1.1 release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.0)
+> records the actual downloadable artifacts. v1.0.1 remains a separately pinned historical baseline.
 > Software qualification and scientific advantage have separate gates. General
 > transfer efficiency remains **NOT_DEMONSTRATED**.
 
@@ -34,13 +36,15 @@ to actual use and outcomes. The native core requires no language model or Python
 Download or clone this repository. The release installers select your platform,
 verify the downloaded archive against its SHA256 manifest, and install a standalone
 binary. Release installation does not need Rust, Python, or a model service.
+The commands below install v1.1.0 when its qualified bundles are published;
+before publication, use the source-build instructions below.
 
 **Windows — PowerShell**
 
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v1.0.1 -AddToPath
+.\tools\install.ps1 -Version v1.1.0 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -48,12 +52,12 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v1.0.1
+sh tools/install.sh --version v1.1.0
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
 
-Install the published v1.0.1 native bundle from the exact tag release. Installers require the matching binary bundle on the
+Install a native bundle from its exact tag release. Installers require the matching binary bundle on the
 [release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases). If a bundle
 has not been published for your version or architecture, build from source:
 

@@ -15,6 +15,23 @@ records engineering progress, not a substitute for final candidate receipts.
 | E5–E6 | Keep existing exact prefix/rank improvements; meter full-operation resources without inventing a baseline | No new efficiency advantage claimed; cheaper-certificate research remains open |
 | E7–E8 | Source-CI-gated four-platform staging, installed consumer/native acceptance, compiler/lock/SBOM/provenance and immutable publication tools | Offline tooling tests; final candidate, hour and public acceptance pending |
 
+The original registered E3 primary on `b46ec34` completed in 13.062 seconds with
+`PASS_ENGINEERING_ONLY`; optimized structural controls tie and economics remain
+unknown. Its immutable registration/report pins are recorded in the prospective
+[qualification-reproduction amendment](V11_TRANSFER_PROTOCOL_001.md).
+Staging run `40857485434` then exposed a debug test-image size refusal before the
+Linux full-filesystem fault and a checker using the wrong longstanding legacy
+observation law. Preserve that failed run and its artifacts. The release profile
+and independent fixture expectation are corrected without changing engine Rust,
+consumer, task specification or budgets. Final source requires separately pinned
+qualification; a reproduction uses already opened engineering targets and cannot
+be counted as another primary or scientific sample.
+The same staging run's Intel Mac source gate timed out at the unchanged
+300-second combined compile/test deadline. A separately bounded cold compilation
+probe and preserved timeout output now distinguish compilation from warm test
+execution. This is an explicit CI boundary change, not proof that an older
+unexplained timeout has been fixed. The new phase timings remain pending.
+
 ## Defects found and corrected before candidate freeze
 
 - Local transfer initially used a work-unit label rejected by the existing

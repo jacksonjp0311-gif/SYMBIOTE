@@ -8,9 +8,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TIMEOUT_DIAGNOSTICS = ROOT / "experiments/local/verify-timeouts"
+TIMEOUT_TAIL_BYTES = 32 * 1024
 
 
 def require(condition, description):
@@ -30,20 +33,64 @@ def count_python_tests(output):
     return int(match.group(1))
 
 
+def preserve_timeout(args, failure, elapsed):
+    """Preserve bounded partial tails and original capture hashes; never regrade."""
+    report = dict(schema="symbiote.verifier-timeout/1", status="HOLD_TIMEOUT", argv=[str(x) for x in args],
+                  timeout_seconds=300, elapsed_seconds=elapsed,
+                  scope="partial subprocess capture only; cold compilation versus test execution is not inferred")
+    tails = {}
+    for name, captured in (("stdout", failure.stdout), ("stderr", failure.stderr)):
+        known_bytes = isinstance(captured, bytes)
+        raw = captured if known_bytes else (captured.encode("utf-8") if isinstance(captured, str) else b"")
+        tail = raw[-TIMEOUT_TAIL_BYTES:]
+        tails[name] = tail
+        report[name] = dict(capture_available=captured is not None, captured_bytes=len(raw),
+                            capture_sha256=hashlib.sha256(raw).hexdigest() if captured is not None else None,
+                            hash_basis="original captured bytes" if known_bytes else "UTF-8 reencoding of captured text" if isinstance(captured,str) else "capture unavailable",
+                            original_pipe_bytes_known=known_bytes, tail_bytes=len(tail),
+                            tail_sha256=hashlib.sha256(tail).hexdigest(), tail_file=name+".tail")
+    try:
+        TIMEOUT_DIAGNOSTICS.mkdir(parents=True, exist_ok=True)
+        directory = Path(tempfile.mkdtemp(prefix="timeout-", dir=TIMEOUT_DIAGNOSTICS))
+        for name, tail in tails.items():
+            with (directory / (name+".tail")).open("xb") as output:
+                output.write(tail)
+        report["directory"] = str(directory)
+        with (directory / "timeout.json").open("x", encoding="utf-8", newline="\n") as output:
+            json.dump(report, output, ensure_ascii=False, allow_nan=False, indent=2)
+            output.write("\n")
+    except OSError as error:
+        report["diagnostic_save_error"] = str(error)
+    print("HOLD_VERIFICATION_TIMEOUT " + json.dumps(report, ensure_ascii=False), file=sys.stderr, flush=True)
+    for name, tail in tails.items():
+        if tail:
+            print(f"--- captured {name} tail (at most {TIMEOUT_TAIL_BYTES} bytes; UTF-8 rendering) ---", file=sys.stderr)
+            print(tail.decode("utf-8", errors="replace"), file=sys.stderr, flush=True)
+    return report
+
+
 def execute(args, *, expected=0):
-    result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, encoding="utf-8", capture_output=True, timeout=300)
+    started = time.monotonic()
+    try:
+        result = subprocess.run([str(x) for x in args], cwd=ROOT, text=True, encoding="utf-8", capture_output=True, timeout=300)
+    except subprocess.TimeoutExpired as failure:
+        preserve_timeout(args, failure, time.monotonic() - started)
+        raise
     if result.returncode != expected:
         raise RuntimeError(f"{args[0]} returned {result.returncode}\n{result.stdout}\n{result.stderr}")
     return result
 
 
 def main():
+    global TIMEOUT_DIAGNOSTICS
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-cargo", action="store_true")
     parser.add_argument("--skip-parity", action="store_true")
     parser.add_argument("--output", type=Path, default=ROOT / "experiments/local/genesis-verification.json")
     parser.add_argument("--summary", type=Path, default=ROOT / "experiments/local/software-verification.json")
+    parser.add_argument("--timeout-diagnostics", type=Path, default=TIMEOUT_DIAGNOSTICS)
     args = parser.parse_args()
+    TIMEOUT_DIAGNOSTICS = args.timeout_diagnostics
     native_tests = None
     if not args.skip_cargo:
         for command in [["cargo", "fmt", "--all", "--", "--check"], ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["cargo", "test", "--workspace", "--locked"], ["cargo", "build", "--workspace", "--locked"], ["cargo", "build", "--release", "--locked", "-p", "symbiote-runtime", "--bin", "symbiote"]]:

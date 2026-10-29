@@ -121,9 +121,38 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.13'
+      - name: Measure bounded cold Intel test compilation separately from execution
+        if: matrix.target == 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          python -B - <<'PY'
+          import hashlib, json, types
+          from pathlib import Path
+          source = Path('tools/stability_campaign.py').resolve(strict=True)
+          raw = source.read_bytes()
+          safety = types.ModuleType('intel_cold_compile_supervisor')
+          safety.__file__ = str(source)
+          exec(compile(raw, str(source), 'exec'), safety.__dict__)
+          # Existing process-tree supervisor; this compiler-only diagnostic has
+          # its own declared output ceiling, not a changed native-test budget.
+          output_limit = 16 * 1024 * 1024
+          safety.BOUNDS = dict(safety.BOUNDS, output_bytes_per_process=output_limit)
+          evidence = Path('dist/intel-cold-compile')
+          evidence.mkdir(parents=True, exist_ok=False)
+          command = ['cargo','test','--workspace','--locked','--no-run','--message-format','json']
+          record = safety.execute(command, evidence, 'intel-cold-test-compilation', timeout=300)
+          receipt = {'schema':'symbiote.ci-compile-boundary/1','source_commit':'${{ needs.prepare.outputs.sha }}',
+                     'command':command,'compile_only':True,'profile':'test/debug','command_timeout_seconds':300,
+                     'captured_output_limit_bytes':output_limit,'supervisor_source_sha256':hashlib.sha256(raw).hexdigest(),
+                     'process':record,'scope':'cold test compilation only; subsequent verifier test execution keeps its original 300-second bound'}
+          safety.write_new(evidence/'compile-boundary.json',receipt)
+          print(json.dumps(receipt,indent=2),flush=True)
+          assert source.read_bytes() == raw, 'loaded supervisor source changed'
+          safety.check_exit(record)
+          PY
       - name: Execute additional Intel macOS software gates not covered by source CI
         if: matrix.target == 'x86_64-apple-darwin'
-        run: python -B tools/verify.py
+        run: python -B tools/verify.py --timeout-diagnostics dist/intel-verify-timeouts
       - name: Build documented API reference
         if: matrix.target == 'x86_64-apple-darwin'
         run: cargo doc --workspace --all-features --no-deps --locked
@@ -281,7 +310,7 @@ jobs:
           [[ "$(findmnt -rn --mountpoint "$volume" -o SOURCE)" == symbiote-v11-enospc ]]
           export SYMBIOTE_ENOSPC_ROOT="$volume"
           export SYMBIOTE_ENOSPC_RECEIPT="$evidence/enospc.json"
-          cargo test --locked -p symbiote-runtime --test engine_faults -- --ignored --exact actual_linux_disk_full_preserves_committed_state --nocapture 2>&1 | tee "$evidence/native-test.txt"
+          cargo test --release --locked -p symbiote-runtime --test engine_faults -- --ignored --exact actual_linux_disk_full_preserves_committed_state --nocapture 2>&1 | tee "$evidence/native-test.txt"
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -297,7 +326,7 @@ jobs:
           # selecting a filename as authority. The receipt's actual image SHA
           # must match one bounded Cargo output before any copy is qualified.
           images = []
-          for path in Path('target/debug/deps').glob('engine_faults-*'):
+          for path in Path('target/release/deps').glob('engine_faults-*'):
               if path.is_file() and not path.is_symlink() and path.stat().st_size <= 64*1024*1024:
                   raw = path.read_bytes()
                   if hashlib.sha256(raw).hexdigest() == report['test_executable_sha256']:
@@ -310,7 +339,7 @@ jobs:
           assert hashlib.sha256(original.read_bytes()).hexdigest() == report['test_executable_sha256']
           context = {'schema':'symbiote.enospc-source-context/1','source_commit':os.environ['SYMBIOTE_SOURCE_COMMIT'],
                      'workflow_run_id':os.environ['GITHUB_RUN_ID'],'workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
-                     'compiler_verbose':subprocess.check_output(['rustc','-vV'],text=True),
+                     'compiler_verbose':subprocess.check_output(['rustc','-vV'],text=True),'build_profile':'release',
                      'test_executable_original':str(original.resolve(strict=True)),
                      'test_executable_copy':'executables/engine-faults','test_executable_sha256':report['test_executable_sha256'],
                      'receipt_sha256':hashlib.sha256(Path(os.environ['SYMBIOTE_ENOSPC_RECEIPT']).read_bytes()).hexdigest(),

@@ -298,11 +298,22 @@ def metadata(args):
 def inspect_prediction(report):
     require(report["schema"] == "symbiote.observation-demo/1" and report["status"] == "PASS"
             and report["network_requests"] == 0 and report["language_model"] is False, "observation proof schema/status")
+    # This is the immutable owned legacy fixture in observation_demo.rs, not
+    # the separate new Engine-CLI observation source used below.
+    source_pin=hashlib.sha256(b"owned-synthetic-affine/3-bit-xor5-bias1/v1").hexdigest()
+    need_source=(report["source"]=="explicitly owned deterministic three-bit affine observation source"
+                 and report["source_sha256"]==source_pin and report["artifact"]=="standalone-active-affine")
+    require(need_source,"owned observation source/provenance differs")
+    snapshot=report["snapshot"]
+    require(snapshot["family"]=="boolean-affine/v1" and snapshot["width"]==3
+            and snapshot["physical_certificate_authorized"] is False
+            and snapshot["conditional_strategy"]==dict(kind="affine",width=3,coefficients=5,bias=True),
+            "owned observation conditional model differs")
     predictions = report["predictions"]
     require(len(predictions) == 8 and {item["input"] for item in predictions} == set(range(8)), "complete finite prediction domain")
     for item in predictions:
         require(type(item["input"]) is int and type(item["prediction"]) is int
-                and item["prediction"] == ((item["input"] & 3).bit_count() % 2), "owned observation prediction differs")
+                and item["prediction"] == (((item["input"] & 5).bit_count() % 2) ^ 1), "owned observation prediction differs")
 
 
 def verify_export(root, filename, schema, native_sha, driver_sha):

@@ -96,3 +96,47 @@ replacement success report. Smoke uses unrelated parameters and is not this
 study. A corrected candidate requires distinct immutable pins and visible
 qualification. Completed evidence is never rewritten. Independent-host operation
 and power-loss durability are not tested.
+
+## Qualification reproduction amendment — after the closed primary
+
+The original primary ran once on source
+`b46ec345cd83d07a923024501868f482b72b791f`, registration SHA256
+`a075416dcafa97dc11b17a58fb62726737bb7be122e154b8daed4ac459f428ef`,
+and report SHA256
+`09128d06b29db74c88eb5e6998ace034999eaf57a19c44f629407cc8219886ab`.
+It completed in 13.062 seconds with `PASS_ENGINEERING_ONLY`. Its original
+source, registration, protocol bytes, report and raw evidence remain unchanged.
+
+The subsequent staged release gates exposed delivery-test setup defects: a debug
+fault-test image exceeded its unchanged 64 MiB image bound, and the installed
+legacy observation checker used a different affine law from the longstanding
+owned fixture. Corrections select the release-profile fault-test image and bind
+the checker to the fixture's actual, independently declared xor5/bias1 law.
+Neither correction changes the Rust engine, inference, evaluation or learning
+consumer. All original safety and experiment budgets remain in force.
+The same staging run's Intel Mac source test exceeded its original combined
+300-second compile/test deadline without preserving captured output. The new
+pipeline measures cold test compilation separately under an explicit 300-second
+bound, then retains the existing verifier's 300-second command bounds. Captured
+timeout tails, original capture hashes and phase timings are preserved. This
+declares separate CI compilation/execution boundaries; it does not claim the
+earlier timeout or historical 37-minute anomaly has been explained or repaired.
+
+For a final source containing only these delivery-tool/workflow corrections and
+documentation, one explicitly labelled **qualification reproduction** may execute
+the same engineering workload in fresh private owners/output directories. These
+targets have already been opened; this is not a new primary, unfamiliar-task
+study or independent scientific sample. The original primary is not replaced.
+
+Before reproduction, its externally pinned build proof must declare the parent
+registration/report/source, purpose `qualification-reproduction`, and exact
+per-file equality of every `crates/**` Rust/Cargo input, root `Cargo.toml` and
+`Cargo.lock`, `tests/consumer-engine/**` source/lock/manifest and the task machine
+specification against that primary source. Only release helper/tests, candidate
+workflow, verifier timeout diagnostics/tests and documentation may differ.
+Verify this equality before admission;
+otherwise hold and design a separately reviewed new protocol. Keep compiler,
+algorithm, task generation, controls, thresholds, 600-second/128-MiB bounds and
+once-only execution guard unchanged. Record new source/image/registration pins
+and independent audit separately. A failed reproduction stays held; no automatic
+retry or target/policy retuning is authorized by this amendment.
