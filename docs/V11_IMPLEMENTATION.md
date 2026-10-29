@@ -10,7 +10,7 @@ records engineering progress, not a substitute for final candidate receipts.
 | E0 | Separate correctness, embedding, recovery, resources, science and delivery contracts; retain four crates | Prospective contract and exact baseline; historical HOLDs unchanged |
 | E1 | Typed Engine lifecycle, authorized individual observations, opaque evaluated candidates, event sink, cancellation, independent consumer and native CLI | Focused lifecycle/isolation/source-off reopen checks; final consumer on each platform pending |
 | E2 | Role-aware committed counters, actual publication/resource accounting, exact local transfer and native causal outcome reconciliation | Fabrication, duplicate, identity, stale ticket, missing use and revoked model checks; registered integration pending |
-| E3 | Separate public-API consumer and controller for actual restart, frozen fresh tasks, isolated/cache/equal-resource controls and once reconciliation | Prospective protocol; one disjoint generic development fixture completed; primary not yet opened |
+| E3 | Separate public-API consumer and controller for actual restart, frozen fresh tasks, isolated/cache/equal-resource controls and once reconciliation | Original b46 primary passes with independent data audits; final-source qualification reproduction pending |
 | E4 | Owned-process fault matrix, explicit stale-lock recovery, exact live-ledger guards, engine-writer admission and prevalidated restore | Development fault tests and actual old public Windows writer probe; Linux ENOSPC and final hour pending |
 | E5–E6 | Keep existing exact prefix/rank improvements; meter full-operation resources without inventing a baseline | No new efficiency advantage claimed; cheaper-certificate research remains open |
 | E7–E8 | Source-CI-gated four-platform staging, installed consumer/native acceptance, compiler/lock/SBOM/provenance and immutable publication tools | Offline tooling tests; final candidate, hour and public acceptance pending |
@@ -30,7 +30,21 @@ The same staging run's Intel Mac source gate timed out at the unchanged
 300-second combined compile/test deadline. A separately bounded cold compilation
 probe and preserved timeout output now distinguish compilation from warm test
 execution. This is an explicit CI boundary change, not proof that an older
-unexplained timeout has been fixed. The new phase timings remain pending.
+unexplained timeout has been fixed. Source `6689822` records 249 seconds of cold
+Intel compilation, followed by a passing separately bounded source verifier.
+These phase measurements do not diagnose the historical 37-minute event.
+
+Source CI `40860247104` attempt 1 also records two Windows 500-ms response-read
+timeouts in legacy fixtures. One explicitly declared full same-source repeat
+passes all four jobs on attempt 2. No Rust, test concurrency or runtime limit
+changed. Preserve the initial failure; a passing repeat does not diagnose it.
+
+Staging `40862847024` passes the actual Linux ENOSPC fault and installed native /
+independent-consumer behavior on Windows, Linux and Apple Silicon before the
+pinned signing action rejects an absent CycloneDX `serialNumber`. The release
+helper now adds a deterministic, content-bound standard UUID; CycloneDX 1.5,
+dependency scope, Rust engine, consumer, lock and task specification are unchanged.
+Native behavior is distinct from successful signing and final public delivery.
 
 ## Defects found and corrected before candidate freeze
 

@@ -121,6 +121,12 @@ bound, then retains the existing verifier's 300-second command bounds. Captured
 timeout tails, original capture hashes and phase timings are preserved. This
 declares separate CI compilation/execution boundaries; it does not claim the
 earlier timeout or historical 37-minute anomaly has been explained or repaired.
+Staging source `6689822` subsequently passed the actual Linux full-filesystem
+fault and installed behavior on Windows, Linux and Apple Silicon, then the
+pinned signing action refused a missing CycloneDX `serialNumber`. The correction
+adds a standard content-bound UUID identifier to release metadata; it changes
+neither the inventory's declared scope nor engine behavior. This delivery-only
+correction is covered by the same reproduction/equivalence conditions below.
 
 For a final source containing only these delivery-tool/workflow corrections and
 documentation, one explicitly labelled **qualification reproduction** may execute

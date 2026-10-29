@@ -11,6 +11,7 @@ from unittest import mock
 import importlib.util
 import marshal
 import struct
+import uuid
 
 SOURCE = Path(__file__).with_name("v11_release_checks.py")
 m = types.ModuleType("v11_release_fixture")
@@ -37,6 +38,32 @@ def cargo_fixture():
 
 
 class MetadataBoundaryTests(unittest.TestCase):
+    def test_sbom_serial_satisfies_pinned_attestation_consumer_and_is_content_stable(self):
+        # Actual consumer contract, not the emitter's own schema assumption:
+        # https://github.com/actions/attest/blob/1e69f48acb82d1966a394da916b4c1698aa569d6/src/sbom.ts#L48-L58
+        def accepted_by_pinned_consumer(value):
+            return bool(value.get("bomFormat") and value.get("serialNumber") and value.get("specVersion"))
+        metadata,lock=cargo_fixture()
+        bom,_=m.cargo_sbom(metadata,lock,"x86_64-unknown-linux-gnu","b"*64,"c"*40)
+        previous=copy.deepcopy(bom);previous.pop("serialNumber")
+        self.assertFalse(accepted_by_pinned_consumer(previous))
+        self.assertTrue(accepted_by_pinned_consumer(bom))
+        self.assertEqual((bom["bomFormat"],bom["specVersion"]),("CycloneDX","1.5"))
+        serial=uuid.UUID(bom["serialNumber"])
+        self.assertEqual(serial.urn,bom["serialNumber"])
+        self.assertEqual((serial.version,serial.variant),(5,uuid.RFC_4122))
+        reordered=copy.deepcopy(metadata);reordered["packages"].reverse();reordered["resolve"]["nodes"].reverse()
+        self.assertEqual(m.cargo_sbom(reordered,lock,"x86_64-unknown-linux-gnu","b"*64,"c"*40)[0],bom)
+        changed_component=copy.deepcopy(metadata);changed_component["packages"][1]["license"]="Apache-2.0"
+        variants=[(metadata,lock,"aarch64-apple-darwin","b"*64,"c"*40),
+                  (metadata,lock,"x86_64-unknown-linux-gnu","d"*64,"c"*40),
+                  (metadata,lock,"x86_64-unknown-linux-gnu","b"*64,"d"*40),
+                  (metadata,lock+b"\n","x86_64-unknown-linux-gnu","b"*64,"c"*40),
+                  (changed_component,lock,"x86_64-unknown-linux-gnu","b"*64,"c"*40)]
+        changed_serials=[m.cargo_sbom(*arguments)[0]["serialNumber"]for arguments in variants]
+        self.assertNotIn(bom["serialNumber"],changed_serials)
+        self.assertEqual(len(set(changed_serials)),len(variants))
+
     def test_normal_build_closure_excludes_dev_only_packages(self):
         metadata, lock = cargo_fixture()
         bom, features = m.cargo_sbom(metadata, lock, "x86_64-unknown-linux-gnu", "b" * 64, "c" * 40)

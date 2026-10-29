@@ -17,6 +17,7 @@ import sys
 import time
 import tomllib
 import types
+import uuid
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -225,6 +226,11 @@ def cargo_sbom(metadata, lock_bytes, target, binary_sha, source_commit):
            "components": [item for item in components if item is not application],
            "dependencies": [{"ref": identities[identity], "dependsOn": sorted(identities[dep] for dep in edges[identity])}
                             for identity in sorted(reached, key=lambda value: identities[value])]}
+    # The pinned actions/attest SBOM consumer requires a serialNumber even
+    # though the CycloneDX 1.5 schema permits its omission. Derive its UUID from
+    # this exact canonical content before adding the identifier itself.
+    content_sha=hashlib.sha256(canonical(bom)).hexdigest()
+    bom["serialNumber"]=uuid.uuid5(uuid.NAMESPACE_URL,"https://github.com/"+REPOSITORY+"/sbom/v1/"+content_sha).urn
     return bom, sorted(nodes[root]["features"])
 
 
