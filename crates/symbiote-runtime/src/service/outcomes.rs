@@ -3,6 +3,7 @@
 //! explicit assumption. Retained-case use is not unanswered-task generalization.
 use super::*;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use symbiote_memory::knowledge::{KnowledgeAnchor, KnowledgeRecord};
 use symbiote_memory::operational::PartnerDecisionRecord;
 use symbiote_memory::witness::LedgerWitness;
@@ -1221,6 +1222,62 @@ pub(super) fn reconcile(
     }
     Ok(if old { None } else { Some(capability) })
 }
+pub(super) struct CounterCredits {
+    pub new_completed: usize,
+    pub new_capability: usize,
+    pub new_measured: usize,
+    pub history_completed: usize,
+}
+/// Preserve committed reconciliations; current remote state after the reply is
+/// deliberately not inferred. Revalidate complete native witnesses, not flags.
+pub(super) fn counter_credits(state: &State, start: usize) -> Result<CounterCredits, String> {
+    if start > state.journal.events().len() {
+        return Err("counter outcome start is unavailable".into());
+    }
+    let mut policy = lifecycle::initial_policy(&state.config, &state.journal)?;
+    let mut history = BTreeSet::new();
+    let mut fresh = BTreeSet::new();
+    let mut capability = BTreeSet::new();
+    let mut measured = BTreeSet::new();
+    for (i, event) in state.journal.events().iter().enumerate() {
+        if let Some(Event::Reconciled {
+            credit_key,
+            capability_verified,
+            cost_benefit_verified,
+            ..
+        }) = decode(event)?
+        {
+            validate_event(
+                &policy,
+                event,
+                &state.journal.events()[..i],
+                &state.knowledge,
+            )?;
+            if !history.insert(credit_key.clone()) {
+                return Err("duplicate promotion credit in outcome counter".into());
+            }
+            if i >= start {
+                fresh.insert(credit_key.clone());
+                if capability_verified {
+                    capability.insert(credit_key.clone());
+                }
+                if cost_benefit_verified {
+                    measured.insert(credit_key);
+                }
+            }
+        }
+        if let OperationalEvent::PolicyTransitioned { policy: next, .. } = event {
+            policy = Config::historical(next)?;
+        }
+    }
+    Ok(CounterCredits {
+        new_completed: fresh.len(),
+        new_capability: capability.len(),
+        new_measured: measured.len(),
+        history_completed: history.len(),
+    })
+}
+
 pub(super) fn already_sent(
     state: &State,
     peer: &str,
@@ -1477,6 +1534,170 @@ mod tests {
             &"44".repeat(32)
         )
         .is_err());
+    }
+
+    #[test]
+    fn role_counters_reconcile_duplicate_supersession_revocation_and_restart() {
+        use super::super::cognitive::counters::{Counters, Role};
+        let mut f = Fixture::new(false);
+        let state = f.state.as_mut().unwrap();
+        let mut counters = Counters::begin(state).unwrap();
+        let before = counters.capture(state).unwrap();
+        assert_eq!(process_pending(state, &f.permit).unwrap(), 1);
+        counters
+            .checkpoint(state, &before, Role::ReceiverRole, None)
+            .unwrap();
+        let first = counters.finish(state).unwrap();
+        assert_eq!(
+            first["promotions"],
+            json!({"ordinary_learning":0,"receiver_role":1,"total_new":1})
+        );
+        assert_eq!(first["completed_outcomes"]["receiver_role"], 1);
+        assert_eq!(first["capability_outcomes"]["receiver_role"], 1);
+        assert_eq!(
+            first["current_active_local"]["capability_outcomes"]["receiver_role"],
+            1
+        );
+        assert_eq!(first["measured_benefits"]["total"], 0);
+        assert_eq!(
+            first,
+            counters.finish(state).unwrap(),
+            "read must not create credit"
+        );
+        let fixture = state.config.contexts[0]
+            .truth_fixture
+            .as_ref()
+            .unwrap()
+            .clone();
+        let fixture_bytes = fs::read(&fixture).unwrap();
+        let mut changed = fixture_bytes.clone();
+        changed.push(b' ');
+        fs::write(&fixture, changed).unwrap();
+        let changed = counters.finish(state).unwrap();
+        assert_eq!(changed["completed_outcomes"]["receiver_role"], 1);
+        assert_eq!(
+            changed["current_active_local"]["capability_outcomes"]["total"], 0,
+            "changed evaluator bytes cannot verify current membership"
+        );
+        fs::write(fixture, fixture_bytes).unwrap();
+        let mut duplicate = f.request.clone();
+        duplicate.request_id = "duplicate-payload".into();
+        state.submit("sender", &duplicate).unwrap();
+        let before = counters.capture(state).unwrap();
+        assert_eq!(process_pending(state, &f.permit).unwrap(), 0);
+        counters
+            .checkpoint(state, &before, Role::ReceiverRole, None)
+            .unwrap();
+        let reused = counters.finish(state).unwrap();
+        assert_eq!(reused["promotions"]["total_new"], 1);
+        assert_eq!(reused["reused_records"]["receiver_role"], 1);
+        assert_eq!(reused["completed_outcomes"]["receiver_role"], 2);
+        assert_eq!(reused["capability_outcomes"]["receiver_role"], 1);
+        // An actually committed new version is a promotion event, not evidence
+        // that the identical payload acquired another verified capability.
+        let before = counters.capture(state).unwrap();
+        let mut replacement = state.knowledge.active().pop().unwrap();
+        let (_, evidence) = state
+            .knowledge
+            .promotion_evidence_between(
+                &replacement,
+                &serde_json::from_value::<KnowledgeAnchor>(
+                    first["initial_knowledge_anchor"].clone(),
+                )
+                .unwrap(),
+                &state.knowledge.history_anchor(),
+            )
+            .unwrap();
+        replacement.revision += 1;
+        replacement.provenance = "controlled native supersession fixture".into();
+        let mut evidence: symbiote_memory::knowledge::TrialEvidence =
+            serde_json::from_value(evidence).unwrap();
+        for case in &mut evidence.cases {
+            case.baseline = Some(case.candidate);
+        }
+        // Controlled assessment fixture permits a same-payload version change;
+        // no feedback measurement or engine cost-benefit credit is created.
+        evidence.costs.baseline = evidence.costs.candidate + 1;
+        state
+            .knowledge
+            .promote(
+                replacement.clone(),
+                symbiote_memory::knowledge::assess(&replacement, &evidence).unwrap(),
+            )
+            .unwrap();
+        counters
+            .checkpoint(state, &before, Role::OrdinaryLearning, None)
+            .unwrap();
+        let superseded = counters.finish(state).unwrap();
+        assert_eq!(
+            superseded["promotions"],
+            json!({"ordinary_learning":1,"receiver_role":1,"total_new":2})
+        );
+        assert_eq!(superseded["capability_outcomes"]["receiver_role"], 1);
+        assert_eq!(
+            superseded["current_active_local"]["capability_outcomes"]["total"],
+            0
+        );
+        let before = counters.capture(state).unwrap();
+        state
+            .knowledge
+            .revoke(&replacement.id, "controlled revocation")
+            .unwrap();
+        counters
+            .checkpoint(state, &before, Role::OrdinaryLearning, None)
+            .unwrap();
+        let revoked = counters.finish(state).unwrap();
+        assert_eq!(revoked["completed_outcomes"]["receiver_role"], 2);
+        assert_eq!(revoked["capability_outcomes"]["receiver_role"], 1);
+        assert_eq!(
+            revoked["current_active_local"]["completed_outcomes"]["total"],
+            0
+        );
+        let reopened = Counters::begin(state).unwrap().finish(state).unwrap();
+        assert_eq!(reopened["promotions"]["total_new"], 0);
+        assert_eq!(reopened["completed_outcomes"]["total"], 0);
+        assert_eq!(
+            reopened["durable_history_completed_outcomes"]["receiver_role"],
+            2
+        );
+    }
+    #[test]
+    fn role_counters_reject_hash_claims_without_native_commits() {
+        use super::super::cognitive::counters::{Counters, Role};
+        let mut f = Fixture::new(false);
+        let state = f.state.as_mut().unwrap();
+        let mut counters = Counters::begin(state).unwrap();
+        let before = counters.capture(state).unwrap();
+        let invented = json!({"status":"REUSED","before":state.knowledge.history_anchor(),"after":state.knowledge.history_anchor(),"queries_performed":0,"record_sha256":"55".repeat(32),"artifact":"invented","scope":f.request.scope});
+        assert!(counters
+            .checkpoint(state, &before, Role::OrdinaryLearning, Some(&invented))
+            .is_err());
+        let before = counters.capture(state).unwrap();
+        process_pending(state, &f.permit).unwrap();
+        let file = state.knowledge.ledger_path();
+        let original = fs::read(&file).unwrap();
+        let mut rows: Vec<Value> = String::from_utf8(original.clone())
+            .unwrap()
+            .lines()
+            .map(|s| serde_json::from_str(s).unwrap())
+            .collect();
+        rows[1]["sha256"] = json!("55".repeat(32));
+        fs::write(
+            &file,
+            rows.iter()
+                .map(|v| serde_json::to_string(v).unwrap() + "\n")
+                .collect::<String>(),
+        )
+        .unwrap();
+        assert!(counters
+            .checkpoint(state, &before, Role::ReceiverRole, None)
+            .is_err());
+        fs::write(file, original).unwrap();
+        let opfile = state.journal.ledger_path();
+        let opbytes = fs::read(&opfile).unwrap();
+        fs::write(&opfile, &opbytes[..opbytes.len() - 1]).unwrap();
+        assert!(counters.finish(state).unwrap_err().contains("truncated"));
+        fs::write(opfile, opbytes).unwrap();
     }
     #[test]
     fn reading_an_outcome_never_evaluates_or_mutates_receiver_state() {

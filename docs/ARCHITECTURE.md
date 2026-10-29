@@ -8,6 +8,14 @@ reuse, and opt-in receiver-owned outcome feedback. Published v1.0.1 remains the
 corrective baseline. The versioned history below records earlier slices and
 does not extend their original evidence to the new implementation.
 
+The v1.1.0 candidate additionally exposes a typed, host-owned
+[embedding engine](ENGINE_EMBEDDING.md), with explicit writer admission, exact
+ledger-derived counters and receiver-handle-bound local exchange. Its
+[architecture boundary](NATIVE_ARCHITECTURE.md#typed-embedding-engine-target),
+[compatibility rules](COMPATIBILITY.md#v110-engine-candidate-boundary) and
+[qualification status](V11_ENGINE_STATUS.md) are separate from the historical
+release descriptions below.
+
 The v0.4 operational system has four crates. The reasoning crate contains exact
 Moore prefix inference, affine version spaces, conservative positive-cost graph
 certificates and a participant-specific value-of-symbiosis decision. The protocol

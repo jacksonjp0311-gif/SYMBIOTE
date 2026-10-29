@@ -1,5 +1,42 @@
 # SYMBIOTE: engine evolution handoff
 
+## Current target — v1.1.0 embeddable engine
+
+Continue the implemented engine; do not rewrite it or add placeholder crates.
+The owner's Stable Engine Evolution Plan is represented by the prospective
+[support contract](V11_ENGINE_SUPPORT_CONTRACT.md). Read the
+[current release-specific table](V11_ENGINE_STATUS.md) and
+[implementation ledger](V11_IMPLEMENTATION.md) first; they distinguish completed
+source work from qualification and public delivery.
+
+The additive `symbiote_runtime::engine` interface, native `engine` commands and
+separate developer workspace are implemented. Use
+[embedding](ENGINE_EMBEDDING.md), [CLI](ENGINE_CLI.md),
+[compatibility](COMPATIBILITY.md), [fault matrix](V11_FAULT_MATRIX.md),
+[registered integration](V11_TRANSFER_PROTOCOL_001.md) and
+[publication](V11_PUBLICATION.md) as the concrete interfaces and gates.
+
+Finish in this order: combined software/docs/consumer checks → clean source
+freeze → once-only registered integration → four-platform installed staging and
+Linux ENOSPC → fresh 60-minute/120-cycle exact staged Windows-image qualification
+→ independent evidence review → provisional immutable publication → four-platform
+anonymous public acceptance → stable promotion. Preserve failed evidence and
+separate source/native/driver/consumer pins. No source rebuild or change during
+the hour, tag movement, asset replacement, hidden retry, invented baseline or
+relabelled efficiency result is allowed.
+
+The new engine owner marker deliberately rejects older/generic writers, including
+the published v1.0.1 executable, before mutation. Unmarked prototype engine stores
+hold without automatic migration. Stop owners before checkpoint/restore; backup
+rollback discards learning acquired after that backup. In-process callbacks are
+cooperative, not safely preemptible. Two-host and power-loss remain unqualified.
+
+Record each completed milestone's source, capability, tests actually run, evidence
+pins, failures and next action. Scientific superiority is **NOT_DEMONSTRATED** and
+is not a blocker for correct, honestly bounded software delivery.
+
+## Historical pre-v1.1 handoff — preserved baseline
+
 The corrective 1.0.1 engine descends from BRUTE and remains a four-crate Rust
 workspace. Continue the existing engine. Its purpose is persistent learning from
 authorized evidence and reciprocal interaction, without a language-model dependency.

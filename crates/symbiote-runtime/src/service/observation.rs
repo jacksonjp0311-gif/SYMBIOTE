@@ -12,7 +12,9 @@ use symbiote_memory::knowledge::{
     affine_schema_fingerprint, assess, KnowledgeRecord, KnowledgeStore, TrialCase, TrialCosts,
     TrialEvidence,
 };
-use symbiote_reasoning::structural::{AffineQueryPolicy, AffineStrategy, CompactAffineLearner};
+use symbiote_reasoning::structural::{
+    AffineQueryPolicy, AffineStatus, AffineStrategy, CompactAffineLearner,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -151,6 +153,53 @@ pub struct Inference {
     pub cases: Vec<TrialCase>,
 }
 
+/// Structured origin of a bounded inference failure. Legacy callers retain
+/// their String signatures; embedding callers never need to parse diagnostics.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum InferenceFailure {
+    Malformed(String),
+    IncompatibleSchema(String),
+    Uncertain(String),
+    Contradiction(String),
+    BudgetExhausted(String),
+    Cancelled,
+    DeadlineExceeded,
+    Source(String),
+    EventSink(String),
+}
+impl std::fmt::Display for InferenceFailure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Malformed(message)
+            | Self::IncompatibleSchema(message)
+            | Self::Uncertain(message)
+            | Self::Contradiction(message)
+            | Self::BudgetExhausted(message)
+            | Self::Source(message)
+            | Self::EventSink(message) => f.write_str(message),
+            Self::Cancelled | Self::DeadlineExceeded => f.write_str("cancelled:local-observation"),
+        }
+    }
+}
+impl std::error::Error for InferenceFailure {}
+fn inference_check(cancelled: &AtomicBool, deadline: Instant) -> Result<(), InferenceFailure> {
+    if cancelled.load(Ordering::Acquire) {
+        return Err(InferenceFailure::Cancelled);
+    }
+    if Instant::now() >= deadline {
+        return Err(InferenceFailure::DeadlineExceeded);
+    }
+    Ok(())
+}
+fn model_failure(learner: &CompactAffineLearner, message: String) -> InferenceFailure {
+    match learner.status() {
+        AffineStatus::BudgetExhausted => InferenceFailure::BudgetExhausted(message),
+        AffineStatus::Contradicted => InferenceFailure::Contradiction(message),
+        AffineStatus::Supported => InferenceFailure::Uncertain(message),
+    }
+}
+
 /// Run the same bounded active backend used by configured local observation.
 /// The host supplies an already authorized, cooperative source. The result is
 /// inert conditional knowledge and an audit; this function never promotes it,
@@ -186,16 +235,43 @@ pub fn infer_with_policy<S: ObservationSource>(
     query_policy: AffineQueryPolicy,
     mut emit: impl FnMut(&str, Value) -> Result<(), String>,
 ) -> Result<Inference, String> {
-    permit.validate()?;
-    if !(1..=8).contains(&source.width())
-        || usage.queries > permit.max_queries_total
-        || usage.gf2_work >= permit.max_gf2_work_total
-    {
-        return Err(
+    infer_with_policy_typed(
+        source,
+        permit,
+        usage,
+        cancelled,
+        deadline,
+        query_policy,
+        &mut emit,
+    )
+    .map_err(|error| error.to_string())
+}
+
+/// The same exact inference path with structured error origins. Query policy,
+/// source calls, held-out conditions and serialized success receipts are shared
+/// with the legacy adapter; this function grants no source authorization.
+#[allow(clippy::too_many_arguments)]
+pub fn infer_with_policy_typed<S: ObservationSource>(
+    source: &mut S,
+    permit: &ObservationPermit,
+    usage: &mut Usage,
+    cancelled: &AtomicBool,
+    deadline: Instant,
+    query_policy: AffineQueryPolicy,
+    mut emit: impl FnMut(&str, Value) -> Result<(), String>,
+) -> Result<Inference, InferenceFailure> {
+    permit.validate().map_err(InferenceFailure::Malformed)?;
+    if !(1..=8).contains(&source.width()) {
+        return Err(InferenceFailure::IncompatibleSchema(
             "observation adapter width or remaining query/work allowance is invalid".into(),
-        );
+        ));
     }
-    infer_policy(
+    if usage.queries > permit.max_queries_total || usage.gf2_work >= permit.max_gf2_work_total {
+        return Err(InferenceFailure::BudgetExhausted(
+            "observation adapter width or remaining query/work allowance is invalid".into(),
+        ));
+    }
+    infer_policy_typed(
         source,
         permit,
         usage,
@@ -217,7 +293,7 @@ fn infer<S: ObservationSource>(
     deadline: Instant,
     emit: &mut impl FnMut(&str, Value) -> Result<(), String>,
 ) -> Result<Inference, String> {
-    infer_policy(
+    infer_policy_typed(
         source,
         permit,
         usage,
@@ -226,10 +302,11 @@ fn infer<S: ObservationSource>(
         AffineQueryPolicy::Reference,
         emit,
     )
+    .map_err(|error| error.to_string())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn infer_policy<S: ObservationSource>(
+fn infer_policy_typed<S: ObservationSource>(
     source: &mut S,
     permit: &ObservationPermit,
     usage: &mut Usage,
@@ -237,55 +314,69 @@ fn infer_policy<S: ObservationSource>(
     deadline: Instant,
     query_policy: AffineQueryPolicy,
     emit: &mut impl FnMut(&str, Value) -> Result<(), String>,
-) -> Result<Inference, String> {
+) -> Result<Inference, InferenceFailure> {
     let remaining = permit
         .max_gf2_work_total
         .checked_sub(usage.gf2_work)
-        .ok_or("budget:observation-gf2")?;
+        .ok_or_else(|| InferenceFailure::BudgetExhausted("budget:observation-gf2".into()))?;
     let width = source.width();
-    let mut learner = CompactAffineLearner::new(width, remaining)?;
+    let mut learner = CompactAffineLearner::new(width, remaining)
+        .map_err(InferenceFailure::IncompatibleSchema)?;
     let mut queries = Vec::new();
     let result = (|| {
         while learner.identified().is_none() {
-            check(cancelled, deadline)?;
+            inference_check(cancelled, deadline)?;
             let input = {
                 let _timer = super::timing::Timer::start(super::timing::Stage::Compute);
                 learner
-                    .choose_query_with_policy(query_policy)?
-                    .ok_or("exact affine inference has no admissible query")?
+                    .choose_query_with_policy(query_policy)
+                    .map_err(|message| model_failure(&learner, message))?
+                    .ok_or_else(|| {
+                        model_failure(
+                            &learner,
+                            "exact affine inference has no admissible query".into(),
+                        )
+                    })?
             };
             let before = learner.snapshot();
             if usage.queries >= permit.max_queries_total {
-                return Err("budget:local-observation-queries".into());
+                return Err(InferenceFailure::BudgetExhausted(
+                    "budget:local-observation-queries".into(),
+                ));
             }
             // Charge the admitted source invocation even if the adapter fails
             // after performing work. Retrying cannot reclaim a spent allowance.
             usage.queries += 1;
-            let observation = source.observe(input, cancelled, deadline)?;
-            check(cancelled, deadline)?;
+            let returned = source.observe(input, cancelled, deadline);
+            inference_check(cancelled, deadline)?;
+            let observation = returned.map_err(InferenceFailure::Source)?;
             if observation.sequence != queries.len()
                 || observation.input != input
                 || observation.output > 1
             {
-                return Err("observation source returned an invalid query binding".into());
+                return Err(InferenceFailure::Malformed(
+                    "observation source returned an invalid query binding".into(),
+                ));
             }
             queries.push(observation.clone());
             emit(
                 "OBSERVE",
                 json!({"schema":"symbiote.active-observation/1","stage":"training","observation":observation,"reason":"exact balanced support split","before":before}),
-            )?;
+            ).map_err(InferenceFailure::EventSink)?;
             {
                 let _timer = super::timing::Timer::start(super::timing::Stage::Compute);
-                learner.observe(input, observation.output)?;
+                learner
+                    .observe(input, observation.output)
+                    .map_err(|message| model_failure(&learner, message))?;
             }
             emit(
                 "MODEL",
                 json!({"schema":"symbiote.active-inference/1","snapshot":learner.snapshot(),"received_hint_used":false}),
-            )?;
+            ).map_err(InferenceFailure::EventSink)?;
         }
         let model = learner
             .identified()
-            .ok_or("affine model remains uncertain")?;
+            .ok_or_else(|| InferenceFailure::Uncertain("affine model remains uncertain".into()))?;
         let training = queries.len();
         let mut cases = Vec::new();
         for input in 0..(1_u16 << width) {
@@ -298,33 +389,44 @@ fn infer_policy<S: ObservationSource>(
             if cases.len() >= permit.heldout_cases {
                 break;
             }
-            check(cancelled, deadline)?;
+            inference_check(cancelled, deadline)?;
             let prediction = {
                 let _timer = super::timing::Timer::start(super::timing::Stage::Compute);
                 learner
-                    .forecast(input)?
+                    .forecast(input)
+                    .map_err(|message| model_failure(&learner, message))?
                     .answer
-                    .ok_or("inferred model abstained on held-out input")?
+                    .ok_or_else(|| {
+                        model_failure(
+                            &learner,
+                            "inferred model abstained on held-out input".into(),
+                        )
+                    })?
             };
             if usage.queries >= permit.max_queries_total {
-                return Err("budget:local-observation-heldout".into());
+                return Err(InferenceFailure::BudgetExhausted(
+                    "budget:local-observation-heldout".into(),
+                ));
             }
             usage.queries += 1;
-            let observation = source.observe(input, cancelled, deadline)?;
-            check(cancelled, deadline)?;
+            let returned = source.observe(input, cancelled, deadline);
+            inference_check(cancelled, deadline)?;
+            let observation = returned.map_err(InferenceFailure::Source)?;
             if observation.sequence != queries.len()
                 || observation.input != input
                 || observation.output > 1
             {
-                return Err("held-out observation binding rejected".into());
+                return Err(InferenceFailure::Malformed(
+                    "held-out observation binding rejected".into(),
+                ));
             }
             queries.push(observation.clone());
             emit(
                 "VERIFY",
                 json!({"schema":"symbiote.active-observation/1","stage":"heldout","observation":observation,"conditional_prediction":prediction,"physical_certificate_authorized":false}),
-            )?;
+            ).map_err(InferenceFailure::EventSink)?;
             if observation.output != prediction {
-                return Err("observations contradict the declared stationary affine family; no model promoted".into());
+                return Err(InferenceFailure::Contradiction("observations contradict the declared stationary affine family; no model promoted".into()));
             }
             cases.push(TrialCase {
                 id: format!("heldout-{input}"),
@@ -335,24 +437,27 @@ fn infer_policy<S: ObservationSource>(
             });
         }
         if cases.len() != permit.heldout_cases {
-            return Err(
+            return Err(InferenceFailure::Uncertain(
                 "observation domain lacks enough distinct held-out inputs; no model promoted"
                     .into(),
-            );
+            ));
         }
-        check(cancelled, deadline)?;
+        inference_check(cancelled, deadline)?;
         Ok(Inference {
             model,
             queries,
             training,
-            snapshot: serde_json::to_value(learner.snapshot()).map_err(|e| e.to_string())?,
+            snapshot: serde_json::to_value(learner.snapshot())
+                .map_err(|e| InferenceFailure::Malformed(e.to_string()))?,
             cases,
         })
     })();
     usage.gf2_work = usage
         .gf2_work
         .checked_add(learner.snapshot().work_units)
-        .ok_or("observation GF2 usage overflow")?;
+        .ok_or_else(|| {
+            InferenceFailure::BudgetExhausted("observation GF2 usage overflow".into())
+        })?;
     result
 }
 

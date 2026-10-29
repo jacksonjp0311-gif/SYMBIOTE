@@ -4,6 +4,32 @@ These are version objectives, not automatic capability promises. Later-feature
 prototypes in Genesis do not justify skipping the associated research gates.
 Maintain failed criteria and matched-cost controls for every release.
 
+## Current engineering target: v1.1.0
+
+Deliver a qualified, embeddable Rust reasoning-and-learning component within the
+existing four crates. [Current status](V11_ENGINE_STATUS.md) is authoritative for
+this release; the [prospective contract](V11_ENGINE_SUPPORT_CONTRACT.md) preserves
+its declared gates. This is a software support target, separate from the earlier
+research milestones and their historical HOLDs.
+
+| Stage | Concrete exit |
+|---|---|
+| E0 — contract | Pinned baseline, support boundary and prospective tests |
+| E1 — embedding | Independent consumer completes isolated new/open/learn/predict/cancel/close/reopen without CLI assumptions |
+| E2 — evidence | Counters reconcile with unique committed events; forged, duplicate, stale and revoked claims fail |
+| E3 — complete cycle | Exact bilateral artifact transfer, independent evaluation, actual restart, fresh use and once-only outcome reconciliation through ordinary APIs |
+| E4–E6 — reliability and resources | Declared fault outcomes, bounded resource profile and honest complete-cost comparisons; negative science remains negative |
+| E7 — qualification | Clean source, exact compiler/lock, matching platform installed checks, independent consumer and fresh 60-minute/120-cycle final-image campaign |
+| E8 — delivery | Immutable staged bytes, signed origin, complete evidence, anonymous delivered acceptance, then stable promotion |
+
+Next research: declare a new cheaper-certificate or complementary-constraint
+workload before targets open. Measure both participants against optimized
+isolated retention, answer caching and equal resources. Current isolation ties
+and unknown/negative complete costs do not establish reciprocal superiority.
+Two-host validation remains open until another endpoint is authorized.
+
+## Historical research milestones
+
 | Version | Objective | Required next evidence |
 | --- | --- | --- |
 | v0.1 Genesis | Clean BRUTE derivative; native exact reasoning; authorized telemetry; independent vertical slice | Delivered local finite-domain loop, exact parity, persistence, rollback, reciprocal strategy acceptance and honest controls |

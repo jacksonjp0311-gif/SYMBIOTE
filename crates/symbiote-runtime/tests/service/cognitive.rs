@@ -155,6 +155,8 @@ impl CognitiveFixture {
             .stderr(stderr)
             .spawn()
             .unwrap();
+        let pid = process.id();
+        let started = Instant::now();
         let input = process.stdin.take();
         let held_input = if eof {
             drop(input);
@@ -181,6 +183,17 @@ impl CognitiveFixture {
             fs::read_to_string(self.fixture.dir.0.join(format!("{tag}-stderr.txt"))).unwrap(),
             fs::read_to_string(self.fixture.dir.0.join(format!("{tag}-stdout.jsonl"))).unwrap()
         );
+        if std::env::var_os("SYMBIOTE_CANCELLATION_ARTIFACTS").is_some() {
+            fs::write(
+                receipts.join("process-exit.json"),
+                serde_json::to_vec(&json!({"schema":"symbiote.native-test-process-exit/1",
+                    "pid":pid,"exit_code":status.code(),"observed_exited":true,
+                    "owner_input_closed":eof,"elapsed_ms":started.elapsed().as_millis(),
+                    "native_sha256":hash(&fs::read(native_binary()).unwrap())}))
+                .unwrap(),
+            )
+            .unwrap();
+        }
         serde_json::from_slice(&fs::read(receipts.join("summary.json")).unwrap()).unwrap()
     }
     fn events(&self, tag: &str) -> Vec<Value> {
@@ -302,6 +315,7 @@ fn embedded_cognition_honors_host_cancellation_and_releases_the_owner() {
 
 #[test]
 fn native_cognition_rejects_wrong_transfer_and_respects_owner_eof_and_rpc_budget() {
+    let _binary = cognition_binary_override();
     let mut fixture = CognitiveFixture::new(true);
     fixture.policy["contribute"] = json!(false);
     let mut first = ServiceProcess::start(&fixture.fixture);
@@ -323,6 +337,95 @@ fn native_cognition_rejects_wrong_transfer_and_respects_owner_eof_and_rpc_budget
     assert_eq!(bounded["reason"], "budget:global-rpc-or-plaintext");
     first.stop();
     second.stop();
+    retain_cancellation_artifacts(&fixture, &report, &eof, &bounded);
+}
+
+fn retain_cancellation_artifacts(
+    fixture: &CognitiveFixture,
+    first: &Value,
+    eof: &Value,
+    bounded: &Value,
+) {
+    let Some(destination) = std::env::var_os("SYMBIOTE_CANCELLATION_ARTIFACTS") else {
+        return;
+    };
+    let destination = PathBuf::from(destination);
+    assert!(
+        !destination.exists(),
+        "cancellation evidence destination must be fresh"
+    );
+    fs::create_dir(&destination).unwrap();
+    let mut entries = Vec::new();
+    fn copy(source: &Path, destination: &Path, relative: &Path, entries: &mut Vec<Value>) {
+        assert!(!source.symlink_metadata().unwrap().file_type().is_symlink());
+        if source.is_dir() {
+            fs::create_dir_all(destination).unwrap();
+            for entry in fs::read_dir(source).unwrap() {
+                let entry = entry.unwrap();
+                copy(
+                    &entry.path(),
+                    &destination.join(entry.file_name()),
+                    &relative.join(entry.file_name()),
+                    entries,
+                );
+            }
+            return;
+        }
+        let bytes = fs::read(source).unwrap();
+        let text = String::from_utf8_lossy(&bytes);
+        assert!(
+            !text.contains("-----BEGIN PRIVATE KEY-----")
+                && !text.contains("-----BEGIN RSA PRIVATE KEY-----")
+        );
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(destination)
+            .unwrap();
+        file.write_all(&bytes).unwrap();
+        file.sync_all().unwrap();
+        entries.push(json!({"path":relative.to_string_lossy().replace('\\',"/"),"bytes":bytes.len(),"sha256":hash(&bytes)}));
+    }
+    for name in [
+        "actor-state",
+        "server-state",
+        "client-state",
+        "actor.json",
+        "server.json",
+        "client.json",
+        "run-policy.json",
+        "affine-truth.json",
+        "other-affine-truth.json",
+        "graph-truth.json",
+        "ca.pem",
+        "server.pem",
+        "client.pem",
+        "observer.pem",
+        "native-counterexample",
+        "native-eof",
+        "native-rpc-bound",
+        "native-counterexample-stdout.jsonl",
+        "native-counterexample-stderr.txt",
+        "native-eof-stdout.jsonl",
+        "native-eof-stderr.txt",
+        "native-rpc-bound-stdout.jsonl",
+        "native-rpc-bound-stderr.txt",
+    ] {
+        copy(
+            &fixture.fixture.dir.0.join(name),
+            &destination.join(name),
+            Path::new(name),
+            &mut entries,
+        );
+    }
+    let driver = std::env::current_exe().unwrap();
+    fs::write(destination.join("cancellation-artifacts.json"), serde_json::to_vec_pretty(&json!({
+        "schema":"symbiote.native-cancellation-proof/1", "first":first, "eof":eof, "bounded":bounded,
+        "files":entries,"native_sha256":hash(&fs::read(native_binary()).unwrap()),"driver_sha256":hash(&fs::read(driver).unwrap()),
+        "private_keys_copied":false,"scope":"actual installed image owner-EOF and RPC budget; no scientific benefit claim"})).unwrap()).unwrap();
 }
 
 #[test]

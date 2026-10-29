@@ -7,3 +7,6 @@ pub mod reciprocal;
 pub mod service;
 pub mod topology_research;
 pub mod transfer;
+
+/// Typed local embedding lifecycle; explicit caller-owned sources and sinks.
+pub mod engine;

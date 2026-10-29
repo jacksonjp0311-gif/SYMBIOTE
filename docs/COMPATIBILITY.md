@@ -1,5 +1,49 @@
 # Compatibility and release boundary
 
+## v1.1.0 engine candidate boundary
+
+The development target adds a typed embedding façade and a separate engine CLI;
+qualification remains as recorded in [the current status](V11_ENGINE_STATUS.md)
+and [support contract](V11_ENGINE_SUPPORT_CONTRACT.md). Published v1.0.1 remains
+the corrective baseline. The historical release descriptions below retain their
+original evidence and do not qualify new candidate binaries.
+
+New `Engine` owners append `engine_owner_registered` immediately after their
+original identity genesis, declaring namespace `embedding-engine/v1` and
+minimum-writer capability `symbiote-engine-writer/1`. The capability names a
+writer format first introduced in v1.1.0; it is independent of package SemVer.
+The original genesis bytes are preserved. Earlier writers cannot parse the new
+event. Current generic legacy writers also refuse an engine-owned namespace;
+only explicit compatible engine constructors admit it. This does not migrate
+existing legacy owners or make the legacy `observe-demo` command an engine API.
+
+An owned Windows compatibility check used the actual published v1.0.1 executable
+with SHA256 `a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c`.
+With handles closed, its legacy observation command rejected both a new marked
+owner and a checkpoint-restored copy without changing owner files. The current
+development legacy writer also rejected the marked owner. This bounded
+compatibility check is separate from final candidate installation and platform
+qualification; the original public image and historical failing probe remain
+unchanged.
+
+Unmarked prototype engine owners return a typed `Hold`; opening them never
+registers or rewrites them automatically. Read-only maintenance and checkpoint
+validation understand the marker, and restoration preserves it. An older binary
+must not be made compatible by deleting the marker or other rows. For rollback,
+use a separately verified snapshot accepted by the intended older writer, in a
+new destination. That restores the older state and does not retain later learning.
+
+Embedding callers inspect `EngineError.kind` and `committed`, rather than parsing
+diagnostic text. Exact knowledge publication limits map to `BudgetExhausted`,
+invalid evidence to `Contradiction`, changed or missing live knowledge bytes to
+`Hold`, and actual filesystem failures to `Storage`. A failure after a durable
+knowledge commit exposes the committed anchor; a failed notification does not
+undo that commit. Pending or inconsistent histories may require explicit typed
+recovery or remain held. Neither recovery nor checkpoint restoration silently
+repairs unknown bytes or rolls back a completed learning event.
+
+## Historical v1.0.0 and v0.5.1 boundary
+
 Public v1.0.0 adds the [runtime API](RUST_API.md), native cognitive profile events
 and a separate strategy ledger. Its [release audit](V1_RELEASE_AUDIT.md) records
 passing four-platform builds, downloaded bundle integrity, installed Windows

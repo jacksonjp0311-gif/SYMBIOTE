@@ -27,8 +27,8 @@ production-code rewriting. Received data never grants execution authority.
 | Scientific advantage | Reciprocal efficiency requires positive complete measured benefit for each participant against appropriate controls | NOT_DEMONSTRATED; not a software-release blocker |
 | Delivery | Installed exact platform artifacts pass behavior, checksum, provenance and public retrieval checks | v1.0.1 qualified separately; v1.1 pending |
 
-Primary stable embedding support is finite affine Boolean inference at widths
-1–8, exact query policies, conditional prediction, evaluated retention, outcome
+Primary stable embedding support is validated finite affine Boolean learning at
+widths 2–8, exact query policies, conditional prediction, evaluated retention, outcome
 inspection, revocation and stopped-owner verified checkpoint/restore on local
 filesystems. Retain existing bounded graph-certificate and Moore reference APIs
 and their gates. Do not imply a new general graph embedding contract from the
@@ -50,9 +50,10 @@ No crates.io publication is implied.
 
 Domain clarification before qualification: own active inference at width one has
 no input left for disjoint held-out validation after identification and therefore
-returns typed Uncertain. Own validated acquisition supports widths 2–8. A frozen
-received width-one candidate may be checked against its complete two-input domain;
-this does not provide fresh-input generalization at width one.
+returns typed Uncertain. Validated acquisition and incoming-candidate evaluation
+through the new facade support widths 2–8. Width-one facade evaluation also
+returns Uncertain; no separate complete-domain evaluator is claimed. Existing
+lower-level finite-family APIs retain their original documented bounds.
 
 ## E0 — baseline and contract
 

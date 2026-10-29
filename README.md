@@ -6,10 +6,10 @@
 
 **Symbiotic Adaptive Intelligence**
 
-A Rust-native intelligence that reasons from evidence, learns through authorized
-exchange, and returns useful knowledge to its partners. Its identity and validated
-experience persist between runs. No language model or API key is required for the
-local demonstrations.
+A Rust-native reasoning and learning engine that acquires authorized observations,
+constructs exact conditional models, independently evaluates exchanged knowledge,
+and retains validated capabilities across restarts. Its feedback binds decisions
+to actual use and outcomes. The native core requires no language model or Python.
 
 [![Verification](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml/badge.svg)](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/jacksonjp0311-gif/SYMBIOTE)](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases)
@@ -17,24 +17,16 @@ local demonstrations.
 
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
-[Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
+[Embed in Rust](docs/ENGINE_EMBEDDING.md) · [Engine CLI](docs/ENGINE_CLI.md) ·
+[Release status](docs/V11_ENGINE_STATUS.md)
 
-> **Main includes unreleased engine evolution.** Exact prefix reuse, an authorized
-> receiver-outcome channel and optional rank-based observation learning are
-> [documented separately](docs/ENGINE_EVOLUTION_002.md). Build this checkout to
-> use them; the v1.0.1 downloads remain the corrective baseline described below.
-> The [registered engineering run](experiments/engine-evolution-002/README.md)
-> passes: exact hash parity, 128 fresh case/input predictions per structural arm,
-> retained knowledge after restart, and receiver-owned outcome reconciliation.
-> Isolation ties and unknown economic benefits remain explicit.
-
-> **v1.0.1 is a corrective release for a bounded, one-host engine.**
-> Source, native component, 64-cell operational and fresh-hour checks pass.
-> Independent hour review, anonymous public native acceptance and public evidence delivery pass. Corrected verification,
-> observation-driven learning and useful reciprocal contribution do not establish
-> general intelligence or general transfer efficiency. The v1.0.0 tag and its
-> [original audit](docs/V1_RELEASE_AUDIT.md) remain unchanged.
-> [Current evidence and limits](docs/CORRECTIVE_RELEASE_101.md#qualification-evidence).
+> **v1.1.0 candidate: typed, embeddable engine.** This checkout adds a small Rust
+> interface, native `engine` commands, independent consumer, role-aware counters,
+> and exact transfer/use/outcome binding. Candidate qualification and public
+> delivery are tracked in the [current support table](docs/V11_ENGINE_STATUS.md).
+> Until that table records publication, the packaged baseline remains v1.0.1.
+> Software qualification and scientific advantage have separate gates. General
+> transfer efficiency remains **NOT_DEMONSTRATED**.
 
 
 ## Get started
@@ -75,6 +67,27 @@ You can also download a matching archive directly, extract it, and run
 [installation and recovery](docs/OPERATIONS.md) for paths and platform details.
 
 ## Use it
+
+For an application, start with the [typed Rust interface](docs/ENGINE_EMBEDDING.md).
+The independent consumer uses only that interface and its own Cargo workspace:
+
+```sh
+cargo run --locked --manifest-path tests/consumer-engine/Cargo.toml -- --out ABSOLUTE_NEW_DIRECTORY
+```
+
+It creates two isolated owners, observes, infers, evaluates, retains and predicts;
+then closes, reopens and predicts without consulting the source. It also checks
+cancellation, writer exclusion, revocation and verified checkpoint/restore.
+The embedding host owns adapters, budgets, paths and event presentation. Callbacks
+are cooperative; hard termination requires an explicitly supervised process.
+
+The installed v1.1 product exposes the same lifecycle through `symbiote engine`.
+Follow the [copyable CLI recipe](docs/ENGINE_CLI.md) for a complete observation,
+restart and backup example. Every operation returns structured JSON with typed
+errors. Engine-owned directories are distinct from older demonstration stores;
+incompatible writers refuse them before changing history.
+
+The existing simple local modes remain available:
 
 ```sh
 symbiote demo       # Watch the original two-agent learning cycle
@@ -202,6 +215,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 
 | What is checked | Evidence |
 | --- | --- |
+| v1.1 typed engine, consumer, exact transfer and delivery | [Current release-specific support and qualification table](docs/V11_ENGINE_STATUS.md), [prospective contract](docs/V11_ENGINE_SUPPORT_CONTRACT.md), [fault matrix](docs/V11_FAULT_MATRIX.md) |
 | Unreleased main engine evolution | [Registered results and exact evidence](experiments/engine-evolution-002/README.md): exact cached-prefix parity, lower rank-query work, frozen fresh-input reuse and receiver-owned feedback; isolated learner ties and whole-cost gain remains unestablished |
 | Corrective v1.0.1 software | [Three-platform CI on source `6025fff`](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717); qualified native bytes and public installation are separate checks |
 | Learning from an authorized observation source | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): widths 3 and 8, independent held-out inputs, retained predictions and zero source queries after restart |
@@ -299,12 +313,13 @@ behavior explicit without fragmenting the system into placeholder packages.
 | `crates/symbiote-reasoning/` | Exact hidden-state and affine inference, conservative graph certificates, active queries, conditional prediction and the value-of-symbiosis decision |
 | `crates/symbiote-protocol/` | Authorized local sessions, separate TLS 1.3 API, resource limits, sensors and revocation |
 | `crates/symbiote-memory/` | Private identity, evaluated knowledge, operational journals, reciprocal evaluation receipts, idempotency, rollback and lifecycle integrity |
-| `crates/symbiote-runtime/` | Native peers, configured knowledge service, active learning, experiments, isolated controls and redundant-exchange measurement |
+| `crates/symbiote-runtime/` | Typed embedding and native CLI, active learning, exact exchange/outcomes, configured peers, diagnostics and experimental controls |
 | `docs/` | Architecture, mathematics, operations, provenance, research and version objectives |
 | `docs/assets/` | Original project artwork and its provenance |
 | `docs/reference/` | Preserved upstream algorithm used by developer parity checks |
 | `experiments/` | Compact checked receipts; local generated runs stay ignored |
 | `tests/fixtures/` | Shared original-Python/native fixtures |
+| `tests/consumer-engine/` | Separate developer workspace using only the documented typed engine API |
 | `tools/` | Installers, verification, packaging and upstream audit utilities |
 | `SYMBIOTE-All-One.ps1` | Synchronous Windows build, run, research, test, verify and Git operations |
 
@@ -333,13 +348,15 @@ is preregistered and has not been run.
 
 ## Develop and verify
 
-Stable Rust and Cargo build the native system. Python 3.11+ is needed only for
+Rust 1.98.1 is the declared minimum and qualification compiler; current stable is
+checked separately. Python 3.11+ is needed only for
 developer verification against the original Python implementation.
 
 ```sh
 cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 python tools/verify.py
+cargo doc --workspace --no-deps --locked
 ```
 
 `Cargo.lock` pins dependencies. Verification reports failures and preserves the
@@ -361,10 +378,11 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 8.90 MB across 15 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.45% fewer bytes. [Footprint](experiments/footprint.json)
-excludes Git history, build caches and local state. Full study traces live in
-checksum-pinned release assets.
+The v1.1 source snapshot is about 9.64 MB across 15 root entries, versus
+BRUTE's 574.80 MB and 41 entries: about 98.32% fewer bytes.
+[Current footprint](experiments/v1.1.0/footprint.json) excludes Git history, build
+caches and local state; [the earlier snapshot](experiments/footprint.json) is
+preserved. Full study traces live in checksum-pinned release assets.
 
 New SYMBIOTE code uses the [MIT license](LICENSE). The retained BRUTE reference
 has an explicit exception because the inspected upstream supplied no license

@@ -287,3 +287,152 @@ its read. It did not execute a native engine or rerun a target. Its original
 implementation uses the recorded local paths; preserving the script does not by
 itself make those paths portable. No private keys or token values were found in
 the non-executable raw evidence scanned for the audit.
+
+## Role-aware accounting for the v1.1 target
+
+New development summaries add `learning_counters` with schema
+`symbiote.role-learning-counters/1`. Existing `fresh_promotions`,
+`receiver_outcomes_verified`, `receiver_capability_outcomes_verified` and
+`partner_benefits_verified` keep their historical meaning. In particular,
+`fresh_promotions` records ordinary learning paths that completed their existing
+success reporting; it remains receiver-role-exclusive. It is not retroactively
+redefined as a count of every committed promotion.
+
+The new object binds its initial/final knowledge anchors and operational event
+prefixes. Each ordinary observation/learning action and receiver processing action
+has a `LEARNING_COUNTERS` checkpoint with its own before/after anchors. A new
+promotion counts only when the native store confirms the exact committed record
+and assessment between those heads. Final totals must reconcile with every
+promotion in the run's actual ledger suffix. A digest supplied without the native
+commit cannot increase a count; truncated or mismatched disk/live history boundaries fail.
+
+| Field | Interpretation |
+| --- | --- |
+| `promotions.ordinary_learning` | Unique committed promotions by ordinary observation or learning actions |
+| `promotions.receiver_role` | Unique committed promotions by locally authorized receiver-role processing |
+| `promotions.total_new` | Sum of those two disjoint promotion origins |
+| `reused_records` | Unique retained record versions actually matched by an ordinary reuse or receiver duplicate-payload decision, split by local role |
+| `completed_outcomes` | Newly committed terminal outcomes this run, split into `ordinary_learning`, `receiver_role` and `partner_receiver` origins |
+| `capability_outcomes` | Outcome subset with verified capability-extension evidence; deduplicated by exact promotion coordinate |
+| `measured_benefits` | Outcome subset backed by a validated measured task window with positive net; unknown economics contribute zero |
+| `current_active_local` | Explicit subset of this run's local promoted outcomes/capabilities/benefits whose exact record is still active under the current policy/evaluator |
+| `durable_history_completed_outcomes` | All validated terminal outcomes already retained in the owner's journal, including prior runs |
+
+The ordinary and receiver promotion origins are disjoint. Reuse is a separate
+operation category: a model promoted earlier in a run may be reused later in that
+same run. Do not add reuse or capability/benefit subsets to `total_new`.
+Repeated recognition of one retained version in one role counts once per run;
+merely opening, reading or replaying a store counts neither a promotion nor a
+reuse decision. Restart starts a new event window and cannot re-credit an old
+promotion or completed outcome.
+
+Completed outcomes are historical commitments. Later revocation or supersession
+does not erase their counts or original quality classification. Instead,
+`current_active_local` loses the corresponding active membership. An identical
+payload in a superseding version does not by itself establish another capability
+outcome. Historical reconciliation with a partner remains a validated response
+snapshot; it does not prove that the remote record is still active after that
+response. `partner_current_status` states this unobserved boundary explicitly.
+
+These counters describe committed behavior and evidence. They are not independent
+scientific samples, generalized capability claims or a replacement for complete
+operation-cost measurement. The v1.1 acceptance criteria remain prospective in
+[the support contract](V11_ENGINE_SUPPORT_CONTRACT.md).
+
+### Typed embedding inspection
+
+The prospective embedding API exposes read-only typed counters through
+`Engine::counters()`, `Engine::counter_anchor()` and
+`Engine::counters_since(&anchor)`. The report schema is
+`symbiote.engine-learning-counters/1` and its public Rust types live in
+`engine::counters`. Consumers use typed fields and `EngineError.kind`; they do not
+parse diagnostic strings or supply success flags.
+
+`counters()` covers the durable lifetime, so reopening returns the same historical
+totals. To measure one run, capture `counter_anchor()` first and inspect
+`counters_since(&anchor)` afterward. Both knowledge and operational prefix
+coordinates are validated; a foreign, changed or mixed-prefix anchor is rejected.
+A new anchor after completed work yields zero new promotions/outcomes until new
+native commits occur. Reading either API appends no event and contacts no source.
+
+The embedding role comes from the exact native inference audit: an incoming
+artifact SHA binds a receiver-origin episode to that same retained artifact;
+otherwise the record must be owned by the engine. Counted retention requires the
+actual Started/Inferred/Evaluated/Finished chain and original knowledge-store
+promotion evidence. Reuse requires an unchanged head with the exact active
+record. An internally rehashed Finished entry without its real episode/store
+commit cannot create credit.
+
+Each historical retention includes a typed `CurrentValidity`: `Active`,
+`RevokedOrSuperseded`, `SourceEpochHold` or `PolicyHold`. These statuses keep source,
+policy and active-membership questions distinct from historical completion.
+Unfinished or unaccounted native commits return an explicit hold instead of an
+invented finished total. The typed report uses the same disjoint-origin and
+outcome-subset interpretation as the native runtime summary above; it does not
+turn a model's retention alone into a completed verified-use outcome.
+
+
+The embedding counter report keeps local exchange receipts in a separate category:
+`partner_outcome_snapshots_recorded` counts unique saved partner responses in the
+selected window, `recorded_reconciliations` lists those historical records, and
+`durable_history_partner_outcome_snapshots_recorded` counts them across the owner's
+full retained history. `current_remote_validity` is the typed
+`UnknownWithoutReceiver` status. A saved snapshot is not promoted into current
+verified remote capability or measured benefit counts. Call
+`reconcile_local_transfer` with the actual receiver handle to check current
+membership; revocation makes that live check fail while the historical snapshot
+remains recorded. This differs from the native channel's complete-ledger witness
+format, so counters from the two interfaces must retain their declared scopes.
+
+### Per-owner resource inspection
+
+`Engine::resources()` returns typed `symbiote.engine-resources/1` diagnostics
+without another file read, source call or journal event. Knowledge-store counters
+belong to that open store instance: reopening starts a new accounting window and
+records the actual cold-read bytes. They report application bytes for full
+history serialization, write submission, successful `write_all`, and successful
+atomic publication, with publication attempt/failure counts. These byte categories
+overlap and must not be summed. The current implementation rewrites its complete
+knowledge history for each publication, so cumulative written bytes can exceed
+the final file's growth substantially.
+
+A failed `write_all` leaves `failed_partial_write_bytes` unknown (`None`), rather
+than claiming that zero bytes reached its temporary file. A completed write whose
+later sync or replacement fails counts the complete write but no publication.
+`saturated` marks counter overflow. These observations are not physical disk I/O,
+an OS crash-durability guarantee, CPU time or peak memory. Common identity-ledger
+setup and whole-process measurements remain separate. The resource report also
+exposes the operational journal's actual per-instance prefix-work counters.
+
+Capacity inspection preserves the existing limits of 4,096 records, 4 MiB per
+knowledge ledger, and 128 KiB per record. Physical `remaining_ledger_bytes` and
+compact `remaining_publication_bytes` are separate: accepted trailing JSON
+whitespace may occupy the physical limit while the existing compact rewrite
+still has room. Cold opening computes that exact compact size once and reports
+the additional work as `capacity_quote_serialized_bytes`. Capacity is a bound,
+not a promise that the next record, filesystem operation or allocation succeeds.
+
+The live knowledge store pins the SHA256 of the exact bytes it opened, including
+accepted JSON whitespace. Before staging a publication and before replacing the
+ledger, it checks those bytes again. Missing, replaced, truncated or corrupt
+history returns a typed integrity hold and is never repaired from cached state.
+Genesis requires an absent ledger. The extra bounded reads and raw-byte hashing
+are recorded as `integrity_read_bytes` and `integrity_hashed_bytes`, with check
+and failure counts. A cooperative writer lock plus these checks detects external
+change; it is not an adversarial OS compare-and-swap guarantee.
+
+`promote_checked`, `promote_graph_checked` and `revoke_checked` return typed
+`MemoryWriteError` categories from the actual guard: `Capacity`, `Invalid`,
+`Integrity` or `Storage`. Existing string-returning methods wrap the same implementation. A new
+record may exceed remaining capacity even when that remainder is nonzero; the
+exact serialized publication guard decides this before any file write.
+
+New embedding owners created by v1.1.0 also carry an explicit
+`engine_owner_registered` event immediately after their original identity genesis.
+Its namespace is `embedding-engine/v1` and its minimum-writer capability is
+`symbiote-engine-writer/1`. The latter identifies the required writer format,
+independently of the package release version. Earlier writers reject the unknown
+event; current generic legacy writers also refuse this namespace. Only explicit
+compatible engine constructors admit it. An unmarked prototype owner is held for
+an explicitly reviewed future migration, without automatic rewriting. Read-only
+inspection and checkpoint/restore preserve and validate the marker.

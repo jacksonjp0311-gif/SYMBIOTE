@@ -16,6 +16,9 @@ use symbiote_reasoning::symbiosis::{
     ExchangePlan, ExchangeTerms, OutboundEvidence, ParticipantView, ValueReconciliation,
 };
 
+#[path = "counters.rs"]
+pub(super) mod counters;
+
 const DETAILS: &str = "symbiote.cognition-decision/1";
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -2002,7 +2005,7 @@ impl Cycle<'_> {
         Ok(count)
     }
 
-    fn receiver_tick(&mut self) -> Result<usize, String> {
+    fn receiver_tick(&mut self, accounting: &mut counters::Counters) -> Result<usize, String> {
         let Some(permit) = self
             .policy
             .outcomes
@@ -2021,7 +2024,11 @@ impl Cycle<'_> {
         super::timing::lock(self.budget)
             .map_err(|_| "native resource lock poisoned")?
             .model(self.policy, 65_536)?;
-        let used = super::outcomes::process_pending(&mut owner, permit)?;
+        let before = accounting.capture(&owner)?;
+        let used = super::outcomes::process_pending(&mut owner, permit);
+        let counted = accounting.checkpoint(&owner, &before, counters::Role::ReceiverRole, None)?;
+        self.recorder.emit("LEARNING_COUNTERS", counted)?;
+        let used = used?;
         self.recorder.emit("RECEIVER_OUTCOME",json!({"used":used,"goal":permit.goal,"scope":permit.scope,"basis":"receiver-owned retained evaluation case; no unanswered-task or economic gain claim"}))?;
         Ok(used)
     }
@@ -2266,6 +2273,7 @@ fn run_controlled(
     let mut recorder = Recorder { file, sequence: 0 };
     let identity = owner.config.identity.clone();
     let initial = owner.knowledge.history_anchor();
+    let mut accounting = counters::Counters::begin(&owner)?;
     let denied = owner.journal.denied_peers();
     let listener_allowed = !cancelled.load(Ordering::Acquire)
         && owner
@@ -2364,7 +2372,7 @@ fn run_controlled(
                     deadline,
                     recorder: &mut recorder,
                 };
-                cycle.receiver_tick()?;
+                cycle.receiver_tick(&mut accounting)?;
                 let until = (Instant::now() + Duration::from_millis(policy.interval_ms.min(1000)))
                     .min(deadline);
                 while !cancelled.load(Ordering::Acquire) && Instant::now() < until {
@@ -2381,6 +2389,7 @@ fn run_controlled(
                     episodes += 1;
                     let mut owner =
                         super::timing::lock(&state).map_err(|_| "native owner lock poisoned")?;
+                    let counter_before = accounting.capture(&owner)?;
                     let State {
                         config, knowledge, ..
                     } = &mut *owner;
@@ -2396,6 +2405,13 @@ fn run_controlled(
                         },
                         |phase, details| recorder.emit(phase, details),
                     )?;
+                    let counted = accounting.checkpoint(
+                        &owner,
+                        &counter_before,
+                        counters::Role::OrdinaryLearning,
+                        Some(&response),
+                    )?;
+                    recorder.emit("LEARNING_COUNTERS", counted)?;
                     novel += response["fresh_promotions"]
                         .as_u64()
                         .ok_or("observation learning response lacks promotion count")?
@@ -2434,7 +2450,24 @@ fn run_controlled(
             match cycle.sense(&profile) {
                 Ok(offers) => {
                     for offer in offers {
-                        novel += usize::from(cycle.learn(&profile.peer, offer)?);
+                        let before = {
+                            let owner = super::timing::lock(&state)
+                                .map_err(|_| "native owner lock poisoned")?;
+                            accounting.capture(&owner)?
+                        };
+                        let learned = cycle.learn(&profile.peer, offer);
+                        let counted = {
+                            let owner = super::timing::lock(&state)
+                                .map_err(|_| "native owner lock poisoned")?;
+                            accounting.checkpoint(
+                                &owner,
+                                &before,
+                                counters::Role::OrdinaryLearning,
+                                None,
+                            )?
+                        };
+                        cycle.recorder.emit("LEARNING_COUNTERS", counted)?;
+                        novel += usize::from(learned?);
                     }
                 }
                 Err(error) => {
@@ -2465,7 +2498,7 @@ fn run_controlled(
             } else {
                 0
             };
-            cycle.receiver_tick()?;
+            cycle.receiver_tick(&mut accounting)?;
             let (sent, verified, capability) = cycle.channel(
                 policy
                     .max_contributions_per_episode
@@ -2505,6 +2538,7 @@ fn run_controlled(
         }
     }
     let owner = super::timing::lock(&state).map_err(|_| "native owner lock poisoned")?;
+    let learning_counters = accounting.finish(&owner)?;
     let mut summary = json!({"schema":"symbiote.cognition-summary/1","status":"STOPPED","identity":identity,"reason":reason,"episodes":episodes,
         "initial_knowledge_anchor":initial,"final_knowledge_anchor":owner.knowledge.history_anchor(),"active_models":owner.knowledge.active().len(),
         "fresh_promotions":novel,"quarantined_contributions":contributions,"partner_benefits_verified":0,
@@ -2517,6 +2551,7 @@ fn run_controlled(
         "protocol":"symbiote/2","oracle_assumption":"operator-pinned local finite fixtures; no remote honesty or generalization claim",
         "bandwidth_basis":"JSON negotiation/RPC application plaintext; cryptographic handshake and TLS wire framing excluded",
         "learning_basis":"fresh actual local model promotions, never peer PASS receipts; duplicate promoted receipts are reused"});
+    summary["learning_counters"] = learning_counters;
     if policy.outcomes.is_some() {
         summary["receiver_outcomes_verified"] = json!(receiver_outcomes);
         summary["receiver_capability_outcomes_verified"] = json!(receiver_capabilities);

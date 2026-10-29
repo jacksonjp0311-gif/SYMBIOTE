@@ -1,6 +1,42 @@
 # Changelog
 
-## Unreleased — verified-learning engine evolution
+## v1.1.0 candidate — qualified embedding target — 2026-10-29
+
+Qualification and publication are pending in the [current support table](docs/V11_ENGINE_STATUS.md).
+The prospective contract and registered workloads precede final execution.
+
+- Add a typed, caller-owned `symbiote_runtime::engine` interface for new/open,
+  individual observations, exact inference, independent candidate evaluation,
+  retention, prediction, counters, outcomes, revocation, cancellation and verified
+  checkpoint/restore. The library has no stdin, output, cwd/environment or process
+  presentation side effects. Native callbacks remain cooperatively cancellable.
+- Add an independent Rust consumer with its own workspace/lock and native
+  `symbiote engine` lifecycle commands with structured results and typed errors.
+- Bind local two-owner exchange to exact grants, identities, artifacts,
+  evaluations, promotions, actual uses and native receiver-owned outcomes.
+  Deserialized claims grant no trust; replay and repeated reconciliation grant no
+  new credit. Conditional fresh use is distinct from verified economic benefit.
+- Add disjoint role-aware promotion counters, unique ledger-derived totals and
+  current-validity diagnostics while preserving legacy counter semantics.
+- Meter cold reads, serialization, publication attempts, confirmed writes and
+  integrity checks with explicit accounting boundaries. Preserve exact prefix
+  hashes and durable ordering; unknown baselines remain unknown.
+- Reject replaced/corrupt/truncated live knowledge histories before mutation.
+  Register engine-owned directories with a writer-format marker so legacy and
+  generic writers refuse them without changing evidence. Verify restored
+  ownership/configuration before destination creation; no automatic prototype
+  store migration is provided.
+- Add owned-process fault injection, typed permission/capacity failures, bounded
+  adversarial candidate mutation checks, and an explicit disposable Linux
+  full-filesystem gate. Power-loss durability remains unqualified.
+- Stage four source-bound native architectures, independent consumers, installed
+  acceptance, SBOMs and signed build provenance before immutable publication.
+  Require a fresh final-image hour and anonymous delivered-byte acceptance.
+- Preserve all historical failures, tags, archives, isolated ties and negative
+  efficiency results. No generalized intelligence or reciprocal-efficiency
+  advantage is claimed.
+
+## Main before v1.1 — verified-learning engine evolution
 
 - Reuse exact canonical operational prefix hashes and validate startup feedback
   in one ordered pass; retain original receipt bytes and explicit reference paths.

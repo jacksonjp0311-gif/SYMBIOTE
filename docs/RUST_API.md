@@ -1,5 +1,17 @@
 # Embedding the native runtime
 
+For new integrations, use the additive v1.1
+[`symbiote_runtime::engine` facade](ENGINE_EMBEDDING.md). It supplies typed
+errors, caller-owned adapters/budgets/events, explicit new/open, staged learning,
+conditional prediction, exact local transfer/outcomes and verified stopped-owner
+lifecycle operations. The [independent consumer](../tests/consumer-engine/Cargo.toml)
+imports only that surface. [Current release status](V11_ENGINE_STATUS.md) separates
+source implementation from packaged qualification.
+
+The entry points below are the preserved legacy service API. Their String-based
+errors and CLI-oriented wrappers remain compatible; they are not the new facade
+contract. Engine-owned stores reject generic/legacy writers without modification.
+
 The public v1.0.0 runtime and subsequent main corrections are qualified separately.
 They use the same owner,
 authorization and evaluation boundaries as the command-line program. It has no

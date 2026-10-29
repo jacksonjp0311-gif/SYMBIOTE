@@ -273,6 +273,21 @@ pub(crate) fn validate_strategy_learning_admission(directory: &Path) -> Result<(
 }
 
 pub(crate) fn validate_knowledge_owner(directory: &Path, identity: &str) -> Result<(), String> {
+    validate_knowledge_owner_admission(directory, identity, false)
+}
+
+pub(crate) fn validate_engine_knowledge_owner(
+    directory: &Path,
+    identity: &str,
+) -> Result<(), String> {
+    validate_knowledge_owner_admission(directory, identity, true)
+}
+
+fn validate_knowledge_owner_admission(
+    directory: &Path,
+    identity: &str,
+    engine: bool,
+) -> Result<(), String> {
     validate_layout_identity(directory, identity)?;
     let original = read_regular(&directory.join("ledger.jsonl"), super::MAX_LEDGER_BYTES)?;
     if original.is_none()
@@ -286,9 +301,17 @@ pub(crate) fn validate_knowledge_owner(directory: &Path, identity: &str) -> Resu
         return Err("operational or strategy state exists without its original identity ledger; refusing structural owner initialization".into());
     }
     if let Some(bytes) = original {
-        if super::Store::validate_snapshot(&bytes)? != identity {
+        let (owner, registration) = super::Store::validate_owner_snapshot(&bytes)?;
+        if owner != identity {
             return Err("structural knowledge owner differs from original identity ledger; refusing to create or modify state".into());
         }
+        if engine != registration.is_some() {
+            return Err(
+                "knowledge writer admission differs from the registered owner namespace".into(),
+            );
+        }
+    } else if engine {
+        return Err("engine knowledge requires its explicitly registered identity ledger".into());
     }
     Ok(())
 }

@@ -5,6 +5,7 @@
 //! A SHA chain detects accidental modification, not an attacker rewriting it all.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
@@ -356,6 +357,109 @@ impl Receipt {
     }
 }
 
+/// Per-instance application I/O diagnostics, never a learning reward or OS
+/// durability/power-loss certificate. Publication bytes overlap complete writes;
+/// do not sum them. Hash serialization, allocator/CPU and identity setup are separate.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct KnowledgeIoDiagnostics {
+    pub cold_read_bytes: u64,
+    /// Actual bounded reads performed by live prepublication integrity guards.
+    pub integrity_read_bytes: u64,
+    /// Exact raw-byte hashing for cold pins, guards and successful publications.
+    pub integrity_hashed_bytes: u64,
+    pub integrity_checks: u64,
+    pub integrity_failures: u64,
+    pub full_history_serialized_bytes: u64,
+    /// Extra canonical serialization used only to cache exact publication capacity.
+    pub capacity_quote_serialized_bytes: u64,
+    pub write_submitted_bytes: u64,
+    pub write_all_completed_bytes: u64,
+    pub committed_publication_bytes: u64,
+    pub publication_attempts: u64,
+    pub publication_failures: u64,
+    pub failed_write_all_calls: u64,
+    /// Some(0) when no write_all failed; None after a failure because partial
+    /// successful bytes are not observable through Write::write_all's error.
+    pub failed_partial_write_bytes: Option<u64>,
+    pub saturated: bool,
+}
+impl Default for KnowledgeIoDiagnostics {
+    fn default() -> Self {
+        Self {
+            cold_read_bytes: 0,
+            integrity_read_bytes: 0,
+            integrity_hashed_bytes: 0,
+            integrity_checks: 0,
+            integrity_failures: 0,
+            full_history_serialized_bytes: 0,
+            capacity_quote_serialized_bytes: 0,
+            write_submitted_bytes: 0,
+            write_all_completed_bytes: 0,
+            committed_publication_bytes: 0,
+            publication_attempts: 0,
+            publication_failures: 0,
+            failed_write_all_calls: 0,
+            failed_partial_write_bytes: Some(0),
+            saturated: false,
+        }
+    }
+}
+fn io_add(target: &mut u64, amount: u64) -> bool {
+    let overflow = target.checked_add(amount).is_none();
+    *target = target.saturating_add(amount);
+    overflow
+}
+fn write_application_bytes(
+    writer: &mut impl Write,
+    bytes: &[u8],
+    io: &mut KnowledgeIoDiagnostics,
+) -> Result<(), String> {
+    io.saturated |= io_add(&mut io.write_submitted_bytes, bytes.len() as u64);
+    if let Err(error) = writer.write_all(bytes) {
+        io.saturated |= io_add(&mut io.failed_write_all_calls, 1);
+        io.failed_partial_write_bytes = None;
+        return Err(error.to_string());
+    }
+    io.saturated |= io_add(&mut io.write_all_completed_bytes, bytes.len() as u64);
+    Ok(())
+}
+/// Unchanged native limits and the live owner's last successfully published
+/// physical ledger size plus exact cached canonical rewrite size. Physical
+/// whitespace can be reclaimed by the existing compact rewrite. The extra cold
+/// serialization is counted separately. This is not an I/O success promise.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct KnowledgeCapacity {
+    pub used_records: usize,
+    pub used_ledger_bytes: usize,
+    pub canonical_ledger_bytes: usize,
+    pub max_records: usize,
+    pub max_ledger_bytes: usize,
+    pub max_record_bytes: usize,
+    pub remaining_records: usize,
+    pub remaining_ledger_bytes: usize,
+    pub remaining_publication_bytes: usize,
+}
+/// Classification comes from the guard that failed, without parsing prose.
+/// A storage failure is not permission to recreate or repair a live ledger.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum MemoryWriteError {
+    Capacity(String),
+    Invalid(String),
+    Integrity(String),
+    Storage(String),
+}
+impl std::fmt::Display for MemoryWriteError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Capacity(message)
+            | Self::Invalid(message)
+            | Self::Integrity(message)
+            | Self::Storage(message) => formatter.write_str(message),
+        }
+    }
+}
+impl std::error::Error for MemoryWriteError {}
 /// Separate, versioned native ledger. The caller's persistent identity is bound
 /// into genesis. Opening it never resets or migrates the original v0.1 ledger.
 pub struct KnowledgeStore {
@@ -369,6 +473,10 @@ pub struct KnowledgeStore {
     bindings: BTreeMap<String, (String, String, String)>,
     retained_expected: BTreeMap<String, BTreeMap<u16, u8>>,
     retained_graph_edges: BTreeMap<String, BTreeMap<usize, u16>>,
+    io: KnowledgeIoDiagnostics,
+    ledger_bytes: usize,
+    canonical_ledger_bytes: usize,
+    disk_sha256: Option<String>,
 }
 
 /// A read-only position in a validated owner history. This does not grant trust
@@ -383,13 +491,25 @@ pub struct KnowledgeAnchor {
 
 impl KnowledgeStore {
     pub fn open(directory: &Path, identity: &str) -> Result<Self, String> {
+        Self::open_admitted(directory, identity, false)
+    }
+
+    pub fn open_engine(directory: &Path, identity: &str) -> Result<Self, String> {
+        Self::open_admitted(directory, identity, true)
+    }
+
+    fn open_admitted(directory: &Path, identity: &str, engine: bool) -> Result<Self, String> {
         if !label(identity) {
             return Err("invalid persistent knowledge owner identity".into());
         }
         fs::create_dir_all(directory).map_err(|e| format!("knowledge directory: {e}"))?;
         let (lock, _initialization_gate) =
             super::maintenance::writer_lock(directory, "knowledge.writer.lock")?;
-        super::maintenance::validate_knowledge_owner(directory, identity)?;
+        if engine {
+            super::maintenance::validate_engine_knowledge_owner(directory, identity)?;
+        } else {
+            super::maintenance::validate_knowledge_owner(directory, identity)?;
+        }
         // Reject an unsupported registered format before a first knowledge
         // genesis can mutate that owner's directory.
         super::maintenance::validate_layout_identity(directory, identity)?;
@@ -404,6 +524,10 @@ impl KnowledgeStore {
             bindings: BTreeMap::new(),
             retained_expected: BTreeMap::new(),
             retained_graph_edges: BTreeMap::new(),
+            io: KnowledgeIoDiagnostics::default(),
+            ledger_bytes: 0,
+            canonical_ledger_bytes: 0,
+            disk_sha256: None,
         };
         let path = store.ledger_path();
         if path.exists() {
@@ -412,9 +536,12 @@ impl KnowledgeStore {
                 return Err("knowledge ledger exceeds byte budget".into());
             }
             let mut bytes = Vec::new();
-            file.take(super::MAX_LEDGER_BYTES as u64 + 1)
-                .read_to_end(&mut bytes)
-                .map_err(|e| e.to_string())?;
+            let read = file
+                .take(super::MAX_LEDGER_BYTES as u64 + 1)
+                .read_to_end(&mut bytes);
+            store.io.saturated |= io_add(&mut store.io.cold_read_bytes, bytes.len() as u64);
+            read.map_err(|e| e.to_string())?;
+            store.ledger_bytes = bytes.len();
             if bytes.len() > super::MAX_LEDGER_BYTES
                 || bytes.is_empty()
                 || bytes.last() != Some(&b'\n')
@@ -441,6 +568,18 @@ impl KnowledgeStore {
                     ));
                 }
                 store.validate_event(&receipt.payload)?;
+                let canonical = serde_json::to_vec(&receipt)
+                    .map_err(|e| e.to_string())?
+                    .len()
+                    + 1;
+                store.canonical_ledger_bytes = store
+                    .canonical_ledger_bytes
+                    .checked_add(canonical)
+                    .ok_or("knowledge canonical byte size overflow")?;
+                store.io.saturated |= io_add(
+                    &mut store.io.capacity_quote_serialized_bytes,
+                    canonical as u64,
+                );
                 store.apply(&receipt.payload);
                 previous = receipt.sha256.clone();
                 store.receipts.push(receipt);
@@ -448,6 +587,7 @@ impl KnowledgeStore {
             if !store.genesis {
                 return Err("knowledge genesis missing".into());
             }
+            store.disk_sha256 = Some(store.pin_bytes(&bytes));
         }
         if !path.exists() {
             store.append(Event::Genesis {
@@ -475,6 +615,10 @@ impl KnowledgeStore {
             bindings: BTreeMap::new(),
             retained_expected: BTreeMap::new(),
             retained_graph_edges: BTreeMap::new(),
+            io: KnowledgeIoDiagnostics::default(),
+            ledger_bytes: 0,
+            canonical_ledger_bytes: 0,
+            disk_sha256: None,
         };
         let mut previous = ZERO_HASH.to_string();
         for (sequence, line) in std::str::from_utf8(bytes)
@@ -506,6 +650,26 @@ impl KnowledgeStore {
         Ok(())
     }
 
+    /// Snapshot only: no file read/write, source callback or global counter.
+    pub fn io_diagnostics(&self) -> KnowledgeIoDiagnostics {
+        self.io.clone()
+    }
+    /// Current native capacity. Callers may reject certain exhaustion before
+    /// learning; exact next-frame serialization and storage can still fail.
+    pub fn capacity(&self) -> KnowledgeCapacity {
+        KnowledgeCapacity {
+            used_records: self.receipts.len(),
+            used_ledger_bytes: self.ledger_bytes,
+            canonical_ledger_bytes: self.canonical_ledger_bytes,
+            max_records: super::MAX_RECORDS,
+            max_ledger_bytes: super::MAX_LEDGER_BYTES,
+            max_record_bytes: MAX_RECORD_BYTES,
+            remaining_records: super::MAX_RECORDS.saturating_sub(self.receipts.len()),
+            remaining_ledger_bytes: super::MAX_LEDGER_BYTES.saturating_sub(self.ledger_bytes),
+            remaining_publication_bytes: super::MAX_LEDGER_BYTES
+                .saturating_sub(self.canonical_ledger_bytes),
+        }
+    }
     pub fn identity(&self) -> &str {
         &self.identity
     }
@@ -686,7 +850,16 @@ impl KnowledgeStore {
         record: KnowledgeRecord,
         assessment: Assessment,
     ) -> Result<(), String> {
-        self.append(Event::Promote {
+        self.promote_checked(record, assessment)
+            .map_err(|error| error.to_string())
+    }
+
+    pub fn promote_checked(
+        &mut self,
+        record: KnowledgeRecord,
+        assessment: Assessment,
+    ) -> Result<(), MemoryWriteError> {
+        self.append_checked(Event::Promote {
             record,
             assessment: Box::new(assessment),
             policy_version: Some(2),
@@ -698,7 +871,16 @@ impl KnowledgeStore {
         record: KnowledgeRecord,
         assessment: graph::GraphAssessment,
     ) -> Result<(), String> {
-        self.append(Event::PromoteGraph {
+        self.promote_graph_checked(record, assessment)
+            .map_err(|error| error.to_string())
+    }
+
+    pub fn promote_graph_checked(
+        &mut self,
+        record: KnowledgeRecord,
+        assessment: graph::GraphAssessment,
+    ) -> Result<(), MemoryWriteError> {
+        self.append_checked(Event::PromoteGraph {
             record,
             assessment: Box::new(assessment),
             policy_version: 2,
@@ -723,7 +905,12 @@ impl KnowledgeStore {
     }
 
     pub fn revoke(&mut self, id: &str, reason: &str) -> Result<(), String> {
-        self.append(Event::Revoke {
+        self.revoke_checked(id, reason)
+            .map_err(|error| error.to_string())
+    }
+
+    pub fn revoke_checked(&mut self, id: &str, reason: &str) -> Result<(), MemoryWriteError> {
+        self.append_checked(Event::Revoke {
             id: id.into(),
             reason: reason.into(),
         })
@@ -962,10 +1149,83 @@ impl KnowledgeStore {
         }
     }
 
+    fn pin_bytes(&mut self, bytes: &[u8]) -> String {
+        self.io.saturated |= io_add(&mut self.io.integrity_hashed_bytes, bytes.len() as u64);
+        format!("{:x}", Sha256::digest(bytes))
+    }
+
+    /// The cooperative writer lock does not authorize replacing unknown bytes.
+    /// Check both before creating a temporary and again before replacement. This
+    /// detects external change; it is not an adversarial OS compare-and-swap.
+    fn check_disk_pin(&mut self) -> Result<(), MemoryWriteError> {
+        self.io.saturated |= io_add(&mut self.io.integrity_checks, 1);
+        let checked = (|| {
+            let path = self.ledger_path();
+            let metadata = match fs::symlink_metadata(&path) {
+                Ok(metadata) => metadata,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    return if self.disk_sha256.is_none() {
+                        Ok(())
+                    } else {
+                        Err(MemoryWriteError::Integrity(
+                            "live knowledge ledger is missing; refusing replacement".into(),
+                        ))
+                    };
+                }
+                Err(error) => {
+                    return Err(MemoryWriteError::Storage(format!(
+                        "knowledge integrity metadata: {error}"
+                    )))
+                }
+            };
+            if self.disk_sha256.is_none() {
+                return Err(MemoryWriteError::Integrity(
+                    "knowledge genesis requires an absent ledger".into(),
+                ));
+            }
+            if !metadata.is_file() || metadata.file_type().is_symlink() {
+                return Err(MemoryWriteError::Integrity(
+                    "live knowledge ledger is not a regular pinned file".into(),
+                ));
+            }
+            let file = File::open(&path).map_err(|error| {
+                MemoryWriteError::Storage(format!("knowledge integrity read: {error}"))
+            })?;
+            let mut bytes = Vec::new();
+            let read = file
+                .take(super::MAX_LEDGER_BYTES as u64 + 1)
+                .read_to_end(&mut bytes);
+            self.io.saturated |= io_add(&mut self.io.integrity_read_bytes, bytes.len() as u64);
+            read.map_err(|error| {
+                MemoryWriteError::Storage(format!("knowledge integrity read: {error}"))
+            })?;
+            let actual = self.pin_bytes(&bytes);
+            if bytes.len() != self.ledger_bytes
+                || self.disk_sha256.as_deref() != Some(actual.as_str())
+            {
+                return Err(MemoryWriteError::Integrity(
+                    "live knowledge ledger bytes changed; refusing replacement".into(),
+                ));
+            }
+            Ok(())
+        })();
+        checked.inspect_err(|_| {
+            self.io.saturated |= io_add(&mut self.io.integrity_failures, 1);
+        })
+    }
+
     fn append(&mut self, event: Event) -> Result<(), String> {
-        self.validate_event(&event)?;
+        self.append_checked(event)
+            .map_err(|error| error.to_string())
+    }
+
+    fn append_checked(&mut self, event: Event) -> Result<(), MemoryWriteError> {
+        self.validate_event(&event)
+            .map_err(MemoryWriteError::Invalid)?;
         if self.receipts.len() >= super::MAX_RECORDS {
-            return Err("knowledge record budget exhausted".into());
+            return Err(MemoryWriteError::Capacity(
+                "knowledge record budget exhausted".into(),
+            ));
         }
         let mut receipt = Receipt {
             sequence: self.receipts.len(),
@@ -978,42 +1238,63 @@ impl KnowledgeStore {
             payload: event,
             sha256: String::new(),
         };
-        receipt.sha256 = receipt.hash()?;
-        let new_line = serde_json::to_vec(&receipt).map_err(|e| e.to_string())?;
+        receipt.sha256 = receipt.hash().map_err(MemoryWriteError::Invalid)?;
+        let new_line =
+            serde_json::to_vec(&receipt).map_err(|e| MemoryWriteError::Invalid(e.to_string()))?;
         if new_line.len() > MAX_RECORD_BYTES {
-            return Err("knowledge record byte budget exhausted".into());
+            return Err(MemoryWriteError::Capacity(
+                "knowledge record byte budget exhausted".into(),
+            ));
         }
         let mut bytes = Vec::new();
         for old in &self.receipts {
-            serde_json::to_writer(&mut bytes, old).map_err(|e| e.to_string())?;
+            serde_json::to_writer(&mut bytes, old)
+                .map_err(|e| MemoryWriteError::Invalid(e.to_string()))?;
             bytes.push(b'\n');
         }
         bytes.extend_from_slice(&new_line);
         bytes.push(b'\n');
+        self.io.saturated |= io_add(
+            &mut self.io.full_history_serialized_bytes,
+            bytes.len() as u64,
+        );
         if bytes.len() > super::MAX_LEDGER_BYTES {
-            return Err("knowledge ledger byte budget exhausted".into());
+            return Err(MemoryWriteError::Capacity(
+                "knowledge ledger byte budget exhausted".into(),
+            ));
         }
+        self.check_disk_pin()?;
         let number = super::TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let temporary = self
             .directory
             .join(format!("knowledge.{}.{number}.tmp", std::process::id()));
+        self.io.saturated |= io_add(&mut self.io.publication_attempts, 1);
         let result = (|| {
             let mut file = OpenOptions::new()
                 .write(true)
                 .create_new(true)
                 .open(&temporary)
-                .map_err(|e| e.to_string())?;
-            file.write_all(&bytes).map_err(|e| e.to_string())?;
-            file.sync_all().map_err(|e| e.to_string())?;
+                .map_err(|e| MemoryWriteError::Storage(e.to_string()))?;
+            write_application_bytes(&mut file, &bytes, &mut self.io)
+                .map_err(MemoryWriteError::Storage)?;
+            file.sync_all()
+                .map_err(|e| MemoryWriteError::Storage(e.to_string()))?;
             drop(file);
-            fs::rename(&temporary, self.ledger_path())
-                .map_err(|e| format!("atomic knowledge replacement: {e}"))?;
+            self.check_disk_pin()?;
+            fs::rename(&temporary, self.ledger_path()).map_err(|e| {
+                MemoryWriteError::Storage(format!("atomic knowledge replacement: {e}"))
+            })?;
             Ok(())
         })();
         if let Err(error) = result {
+            self.io.saturated |= io_add(&mut self.io.publication_failures, 1);
             let _ = fs::remove_file(temporary);
             return Err(error);
         }
+        self.io.saturated |= io_add(&mut self.io.committed_publication_bytes, bytes.len() as u64);
+        self.ledger_bytes = bytes.len();
+        self.canonical_ledger_bytes = bytes.len();
+        self.disk_sha256 = Some(self.pin_bytes(&bytes));
         self.apply(&receipt.payload);
         self.receipts.push(receipt);
         Ok(())
@@ -1072,6 +1353,335 @@ mod tests {
                 candidate: 10,
             },
         }
+    }
+    #[test]
+    fn io_diagnostics_leave_failed_partial_write_bytes_unknown_and_saturate() {
+        struct PartialWriter {
+            wrote: bool,
+        }
+        impl Write for PartialWriter {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                if self.wrote {
+                    Err(std::io::Error::other("controlled partial write failure"))
+                } else {
+                    self.wrote = true;
+                    Ok(bytes.len().min(1))
+                }
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let mut io = KnowledgeIoDiagnostics::default();
+        assert!(write_application_bytes(
+            &mut PartialWriter { wrote: false },
+            b"some bytes",
+            &mut io
+        )
+        .is_err());
+        assert_eq!(io.write_submitted_bytes, 10);
+        assert_eq!(io.write_all_completed_bytes, 0);
+        assert_eq!(io.failed_write_all_calls, 1);
+        assert_eq!(io.failed_partial_write_bytes, None);
+        io.write_submitted_bytes = u64::MAX;
+        assert!(write_application_bytes(&mut Vec::new(), b"x", &mut io).is_ok());
+        assert!(io.saturated);
+        assert_eq!(io.write_submitted_bytes, u64::MAX);
+        assert_eq!(
+            io.failed_partial_write_bytes, None,
+            "later successes do not erase unknown earlier partial bytes"
+        );
+    }
+    #[test]
+    fn io_diagnostics_count_full_rewrites_and_isolate_cold_owners() {
+        let first = Directory::new();
+        let other = Directory::new();
+        let mut store = KnowledgeStore::open(&first.0, "owner-a").unwrap();
+        let genesis = fs::read(store.ledger_path()).unwrap();
+        let r = record();
+        store
+            .promote(r.clone(), assess(&r, &evidence()).unwrap())
+            .unwrap();
+        let promoted = fs::read(store.ledger_path()).unwrap();
+        store.revoke(&r.id, "controlled revocation").unwrap();
+        let revoked = fs::read(store.ledger_path()).unwrap();
+        let work = store.io_diagnostics();
+        let expected = (genesis.len() + promoted.len() + revoked.len()) as u64;
+        assert_eq!(work.cold_read_bytes, 0);
+        assert_eq!(work.full_history_serialized_bytes, expected);
+        assert_eq!(work.write_submitted_bytes, expected);
+        assert_eq!(work.write_all_completed_bytes, expected);
+        assert_eq!(work.committed_publication_bytes, expected);
+        let guarded = 2 * (genesis.len() + promoted.len()) as u64;
+        assert_eq!(work.integrity_read_bytes, guarded);
+        assert_eq!(work.integrity_hashed_bytes, expected + guarded);
+        assert_eq!(work.integrity_checks, 6);
+        assert_eq!(work.integrity_failures, 0);
+        assert!(expected > revoked.len() as u64);
+        assert_eq!(work.publication_attempts, 3);
+        assert_eq!(work.publication_failures, 0);
+        assert_eq!(work.failed_partial_write_bytes, Some(0));
+        assert!(!work.saturated);
+        let capacity = store.capacity();
+        assert_eq!(capacity.used_records, 3);
+        assert_eq!(capacity.used_ledger_bytes, revoked.len());
+        assert_eq!(capacity.max_records, super::super::MAX_RECORDS);
+        assert_eq!(capacity.max_ledger_bytes, super::super::MAX_LEDGER_BYTES);
+        assert_eq!(capacity.max_record_bytes, MAX_RECORD_BYTES);
+        let separate = KnowledgeStore::open(&other.0, "owner-b").unwrap();
+        assert_eq!(separate.io_diagnostics().publication_attempts, 1);
+        assert_eq!(store.io_diagnostics(), work);
+        drop(separate);
+        drop(store);
+        let cold = KnowledgeStore::open(&first.0, "owner-a").unwrap();
+        let read = cold.io_diagnostics();
+        assert_eq!(read.cold_read_bytes, revoked.len() as u64);
+        assert_eq!(read.integrity_hashed_bytes, revoked.len() as u64);
+        assert_eq!(read.integrity_read_bytes, 0);
+        assert_eq!(read.integrity_checks, 0);
+        assert_eq!(read.publication_attempts, 0);
+        assert_eq!(read.full_history_serialized_bytes, 0);
+        assert_eq!(read.capacity_quote_serialized_bytes, revoked.len() as u64);
+        assert_eq!(read.committed_publication_bytes, 0);
+        assert_eq!(cold.capacity(), capacity);
+        assert_eq!(fs::read(cold.ledger_path()).unwrap(), revoked);
+    }
+    #[test]
+    fn integrity_guard_rejects_a_replaced_path_before_publication() {
+        let dir = Directory::new();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let at = store.history_anchor();
+        let capacity = store.capacity();
+        let before = store.io_diagnostics();
+        let path = store.ledger_path();
+        let saved = dir.0.join("knowledge.saved");
+        fs::rename(&path, &saved).unwrap();
+        fs::create_dir(&path).unwrap();
+        let r = record();
+        let error = store
+            .promote(r.clone(), assess(&r, &evidence()).unwrap())
+            .unwrap_err();
+        assert!(error.contains("not a regular pinned file"));
+        let failed = store.io_diagnostics();
+        assert_eq!(store.history_anchor(), at);
+        assert_eq!(store.capacity(), capacity);
+        assert_eq!(failed.publication_attempts, before.publication_attempts);
+        assert_eq!(failed.publication_failures, 0);
+        assert_eq!(failed.write_submitted_bytes, before.write_submitted_bytes);
+        assert_eq!(
+            failed.write_all_completed_bytes,
+            failed.write_submitted_bytes
+        );
+        assert_eq!(
+            failed.committed_publication_bytes,
+            before.committed_publication_bytes
+        );
+        assert_eq!(failed.failed_write_all_calls, 0);
+        assert_eq!(failed.integrity_failures, 1);
+        assert_eq!(
+            failed.failed_partial_write_bytes,
+            Some(0),
+            "the integrity guard rejected the replaced path without submitting bytes"
+        );
+        fs::remove_dir(&path).unwrap();
+        fs::rename(saved, path).unwrap();
+    }
+    #[test]
+    fn live_mutation_never_overwrites_unknown_bytes_on_promote_or_revoke() {
+        let foreign = Directory::new();
+        let foreign_store = KnowledgeStore::open(&foreign.0, "foreign-owner").unwrap();
+        let foreign_bytes = fs::read(foreign_store.ledger_path()).unwrap();
+        for mutation in ["foreign", "corrupt", "truncated", "missing"] {
+            for revoke in [false, true] {
+                let dir = Directory::new();
+                let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+                let r = record();
+                store
+                    .promote_checked(r.clone(), assess(&r, &evidence()).unwrap())
+                    .unwrap();
+                let at = store.history_anchor();
+                let active = store.active();
+                let capacity = store.capacity();
+                let before = store.io_diagnostics();
+                let path = store.ledger_path();
+                let original = fs::read(&path).unwrap();
+                let replacement = match mutation {
+                    "foreign" => Some(foreign_bytes.clone()),
+                    "corrupt" => {
+                        let mut bytes = original.clone();
+                        bytes[12] ^= 1;
+                        Some(bytes)
+                    }
+                    "truncated" => Some(original[..original.len() - 1].to_vec()),
+                    "missing" => None,
+                    _ => unreachable!(),
+                };
+                match &replacement {
+                    Some(bytes) => fs::write(&path, bytes).unwrap(),
+                    None => fs::remove_file(&path).unwrap(),
+                }
+                let result = if revoke {
+                    store.revoke_checked(&r.id, "controlled withdrawal")
+                } else {
+                    let mut next = r.clone();
+                    next.id = "independent-next".into();
+                    next.scope = "independent-next".into();
+                    store.promote_checked(next.clone(), assess(&next, &evidence()).unwrap())
+                };
+                assert!(
+                    matches!(result, Err(MemoryWriteError::Integrity(_))),
+                    "{mutation}, revoke={revoke}: {result:?}"
+                );
+                assert_eq!(store.history_anchor(), at);
+                assert_eq!(store.active(), active);
+                assert_eq!(store.capacity(), capacity);
+                assert_eq!(fs::read(&path).ok(), replacement);
+                let after = store.io_diagnostics();
+                assert_eq!(after.publication_attempts, before.publication_attempts);
+                assert_eq!(after.write_submitted_bytes, before.write_submitted_bytes);
+                assert_eq!(
+                    after.committed_publication_bytes,
+                    before.committed_publication_bytes
+                );
+                assert_eq!(after.integrity_failures, before.integrity_failures + 1);
+            }
+        }
+    }
+    #[test]
+    fn capacity_keeps_compact_publication_room_in_a_physically_full_history() {
+        let dir = Directory::new();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        for index in 0..31 {
+            let mut r = record();
+            r.id = format!("capacity-{index}");
+            r.scope = format!("capacity-scope-{index}");
+            store
+                .promote(r.clone(), assess(&r, &evidence()).unwrap())
+                .unwrap();
+        }
+        let path = store.ledger_path();
+        let original = fs::read(&path).unwrap();
+        assert_eq!(store.record_count(), 32);
+        drop(store);
+        // Existing native JSONL accepts trailing JSON whitespace. Make the
+        // physical file full without changing any receipt or its chain hash.
+        let mut padded = Vec::new();
+        let stride = super::super::MAX_LEDGER_BYTES / 32;
+        for line in original
+            .split(|byte| *byte == b'\n')
+            .filter(|line| !line.is_empty())
+        {
+            let end = padded.len() + stride - 1;
+            assert!(line.len() < stride);
+            padded.extend_from_slice(line);
+            padded.resize(end, b' ');
+            padded.push(b'\n');
+        }
+        assert_eq!(padded.len(), super::super::MAX_LEDGER_BYTES);
+        fs::write(&path, padded).unwrap();
+        let mut reopened = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let capacity = reopened.capacity();
+        assert_eq!(capacity.remaining_ledger_bytes, 0);
+        assert_eq!(capacity.canonical_ledger_bytes, original.len());
+        assert!(capacity.remaining_publication_bytes > 0);
+        assert_eq!(
+            reopened.io_diagnostics().cold_read_bytes,
+            super::super::MAX_LEDGER_BYTES as u64
+        );
+        assert_eq!(
+            reopened.io_diagnostics().capacity_quote_serialized_bytes,
+            original.len() as u64
+        );
+        let mut r = record();
+        r.id = "after-physical-full".into();
+        r.scope = "after-physical-full".into();
+        reopened
+            .promote(r.clone(), assess(&r, &evidence()).unwrap())
+            .unwrap();
+        assert_eq!(reopened.record_count(), 33);
+        let after = reopened.capacity();
+        assert!(after.used_ledger_bytes < after.max_ledger_bytes);
+        assert_eq!(after.used_ledger_bytes, after.canonical_ledger_bytes);
+        assert_eq!(
+            fs::metadata(path).unwrap().len(),
+            after.used_ledger_bytes as u64
+        );
+    }
+    #[test]
+    fn checked_writes_classify_actual_serialized_capacity_without_prose_parsing() {
+        let dir = Directory::new();
+        let store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let path = store.ledger_path();
+        let genesis = fs::read(&path).unwrap();
+        let first: Receipt = serde_json::from_slice(&genesis[..genesis.len() - 1]).unwrap();
+        drop(store);
+        let mut bytes = genesis;
+        let mut previous = first.sha256;
+        let mut index = 1;
+        let next = loop {
+            let mut r = record();
+            r.id = format!("large-{index}");
+            r.scope = format!("large-scope-{index}");
+            r.provenance = "p".repeat(4096);
+            r.schema_fingerprint = affine_schema_fingerprint(8).unwrap();
+            r.payload["width"] = serde_json::json!(8);
+            let mut trial = evidence();
+            trial.training_case_ids.clear();
+            trial.training_inputs.clear();
+            trial.cases = (0..256)
+                .map(|input| {
+                    let expected = r.predict(input).unwrap();
+                    TrialCase {
+                        id: format!("{}-{input}", "c".repeat(110)),
+                        input,
+                        expected,
+                        candidate: expected,
+                        baseline: None,
+                    }
+                })
+                .collect();
+            let assessment = assess(&r, &trial).unwrap();
+            let mut receipt = Receipt {
+                sequence: index,
+                previous: previous.clone(),
+                payload: Event::Promote {
+                    record: r.clone(),
+                    assessment: Box::new(assessment.clone()),
+                    policy_version: Some(2),
+                },
+                sha256: String::new(),
+            };
+            receipt.sha256 = receipt.hash().unwrap();
+            let row = serde_json::to_vec(&receipt).unwrap();
+            assert!(row.len() <= MAX_RECORD_BYTES);
+            if bytes.len() + row.len() + 1 > super::super::MAX_LEDGER_BYTES {
+                break (r, assessment);
+            }
+            bytes.extend_from_slice(&row);
+            bytes.push(b'\n');
+            previous = receipt.sha256;
+            index += 1;
+        };
+        // These are valid test-only native receipts; replay independently checks
+        // them before the real append guard quotes the next complete publication.
+        fs::write(&path, &bytes).unwrap();
+        let mut store = KnowledgeStore::open(&dir.0, "owner").unwrap();
+        let at = store.history_anchor();
+        let remaining = store.capacity().remaining_publication_bytes;
+        assert!(remaining > 0);
+        let result = store.promote_checked(next.0, next.1);
+        assert!(matches!(result, Err(MemoryWriteError::Capacity(_))));
+        assert_eq!(store.history_anchor(), at);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert_eq!(store.io_diagnostics().publication_attempts, 0);
+        assert!(
+            store.io_diagnostics().full_history_serialized_bytes
+                > super::super::MAX_LEDGER_BYTES as u64
+        );
+        assert!(matches!(
+            store.revoke_checked("absent", "no such record"),
+            Err(MemoryWriteError::Invalid(_))
+        ));
     }
     #[test]
     fn heldout_learning_retains_owner_state_and_evidence() {

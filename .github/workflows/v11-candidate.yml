@@ -1,0 +1,330 @@
+name: Stage v1.1 platform candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact clean workflow HEAD to stage (40 hexadecimal characters)
+        required: true
+        type: string
+      verification_run_id:
+        description: Successful official push CI run for this exact source
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-candidate-${{ inputs.source_commit }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.bind.outputs.version }}
+      sha: ${{ steps.bind.outputs.sha }}
+      source_gate: ${{ steps.source-ci.outputs.gate }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+      - id: bind
+        name: Bind candidate to this workflow source without creating a tag
+        env:
+          EXPECTED_SOURCE: ${{ inputs.source_commit }}
+        run: |
+          python - <<'PY'
+          import os, re, subprocess, tomllib
+          from pathlib import Path
+          expected = os.environ['EXPECTED_SOURCE']
+          sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if not re.fullmatch(r'[0-9a-f]{40}', expected) or expected != sha or sha != os.environ['GITHUB_SHA']:
+              raise SystemExit('Selected candidate must be this exact workflow HEAD; no different checkout ref is allowed')
+          package = tomllib.loads(Path('Cargo.toml').read_text())['workspace']['package']
+          if package['rust-version'] != '1.98.1' or package['version'] != '1.1.0':
+              raise SystemExit('Candidate must declare v1.1.0 and Rust 1.98.1')
+          if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
+              raise SystemExit('Candidate checkout changed')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('version=v' + package['version'] + '\nsha=' + sha + '\n')
+          PY
+      - id: source-ci
+        name: Reuse successful source gates only from the exact official push run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFICATION_RUN: ${{ inputs.verification_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERIFICATION_RUN" =~ ^[1-9][0-9]*$ ]]
+          mkdir dist
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFICATION_RUN" > dist/source-verification-run.json
+          attempt=$(python -c "import json;print(json.load(open('dist/source-verification-run.json'))['run_attempt'])")
+          [[ "$attempt" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFICATION_RUN/attempts/$attempt/jobs?per_page=100" > dist/source-verification-jobs.json
+          python -B tools/release/v11_release_checks.py verify-source-ci --run dist/source-verification-run.json --jobs dist/source-verification-jobs.json --source "$GITHUB_SHA" --run-id "$VERIFICATION_RUN" --out dist/source-ci-gate.json
+          echo "gate=$VERIFICATION_RUN" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: v11-source-ci-gate
+          path: dist/*
+          if-no-files-found: error
+
+  platform:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            executable: symbiote.exe
+            consumer: symbiote-independent-engine-consumer.exe
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            executable: symbiote
+            consumer: symbiote-independent-engine-consumer
+          - os: macos-15
+            target: aarch64-apple-darwin
+            executable: symbiote
+            consumer: symbiote-independent-engine-consumer
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            executable: symbiote
+            consumer: symbiote-independent-engine-consumer
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      SYMBIOTE_SOURCE_COMMIT: ${{ needs.prepare.outputs.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      SYMBIOTE_VERIFICATION_RUN_ID: ${{ needs.prepare.outputs.source_gate }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: '1.98.1'
+          targets: ${{ matrix.target }}
+          components: rustfmt, clippy
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+      - name: Execute additional Intel macOS software gates not covered by source CI
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: python -B tools/verify.py
+      - name: Build documented API reference
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: cargo doc --workspace --all-features --no-deps --locked
+      - name: Build exact release image
+        run: cargo build --release --locked -p symbiote-runtime --bin symbiote --target ${{ matrix.target }}
+      - name: Create checked native bundle
+        run: python -B tools/package_release.py --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --target ${{ matrix.target }} --version ${{ needs.prepare.outputs.version }} --out dist
+      - name: Build source-matched installed-image driver without running tests
+        shell: bash
+        run: cargo test --release --locked -p symbiote-runtime --test service --target ${{ matrix.target }} --no-run --message-format json > dist/service-driver.jsonl
+      - id: driver
+        name: Select one exact built service-test executable
+        run: python -B tools/release/v11_release_checks.py driver --cargo-json dist/service-driver.jsonl
+      - name: Compile the separate external developer workspace with its own lock
+        run: cargo build --release --locked --manifest-path tests/consumer-engine/Cargo.toml --target ${{ matrix.target }}
+      - name: Execute independent embedding lifecycle on the matching platform
+        run: >-
+          python -B tools/release/v11_release_checks.py embedding
+          --binary tests/consumer-engine/target/${{ matrix.target }}/release/${{ matrix.consumer }}
+          --commit ${{ needs.prepare.outputs.sha }} --version ${{ needs.prepare.outputs.version }}
+          --out "${{ steps.driver.outputs.acceptance }}-embedding"
+      - name: Exercise this installed native candidate
+        run: >-
+          python -B tools/release/v11_release_checks.py accept
+          --bundle dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+          --target ${{ matrix.target }} --version ${{ needs.prepare.outputs.version }}
+          --commit ${{ needs.prepare.outputs.sha }}
+          --service-tests "${{ steps.driver.outputs.path }}"
+          --service-tests-sha256 ${{ steps.driver.outputs.sha256 }}
+          --out "${{ steps.driver.outputs.acceptance }}"
+      - name: Bind compiler, lock, features, dependency inventory and behavioral proof
+        run: >-
+          python -B tools/release/v11_release_checks.py metadata
+          --binary target/${{ matrix.target }}/release/${{ matrix.executable }}
+          --bundle dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+          --target ${{ matrix.target }} --version ${{ needs.prepare.outputs.version }}
+          --commit ${{ needs.prepare.outputs.sha }} --out dist
+          --proof "${{ steps.driver.outputs.acceptance }}/acceptance.json"
+          --proof "${{ steps.driver.outputs.acceptance }}-embedding/embedding-acceptance.json"
+          --proof docs/V11_ENGINE_SUPPORT_CONTRACT.md
+          --proof tests/consumer-engine/Cargo.toml
+          --proof tests/consumer-engine/Cargo.lock
+          --proof tests/consumer-engine/src/main.rs
+          --proof crates/symbiote-runtime/examples/embedding_consumer.rs
+      - name: Preserve closed acceptance evidence under one portable artifact root
+        if: always() && steps.driver.outcome == 'success'
+        run: >-
+          python -B tools/release/v11_release_checks.py stage-acceptance
+          --installed "${{ steps.driver.outputs.acceptance }}"
+          --embedding "${{ steps.driver.outputs.acceptance }}-embedding"
+          --out dist/acceptance/${{ matrix.target }}
+      - id: provenance
+        name: Attest this exact staged archive's build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+            dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.build.json
+            dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.cdx.json
+      - name: Preserve build attestation before another signing action
+        run: >-
+          python -B tools/release/v11_release_checks.py preserve-attestation
+          --input "${{ steps.provenance.outputs.bundle-path }}"
+          --out dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.provenance.sigstore.json
+      - id: sbom
+        name: Attest the target-filtered dependency inventory
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+          sbom-path: dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.cdx.json
+      - name: Preserve the separate SBOM attestation
+        run: >-
+          python -B tools/release/v11_release_checks.py preserve-attestation
+          --input "${{ steps.sbom.outputs.bundle-path }}"
+          --out dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.sbom.sigstore.json
+      - name: Verify GitHub build provenance against this source and signer
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh attestation verify dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+          --repo ${{ github.repository }} --source-digest ${{ needs.prepare.outputs.sha }}
+          --signer-workflow ${{ github.repository }}/.github/workflows/v11-candidate.yml
+          --signer-digest ${{ needs.prepare.outputs.sha }} --deny-self-hosted-runners
+          --format json > dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.provenance-verification.json
+      - name: Verify the separate CycloneDX attestation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh attestation verify dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.zip
+          --repo ${{ github.repository }} --source-digest ${{ needs.prepare.outputs.sha }}
+          --signer-workflow ${{ github.repository }}/.github/workflows/v11-candidate.yml
+          --signer-digest ${{ needs.prepare.outputs.sha }} --deny-self-hosted-runners
+          --predicate-type https://cyclonedx.org/bom --format json > dist/symbiote-${{ needs.prepare.outputs.version }}-${{ matrix.target }}.sbom-verification.json
+      - name: Preserve exact attestation bundles and checksum every staged subject
+        run: >-
+          python -B tools/release/v11_release_checks.py seal --out dist
+          --version ${{ needs.prepare.outputs.version }} --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: v11-native-${{ matrix.target }}
+          path: dist/**
+          if-no-files-found: error
+          retention-days: 30
+
+  linux-enospc:
+    name: Actual ENOSPC on a dedicated disposable Linux filesystem
+    needs: prepare
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      SYMBIOTE_SOURCE_COMMIT: ${{ needs.prepare.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: '1.98.1'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+      - name: Execute only the explicit opt-in full-filesystem fault
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent=$(realpath -- "$RUNNER_TEMP")
+          volume="$parent/symbiote-enospc-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          evidence="$parent/symbiote-enospc-evidence-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ && "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]
+          [[ ! -e "$volume" && ! -e "$evidence" ]]
+          mkdir -- "$volume" "$evidence"
+          [[ "$(realpath -- "$volume")" == "$volume" && "$(dirname -- "$volume")" == "$parent" ]]
+          cleanup() {
+            status=$?
+            trap - EXIT
+            if mountpoint -q -- "$volume"; then
+              if [[ "$(findmnt -rn --mountpoint "$volume" -o SOURCE)" != symbiote-v11-enospc ]]; then
+                echo 'Unexpected mount identity; refusing to unmount it.' >&2
+                exit 1
+              fi
+              if ! cp -a -- "$volume/." "$evidence/stopped-volume"; then
+                echo 'Could not preserve the complete owned volume prefix.' >&2
+                status=1
+              fi
+              if ! sudo umount -- "$volume"; then exit 1; fi
+            fi
+            if ! rmdir -- "$volume"; then status=1; fi
+            exit "$status"
+          }
+          trap cleanup EXIT
+          sudo mount -t tmpfs -o "size=1048576,nr_inodes=64,mode=0700,uid=$(id -u),gid=$(id -g)" symbiote-v11-enospc "$volume"
+          [[ "$(findmnt -rn --mountpoint "$volume" -o SOURCE)" == symbiote-v11-enospc ]]
+          export SYMBIOTE_ENOSPC_ROOT="$volume"
+          export SYMBIOTE_ENOSPC_RECEIPT="$evidence/enospc.json"
+          cargo test --locked -p symbiote-runtime --test engine_faults -- --ignored --exact actual_linux_disk_full_preserves_committed_state --nocapture 2>&1 | tee "$evidence/native-test.txt"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = json.loads(Path(os.environ['SYMBIOTE_ENOSPC_RECEIPT']).read_bytes())
+          assert report['schema'] == 'symbiote.engine-enospc/1' and report['status'] == 'PASS_ACTUAL_ENOSPC'
+          assert report['raw_errno'] == 28 and report['filesystem_capacity_bytes'] <= 1048576
+          assert report['fill_written_bytes'] <= 2097152 and report['retain_error_kind'] == 'storage'
+          assert report['reopen_error_kind'] == 'hold' and report['committed_ledgers_unchanged'] is True
+          assert report['fill_file_removed'] is True and report['native_mount_or_unmount_performed'] is False
+          import hashlib, subprocess
+          assert report['source_commit'] == os.environ['SYMBIOTE_SOURCE_COMMIT'] and report['version'] == '1.1.0'
+          # Preserve the exact executed fault-test image without rebuilding or
+          # selecting a filename as authority. The receipt's actual image SHA
+          # must match one bounded Cargo output before any copy is qualified.
+          images = []
+          for path in Path('target/debug/deps').glob('engine_faults-*'):
+              if path.is_file() and not path.is_symlink() and path.stat().st_size <= 64*1024*1024:
+                  raw = path.read_bytes()
+                  if hashlib.sha256(raw).hexdigest() == report['test_executable_sha256']:
+                      images.append((path,raw))
+          assert len(images) == 1
+          original, raw = images[0]
+          retained = Path(os.environ['SYMBIOTE_ENOSPC_RECEIPT']).parent / 'executables'
+          retained.mkdir()
+          with (retained/'engine-faults').open('xb') as output: output.write(raw)
+          assert hashlib.sha256(original.read_bytes()).hexdigest() == report['test_executable_sha256']
+          context = {'schema':'symbiote.enospc-source-context/1','source_commit':os.environ['SYMBIOTE_SOURCE_COMMIT'],
+                     'workflow_run_id':os.environ['GITHUB_RUN_ID'],'workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+                     'compiler_verbose':subprocess.check_output(['rustc','-vV'],text=True),
+                     'test_executable_original':str(original.resolve(strict=True)),
+                     'test_executable_copy':'executables/engine-faults','test_executable_sha256':report['test_executable_sha256'],
+                     'receipt_sha256':hashlib.sha256(Path(os.environ['SYMBIOTE_ENOSPC_RECEIPT']).read_bytes()).hexdigest(),
+                     'scope':'one explicit opt-in actual Linux full-filesystem test; not a Windows/macOS disk-full claim'}
+          Path(os.environ['SYMBIOTE_ENOSPC_RECEIPT']).with_name('source-context.json').write_text(json.dumps(context,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: v11-linux-enospc
+          path: ${{ runner.temp }}/symbiote-enospc-evidence-${{ github.run_id }}-${{ github.run_attempt }}/**
+          if-no-files-found: error
+          retention-days: 30
+
+# No tag/release creation, upload to a release, or latest-release mutation occurs
+# in this workflow. A fresh final hour and all prepublication gates are external
+# prerequisites for the separately reviewed delivery operation.

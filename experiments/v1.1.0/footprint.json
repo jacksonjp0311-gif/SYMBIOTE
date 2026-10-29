@@ -1,0 +1,12 @@
+{
+  "schema": "symbiote.footprint/1",
+  "basis": "staged Git blobs; excludes this report, .git, build outputs and local state; prequalification source snapshot",
+  "upstream_brute_files": 890,
+  "upstream_brute_root_entries": 41,
+  "upstream_brute_bytes": 574798515,
+  "symbiote_files_excluding_report": 341,
+  "symbiote_root_entries": 15,
+  "symbiote_bytes_excluding_report": 9637797,
+  "active_byte_reduction_percent": 98.3233,
+  "root_entry_reduction_percent": 63.41
+}

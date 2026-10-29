@@ -261,7 +261,7 @@ pub struct ParallelWorld {
 }
 impl ParallelWorld {
     /// `labels` is frozen independently of truth. The registered cohort uses
-    /// [1,2,3,4] and [3,1,4,2]; smaller worlds are labelled smoke fixtures.
+    /// `[1,2,3,4]` and `[3,1,4,2]`; smaller worlds are labelled smoke fixtures.
     pub fn new(cheap: usize, labels: Vec<usize>, price: u64) -> Result<Self, String> {
         let count = labels.len();
         if !(2..=4).contains(&count)

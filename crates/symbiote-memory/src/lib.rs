@@ -26,6 +26,38 @@ pub const MAX_RECORD_BYTES: usize = 16 * 1024;
 pub const MAX_RECORDS: usize = 4096;
 const ZERO_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+pub const ENGINE_OWNER_NAMESPACE: &str = "embedding-engine/v1";
+pub const ENGINE_MINIMUM_WRITER: &str = "symbiote-engine-writer/1";
+
+/// An explicit writer-format admission marker, not a model or release claim.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EngineOwnerRegistration {
+    pub namespace: String,
+    pub minimum_writer: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum EngineOwnerError {
+    Admission(String),
+    Storage(String),
+}
+impl std::fmt::Display for EngineOwnerError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Admission(message) | Self::Storage(message) => formatter.write_str(message),
+        }
+    }
+}
+impl std::error::Error for EngineOwnerError {}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum WriterAdmission {
+    Legacy,
+    InitializeEngine,
+    OpenEngine,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -141,6 +173,10 @@ enum Event {
         version: u32,
         identity: String,
     },
+    EngineOwnerRegistered {
+        namespace: String,
+        minimum_writer: String,
+    },
     Promote {
         artifact: Artifact,
         evaluation: Evaluation,
@@ -191,6 +227,7 @@ pub struct Store {
     _lock: Option<maintenance::WriterLock>,
     operational_lease: AtomicBool,
     identity: String,
+    engine_owner: Option<EngineOwnerRegistration>,
     receipts: Vec<Receipt>,
     active: BTreeMap<String, Artifact>,
     revisions: BTreeMap<String, u64>,
@@ -201,19 +238,55 @@ impl Store {
         Self::open_with_initialization_hook(directory, || {})
     }
 
+    /// Initialize a new engine identity only. Existing unmarked owners require
+    /// an explicitly reviewed future migration, never an automatic upgrade.
+    pub fn initialize_engine(directory: &Path) -> Result<Self, EngineOwnerError> {
+        Self::open_admitted(directory, || {}, WriterAdmission::InitializeEngine)
+    }
+
+    pub fn open_engine(directory: &Path) -> Result<Self, EngineOwnerError> {
+        Self::open_admitted(directory, || {}, WriterAdmission::OpenEngine)
+    }
+
+    pub fn engine_owner_registration(&self) -> Option<&EngineOwnerRegistration> {
+        self.engine_owner.as_ref()
+    }
+
     /// A private no-op in production; tests can deterministically schedule a
     /// competing constructor at the pre-genesis filesystem commit boundary.
     fn open_with_initialization_hook(
         directory: &Path,
         before_genesis: impl FnOnce(),
     ) -> Result<Self, String> {
-        fs::create_dir_all(directory).map_err(|e| format!("memory directory: {e}"))?;
-        let (lock, _initialization_gate) = maintenance::writer_lock(directory, "writer.lock")?;
+        Self::open_admitted(directory, before_genesis, WriterAdmission::Legacy)
+            .map_err(|error| error.to_string())
+    }
+
+    fn open_admitted(
+        directory: &Path,
+        before_genesis: impl FnOnce(),
+        admission: WriterAdmission,
+    ) -> Result<Self, EngineOwnerError> {
+        fs::create_dir_all(directory)
+            .map_err(|e| EngineOwnerError::Storage(format!("memory directory: {e}")))?;
+        let (lock, _initialization_gate) = maintenance::writer_lock(directory, "writer.lock")
+            .map_err(EngineOwnerError::Storage)?;
+        let path = directory.join("ledger.jsonl");
+        if admission == WriterAdmission::InitializeEngine && path.exists() {
+            return Err(EngineOwnerError::Admission(
+                "engine initialization requires an absent identity ledger".into(),
+            ));
+        }
+        if admission == WriterAdmission::OpenEngine && !path.exists() {
+            return Err(EngineOwnerError::Admission(
+                "engine owner registration is missing; refusing initialization".into(),
+            ));
+        }
         if !directory.join("ledger.jsonl").exists() && directory.join("knowledge.jsonl").exists() {
-            return Err(
+            return Err(EngineOwnerError::Admission(
                 "structural knowledge exists without its identity ledger; refusing identity reset"
                     .into(),
-            );
+            ));
         }
         if !directory.join("ledger.jsonl").exists()
             && (directory.join("operations.jsonl").exists()
@@ -221,45 +294,71 @@ impl Store {
                 || directory.join(strategy::STRATEGY_FILE).exists()
                 || directory.join(strategy::STRATEGY_OWNER_FILE).exists())
         {
-            return Err(
+            return Err(EngineOwnerError::Admission(
                 "operational or strategy history exists without its identity ledger; refusing identity reset"
                     .into(),
-            );
+            ));
         }
         before_genesis();
-        let path = directory.join("ledger.jsonl");
         let mut store = Self {
             directory: directory.to_path_buf(),
             _lock: Some(lock),
             operational_lease: AtomicBool::new(false),
             identity: String::new(),
+            engine_owner: None,
             receipts: Vec::new(),
             active: BTreeMap::new(),
             revisions: BTreeMap::new(),
         };
         if path.exists() {
-            let file = File::open(&path).map_err(|e| e.to_string())?;
-            if file.metadata().map_err(|e| e.to_string())?.len() > MAX_LEDGER_BYTES as u64 {
-                return Err("memory ledger exceeds byte budget".into());
+            let file = File::open(&path).map_err(|e| EngineOwnerError::Storage(e.to_string()))?;
+            if file
+                .metadata()
+                .map_err(|e| EngineOwnerError::Storage(e.to_string()))?
+                .len()
+                > MAX_LEDGER_BYTES as u64
+            {
+                return Err(EngineOwnerError::Admission(
+                    "memory ledger exceeds byte budget".into(),
+                ));
             }
             let mut bytes = Vec::new();
             file.take(MAX_LEDGER_BYTES as u64 + 1)
                 .read_to_end(&mut bytes)
-                .map_err(|e| e.to_string())?;
-            store.replay_bytes(&bytes)?;
+                .map_err(|e| EngineOwnerError::Storage(e.to_string()))?;
+            store
+                .replay_bytes(&bytes)
+                .map_err(EngineOwnerError::Admission)?;
         }
         if !path.exists() {
             let now = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| EngineOwnerError::Storage(e.to_string()))?;
             let nonce = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-            let id = digest(&(now.as_nanos().to_string(), std::process::id(), nonce))?;
-            store.append(Event::Genesis {
-                version: 1,
-                identity: format!("symbiote-{}", &id[..24]),
-            })?;
+            let id = digest(&(now.as_nanos().to_string(), std::process::id(), nonce))
+                .map_err(EngineOwnerError::Admission)?;
+            store
+                .append(Event::Genesis {
+                    version: 1,
+                    identity: format!("symbiote-{}", &id[..24]),
+                })
+                .map_err(EngineOwnerError::Storage)?;
         }
-        maintenance::validate_layout_identity(directory, &store.identity)?;
+        if admission == WriterAdmission::InitializeEngine {
+            store
+                .append(Event::EngineOwnerRegistered {
+                    namespace: ENGINE_OWNER_NAMESPACE.into(),
+                    minimum_writer: ENGINE_MINIMUM_WRITER.into(),
+                })
+                .map_err(EngineOwnerError::Storage)?;
+        }
+        match (admission, store.engine_owner.as_ref()) {
+            (WriterAdmission::Legacy, Some(_)) => return Err(EngineOwnerError::Admission("engine-owned namespace requires an explicit compatible Engine writer".into())),
+            (WriterAdmission::OpenEngine | WriterAdmission::InitializeEngine, None) => return Err(EngineOwnerError::Admission("engine owner registration is missing; unmarked prototypes require explicit migration".into())),
+            _ => {},
+        }
+        maintenance::validate_layout_identity(directory, &store.identity)
+            .map_err(EngineOwnerError::Admission)?;
         Ok(store)
     }
 
@@ -293,17 +392,24 @@ impl Store {
     }
 
     pub(crate) fn validate_snapshot(bytes: &[u8]) -> Result<String, String> {
+        Self::validate_owner_snapshot(bytes).map(|(identity, _)| identity)
+    }
+
+    pub(crate) fn validate_owner_snapshot(
+        bytes: &[u8],
+    ) -> Result<(String, Option<EngineOwnerRegistration>), String> {
         let mut snapshot = Self {
             directory: PathBuf::new(),
             _lock: None,
             operational_lease: AtomicBool::new(false),
             identity: String::new(),
+            engine_owner: None,
             receipts: Vec::new(),
             active: BTreeMap::new(),
             revisions: BTreeMap::new(),
         };
         snapshot.replay_bytes(bytes)?;
-        Ok(snapshot.identity)
+        Ok((snapshot.identity, snapshot.engine_owner))
     }
 
     /// Validate an original, complete genesis-only ledger without opening a
@@ -378,11 +484,30 @@ impl Store {
                     return Err("invalid, unsupported, or repeated genesis identity".into());
                 }
             }
+            Event::EngineOwnerRegistered {
+                namespace,
+                minimum_writer,
+            } => {
+                if self.receipts.len() != 1
+                    || self.identity.is_empty()
+                    || self.engine_owner.is_some()
+                    || namespace != ENGINE_OWNER_NAMESPACE
+                    || minimum_writer != ENGINE_MINIMUM_WRITER
+                {
+                    return Err("unsupported, late or duplicate engine writer registration".into());
+                }
+            }
             Event::Promote {
                 artifact,
                 evaluation,
                 policy_version,
             } => {
+                if self.engine_owner.is_some() {
+                    return Err(
+                        "legacy finite-table learning cannot mutate an engine-owned namespace"
+                            .into(),
+                    );
+                }
                 if self.identity.is_empty() {
                     return Err("promotion before genesis".into());
                 }
@@ -415,6 +540,12 @@ impl Store {
                 }
             }
             Event::Revoke { id, reason } => {
+                if self.engine_owner.is_some() {
+                    return Err(
+                        "legacy finite-table revocation cannot mutate an engine-owned namespace"
+                            .into(),
+                    );
+                }
                 if !self.active.contains_key(id) || reason.trim().is_empty() || reason.len() > 4096
                 {
                     return Err("revocation requires an active artifact and bounded reason".into());
@@ -427,6 +558,15 @@ impl Store {
     fn apply(&mut self, event: &Event) {
         match event {
             Event::Genesis { identity, .. } => self.identity = identity.clone(),
+            Event::EngineOwnerRegistered {
+                namespace,
+                minimum_writer,
+            } => {
+                self.engine_owner = Some(EngineOwnerRegistration {
+                    namespace: namespace.clone(),
+                    minimum_writer: minimum_writer.clone(),
+                });
+            }
             Event::Promote { artifact, .. } => {
                 self.revisions
                     .insert(artifact.id.clone(), artifact.revision);
@@ -529,6 +669,96 @@ mod tests {
     }
     fn good_evaluation(a: &Artifact) -> Evaluation {
         evaluate(a, &[0, 3, 0, 3], &[Some(0), None, None, None]).unwrap()
+    }
+
+    #[test]
+    fn engine_owner_registration_rejects_generic_writers_and_preserves_genesis() {
+        let dir = TestDirectory::new();
+        let mut owner = Store::initialize_engine(&dir.0).unwrap();
+        let identity = owner.identity().to_string();
+        assert_eq!(owner.record_count(), 2);
+        assert_eq!(
+            owner.engine_owner_registration(),
+            Some(&EngineOwnerRegistration {
+                namespace: ENGINE_OWNER_NAMESPACE.into(),
+                minimum_writer: ENGINE_MINIMUM_WRITER.into()
+            })
+        );
+        let original = fs::read(owner.ledger_path()).unwrap();
+        let genesis_end = original.iter().position(|byte| *byte == b'\n').unwrap() + 1;
+        assert_eq!(
+            Store::validate_empty_genesis(&original[..genesis_end]).unwrap(),
+            identity
+        );
+        assert_eq!(Store::validate_snapshot(&original).unwrap(), identity);
+        let a = artifact();
+        assert!(owner.promote(a.clone(), good_evaluation(&a)).is_err());
+        assert_eq!(fs::read(owner.ledger_path()).unwrap(), original);
+        assert!(knowledge::KnowledgeStore::open(&dir.0, &identity).is_err());
+        let knowledge = knowledge::KnowledgeStore::open_engine(&dir.0, &identity).unwrap();
+        let structural = fs::read(knowledge.ledger_path()).unwrap();
+        drop(knowledge);
+        drop(owner);
+        assert!(Store::open(&dir.0).is_err());
+        assert!(knowledge::KnowledgeStore::open(&dir.0, &identity).is_err());
+        assert_eq!(fs::read(dir.0.join("ledger.jsonl")).unwrap(), original);
+        assert_eq!(fs::read(dir.0.join("knowledge.jsonl")).unwrap(), structural);
+        assert_eq!(
+            maintenance::inspect(&dir.0).unwrap().identity,
+            Some(identity.clone())
+        );
+        let reopened = Store::open_engine(&dir.0).unwrap();
+        assert_eq!(reopened.identity(), identity);
+        assert_eq!(fs::read(reopened.ledger_path()).unwrap(), original);
+    }
+
+    #[test]
+    fn engine_admission_never_upgrades_an_unmarked_owner_or_unknown_writer_marker() {
+        let dir = TestDirectory::new();
+        let legacy = Store::open(&dir.0).unwrap();
+        let identity = legacy.identity().to_string();
+        let original = fs::read(legacy.ledger_path()).unwrap();
+        drop(legacy);
+        assert!(matches!(
+            Store::open_engine(&dir.0),
+            Err(EngineOwnerError::Admission(_))
+        ));
+        assert!(matches!(
+            Store::initialize_engine(&dir.0),
+            Err(EngineOwnerError::Admission(_))
+        ));
+        assert!(knowledge::KnowledgeStore::open_engine(&dir.0, &identity).is_err());
+        assert_eq!(fs::read(dir.0.join("ledger.jsonl")).unwrap(), original);
+        assert_eq!(Store::open(&dir.0).unwrap().record_count(), 1);
+
+        let marked = TestDirectory::new();
+        let owner = Store::initialize_engine(&marked.0).unwrap();
+        let path = owner.ledger_path();
+        let saved = fs::read(&path).unwrap();
+        drop(owner);
+        let mut receipts: Vec<Receipt> = std::str::from_utf8(&saved)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        if let Event::EngineOwnerRegistered { minimum_writer, .. } = &mut receipts[1].payload {
+            *minimum_writer = "unsupported-future-writer/99".into();
+        } else {
+            panic!("expected marker");
+        }
+        receipts[1].sha256 = receipts[1].calculate_hash().unwrap();
+        let mut changed = Vec::new();
+        for receipt in receipts {
+            serde_json::to_writer(&mut changed, &receipt).unwrap();
+            changed.push(b'\n');
+        }
+        fs::write(&path, &changed).unwrap();
+        assert!(matches!(
+            Store::open_engine(&marked.0),
+            Err(EngineOwnerError::Admission(_))
+        ));
+        assert!(Store::open(&marked.0).is_err());
+        assert_eq!(fs::read(path).unwrap(), changed);
     }
 
     #[test]

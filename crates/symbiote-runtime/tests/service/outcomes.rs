@@ -187,6 +187,28 @@ fn two_native_agents_reconcile_receiver_owned_outcome_and_restart() {
     assert_eq!(first["receiver_capability_outcomes_verified"], 1);
     assert_eq!(first["partner_benefits_verified"], 0);
     assert_eq!(first["fresh_promotions"], 1);
+    assert_eq!(
+        first["learning_counters"]["promotions"],
+        json!({"ordinary_learning":1,"receiver_role":0,"total_new":1})
+    );
+    assert_eq!(
+        receiver_first["fresh_promotions"], 0,
+        "legacy ordinary-learning-only field stays readable"
+    );
+    assert_eq!(
+        receiver_first["learning_counters"]["promotions"],
+        json!({"ordinary_learning":0,"receiver_role":1,"total_new":1})
+    );
+    assert_eq!(
+        receiver_first["learning_counters"]["current_active_local"]["capability_outcomes"]
+            ["receiver_role"],
+        1
+    );
+    assert_eq!(
+        first["learning_counters"]["completed_outcomes"]["partner_receiver"],
+        1
+    );
+    assert_eq!(first["learning_counters"]["measured_benefits"]["total"], 0);
     let reconciled = channel_rows(&f, "reconciled");
     assert_eq!(reconciled.len(), 1);
     assert_eq!(
@@ -227,6 +249,32 @@ fn two_native_agents_reconcile_receiver_owned_outcome_and_restart() {
     let receiver_restart = receiver2.stop();
     assert_eq!(restart["observation_usage"]["queries"], 0);
     assert_eq!(restart["fresh_promotions"], 0);
+    assert_eq!(restart["learning_counters"]["promotions"]["total_new"], 0);
+    assert_eq!(
+        receiver_restart["learning_counters"]["promotions"]["total_new"],
+        0
+    );
+    assert_eq!(
+        restart["learning_counters"]["reused_records"]["ordinary_learning"],
+        1
+    );
+    assert_eq!(
+        receiver_restart["learning_counters"]["reused_records"]["total"], 0,
+        "mere reopen/replay grants no reuse credit"
+    );
+    assert_eq!(
+        restart["learning_counters"]["completed_outcomes"]["total"],
+        0
+    );
+    assert_eq!(
+        restart["learning_counters"]["durable_history_completed_outcomes"]["partner_receiver"],
+        1
+    );
+    assert_eq!(
+        receiver_restart["learning_counters"]["durable_history_completed_outcomes"]
+            ["receiver_role"],
+        1
+    );
     assert_eq!(restart["receiver_outcomes_verified"], 0);
     assert_eq!(channel_rows(&f, "reconciled").len(), 1);
     assert!(!events(&f, "sender-restart")

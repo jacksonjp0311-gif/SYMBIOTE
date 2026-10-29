@@ -51,6 +51,52 @@ predictions with the source stopped. This embedding is separate from the normal
 configured receiver channel. [Measured results and limits](ENGINE_EVOLUTION_002.md)
 keep component costs, retained exchange use and fresh source reuse distinct.
 
+## Typed embedding engine target
+
+The v1.1.0 candidate adds `symbiote_runtime::engine::Engine` inside the existing
+runtime crate. [Its public embedding contract](ENGINE_EMBEDDING.md) supplies typed
+configuration, observation adapters, errors, event sinks, bounded episodes,
+independent evaluation, retention, prediction, revocation and checkpoint/restore.
+The façade owns its stores and journal privately; a caller cannot turn a success
+flag or supplied digest into a promotion. Source callbacks remain trusted native
+code and must cooperate with cancellation and deadlines. The initial public
+embedding boundary is the exact affine family, rather than every research API.
+
+Each new engine owner registers a required writer capability immediately after
+its original identity genesis. Explicit compatible engine constructors admit it;
+generic and earlier writers refuse it. Unmarked prototype owners are held rather
+than upgraded. The [compatibility guide](COMPATIBILITY.md) explains downgrade and
+snapshot rollback limits. The marker is metadata, not a learned model.
+
+Local transfer connects two actual, host-owned `Engine` handles under a bilateral
+grant for the exact artifact, source epoch, scope and policies. The receiving
+engine independently evaluates before retention and records later model use and
+its outcome. Reconciliation reads that actual receiver's checked journal and
+current active knowledge. A saved response cannot substitute for the receiver
+handle or re-credit a completed exchange. Historical response snapshots stay
+auditable after revocation; their remote-current status is explicitly unknown
+until another live check. Conditional capability and unknown economic benefit
+remain distinct. This local API does not widen configured network permissions.
+
+Typed counters derive disjoint ordinary and receiver promotion origins from exact
+committed episodes and native knowledge anchors. Reuse is separate, and capability
+or measured-benefit counts are subsets. Historical completion survives later
+revocation; current active/source/policy validity is reported separately.
+`Engine::resources()` exposes per-instance knowledge I/O and journal prefix work
+without another source call or file read. Its byte stages overlap and are not a
+whole-process CPU, peak-memory or economic-gain measurement.
+
+Knowledge publication pins the exact opened bytes, including accepted JSON
+whitespace, and rechecks them before staging and replacement. Changed, missing or
+foreign history holds instead of being overwritten from a cache. Added guard
+reads and hashing are metered. Exact capacity failures and actual storage failures
+have separate typed categories. Existing receipt bytes, durable publication order
+and capacity limits remain intact. A post-commit sink failure reports the actual
+committed anchor; it cannot undo learning. These checks assume cooperative local
+writers and do not promise an adversarial filesystem compare-and-swap or power-loss
+durability. [The v1.1 status](V11_ENGINE_STATUS.md) keeps pending qualification
+separate from implemented interfaces and component checks.
+
 ## Three kinds of state
 
 1. **Observed:** typed telemetry, published capabilities and actual protocol
