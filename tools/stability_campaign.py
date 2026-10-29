@@ -240,6 +240,17 @@ def parse_darwin_group_census(raw, pid, sampler_pid):
                 members=members, active=any(row["state"][0] != "Z" for row in members))
 
 
+class DarwinCensusTimeout(RuntimeError):
+    """Only an observer timeout whose sampler is confirmed stopped and joined."""
+    def __init__(self, message, attempt):
+        super().__init__(message)
+        self.attempt = attempt
+
+
+class _DarwinProbeDeadline(RuntimeError):
+    pass
+
+
 def darwin_group_alive(pid, deadline=None, observation=None):
     """Bound native ps bytes/time inside the existing cleanup deadline."""
     start = time.monotonic()
@@ -248,6 +259,9 @@ def darwin_group_alive(pid, deadline=None, observation=None):
     selector = selectors.DefaultSelector()
     process = None
     raw = bytearray()
+    timed_out = None
+    sampler_kill_requested = sampler_killed = sampler_joined = False
+    sampler_exit = None
     try:
         process = subprocess.Popen(["/bin/ps", "-A", "-o", "pid=,pgid=,stat="],
                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -256,7 +270,8 @@ def darwin_group_alive(pid, deadline=None, observation=None):
         selector.register(process.stdout, selectors.EVENT_READ)
         while selector.get_map():
             remaining = cutoff - 0.025 - time.monotonic()
-            require(remaining > 0, "Darwin group census timed out before complete EOF")
+            if remaining <= 0:
+                raise _DarwinProbeDeadline("Darwin group census timed out before complete EOF")
             for key, _ in selector.select(remaining):
                 block = os.read(key.fileobj.fileno(), 4096)
                 if not block:
@@ -264,29 +279,92 @@ def darwin_group_alive(pid, deadline=None, observation=None):
                     continue
                 require(len(raw) + len(block) <= 128 * 1024, "Darwin group census byte budget exhausted")
                 raw.extend(block)
-        require(process.wait(timeout=max(0.001, cutoff-time.monotonic())) == 0,
-                "Darwin native ps census failed")
+        try:
+            sampler_exit = process.wait(timeout=max(0.001, cutoff-time.monotonic()))
+            sampler_joined = True
+        except subprocess.TimeoutExpired as failure:
+            raise _DarwinProbeDeadline("Darwin group census timed out waiting for sampler exit") from failure
+        require(sampler_exit == 0, "Darwin native ps census failed")
         result = parse_darwin_group_census(bytes(raw), pid, process.pid)
         require(time.monotonic() <= cutoff, "Darwin group census deadline exhausted during parsing")
         if observation is not None:
             observation.clear()
             observation.update(result)
         return result["active"]
+    except _DarwinProbeDeadline as failure:
+        timed_out = failure
     finally:
         selector.close()
         if process is not None:
             process.stdout.close()
-        if process is not None and process.poll() is None:
-            try:
-                process.kill()
-            except ProcessLookupError:
-                pass
-            process.wait(timeout=max(0.001, cutoff-time.monotonic()))
+        if process is not None and not sampler_joined:
+            if process.poll() is None:
+                try:
+                    process.kill()
+                    sampler_kill_requested = True
+                except ProcessLookupError:
+                    pass
+            sampler_exit = process.wait(timeout=max(0.001, cutoff-time.monotonic()))
+            sampler_joined = True
+    # Malformed/oversized/incomplete-witness/nonzero-exit and sampler-cleanup
+    # failures never enter this recoverable class. No unknown sample is empty.
+    sampler_killed = (sampler_kill_requested and type(sampler_exit) is int
+                      and sampler_exit == -signal.SIGKILL)
+    sampler_stopped = (sampler_joined and type(sampler_exit) is int
+                       and (sampler_exit == 0 or sampler_killed))
+    require(sampler_stopped, str(timed_out) + "; sampler was not confirmed stopped and joined: "
+            + str(dict(kill_requested=sampler_kill_requested, joined=sampler_joined, exit_code=sampler_exit)))
+    raise DarwinCensusTimeout(str(timed_out), dict(
+        outcome="observer-timeout", sampler_pid=process.pid, sampler_killed=sampler_killed,
+        sampler_kill_requested=sampler_kill_requested, sampler_joined=True,
+        sampler_stopped=True, sampler_exit_code=sampler_exit, raw_bytes=len(raw),
+        raw_sha256=hashlib.sha256(raw).hexdigest(), elapsed_seconds=time.monotonic()-start,
+        probe_limit_seconds=0.25))
+
+
+def observe_darwin_group(pid, deadline, observation):
+    """Retry only stopped/joined observer timeouts in one bounded command window."""
+    if deadline is None:
+        return darwin_group_alive(pid, deadline, observation)
+    state = observation if observation is not None else {}
+    sampling = state.get("observer_sampling")
+    started = time.monotonic()
+    while True:
+        probe_deadline = min(deadline, sampling["deadline_monotonic"]) if sampling is not None else deadline
+        require(probe_deadline-time.monotonic() > 0.05, "Darwin observer resampling deadline exhausted")
+        if observation is not None:
+            observation.clear()
+            if sampling is not None: observation["observer_sampling"] = sampling
+        fresh = {} if observation is not None else None
+        try:
+            active = darwin_group_alive(pid, probe_deadline, fresh)
+            if observation is not None:
+                observation.clear(); observation.update(fresh)
+                if sampling is not None: observation["observer_sampling"] = sampling
+            return active
+        except DarwinCensusTimeout as failure:
+            require(failure.attempt.get("sampler_stopped") is True
+                    and failure.attempt.get("sampler_joined") is True
+                    and type(failure.attempt.get("sampler_exit_code")) is int
+                    and (failure.attempt["sampler_exit_code"] == 0
+                         or (failure.attempt.get("sampler_killed") is True
+                             and failure.attempt["sampler_exit_code"] == -signal.SIGKILL)),
+                    "Darwin observer timeout lacks sampler cleanup proof")
+            now = time.monotonic()
+            if sampling is None:
+                sampling = dict(schema="symbiote.darwin-observer-resampling/1",
+                                window_seconds=3, deadline_monotonic=min(deadline, started+3),
+                                failed_attempts=[])
+            require(len(sampling["failed_attempts"]) < 16, "Darwin observer attempt diagnostic bound")
+            sampling["failed_attempts"].append(failure.attempt)
+            state["observer_sampling"] = sampling
+            require(now+0.05 < sampling["deadline_monotonic"],
+                    "Darwin observer resampling deadline exhausted")
 
 
 def group_alive(pid, deadline=None, observation=None):
     if sys.platform == "darwin":
-        return darwin_group_alive(pid, deadline, observation)
+        return observe_darwin_group(pid, deadline, observation)
     try:
         os.killpg(pid, 0)
         # A killed orphan can briefly remain a zombie under Linux's reaper.
@@ -406,21 +484,31 @@ def execute(argv, directory, label, *, timeout, cancelled=lambda: False, environ
             # Job accounting can lag a signalled/reaped root by a scheduler
             # turn. Observe bounded quiescence before declaring a leaked child.
             settle_deadline = min(cleanup_deadline,time.monotonic()+0.25)
+            darwin_quiescent = False
             while time.monotonic()<settle_deadline:
                 active = job.active()!=0 if job else group_alive(process.pid, cleanup_deadline, group_observation)
-                if not active: break
+                if not active:
+                    darwin_quiescent = (not job and sys.platform == "darwin"
+                                        and group_observation.get("basis") == "native-ps-complete-pid-pgid-stat-census"
+                                        and group_observation.get("active") is False)
+                    break
                 time.sleep(0.01)
             if job:
                 leaked = job.active() != 0
                 if leaked:
                     job.terminate()
             else:
-                leaked = group_alive(process.pid, cleanup_deadline, group_observation)
+                leaked = False if darwin_quiescent else group_alive(process.pid, cleanup_deadline, group_observation)
                 if leaked:
+                    darwin_quiescent = False
                     signal_owned_group(process.pid, signal.SIGKILL, cleanup_deadline, group_observation)
             if leaked and outcome == "completed":
                 outcome = "descendant-leak"
-            while time.monotonic()<cleanup_deadline:
+            # After the owned root is reaped, a complete census with no executing
+            # session member proves quiescence. With no intervening signal or
+            # launch, zombie/absent members cannot create another descendant.
+            cleanup_verified = darwin_quiescent
+            while not cleanup_verified and time.monotonic()<cleanup_deadline:
                 cleanup_verified = job.active()==0 if job else not group_alive(process.pid, cleanup_deadline, group_observation)
                 if cleanup_verified: break
                 time.sleep(0.02)

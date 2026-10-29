@@ -219,3 +219,69 @@ opened tasks, independently audited with its own source/image/registration
 pins, and must not overwrite prior results. Its failure stays HOLD with no
 silent retry or retuning. This amendment authorizes no target execution until
 its final source, build/equivalence proof and registration have been reviewed.
+
+
+### Pre-task supervisor exception and scoped admission dependencies
+
+Candidate `65e0991` in run `40901906836` failed on an Intel Mac observer timeout before
+any v1.1.1 E3 registration, workload or hour. The additional prospective
+[corrective contract](CORRECTIVE_RELEASE_111.md) permits only its exact reviewed
+Darwin cleanup-observation/helper-test diff. The global cleanup cap remains 10
+seconds; native `ps` samples remain 0.25 seconds/128 KiB. Only the identified
+confirmed-stopped-and-reaped sampler timeout may be resampled for at most 3
+seconds within the same absolute cleanup deadline. Recovery requires either
+natural zero exit followed by join or its own kill request with actual
+`-SIGKILL` wait status followed by join. Keep kill-request and proven-kill
+booleans separate; a positive nonzero race after a request remains HOLD. Natural nonzero exit and unverified sampler cleanup remain
+HOLD. Preserve failed sample diagnostics and
+require fresh complete valid process-group evidence. Invalid/oversized/bad-witness
+or active-leak observations cannot become quiescent, and cleanup success cannot
+turn a cancelled/timed-out native command into completion.
+
+Any reused complete inactive proof belongs only to the same owned command's
+post-reap phase with no intervening signal; active/unknown/cross-command reuse
+is forbidden. The changed supervisor is explicitly not raw-byte-identical to `65e0991`
+or `9016624`. Bind its actual old/new hashes, exact reviewed diff and approval in the
+new build/equivalence proof; keep all other Rust/consumer/source/spec/task/control,
+cost-accounting, budget and concurrency requirements unchanged. The failed `65e0991`
+candidate, build, operators and readers remain preserved for their own source.
+
+This amendment also replaces global serial scheduling with scoped dependencies
+before any task opens. `LOCAL_E3` admission requires a clean final source, all
+four official source-CI jobs PASS, exact preserved consumer/build bytes,
+independent source/build/equivalence review and explicit typed root acceptance
+of those closed proof bindings. Remote candidate builds/installed gates and
+ENOSPC/signatures may still be OPEN; local admission never asserts their PASS.
+
+A fresh Windows hour may follow closed accepted E3 plus the Windows staged job's
+actual installed-native/consumer, provenance/SBOM, artifact digest and fresh
+independent Windows verification. Other remote platform jobs may continue.
+All six candidate jobs, all four target/native/embedding/signature gates, ENOSPC,
+E3 and the hour remain mandatory before any publication; all four actual public
+acceptances remain mandatory before stable promotion. A source change blocks
+promotion and requires a fresh hour for the replacement image. No learning task,
+helper result or earlier hour is silently relabelled by this scheduling change.
+
+
+The first unused observer-patch snapshot had two-path raw Git diff SHA256
+`0b4a3f7ec4b4b1f57c12001768d8dcf02f5c222f79d4bfe2dd41e18d0d557d8e`,
+supervisor `e430cb85166b0c9829a3ce51de668b88578b6c67f9213ae6ed7c3240a1203081`
+and test `7728f9e378dd80016a274457526c888b07de4e7904d5b06740997a33932064fd`.
+It is preserved as an unused development snapshot, not a qualified source. The
+[corrective contract](CORRECTIVE_RELEASE_111.md#exact-observer-exception-binding)
+records the final exception after the stopped-and-reaped refinement. Future
+reproduction build proofs must preserve the actual final old/new difference
+and keep all other protected inputs under the unchanged equality/version rules.
+
+
+Final admitted observer/test SHA256 values are
+`bb17621588730bf2dd1cebdeb0ded28534d2815ee130e86be1fd11e1b1d7daae`
+and `13588145f5e422fa09eaaa6cf4adbb82e8e600345d699d390ba9e869762966cb`.
+The exact two-path raw Git diff from `65e0991` is
+`c1933b31fe3f7f953268edf3793b479d630391db7caf624f98f0d552ac6b05ad`;
+software-check receipt is
+`7378140a340572f1282c8cd8085fa711a8db8bc739826ba4e3a4b7f8db7bf7a0`.
+The complete final binding, retained unused snapshots and unchanged qualification
+requirements are in the corrective contract. The native task machine JSON,
+source adapter, consumer, control costs, algorithms and 600-second/128-MiB bounds
+remain unchanged; this diagnostic exception creates zero scientific samples.

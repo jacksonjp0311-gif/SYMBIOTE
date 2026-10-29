@@ -13,6 +13,11 @@ Fresh qualification and public delivery are pending under the
   against the real transport route guard and immutable uploaded asset identities.
 - Admit explicitly pinned pure Cargo JSON streams through the existing raw and
   decoded credential checks; preserve original evidence bytes and file names.
+- Preserve the failed Intel candidate run 40901906836. Its Rust checks and
+  parity passed; an owned-process inspection timed out during a Python
+  verification contract. Recover only from proven stopped-and-reaped sampler
+  timeouts, within the existing cleanup limits, retaining failed samples and
+  requiring a fresh complete census. Native tasks never rerun.
 - Advance the four crate versions to 1.1.1 without changing their Rust algorithms,
   embedding interfaces, state schemas, or dependency resolutions.
 

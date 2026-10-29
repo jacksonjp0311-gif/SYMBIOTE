@@ -11,6 +11,7 @@ import tempfile
 import time
 import tomllib
 import unittest
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import Mock, call, patch
 
@@ -87,6 +88,7 @@ class SafetyTests(unittest.TestCase):
         denied = PermissionError(errno.EPERM, "Operation not permitted")
         for active in (False, True):
             with patch.object(c.sys, "platform", "darwin"), \
+                    patch.object(c.time, "monotonic", return_value=100.0), \
                     patch.object(c.os, "killpg", side_effect=denied, create=True), \
                     patch.object(c, "darwin_group_alive", return_value=active) as sample:
                 if active:
@@ -96,6 +98,7 @@ class SafetyTests(unittest.TestCase):
                     c.signal_owned_group(42, 15, 123.0)
                 sample.assert_called_once_with(42, 123.0, None)
         with patch.object(c.sys, "platform", "darwin"), \
+                patch.object(c.time, "monotonic", return_value=100.0), \
                 patch.object(c.os, "killpg", side_effect=denied, create=True), \
                 patch.object(c, "darwin_group_alive", side_effect=RuntimeError("incomplete census")):
             with self.assertRaisesRegex(RuntimeError, "incomplete census"):
@@ -153,6 +156,137 @@ class SafetyTests(unittest.TestCase):
         self.assertFalse(result["cleanup_verified"], result)
         with self.assertRaises(RuntimeError):
             c.check_exit(result)
+
+    @contextmanager
+    def darwin_observer_fixture(self, scenarios, native=None):
+        """Real sampler/parser, fake ps transport and advancing observer clock."""
+        clock=[0.0];samplers=[];native_launches=[];current=[None];mapping={}
+        killpg=Mock()
+        def launch(argv,**kwargs):
+            if argv[0]!="/bin/ps":
+                self.assertIsNotNone(native);native_launches.append(argv);return native
+            mode=scenarios[min(len(samplers),len(scenarios)-1)];pid=900+len(samplers)
+            pipe=SimpleNamespace(fileno=lambda:11,close=Mock())
+            process=SimpleNamespace(pid=pid,stdout=pipe,returncode=0 if mode=="timeout-stopped-zero"
+                                    else 1 if mode=="timeout-stopped-nonzero"else None,mode=mode)
+            def kill():process.returncode=2 if mode=="timeout-kill-raced-nonzero"else 0 if mode=="timeout-kill-raced-zero"else -9
+            def wait(timeout):
+                if mode=="unjoined"and process.returncode==-9:raise c.subprocess.TimeoutExpired(argv,timeout)
+                if process.returncode is None:process.returncode=1 if mode=="nonzero"else 0
+                clock[0]+=min(0.001,timeout);return process.returncode
+            process.kill=Mock(side_effect=kill);process.wait=Mock(side_effect=wait)
+            process.poll=Mock(side_effect=lambda:process.returncode)
+            witness=f"{pid} 800 R\n".encode()
+            raw=(b"warning\n"if mode=="invalid"else b"42 42 Z\n"if mode=="missing-witness"
+                 else witness+b"43 42 S\n"if mode=="active"else witness+b"42 42 Z\n")
+            process.blocks=([b"x"*4096]*33 if mode=="oversized"else[raw,b""])
+            samplers.append(process);current[0]=process;return process
+        def select(timeout):
+            process=current[0]
+            if process.mode in {"timeout","unjoined","timeout-stopped-zero","timeout-stopped-nonzero","timeout-kill-raced-nonzero","timeout-kill-raced-zero"}:clock[0]+=timeout;return[]
+            if process.mode=="active":clock[0]+=0.065
+            return[(SimpleNamespace(fileobj=process.stdout),1)]
+        selector=SimpleNamespace(register=lambda *args:mapping.update(pipe=True),get_map=lambda:mapping,
+                                 select=select,unregister=lambda *args:mapping.clear(),close=Mock())
+        mocked_os=SimpleNamespace(name="posix",environ={},set_blocking=Mock(),
+                                 read=lambda *args:current[0].blocks.pop(0),killpg=killpg)
+        with patch.object(c,"os",mocked_os),patch.object(c.sys,"platform","darwin"), \
+             patch.object(c,"signal",SimpleNamespace(SIGTERM=15,SIGKILL=9)), \
+             patch.object(c.time,"monotonic",side_effect=lambda:clock[0]), \
+             patch.object(c.time,"sleep",side_effect=lambda seconds:clock.__setitem__(0,clock[0]+seconds)), \
+             patch.object(c.selectors,"DefaultSelector",return_value=selector), \
+             patch.object(c.subprocess,"Popen",side_effect=launch):
+            yield clock,samplers,native_launches,killpg
+
+    def test_darwin_delayed_eof_retries_only_killed_joined_sampler_and_keeps_failure(self):
+        with self.darwin_observer_fixture(["timeout","quiet"])as(clock,samplers,_,_):
+            proof={};self.assertFalse(c.group_alive(42,10.0,proof))
+            self.assertEqual(len(samplers),2);samplers[0].kill.assert_called_once()
+            self.assertEqual(samplers[0].wait.call_count,1)
+            attempts=proof["observer_sampling"]["failed_attempts"]
+            self.assertEqual(len(attempts),1)
+            self.assertTrue(attempts[0]["sampler_killed"]and attempts[0]["sampler_joined"])
+            self.assertTrue(attempts[0]["sampler_kill_requested"])
+            self.assertEqual(attempts[0]["probe_limit_seconds"],0.25)
+            self.assertEqual(proof["sampler_pid"],samplers[1].pid)
+            self.assertFalse(proof["active"]);self.assertLess(clock[0],3)
+
+    def test_darwin_invalid_or_unjoined_observer_is_never_resampled(self):
+        for mode in("invalid","missing-witness","oversized","nonzero","unjoined","timeout-stopped-nonzero","timeout-kill-raced-nonzero"):
+            with self.subTest(mode=mode),self.darwin_observer_fixture([mode])as(_,samplers,_,_):
+                with self.assertRaises((RuntimeError,c.subprocess.TimeoutExpired)):c.group_alive(42,10.0,{})
+                self.assertEqual(len(samplers),1)
+
+    def test_darwin_delayed_eof_after_natural_zero_exit_needs_fresh_complete_query(self):
+        for mode in("timeout-stopped-zero","timeout-kill-raced-zero"):
+            native=SimpleNamespace(pid=42,returncode=1,stdout=io.BytesIO(),stderr=io.BytesIO(),
+                                   poll=Mock(return_value=1),wait=Mock(return_value=1))
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory(prefix="symbiote-observer-natural-exit-")as temp:
+                with self.darwin_observer_fixture([mode,"quiet"],native)as(clock,samplers,launches,signals):
+                    result=c.execute(["owned-native-once"],Path(temp),"observer-natural-zero",timeout=10)
+                c.check_exit(result,1)
+                self.assertEqual(len(launches),1);self.assertEqual(len(samplers),2);signals.assert_not_called()
+                self.assertEqual(samplers[0].kill.call_count,int(mode=="timeout-kill-raced-zero"))
+                self.assertEqual(samplers[0].wait.call_count,1)
+                attempts=result["posix_group_observation"]["observer_sampling"]["failed_attempts"]
+                self.assertEqual(len(attempts),1);self.assertFalse(attempts[0]["sampler_killed"])
+                self.assertEqual(attempts[0]["sampler_kill_requested"],mode=="timeout-kill-raced-zero")
+                self.assertTrue(attempts[0]["sampler_joined"]and attempts[0]["sampler_stopped"])
+                self.assertEqual(attempts[0]["sampler_exit_code"],0)
+                self.assertEqual(result["posix_group_observation"]["sampler_pid"],samplers[1].pid)
+                self.assertLess(clock[0],3)
+
+    def test_darwin_repeated_timeout_holds_within_nested_window_and_original_deadline(self):
+        for deadline in(10.0,0.4):
+            with self.subTest(deadline=deadline),self.darwin_observer_fixture(["timeout"])as(clock,samplers,_,_):
+                proof={}
+                with self.assertRaisesRegex(RuntimeError,"resampling deadline"):c.group_alive(42,deadline,proof)
+                self.assertLessEqual(clock[0],min(deadline,3))
+                self.assertGreater(len(samplers),1);self.assertLessEqual(len(samplers),16)
+                self.assertEqual(len(proof["observer_sampling"]["failed_attempts"]),len(samplers))
+                self.assertTrue(all(p.kill.called and p.wait.called for p in samplers))
+                self.assertNotIn("active",proof)
+
+    def test_darwin_execute_reuses_one_fresh_post_reap_quiet_proof_without_native_retry(self):
+        native=SimpleNamespace(pid=42,returncode=1,stdout=io.BytesIO(),stderr=io.BytesIO(),
+                               poll=Mock(return_value=1),wait=Mock(return_value=1))
+        with tempfile.TemporaryDirectory(prefix="symbiote-observer-recovery-")as temp:
+            with self.darwin_observer_fixture(["timeout","quiet"],native)as(_,samplers,launches,signals):
+                result=c.execute(["owned-native-once"],Path(temp),"observer-recovery",timeout=10)
+            c.check_exit(result,1)
+            self.assertEqual(len(launches),1);self.assertEqual(len(samplers),2);signals.assert_not_called()
+            self.assertEqual(len(result["posix_group_observation"]["observer_sampling"]["failed_attempts"]),1)
+            self.assertEqual(c.load(Path(temp)/result["process_receipt"]),result)
+
+    def test_darwin_active_members_force_signal_and_fresh_proof_and_do_not_pass(self):
+        native=SimpleNamespace(pid=42,returncode=0,stdout=io.BytesIO(),stderr=io.BytesIO(),
+                               poll=Mock(return_value=0),wait=Mock(return_value=0))
+        with tempfile.TemporaryDirectory(prefix="symbiote-observer-active-")as temp:
+            with self.darwin_observer_fixture(["active","active","active","quiet"],native)as(_,samplers,launches,signals):
+                result=c.execute(["owned-native-once"],Path(temp),"observer-active",timeout=10)
+            self.assertEqual(len(launches),1);self.assertEqual(len(samplers),4)
+            self.assertEqual(signals.call_args_list,[call(42,9)])
+            self.assertTrue(result["cleanup_verified"])
+            self.assertEqual(result["outcome"],"descendant-leak")
+            with self.assertRaises(RuntimeError):c.check_exit(result)
+
+    def test_darwin_observer_recovery_never_upgrades_native_failure_status(self):
+        def thread(*,target,args,daemon):
+            return SimpleNamespace(start=lambda:target(*args),join=lambda **kwargs:None,is_alive=lambda:False)
+        for reason in("timeout","cancelled","output-budget"):
+            native=SimpleNamespace(pid=42,returncode=-15,stdout=io.BytesIO(b"x"if reason=="output-budget"else b""),
+                                   stderr=io.BytesIO(),poll=Mock(return_value=None),wait=Mock(return_value=-15))
+            with self.subTest(reason=reason),tempfile.TemporaryDirectory(prefix="symbiote-observer-status-")as temp:
+                with self.darwin_observer_fixture(["timeout","quiet"],native)as(_,samplers,launches,signals), \
+                     patch.object(c.threading,"Thread",side_effect=thread), \
+                     patch.dict(c.BOUNDS,output_bytes_per_process=0 if reason=="output-budget"else 1024):
+                    result=c.execute(["owned-native-once"],Path(temp),"observer-"+reason,
+                                     timeout=0 if reason=="timeout"else 10,cancelled=lambda:reason=="cancelled")
+                self.assertEqual(result["outcome"],reason)
+                self.assertTrue(result["cleanup_verified"])
+                self.assertEqual(len(launches),1);self.assertEqual(len(samplers),2)
+                self.assertEqual(signals.call_args_list,[call(42,15)])
+                with self.assertRaises(RuntimeError):c.check_exit(result,-15)
 
     def test_real_cancellation_and_output_ceiling_preserve_failure_receipts(self):
         with tempfile.TemporaryDirectory(prefix="symbiote-campaign-cancel-test-") as temp:
