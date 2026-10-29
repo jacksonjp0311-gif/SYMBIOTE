@@ -1,0 +1,40 @@
+{
+  "schema": "symbiote.v11-transfer-spec/1",
+  "protocol": "SYMBIOTE-V11-TRANSFER-001",
+  "cases": [
+    {
+      "a": {
+        "mask": 106,
+        "bias": 1
+      },
+      "b": {
+        "mask": 79,
+        "bias": 1
+      }
+    },
+    {
+      "a": {
+        "mask": 101,
+        "bias": 1
+      },
+      "b": {
+        "mask": 140,
+        "bias": 1
+      }
+    }
+  ],
+  "width": 8,
+  "fresh_inputs": 32,
+  "horizons": [
+    1,
+    16,
+    32
+  ],
+  "query_policy": "rank-basis-min/v1",
+  "max_queries_per_source": 16,
+  "max_gf2_per_episode": 1000000,
+  "bounds": {
+    "seconds": 600,
+    "evidence_bytes": 134217728
+  }
+}

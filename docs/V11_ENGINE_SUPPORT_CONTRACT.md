@@ -48,6 +48,12 @@ target v1.1.0; preserve existing signatures, public struct/enum construction and
 schema readers unless a separately reviewed incompatible change is required.
 No crates.io publication is implied.
 
+Domain clarification before qualification: own active inference at width one has
+no input left for disjoint held-out validation after identification and therefore
+returns typed Uncertain. Own validated acquisition supports widths 2–8. A frozen
+received width-one candidate may be checked against its complete two-input domain;
+this does not provide fresh-input generalization at width one.
+
 ## E0 — baseline and contract
 
 The baseline [CI run 40833650082](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40833650082)
