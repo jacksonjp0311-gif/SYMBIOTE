@@ -1,0 +1,53 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "public-native:aarch64-apple-darwin",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898",
+  "status": "PASS",
+  "started_unix_ns": 1793313555000000000,
+  "finished_unix_ns": 1793313605000000000,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\public-acceptance.json",
+      "bytes": 52362,
+      "sha256": "d2c82e75bb387085be717c059bf6b5b0e3c21b081a32ff6093611905f45e4af3",
+      "name": "public-platform"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\native\\acceptance.json",
+      "bytes": 42902,
+      "sha256": "c2b5932e016a03327dca79d73aa74e6834a689bda40298bf7efb15d84799df87",
+      "name": "native-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\embedding\\embedding-acceptance.json",
+      "bytes": 3449,
+      "sha256": "845694233dfa3ccd2dc23b566f4d945cd7c568454c7479a3f3cd3ed23416cc47",
+      "name": "embedding-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+      "bytes": 36455,
+      "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+      "name": "official-public-run"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+      "bytes": 85956,
+      "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+      "name": "provisional-operation"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual first-public-run receipts and independent source-bound data review",
+    "decision": "ACCEPT",
+    "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim.",
+    "evidence_digest": "06cf74cd62399d70ecf5d8fccc7e4f58cc4cb33ff3cde8c57bb8ef6c21e7cb7c"
+  },
+  "public_binding": {
+    "release_id": 428461777,
+    "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+    "asset_digest": "cf8d5c03f1c8628ed4e9c5f4f0772dfce4be64bb10d5f7de5f33d54547eff9f2"
+  }
+}

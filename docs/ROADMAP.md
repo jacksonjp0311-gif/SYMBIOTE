@@ -1,60 +1,42 @@
-# Current corrective delivery: v1.1.2
+# Roadmap: qualify the existing engine
 
-Continue the existing engine under [CORRECTIVE_RELEASE_112.md](CORRECTIVE_RELEASE_112.md).
-The only new functional correction is authenticated, narrowly scoped GitHub
-metadata access in the public checker. Anonymous downloads and credential-free
-native children remain mandatory. Do not rewrite the Rust engine or relax gates.
+Current software release **v1.1.2 — Stable release** follows
+[CORRECTIVE_RELEASE_112.md](CORRECTIVE_RELEASE_112.md). Continue the existing
+four-crate Rust engine; do not rewrite it or change declared research gates.
+Source `8aa5f4c` has [all four source CI jobs](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40941750300)
+closed PASS. Replacement candidate 40945405929 is **PASS (all six jobs, attempt 1)**.
 
-v1.1.1 (source69d) remains a FAILED prerelease after an Intel REST quota error
-before download/native execution. Its source/staged/hour evidence and three
-public platform passes are retained at their own scope. Its immutable evidence
-ZIP is pinned in the corrective contract. v1.0.1 remains latest stable.
+The declared release path is retained below; source/platform/E3/hour stages are
+closed for the exact current images. Archive and public-delivery stages retain
+their separately recorded results:
 
-Freeze the new source, complete source and platform checks, run the once-only
-compatibility reproduction and fresh actual staged-image hour, then all four
-public platform checks before stable promotion. No new scientific sample or
-reciprocal-efficiency claim is authorized. Preserve the completed studies.
+1. Close all six candidate jobs, the four actual installed native/external
+   consumer dimensions, actual Linux ENOSPC and exact signed subject checks.
+2. Close the registered delivery-compatibility E3 reproduction on the same opened
+   tasks, with original parent/primary pins and zero new scientific samples.
+3. Close a fresh 60-minute/120-cycle hour on the actual new staged Windows image,
+   its source-matched driver and independently audited original raw evidence.
+4. Review a byte-preserving selected archive and exact immutable asset plan;
+   publish provisionally and anonymously verify delivered bytes.
+5. Require the first public run to pass all four installed native/consumer
+   platform checks, then promote stable/latest and record the actual receipt
+   index. Public delivery remains **PASS — four targets, first public attempt**.
 
-## Earlier roadmap/handoff snapshot
+The committed scoped scheduling DAG allows local E3 and later Windows-only hour
+admission while unrelated remote jobs are OPEN. All required gates still close
+before publication. No source changes/heavy work during an active hour, asset
+replacement, tag movement, hidden retry or upgrade of failed evidence is allowed.
+The failed v1.1.0/v1.1.1 releases and first source-8aa candidate retain their own records;
+stable/latest status is **v1.1.2 — latest stable**. Current result details
+belong in [the release table](V11_ENGINE_STATUS.md), not in research milestones.
 
-The following earlier notes are historical; their source IDs, proposed release
-statuses and commands do not replace the current correction contract.
-
-# Evidence-gated evolution
-
-These are version objectives, not automatic capability promises. Later-feature
-prototypes in Genesis do not justify skipping the associated research gates.
-Maintain failed criteria and matched-cost controls for every release.
-
-## Current engineering target: v1.1.1 corrective delivery
-
-The v1.1.0 public workflow failed before downloading or executing any native
-program. Its tag/assets and original qualification records remain preserved.
-The [corrective contract](CORRECTIVE_RELEASE_111.md) requires a new source freeze,
-four-platform installed checks, a fresh actual-image hour, and first-attempt
-public acceptance. No old result is relabelled as qualification of the new image.
-
-Deliver a qualified, embeddable Rust reasoning-and-learning component within the
-existing four crates. [Current status](V11_ENGINE_STATUS.md) is authoritative for
-this release; the [prospective contract](V11_ENGINE_SUPPORT_CONTRACT.md) preserves
-its declared gates. This is a software support target, separate from the earlier
-research milestones and their historical HOLDs.
-
-| Stage | Concrete exit |
-|---|---|
-| E0 — contract | Pinned baseline, support boundary and prospective tests |
-| E1 — embedding | Independent consumer completes isolated new/open/learn/predict/cancel/close/reopen without CLI assumptions |
-| E2 — evidence | Counters reconcile with unique committed events; forged, duplicate, stale and revoked claims fail |
-| E3 — complete cycle | Exact bilateral artifact transfer, independent evaluation, actual restart, fresh use and once-only outcome reconciliation through ordinary APIs |
-| E4–E6 — reliability and resources | Declared fault outcomes, bounded resource profile and honest complete-cost comparisons; negative science remains negative |
-| E7 — qualification | Clean source, exact compiler/lock, matching platform installed checks, independent consumer and fresh 60-minute/120-cycle final-image campaign |
-| E8 — delivery | Immutable staged bytes, signed origin, complete evidence, anonymous delivered acceptance, then stable promotion |
-
-Next research: declare a new cheaper-certificate or complementary-constraint
-workload before targets open. Measure both participants against optimized
-isolated retention, answer caching and equal resources. Current isolation ties
-and unknown/negative complete costs do not establish reciprocal superiority.
-Two-host validation remains open until another endpoint is authorized.
+After delivery, the next research step is a prospective workload whose independent
+validation can be amortized across fresh tasks. Count both participants' complete
+costs against optimized isolation, retention, answer caching and equal resources.
+Current isolated ties and extra transfer work establish no efficiency advantage.
+An unfamiliar independent adapter and separately authorized second host remain
+open. Scientific gain is a distinct objective, not a condition invented after a
+bounded software gate has passed.
 
 ## Historical research milestones
 

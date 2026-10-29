@@ -1,4 +1,47 @@
-# Path to a stable bounded SYMBIOTE
+# Bounded software release and broader stable goals
+
+v1.1.2 software status: **Stable release**. Current stable/latest state:
+**v1.1.2 — latest stable**. Current authority is the
+[main engine status](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md)
+and [actual delivery index](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/experiments/v1.1.2/public-delivery.json).
+The source-qualified native remains `8aa5f4c`; later documentation commits do not become
+native campaign sources. The versioned support contract, CLI and API describe
+that frozen implementation; their prepublication status text is historical.
+
+## Current bounded software evidence
+
+| Gate | Current source `8aa5f4c` result |
+|---|---|
+| Source and additional tag CI | CI 40941750300 and tag CI 40958132994, all four jobs PASS in each first attempt; separate runs, not independent scientific samples |
+| Installed targets and embedding | Candidate 40945405929 all six jobs PASS: four native lifecycles, four separately compiled consumer lifecycles, exact source/compiler/lock and bounded Linux ENOSPC |
+| Exact reciprocal cycle | Registered compatibility reproduction `987ccaa9` / `8286f0f1` and independent causal/cost/parentage audits PASS; four directional transfers, 128 conditional fresh uses, four outcomes/reconciliations, restart zero credit |
+| Fresh actual-image hour | New staged native `0f081d8e`/local driver `e442b2ec`, 120 cycles, measurement 3,602,094 ms; outer `2989c31e`/native `51c083c0`; independent `15a4483b`/`ecb71a0f` PASS with cleanup/source watch/awake closure |
+| Archive and raw evidence | ZIP `07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a`, manifest `daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069`; exact byte/public delivery records belong to the actual index |
+| Anonymous public behavior and promotion | **PASS — four targets, first public attempt**, run 40967471449, release 428461777; finalization Stable release |
+
+This is finite affine acquisition at widths 2–8, conditional prediction, durable
+memory and explicitly granted reciprocal exchange. It is not a claim of arbitrary
+agent truth, universal transfer utility or general intelligence. Receiver-owned
+capability outcomes are separate from economic-benefit credit. Isolated learners
+tie; ordinary transfer uses 4,278 versus 2,852 GF(2) units per owner, with a separate
+1,426-unit idempotence control. Unknown full economics stay unknown and historical
+full-cost losses stay visible. Reciprocal efficiency is **NOT_DEMONSTRATED**.
+
+Independent two-host validation remains **OPEN_UNAVAILABLE**; power-loss,
+network-filesystem and broad unfamiliar-adapter qualification remain open. They
+are explicit broader goals, not retrospective new gates for this bounded release.
+A fresh research workload needs its own prospective controls before targets open.
+See [roadmap](ROADMAP.md), [research](RESEARCH.md) and
+[the correction](CORRECTIVE_RELEASE_112.md).
+
+## Preserved historical gate account
+
+The original account below is retained as a historical record of its own sources,
+images, failures and objectives. Statements of then-current status or proposed
+next work are not current v1.1.2 status. Its HOLD/open research rows are not upgraded
+by a later software release.
+
+## Path to a stable bounded SYMBIOTE
 
 The stable target is an embeddable Rust agent with exact reasoning, reciprocal
 exchange and evaluated persistent knowledge in its declared affine and graph
@@ -6,7 +49,7 @@ families. Stable software does not establish general intelligence, arbitrary
 remote truth or universal transfer efficiency. The original version objectives
 remain in [the roadmap](ROADMAP.md); unsuccessful research criteria stay visible.
 
-## Current qualification status
+### Current qualification status
 
 The corrective native implementation was qualified on source `6025fff`; the published tag is `c55fc37`. Its three-platform software
 gate, independently consumed normal-learning/observation components and 64-cell
@@ -67,7 +110,7 @@ not new test definitions. See the [full local account](LOCAL_QUALIFICATION_V051.
 and [evidence index](../experiments/v0.5.1/README.md). Version numbers do not close
 open gates.
 
-## Preserve the prospective study and unproven criteria
+### Preserve the prospective study and unproven criteria
 
 The protocol-004 primary remains HOLD, with every failure and unfinished case
 preserved. The later engineering reproduction completed the same 24 worlds and
@@ -88,7 +131,7 @@ count is reported separately. Empty controls are reported separately. Equality o
 empty model lists establishes no learned capability. This evidence rule changes
 neither the frozen policy, cohort, prices nor protocol 004's utility criteria.
 
-## Maintain identities and trust within the checked envelope
+### Maintain identities and trust within the checked envelope
 
 v0.5.1 implements an offline, explicit policy transition anchored to the previous
 policy digest and operational journal head. It preserves owner identity and prior
@@ -102,7 +145,7 @@ The continuity campaign alternates two preprovisioned server leaves four times;
 it does not demonstrate automatic renewal, remote administration or every
 interruption under arbitrary deployment conditions.
 
-## Make durable state portable and reproducible
+### Make durable state portable and reproducible
 
 Verified offline backup/restore now includes identity, knowledge, operational
 registration, deny history, idempotent receipts and layout metadata, with file
@@ -119,7 +162,7 @@ stopped single owner and the declared same-OS format; they do not qualify
 cross-OS restore, network filesystems or power-loss durability. Do not
 promise byte-identical timings, cryptographic nonces or operating-system counters.
 
-## Qualify one bounded release candidate
+### Qualify one bounded release candidate
 
 The fixed S5 campaign covers both manual task families, owned native processes,
 local TLS, a genuinely lost committed quarantine reply, one killed-and-waited

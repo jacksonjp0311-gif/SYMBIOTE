@@ -1,0 +1,72 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "e3",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "82a97759eb475fe022c96b5a082c994c2cb9645ba0250f4f4c8a975664d88675",
+  "status": "PASS",
+  "started_unix_ns": 1793309445882060200,
+  "finished_unix_ns": 1793309446300319300,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-repro-8aa\\registration.json",
+      "bytes": 37837,
+      "sha256": "987ccaa99454c6446a39ada8f9a8dd661edfe6a3dadf1db09f26177cea4cf6e9",
+      "name": "e3-registration"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-repro-8aa\\transfer-report.json",
+      "bytes": 300726,
+      "sha256": "8286f0f1ec4d40699a3831b1179bf23d6567d636044d1bf32516df40d1c9da0a",
+      "name": "e3-report"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-independent-8aa\\audit.json",
+      "bytes": 7121,
+      "sha256": "939b66c7b3b7e9b6f7c2918e20cd636dabe3ed5f06b55a28ab508a7919763348",
+      "name": "e3-independent-audit"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-cost-audit-repro-8aa.json",
+      "bytes": 304276,
+      "sha256": "926fe19df5962a14ac7a407a24118fb5fec1290098d404fbaf725c67b212e34b",
+      "name": "e3-cost-audit"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-parentage-8aa.json",
+      "bytes": 3021,
+      "sha256": "eecf546cab9b1f0a12c5dfbad6725a528abdc1be560656acc4150142d0e9828c",
+      "name": "e3-parentage"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-cost-audit-repro-8aa.py",
+      "bytes": 29185,
+      "sha256": "2809c291d126b7b7012dfba5f17e109135b71c95ec1379571875b58779655df0",
+      "name": "e3-cost-reader"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-e3-parentage-8aa.py",
+      "bytes": 3701,
+      "sha256": "2d738517e0e4b7e75e565057b7a0115cee4bcea0d058e281b6a2a623727e6200",
+      "name": "e3-parentage-reader"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-build-8aa5f4c\\build-proof.json",
+      "bytes": 86845,
+      "sha256": "f10f564d1bbcbb2110b06953324595271fb0494826b4237977f4b2e3541a0045",
+      "name": "e3-actual-local-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-local-e3-root-admission-8aa\\root-admission.json",
+      "bytes": 2146,
+      "sha256": "5d1cb411159efeefd7f28c8c47c19dfbdbdb5afa0c2bef10d58d7748db4578fe",
+      "name": "e3-root-prerequisites"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Source8aa registered delivery-compatibility reproduction on already opened cases: exact bilateral artifacts, independent receiving evaluation, retained fresh use, once-only outcomes/reconciliation and restart0credit. Original primary/parents preserved; N=0. Isolated controls tie and transfer adds work; complete economics unknown; no reciprocal-efficiency credit.",
+    "evidence_digest": "2049c04f6ba09c80ce42a563b1d414cd47b64d653fe70cb6a1493ce8151e1496"
+  }
+}

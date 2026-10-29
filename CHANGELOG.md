@@ -1,19 +1,29 @@
 # Changelog
 
-## v1.1.2 — corrective qualification in progress
+## v1.1.2 — 2026-10-29 — Stable release
 
-- Add explicitly scoped, read-only GitHub metadata authentication to public
-  acceptance. Keep all release bytes anonymous, the real route guard and
-  redirect/time/byte bounds intact, and all credentials outside native children.
-- Preserve v1.1.1 as a FAILED prerelease with unchanged tag/assets: its first
-  public run passed Windows, Linux and Apple Silicon; Intel metadata returned
-  HTTP 403 before downloading or running the native executable.
-- Rust algorithms, public embedding interfaces, schemas, dependencies and
-  research conclusions are unchanged; local package versions move to 1.1.2.
-- New-source/platform/transfer/hour/public qualification remains pending.
+- Package the existing typed Rust engine and native `engine` lifecycle for
+  authorized observation/inference/evaluation/retention, conditional prediction,
+  durable outcomes, cancellation, revocation and verified checkpoint/restore.
+  APIs, algorithms, schemas and dependency resolutions are unchanged by v1.1.2.
+- Scope optional read-only GitHub metadata authentication explicitly to fixed
+  repository/run/tag routes. Restore the reader before all anonymous release
+  bytes; keep credentials out of native/driver/consumer children and evidence.
+- Preserve failed v1.1.0/v1.1.1 releases and the first source-8aa candidate. The latter's
+  ARM native/embedding steps passed before attestation tlog-entry 404; cause is
+  not established. A separately authorized replacement is a new workflow run,
+  with new images/proofs and no old artifact admission.
+- Exact source `8aa5f4c` passed official four-job CI 40941750300. Replacement candidate
+  40945405929: **PASS (all six jobs, attempt 1)**; E3 **PASS_ENGINEERING_ONLY (registered compatibility reproduction; N=0)**; new actual-image
+  hour **PASS_LOCAL_HOUR (120 cycles, measurement 3,602,094 ms, independent closed-data audits)**; public delivery **PASS — four targets, first public attempt**.
+  Actual receipt index: **[actual delivery index](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/experiments/v1.1.2/public-delivery.json)**.
+- Retain isolated ties, extra transfer costs, unknown economics and open
+  two-host/power-loss/generalization criteria. No reciprocal-efficiency claim.
 
-Earlier entries below retain their historical status; an old pending note is
-not a current release result.
+Earlier entries retain their historical freeze-time descriptions and outcomes.
+An earlier pending note is not current status; use the
+[current release table](docs/V11_ENGINE_STATUS.md) and
+[corrective contract](docs/CORRECTIVE_RELEASE_112.md).
 
 ## v1.1.1 corrective candidate — 2026-10-29
 

@@ -1,0 +1,455 @@
+{
+  "schema": "symbiote.v112-public-evidence-captures/1",
+  "status": "CAPTURED_AWAITING_ROOT_AND_INDEPENDENT_REVIEW",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "public_workflow_run_id": 40967471449,
+  "public_binding": {
+    "release_id": 428461777,
+    "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+    "asset_digest": "cf8d5c03f1c8628ed4e9c5f4f0772dfce4be64bb10d5f7de5f33d54547eff9f2"
+  },
+  "reviewed_input": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\reviewed-public-inputs.CAPTURED-REVIEW-REQUIRED.json",
+    "bytes": 9745,
+    "sha256": "3b0b856645641ca5e1d9a8281b36f9dd71795247dfafdea0a5b29bbf13013c05"
+  },
+  "actual_roots_mapping": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\actual-public-roots.json",
+    "bytes": 348,
+    "sha256": "1461c08d3a7925c21ebb9829922ef0c1b6ca49dabe205746e955913f94bb8b03"
+  },
+  "captures": [
+    {
+      "role": "public-native:x86_64-pc-windows-msvc",
+      "status": "CAPTURED_AWAITING_ROOT_ACCEPT",
+      "started_unix_ns": 1793314046473714900,
+      "finished_unix_ns": 1793314046479268600,
+      "monotonic_elapsed_ns": 15000000,
+      "clock_scope": "actual local completed-evidence review only",
+      "job_id": 123775560026,
+      "official_job_started_unix_ns": 1793313553000000000,
+      "official_job_finished_unix_ns": 1793313603000000000,
+      "anonymous_downloads": [
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.zip",
+          "sha256": "474ac9cd6aa74823027885437985b8353ea4f2e1d498bb80c33d85cbcc5273b8",
+          "bytes": 5049923,
+          "asset_id": 690119835
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.build.json",
+          "sha256": "873801a8d338726524c5dc34be558f086458e71477a3c1d4eb29036f290dd070",
+          "bytes": 32241,
+          "asset_id": 690119703
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.cdx.json",
+          "sha256": "f7b13f46c9552a8c82de1e32d4c4a5b5f7073beac39f6bcc99bdbd9deec4ba1b",
+          "bytes": 60798,
+          "asset_id": 690119734
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance.sigstore.json",
+          "sha256": "4090b52264b2445dd7cc9eb1eb5e5f43c151ce627dd89f77f741220e43f28d51",
+          "bytes": 11750,
+          "asset_id": 690119771
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom.sigstore.json",
+          "sha256": "a76240358071ce15b543c4313ed095d01de8e7c202e755dcbfb74c4c97804cff",
+          "bytes": 65911,
+          "asset_id": 690119803
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance-verification.json",
+          "sha256": "dc1781f49608122c77f309b82b97ffcc8de1703dc46fc4e4692ca9923be392cf",
+          "bytes": 15129,
+          "asset_id": 690119763
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom-verification.json",
+          "sha256": "e1e30533467982950b6128035c4f4697b48f8ddf201fd1c5067d527345a4c45f",
+          "bytes": 109946,
+          "asset_id": 690119793
+        },
+        {
+          "name": "STAGED_SHA256SUMS-x86_64-pc-windows-msvc",
+          "sha256": "41631262e5d68d279ff455b07f44565c7ee8adf1d7e1730c5415b5681f03200c",
+          "bytes": 855,
+          "asset_id": 690119098
+        },
+        {
+          "name": "SHA256SUMS",
+          "sha256": "10d772c7c14d12ec4c09cf549a4628d7f1ee964b9abecbe29d650017144416a7",
+          "bytes": 433,
+          "asset_id": 690119008
+        }
+      ],
+      "metadata_access": {
+        "schema": "symbiote.public-metadata-access/1",
+        "mode": "explicit-metadata-only-token",
+        "requests": [
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929/jobs",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/releases/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/ref/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/tags/3364bcb5414253327e33a458c12a6a5c5058c8ab",
+            "status_code": 200
+          }
+        ],
+        "token_value_recorded": false
+      },
+      "native_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+      "driver_sha256": "b5e22565e7a9b4d7a7c7bc9078b85ce26e825b2f170a34a7e0b8e20b73c61626",
+      "consumer_sha256": "3efab4959ab9ea3849005eb0738b6fed02761bba300ee52450103affa5aa16f0"
+    },
+    {
+      "role": "public-native:x86_64-unknown-linux-gnu",
+      "status": "CAPTURED_AWAITING_ROOT_ACCEPT",
+      "started_unix_ns": 1793314046479268600,
+      "finished_unix_ns": 1793314046479268600,
+      "monotonic_elapsed_ns": 0,
+      "clock_scope": "actual local completed-evidence review only",
+      "job_id": 123775559934,
+      "official_job_started_unix_ns": 1793313553000000000,
+      "official_job_finished_unix_ns": 1793313584000000000,
+      "anonymous_downloads": [
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.zip",
+          "sha256": "7f5a8b1b931a90f172f08e2a2257ba7d40068fd324fe2d0509039aa6f20f09a2",
+          "bytes": 5364291,
+          "asset_id": 690120076
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.build.json",
+          "sha256": "5f09d53d1bd9f64b346d3e1fe4ae7b2c103fd44b0ee00184b9031e160ff40e2f",
+          "bytes": 32247,
+          "asset_id": 690119952
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.cdx.json",
+          "sha256": "80a8605d44864ec729c5c7af47518969dd3c96361762e90f3ba7e99a20dfee1f",
+          "bytes": 61631,
+          "asset_id": 690119975
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance.sigstore.json",
+          "sha256": "13e8d2bf865adeaddc54753717659d0c3ecf5f62799f50ddc6afb957086c66e0",
+          "bytes": 11855,
+          "asset_id": 690120005
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom.sigstore.json",
+          "sha256": "24ba9ff0afa99c39868563d6e1bb8f1837f937128d573c2005bb4c4f0e89644a",
+          "bytes": 66854,
+          "asset_id": 690120041
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance-verification.json",
+          "sha256": "4a4a2506a9da4bf9db6cf839dafa7440d5833957ce00f7903a5547b27bdbbfa3",
+          "bytes": 30147,
+          "asset_id": 690119986
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom-verification.json",
+          "sha256": "db0de6cc68b88855deb801bbc1837305bb1c10a069098c0de42005d6b29f27b6",
+          "bytes": 222808,
+          "asset_id": 690120017
+        },
+        {
+          "name": "STAGED_SHA256SUMS-x86_64-unknown-linux-gnu",
+          "sha256": "a2f745df1bf67495cab216991e488d4c7e10ae69087bf5942e1b3a2669cc725b",
+          "bytes": 869,
+          "asset_id": 690119117
+        },
+        {
+          "name": "SHA256SUMS",
+          "sha256": "10d772c7c14d12ec4c09cf549a4628d7f1ee964b9abecbe29d650017144416a7",
+          "bytes": 433,
+          "asset_id": 690119008
+        }
+      ],
+      "metadata_access": {
+        "schema": "symbiote.public-metadata-access/1",
+        "mode": "explicit-metadata-only-token",
+        "requests": [
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929/jobs",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/releases/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/ref/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/tags/3364bcb5414253327e33a458c12a6a5c5058c8ab",
+            "status_code": 200
+          }
+        ],
+        "token_value_recorded": false
+      },
+      "native_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3",
+      "driver_sha256": "81c5b2bbc033978ef93f7052ff7305d354bcf04980e557997909fda3dc1d6dc5",
+      "consumer_sha256": "dfed208757fb21a4395443e53600a3d87906e82e05c4946e979f5d3dd9aaacc4"
+    },
+    {
+      "role": "public-native:aarch64-apple-darwin",
+      "status": "CAPTURED_AWAITING_ROOT_ACCEPT",
+      "started_unix_ns": 1793314046479268600,
+      "finished_unix_ns": 1793314046479268600,
+      "monotonic_elapsed_ns": 0,
+      "clock_scope": "actual local completed-evidence review only",
+      "job_id": 123775559912,
+      "official_job_started_unix_ns": 1793313555000000000,
+      "official_job_finished_unix_ns": 1793313605000000000,
+      "anonymous_downloads": [
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.zip",
+          "sha256": "485d7f5aa5ec5c18911082ec12481bd4803bce2116cd82ce55e43828bbcc61c2",
+          "bytes": 4862171,
+          "asset_id": 690119304
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.build.json",
+          "sha256": "a11cad5a31f7a0f006de5377fbdee1225c704af2a478a83228f178adde3d62f9",
+          "bytes": 32227,
+          "asset_id": 690119140
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.cdx.json",
+          "sha256": "2e09e54d6aa1e2b8af574c9ddaa816d9e2be047108ce533c8f70a1ded4477e95",
+          "bytes": 61727,
+          "asset_id": 690119167
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.provenance.sigstore.json",
+          "sha256": "c718e7baf25160755d1f0aaeac0ade86591c44cf3d0f5d447aa91c8e5c3a8d2a",
+          "bytes": 11553,
+          "asset_id": 690119242
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.sbom.sigstore.json",
+          "sha256": "bda098e93c3c4c409b00f464efc97796a8196e0a9c2c9a8ad94e4b339b755dbf",
+          "bytes": 66707,
+          "asset_id": 690119279
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.provenance-verification.json",
+          "sha256": "1d9e4db4842714b91227342d448b73cbb2bf4ab8bd446b7e6365955802228323",
+          "bytes": 14900,
+          "asset_id": 690119210
+        },
+        {
+          "name": "symbiote-v1.1.2-aarch64-apple-darwin.sbom-verification.json",
+          "sha256": "ef9dac76a903d27b8a834a51e9553845bbdb0b433f883c9ec01980d60d97b074",
+          "bytes": 111347,
+          "asset_id": 690119262
+        },
+        {
+          "name": "STAGED_SHA256SUMS-aarch64-apple-darwin",
+          "sha256": "baad7d148703f1e463bc55d8872f7527a2e713c067d0179a417034050116680d",
+          "bytes": 841,
+          "asset_id": 690119028
+        },
+        {
+          "name": "SHA256SUMS",
+          "sha256": "10d772c7c14d12ec4c09cf549a4628d7f1ee964b9abecbe29d650017144416a7",
+          "bytes": 433,
+          "asset_id": 690119008
+        }
+      ],
+      "metadata_access": {
+        "schema": "symbiote.public-metadata-access/1",
+        "mode": "explicit-metadata-only-token",
+        "requests": [
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929/jobs",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/releases/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/ref/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/tags/3364bcb5414253327e33a458c12a6a5c5058c8ab",
+            "status_code": 200
+          }
+        ],
+        "token_value_recorded": false
+      },
+      "native_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898",
+      "driver_sha256": "f937d4f0a72b1ec3c3e3860097a5f095fc85c75cc5ade39b8244a56b6c034fc8",
+      "consumer_sha256": "c11ee756715b7be2150c8ca3ce9b534176bd3461226bec646ded95ac05735100"
+    },
+    {
+      "role": "public-native:x86_64-apple-darwin",
+      "status": "CAPTURED_AWAITING_ROOT_ACCEPT",
+      "started_unix_ns": 1793314046479268600,
+      "finished_unix_ns": 1793314046486029400,
+      "monotonic_elapsed_ns": 0,
+      "clock_scope": "actual local completed-evidence review only",
+      "job_id": 123775559922,
+      "official_job_started_unix_ns": 1793313554000000000,
+      "official_job_finished_unix_ns": 1793313611000000000,
+      "anonymous_downloads": [
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.zip",
+          "sha256": "ae52d4c294e414c4991f63bce9eb3866635a3711d741372b1006b96f14af9285",
+          "bytes": 5179290,
+          "asset_id": 690119554
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.build.json",
+          "sha256": "a16cdf26208b549706e032abf527b11e08424a656953e690e5439eee85fc4e2d",
+          "bytes": 32222,
+          "asset_id": 690119399
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.cdx.json",
+          "sha256": "2cf17e811396978c5f37b85e25b09bc4351d5ec4f102c4bcc875fa7feb8116b1",
+          "bytes": 61626,
+          "asset_id": 690119421
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.provenance.sigstore.json",
+          "sha256": "c848312442b892dc1aa10fc5a6af7c84d593b61364df8d72a6a8edc68ad2efbe",
+          "bytes": 11643,
+          "asset_id": 690119458
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.sbom.sigstore.json",
+          "sha256": "51adbef518e7a1b8c3c85ee6a8cb9d04a6c779451eb9a20b9dd8b0b704d284a4",
+          "bytes": 66748,
+          "asset_id": 690119523
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.provenance-verification.json",
+          "sha256": "ee76fa72a7dde778e858f8a7de4b156e4ec8008cd2a47b44397dd16e101a1bf3",
+          "bytes": 30254,
+          "asset_id": 690119443
+        },
+        {
+          "name": "symbiote-v1.1.2-x86_64-apple-darwin.sbom-verification.json",
+          "sha256": "e29d615b78a3ec67e3ed2de950933a23adb1ee0687b0d6da21c7c4de368e7bb6",
+          "bytes": 222616,
+          "asset_id": 690119489
+        },
+        {
+          "name": "STAGED_SHA256SUMS-x86_64-apple-darwin",
+          "sha256": "44818fbf7b542b7fed9752ef0552ede54d7533f043752af85d2ce0e41e27e6a4",
+          "bytes": 834,
+          "asset_id": 690119065
+        },
+        {
+          "name": "SHA256SUMS",
+          "sha256": "10d772c7c14d12ec4c09cf549a4628d7f1ee964b9abecbe29d650017144416a7",
+          "bytes": 433,
+          "asset_id": 690119008
+        }
+      ],
+      "metadata_access": {
+        "schema": "symbiote.public-metadata-access/1",
+        "mode": "explicit-metadata-only-token",
+        "requests": [
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929/jobs",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/releases/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/ref/tags/v1.1.2",
+            "status_code": 200
+          },
+          {
+            "method": "GET",
+            "host": "api.github.com",
+            "path": "/repos/jacksonjp0311-gif/SYMBIOTE/git/tags/3364bcb5414253327e33a458c12a6a5c5058c8ab",
+            "status_code": 200
+          }
+        ],
+        "token_value_recorded": false
+      },
+      "native_sha256": "6be6664a7b2a27fdac856aae90a1e63f735dd649a978898ac7f2877fb4bad3af",
+      "driver_sha256": "c2c6ac2cc2d81b5f03dab37a8d70b96c6c33e2afe008423f12fcef1672e54bd7",
+      "consumer_sha256": "65b203887ea6597f2c4163ba034c645567b886000ea4db5677e54dd92a372a12"
+    }
+  ],
+  "native_executions": 0,
+  "network_calls": 0,
+  "publication_mutations": 0,
+  "pass_gates_created": 0
+}

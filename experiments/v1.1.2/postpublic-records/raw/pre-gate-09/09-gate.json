@@ -1,0 +1,66 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "hour",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+  "status": "PASS",
+  "started_unix_ns": 1793309446506280900,
+  "finished_unix_ns": 1793309446932477400,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-8aa\\soak-registration.json",
+      "bytes": 36065,
+      "sha256": "91d726d4d0f52a0dd99c2caa1fa1406abb6afb02f7e50c3481ac62bd4e51e5f9",
+      "name": "hour-registration"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-8aa\\soak-report.json",
+      "bytes": 3156,
+      "sha256": "2989c31eb51d807e8cde8389b47299e0253144f2824a5c7d360b83e030826987",
+      "name": "hour-report"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-8aa\\native\\soak-report.json",
+      "bytes": 964417,
+      "sha256": "51c083c0e18e138bc75db230e582d218f4ad1ad788a2f2dece7b9d6497aa37aa",
+      "name": "hour-native"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-inputs-8aa\\image-binding.json",
+      "bytes": 2049,
+      "sha256": "80d5f90bd69a1e8d8b0bb501235d975a13db698efabf6a5deebed11871ca3ac5",
+      "name": "hour-image-binding"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-independent-8aa\\audit.json",
+      "bytes": 3801,
+      "sha256": "15a4483babaeffe937291b22e35a434d203b5fc68429c02baafa8713b2f75903",
+      "name": "hour-independent-audit"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-windows-hour-prerequisite-admission.json",
+      "bytes": 3565,
+      "sha256": "2ea79146b2ded986cf67163e6accbb40b475996c9b7e0ce534af9ce21024c079",
+      "name": "hour-prerequisite-admission"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-boundary-audit-8aa.json",
+      "bytes": 187809,
+      "sha256": "ecb71a0f392f67ad32bc124bade158a652602ca0411874a88e0506045f196dfb",
+      "name": "hour-boundary-audit"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-hour-independent-8aa\\audit_hour.py",
+      "bytes": 17759,
+      "sha256": "fca72be8622b01aa069726bdf017ab9e036baf114cd1a1fff088f74670b34f31",
+      "name": "hour-independent-reader"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual new staged Windows native0f081 and source-matched local drivere442:120cycles/fresh hour, declared recovery events, retained models, byte/source watch, independent raw replay and released awake guard. One-host finite software reliability only; no independent host, power-loss or scientific gain claim.",
+    "evidence_digest": "6cee56c85ac68547bac6be0de38caa57205a87bcc66ba4b0ac06759955800fd3"
+  }
+}

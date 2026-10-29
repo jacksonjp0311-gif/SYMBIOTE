@@ -1,0 +1,48 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "linux-enospc",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "531163a359152cee9bbd26c480ddd5bdb0fcb5b218cdcb3c7337c986f9570df3",
+  "status": "PASS",
+  "started_unix_ns": 1793309445433528100,
+  "finished_unix_ns": 1793309445670788900,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\n\\data\\enospc.json",
+      "bytes": 1215,
+      "sha256": "dea2f5f06495d65d865726228b3c6edd1ae3c75d48d6847fddee56b7e06f0528",
+      "name": "enospc-native"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\n\\data\\native-test.txt",
+      "bytes": 6525,
+      "sha256": "2cdf72736b5265fe781f7d124743307b3521e782de089147ada7afe83f8f9fe4",
+      "name": "enospc-test-output"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\n\\data\\source-context.json",
+      "bytes": 904,
+      "sha256": "0cb9ad67846ab903bf3db405311cfe77e2dbc03752a9acc6ffe5770918dcf4cc",
+      "name": "enospc-source-context"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\n\\download.json",
+      "bytes": 2052,
+      "sha256": "5f3bebac812c57e0e70b327b8bbc3b1db0b9f5cf14f13e3e6f9ed5ce6907331c",
+      "name": "enospc-artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "enospc-independent-data-review"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual isolated Linux errno28 within the declared <=1MiB disposable mount; typed storage failure, unchanged committed ledgers, fill-file removal and explicit reopened HOLD. This does not qualify power loss or other operating systems.",
+    "evidence_digest": "3a491334c32c6ddc1e1024da7a9cf6fb21c57ea38cdd43f6a6f0253d3beeb376"
+  }
+}

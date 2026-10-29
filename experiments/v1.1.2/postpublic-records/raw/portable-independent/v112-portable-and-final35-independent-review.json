@@ -1,0 +1,72 @@
+{
+  "schema": "symbiote.independent-v112-portable-and-final35-review/1",
+  "status": "PASS_DATA_ONLY_PORTABLE_REPLAY_AND_FINAL35_DELTA",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "portable_replay": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\replay-receipt.json",
+    "bytes": 3065,
+    "sha256": "6809b623bdb261e7ccee0dc766cbcba0f02946ce2c9b09a4eb4c1b0c0066d1e0"
+  },
+  "mapper": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_portable_data_replay_v2.py",
+    "bytes": 9430,
+    "sha256": "5c70f914eb6f26cd89414aa1aacccf215ea1866e6430f81e41836a063546a845"
+  },
+  "post_replay_guard": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\post-replay-recheck.json",
+    "bytes": 866,
+    "sha256": "06e182dbd0b4e75fc14dc09b5af97366bb5f714f79417e16e535cbfd878e6399"
+  },
+  "postcheck_reader": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\postcheck_v112_replay.py",
+    "bytes": 2294,
+    "sha256": "ed1511bbf1de27d964e7b750ca06d87a3fd66fedf797647606bec32720ae0f25"
+  },
+  "derived_hour": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\hour-audit\\audit.json",
+    "bytes": 3753,
+    "sha256": "67e784799c475270582e30b948bfd20fc286f62ab9dc18c31d13aca3ca0e6c4f"
+  },
+  "derived_e3_cost": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\e3-audit.json",
+    "bytes": 302487,
+    "sha256": "5137f4c47a221faad6b81935bd76261a76ccfe33d44a1cd0f69844129958fc05"
+  },
+  "independent_archive_audit_sha256": "d5210d2d4f5a443ea942dc4706851e55b8f1312cb62c04c7efa45061d8c81f01",
+  "final35_request": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\publication-inputs.FINAL35-ARCHIVE-REVIEW-REQUIRED.json",
+    "bytes": 48601,
+    "sha256": "b0255059ca95822b8620b7f0bc3d613ca14447f8a49ba18d7eea27069aaf1837"
+  },
+  "original_twelve_accepted_request": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-twelve-accept-8aa\\publication-inputs.BEHAVIORAL-ACCEPT-ARCHIVE-PENDING.json",
+    "bytes": 47864,
+    "sha256": "9c6e0f37580011bdcd9dfa6a1c34ec96378d7ecf9f92bdad3b6fe97267c55fd9"
+  },
+  "body": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\RELEASE-BODY.REVIEWED.md",
+    "bytes": 7501,
+    "sha256": "4bbcc5045f7f7f4811f44088dc7167e546e953b0852eec4646b8cc1a245a3344"
+  },
+  "guarded_operations": 784695,
+  "original_host_attempts": [],
+  "native_executions": 0,
+  "producer_or_mapper_reruns": 0,
+  "network_calls": 0,
+  "all2564_inner_bytes_postguard_unchanged": true,
+  "all12_accepted_assessments_and_core33_coordinates_unchanged": true,
+  "final_assets": 35,
+  "total_asset_bytes": 140888070,
+  "archive_bytes": 118983597,
+  "root_archive_acceptance": "REQUIRED_NEXT_NOT_MINTED_BY_REVIEW",
+  "public_acceptance": "PENDING_NEW_FIRST_RUN",
+  "publisher_fresh16_signatures": "SEPARATE_MANDATORY_GATE",
+  "limits": [
+    "Static/source-and-saved-data review of actual closed mapper/postguard; does not rerun them or freshly observe native/process/OS behavior.",
+    "Trusted pinned Python access hooks; no claim of OS security containment. Original155file physicalsource/originalnative checks remain NOT_REPLAYED.",
+    "FINAL35 review verifies exactmetadata delta and approvedbody; original33 artifact verification and finalpublisher freshhash/crypto remain their existing separate gates.",
+    "N0/unknown economics/reciprocal efficiency NOT_DEMONSTRATED/two-host OPEN_UNAVAILABLE preserved."
+  ],
+  "audit_script_sha256": "89b8f80b64ed458eead7ad0c46efd73ec8bb8e21c895b07a84820da0100fc6eb"
+}

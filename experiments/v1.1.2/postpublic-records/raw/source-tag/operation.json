@@ -1,0 +1,20 @@
+{
+  "schema": "symbiote.v112-source-tag-operation/1",
+  "status": "PASS_NEW_IMMUTABLE_SOURCE_TAG_PUSHED",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "tag": "v1.1.2",
+  "tag_object": "3364bcb5414253327e33a458c12a6a5c5058c8ab",
+  "remote_refs": {
+    "refs/heads/main": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+    "refs/tags/v1.0.0": "205fefaacda31f6096b49c9d46879b7dc8661061",
+    "refs/tags/v1.0.1": "190be5f81d99831bb521ab7649ec0b1e41c16878",
+    "refs/tags/v1.1.0": "1a2122c0d510a92bead7089d318db027fdebf4d9",
+    "refs/tags/v1.1.1": "9655a016e04a45afa1e32b5485b5c80f7dc051a8",
+    "refs/tags/v1.1.2": "3364bcb5414253327e33a458c12a6a5c5058c8ab",
+    "refs/tags/v1.1.2^{}": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6"
+  },
+  "push_output": "To https://github.com/jacksonjp0311-gif/SYMBIOTE.git\n * [new tag]         v1.1.2 -> v1.1.2",
+  "older_refs_unchanged": true,
+  "release_created": false,
+  "public_acceptance": "PENDING"
+}

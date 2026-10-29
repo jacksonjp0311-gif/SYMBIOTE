@@ -1,181 +1,74 @@
-# Current corrective delivery: v1.1.2
+# SYMBIOTE handoff: continue the implemented engine
 
-Continue the existing engine under [CORRECTIVE_RELEASE_112.md](CORRECTIVE_RELEASE_112.md).
-The only new functional correction is authenticated, narrowly scoped GitHub
-metadata access in the public checker. Anonymous downloads and credential-free
-native children remain mandatory. Do not rewrite the Rust engine or relax gates.
+Current release **v1.1.2 — Stable release**. Frozen source is
+`8aa5f4c6ab26f7ccad53935a70414ae1765b57c6`; source CI 40941750300 closed all four
+first-attempt jobs PASS. Replacement candidate 40945405929 is
+**PASS (all six jobs, attempt 1)**. Current delivery is **PASS — four targets, first public attempt**;
+public run **40967471449**, release **428461777**, and four formal public gates are
+verified. Final stable promotion is recorded separately in the delivery index.
 
-v1.1.1 (source69d) remains a FAILED prerelease after an Intel REST quota error
-before download/native execution. Its source/staged/hour evidence and three
-public platform passes are retained at their own scope. Its immutable evidence
-ZIP is pinned in the corrective contract. v1.0.1 remains latest stable.
+Read [current status](V11_ENGINE_STATUS.md),
+[the v1.1.2 correction](CORRECTIVE_RELEASE_112.md),
+[the prospective support contract](V11_ENGINE_SUPPORT_CONTRACT.md) and
+[implementation](V11_IMPLEMENTATION.md). The typed
+`symbiote_runtime::engine` interface, native `symbiote engine` commands and
+independent consumer are already implemented. The native core needs no language
+model or Python. Use [embedding](ENGINE_EMBEDDING.md), [CLI](ENGINE_CLI.md),
+[compatibility](COMPATIBILITY.md), [faults](V11_FAULT_MATRIX.md),
+[registered transfer](V11_TRANSFER_PROTOCOL_001.md) and
+[publication](V11_PUBLICATION.md), rather than introducing a parallel framework.
 
-Freeze the new source, complete source and platform checks, run the once-only
-compatibility reproduction and fresh actual staged-image hour, then all four
-public platform checks before stable promotion. No new scientific sample or
-reciprocal-efficiency claim is authorized. Preserve the completed studies.
+## Maintain the bounded release
 
-## Earlier roadmap/handoff snapshot
+Follow the finite gates in [the roadmap](ROADMAP.md): all six source-bound
+candidate jobs/four platforms/consumers and signatures; actual Linux ENOSPC;
+registered E3 compatibility reproduction; fresh actual Windows-image hour;
+independent evidence/selected archive and immutable 35-asset plan; provisional
+anonymous bytes; all four first-attempt public behavior checks; stable promotion.
+Current E3 **PASS_ENGINEERING_ONLY (registered compatibility reproduction; N=0)**, hour **PASS_LOCAL_HOUR (120 cycles, measurement 3,602,094 ms, independent closed-data audits)**, archive **EVIDENCE.zip SHA256 `07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a`; inner manifest `daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069`**.
+Actual final receipt index: **[actual delivery index](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/experiments/v1.1.2/public-delivery.json)**.
 
-The following earlier notes are historical; their source IDs, proposed release
-statuses and commands do not replace the current correction contract.
+Scoped LOCAL_E3 may overlap remote platform work after source/local-build review.
+Windows hour requires its own accepted actual image/signatures and closed E3;
+remote OPEN never means global PASS. Preserve exact native/driver/consumer/source
+pins, original chronology, cancellations, partial prefixes and every HOLD.
+Do not edit/rebuild during the hour, move tags, replace assets, rerun a failed
+public version into stable, invent baselines or relabel unknown economics.
 
-# SYMBIOTE: engine evolution handoff
+The first source-8aa candidate 40943349352 failed at ARM provenance attestation with tlog
+entry 404 after native/embedding passed; cause not established. Root authorized
+one distinct replacement workflow dispatch on unchanged source after preserving
+that failure. Do not admit old run images or attestations into the new candidate.
 
-## Current target — v1.1.1 corrective delivery
+## Fixed safety and science boundaries
 
-The v1.1.0 public run [40893604489](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40893604489)
-failed its checker before any download or native execution. Its release is
-flagged, remains a prerelease, and retains the original tag and all 35 assets.
-v1.0.1 is still latest stable. Follow the
-[corrective contract](CORRECTIVE_RELEASE_111.md): fix the real metadata guard and
-draft lookup assumptions, keep the Rust engine intact, freeze new source, and
-qualify the new 1.1.1 images. Old source/platform/hour results retain their own
-pins and must not be called qualification of the replacement executable.
+The engine accepts individual authorized observations and inert artifacts,
+independently evaluates them, and retains versioned conditional models. Exact
+learning is validated at widths 2–8; width one may return `Uncertain` for lack of
+a distinct held-out input. Owner identity/configuration, grants, current ledger
+heads, promotion/use/outcome provenance, revocation and no-duplicate credit are
+required. Native callbacks are cooperative. Stopped-owner recovery and verified
+checkpoint/restore do not promise power-loss/network-filesystem durability.
+Restored copies share an identity; legacy/generic writers refuse engine stores.
 
-Continue the implemented engine; do not rewrite it or add placeholder crates.
-The owner's Stable Engine Evolution Plan is represented by the prospective
-[support contract](V11_ENGINE_SUPPORT_CONTRACT.md). Read the
-[current release-specific table](V11_ENGINE_STATUS.md) and
-[implementation ledger](V11_IMPLEMENTATION.md) first; they distinguish completed
-source work from qualification and public delivery.
+Efficiency is **NOT_DEMONSTRATED**: isolation ties and transfer incurs additional
+work. Correct conditional predictions and receiver-owned capability outcomes do
+not verify economic benefit. Unknown complete costs remain unknown. A new
+research workload must be declared before opening targets, with optimized
+isolation/cache/equal-resource controls and both participants' full costs.
+Two-host validation remains **OPEN_UNAVAILABLE**. Do not reopen completed studies
+to tune them or count delivery reproductions as new independent samples.
 
-The additive `symbiote_runtime::engine` interface, native `engine` commands and
-separate developer workspace are implemented. Use
-[embedding](ENGINE_EMBEDDING.md), [CLI](ENGINE_CLI.md),
-[compatibility](COMPATIBILITY.md), [fault matrix](V11_FAULT_MATRIX.md),
-[registered integration](V11_TRANSFER_PROTOCOL_001.md) and
-[publication](V11_PUBLICATION.md) as the concrete interfaces and gates.
+## Preserved history
 
-Finish in this order: combined software/docs/consumer checks → clean source
-freeze → once-only registered integration → four-platform installed staging and
-Linux ENOSPC → fresh 60-minute/120-cycle exact staged Windows-image qualification
-→ independent evidence review → provisional immutable publication → four-platform
-anonymous public acceptance → stable promotion. Preserve failed evidence and
-separate source/native/driver/consumer pins. No source rebuild or change during
-the hour, tag movement, asset replacement, hidden retry, invented baseline or
-relabelled efficiency result is allowed.
-
-The new engine owner marker deliberately rejects older/generic writers, including
-the published v1.0.1 executable, before mutation. Unmarked prototype engine stores
-hold without automatic migration. Stop owners before checkpoint/restore; backup
-rollback discards learning acquired after that backup. In-process callbacks are
-cooperative, not safely preemptible. Two-host and power-loss remain unqualified.
-
-Record each completed milestone's source, capability, tests actually run, evidence
-pins, failures and next action. Scientific superiority is **NOT_DEMONSTRATED** and
-is not a blocker for correct, honestly bounded software delivery.
-
-## Historical pre-v1.1 handoff — preserved baseline
-
-The corrective 1.0.1 engine descends from BRUTE and remains a four-crate Rust
-workspace. Continue the existing engine. Its purpose is persistent learning from
-authorized evidence and reciprocal interaction, without a language-model dependency.
-
-Current unreleased implementation: `bb1b88eaa771be5e201ccfcfe93840c6750eb9d7`.
-The prospective engineering protocol was committed first at
-`03dcddc060f0b701c89c6f96fd6603ae365400bf`; the single registered workload passed
-in 35.015 seconds. [Results and exact nonbinary evidence](../experiments/engine-evolution-002/README.md)
-include independent data-only audits, all cost vectors and the original baseline
-parallel failures. Build this checkout to use the additions. The published
-v1.0.1 downloads and their qualification below are unchanged.
-
-The additions reuse exact verified prefix hashes, validate feedback through one
-ordered startup cursor, add optional exact rank-based query selection, and close
-an opt-in receiver-owned outcome channel. A separate Python observation source
-feeds the native embedding example without supplying coefficients or tables.
-Frozen models reopen and correctly answer 128 fresh case/input pairs per arm;
-the isolated structural learner ties. The sender reconciles one actual receiver
-capability outcome and gives it no duplicate credit after restart. Unknown costs
-still produce zero verified economic benefits. See [the engineering account](ENGINE_EVOLUTION_002.md)
-for the limits and [the receiver setup](RECEIVER_OUTCOMES.md) for explicit grants.
-
-Published v1.0.1 baseline qualified native source (F1): `6025fff43ad4b508b94977eeff801aeebf549fd9`.
-The 128-file `symbiote.source-manifest/2` digest is
-`aedf4208a3630b31ec9e7383dd018120d4b021f54e70140e63b4f01e91564aad`.
-Release documentation, downloaded executables and their qualification have separate
-pins. The new hour passes independent data verification.
-Anonymous public native installation, independent component audits and public evidence-archive delivery pass.
-
-Published `v1.0.1` tag source (F2) is
-[`c55fc37fd6de38d7d1af4088bbdce616f0446470`](https://github.com/jacksonjp0311-gif/SYMBIOTE/commit/c55fc37fd6de38d7d1af4088bbdce616f0446470),
-from [release workflow 40751115124](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124).
-The actual public Windows executable SHA256 is `a06c14dae36a14eaa2fd121201849f0417cab7dccb48fddd009fddbfbb27db7c`.
-Evidence archive SHA256 is `53d302b1dbf719dca0ee7dccbea13259493882f22c91c44bc1d7d6f0f0f7bb9a`, with extracted manifest
-`ca3d84140ececebc5ef660e952a4bde5629fadc082db676a392895c1a5866878`. [External receipts and public component audits](../experiments/v1.0.1/public-delivery.json)
-bind those later events; they do not relabel F1's cohort/hour. The installed native
-and source6025 test driver remain separately identified. The demonstrated operating envelope is a finite, bounded one-host engine.
-
-## What is working
-
-- Ledger-witnessed benefit verification and exact causal attribution. Original
-  helper signatures compile but unchecked predicates are deprecated and false.
-  Distinguish the legacy stored-assessment receipt from the separately witnessed
-  finite-task measurement. Neither an ordinary hash nor a restart flag proves gain.
-- Observation-driven exact inference, held-out validation and durable reuse.
-  The configured width-3/8 proofs make 5/10 source calls initially and zero after
-  process restart. `symbiote observe-demo --state state/observation` uses the same
-  inference boundary with a simple owned source and no network setup.
-- A compact incremental GF(2) affine solver, parity-checked against the retained
-  enumerator. Width remains 1–8; observation promotion requires a distinct held-out
-  input. Row operations and enumeration checks are different accounting units.
-- Explicit normal capability contributions, independent receiver evaluation and
-  actual retained-model use. Own incoming good/harm feedback persists and informs
-  the next source choice. Cached declines have bounded reconsideration; inventories
-  compare compatible payload meaning rather than mere nonemptiness.
-- Stage diagnostics, bounded cancellation, ownership, TLS grants, revocation,
-  rollback, migration and stopped-owner backup/restore.
-
-## What the results do not establish
-
-The normal fixture's expensive-query received-task windows gain 94,284 and 93,591
-declared units; cheap-query windows lose 5,715 and 6,408. Complete participant costs
-lose in both cases. Harmful feedback changes the next choice; favorable preference
-persists but does not change that fixture's winner.
-
-The registered 64-cell cohort passes operational reciprocity in 237.344 seconds.
-It loses aggregate whole-process comparisons against greedy isolation and all
-24 fixed orders. Matched resources reproduce the coverage. The scientific sample
-count is zero: related finite engineering cases are not independent discoveries.
-No answer-caching advantage, generalized transfer efficiency or whole-agent speedup
-is established.
-
-In the published baseline, outbound `partner_benefits_verified` remains zero
-without receiver-originated witnesses; return adoption/use was proved through
-separately authorized receiver CLI checks. Main now has an opt-in native outcome
-channel with receiver-owned processing and separate verified outcome/capability
-counters. Its strict economic counter remains zero when costs are unknown.
-Two-host deployment remains `OPEN_UNAVAILABLE`; broad stable qualification
-and generalization remain open. Protocol 002 stays `NOT_RUN` and needs its declared
-amendment before targets open. Preserve original HOLDs and negative results.
-
-## Where to work
-
-| Area | Source |
-| --- | --- |
-| Exact inference and reference algorithms | `crates/symbiote-reasoning/src/structural/compact.rs`, `structural.rs`, `planning.rs` |
-| Causal feedback and measurement | `crates/symbiote-runtime/src/service/feedback.rs` |
-| Receiver-owned processing and outcome proof | `crates/symbiote-runtime/src/service/outcomes.rs`, `docs/RECEIVER_OUTCOMES.md` |
-| Authorized evidence acquisition | `service/observation.rs`, `service/evaluation.rs` |
-| Independent source and frozen prediction | `crates/symbiote-runtime/examples/independent_observer.rs`, `adapters/switchbox_source.py` |
-| Selection, semantic inventory and backoff | `service/selection.rs`, `service/cognitive.rs` |
-| Durable evidence and witnessed receipts | `crates/symbiote-memory/src/knowledge.rs`, `reciprocal.rs` |
-| Independent engineering consumers | `tools/reciprocal_engineering.py`, `tools/soak_campaign.py` |
-| New prospective engineering workload | `tools/engine_evolution.py`, `docs/ENGINE_EVOLUTION_PROTOCOL_002.md` |
-
-Run `cargo test --workspace --locked`, strict workspace Clippy and
-`python tools/verify.py`. Registered campaigns require their explicit external
-registration, fresh output directory, immutable source/executable pins and existing
-bounds. Do not retry or retune a failed cohort into a gain.
-
-Next: reduce or amortize dominant acquisition/control costs without weakening
-validation. Test a useful exchange with independent validation and reuse across
-fresh tasks under a new prospective complete-cost contract. Keep isolated adaptive
-and exact cache controls; unrelated domains and independent-host operation remain
-open. Preserve the historical cohort losses, the unreleased study's isolated ties,
-and the distinction between retained-case exchange and fresh source reuse.
-
-Read [the corrective account](CORRECTIVE_RELEASE_101.md), [runtime setup](LIVE_RUNTIME.md),
-[API compatibility](RUST_API.md), [release gates](STABLE_RELEASE_GATES.md) and
-[roadmap](ROADMAP.md). The prior handoff remains available at its
-[immutable source](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/6025fff43ad4b508b94977eeff801aeebf549fd9/docs/GROK_HANDOFF.md).
+[v1.1.1](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.1)
+remains FAILED/prerelease/notlatest after public Intel metadata HTTP 403 before
+any download/native call; its other three public platforms passed. Its own source,
+staging, E3 and hour remain evidence for their images. Immutable evidence SHA:
+`9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818`.
+[v1.1.0](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.0)
+remains FAILED after a local metadata-route rejection. Tags/assets are unchanged.
+The [previous stable v1.0.1](../experiments/v1.0.1/public-delivery.json),
+[engine evolution002](../experiments/engine-evolution-002/README.md) and earlier
+[research](RESEARCH.md) retain their own sources, measurements and open criteria.
+No new release number closes the broader stable-research objective by itself.

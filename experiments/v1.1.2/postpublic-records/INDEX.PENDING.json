@@ -1,0 +1,83 @@
+{
+  "asset_map_digest": "cf8d5c03f1c8628ed4e9c5f4f0772dfce4be64bb10d5f7de5f33d54547eff9f2",
+  "candidate_run_id": 40945405929,
+  "compact_copy_omissions": [
+    {
+      "id": "root-public-accept",
+      "reason": "Conservative structured scanner/public prose false positive; exact original raw reference retained, source remains protected and unchanged",
+      "sha256": "203fe8e674d723bc08d2f54e42f4c28b73799a68c33796e8eef9bfce64b80a05"
+    }
+  ],
+  "finalization": "PASS_LATEST",
+  "finalize_capture_sha256": "6408037835b0989ef506c799ad0d33dd19fc7cf2c31966ab8ac1a67299a8b1fa",
+  "finalize_operation_sha256": "0b1473258141efe57611b20601ed0cab90223e7c7812ce7301c7b3053eb5078e",
+  "formal_public_assessment_sha256": "919f4650322b0d405a90c2911d66608c12234568ec4df513fa0087acbf07867e",
+  "independent_public_review_sha256": "4d9bf2387258ffc9e3a2bcc00154256f1b56cc9090e02975e93204af21a227d9",
+  "later_documentation_commit": "SEPARATE_POSTPUSH_RECEIPT_NOT_A_RELEASE_SOURCE_STAMP",
+  "official_latest_sha256": "e96baa8ebf39953d1e440a49dc0cd7b0debf5dd3eabad980e3551676b009a9d0",
+  "official_public_jobs": "ALL_FIVE_SUCCESS",
+  "provisional": "PASS_PRERELEASE_NOT_LATEST",
+  "public_artifact_preservation": "ALL_FOUR_API_DIGEST_BOUND_CLOSED",
+  "public_assessment": "ROOT_ACCEPTED_FOUR_ACTUAL_PUBLIC_PLATFORMS",
+  "public_independent_review": "PASS_DATA_ONLY_FOUR_PUBLIC_PLATFORMS",
+  "public_workflow_attempt": 1,
+  "public_workflow_run_id": 40967471449,
+  "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+  "reciprocal_efficiency": "NOT_DEMONSTRATED",
+  "references": [
+    {
+      "bytes": 118983597,
+      "id": "prepublication-evidence",
+      "manifest_sha256": "daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069",
+      "scope": "Immutable prepublication archive; excludes ALL subsequent publication and public-acceptance events",
+      "sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.1.2/EVIDENCE.zip"
+    },
+    {
+      "id": "old111-evidence",
+      "scope": "Historical failed prerelease source69 own evidence; no current1.1.2 qualification inferred",
+      "sha256": "9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.1.1/EVIDENCE.zip"
+    },
+    {
+      "bytes": 329551360,
+      "file_count": 993,
+      "id": "public-full-corpus",
+      "manifest_sha256": "bea89b7d64d47c32edc52d648879e5dc296bc713d031f71f9f0bc87e5895ffc3",
+      "original_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112",
+      "scope": "Protected full originalAPI ZIPs and extracted public raw evidence retained locally; compact Git selection is explicitly partial, no archives/native images/massive logs copied"
+    },
+    {
+      "id": "official-public-run",
+      "scope": "Actual FIRST officialpublic workflow attempt1, all5jobs success; final stable operation pending",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40967471449"
+    },
+    {
+      "id": "excluded-raw-console",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-portable-replay.stdout",
+      "reason": "Protected3JSONframe rawconsole not copied to singleJSON sidecar; individual replay and postguard receipts are copied exactly",
+      "sha256": "1683c4f7496192fb62f021dc853a5de0458f6b76011a264e7f97914aedd59bd3"
+    },
+    {
+      "bytes": 4954,
+      "id": "root-public-decision-raw-reference",
+      "original_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-public-accept-8aa\\decision.json",
+      "scope": "Actual root first-public ACCEPT decision; original protected unchanged. Compact raw copy omitted because unchanged scanner rejects public prose field named authorization. Accepted raw inputs and formal assessment are copied; no general completeness claim.",
+      "sha256": "203fe8e674d723bc08d2f54e42f4c28b73799a68c33796e8eef9bfce64b80a05"
+    }
+  ],
+  "release_id": 428461777,
+  "release_source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "release_url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.2",
+  "released_assets": 35,
+  "root_public_decision_sha256": "203fe8e674d723bc08d2f54e42f4c28b73799a68c33796e8eef9bfce64b80a05",
+  "schema": "symbiote.v112-postarchive-delivery-index/1",
+  "scientific_samples": 0,
+  "scope": "Compact postarchive raw-record selection. Prepublication ZIP remains immutable and excludes these subsequent publication/public-check records. Original full public corpus is protected locally and SHA-censused; this sidecar is a declared partial selection.",
+  "source_ci_run_id": 40941750300,
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "stable_release": "ACTUAL_OFFICIAL_LATEST_V1_1_2",
+  "stage": "PASS_DRAFT_ONLY",
+  "two_host_proof": "OPEN_UNAVAILABLE",
+  "version": "v1.1.2"
+}

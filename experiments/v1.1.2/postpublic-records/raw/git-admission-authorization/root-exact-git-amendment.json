@@ -1,0 +1,46 @@
+{
+  "schema": "symbiote.v112-exact-git-text-admission-authorization/1",
+  "status": "ROOT_AUTHORIZED_ONE_EXACT_ORDINARY_GIT_TEXT_CLASSIFICATION",
+  "amends": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-archive-materialization-authorization.json",
+    "sha256": "0a2b70dac2ab88e6792327623fb7222d20efc4092d8c8212fa4c58407102abfb",
+    "field": "/authorization/no_new_format_exception",
+    "scope": "One explicitly declared git-commit-summary/1 admission only; every other restriction remains."
+  },
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "format": "git-commit-summary/1",
+  "exact_member": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vx112\\p\\02469\\8.stdout",
+    "sha256": "41bc1bb4e077def3cf33faaacc257bbe21bc433ffd0172d92b0cc0f0a062cfc0",
+    "bytes": 177,
+    "origin": "proofs/source-freeze/8.stdout",
+    "original": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-freeze-001\\8.stdout"
+  },
+  "reason": "Ordinary three-line ASCII/UTF8 Git commit summary begins with '[' and was misclassified by a JSON-prefix heuristic. Preserve original bytes and path; declare its actual format explicitly.",
+  "wrapper_sha256": "61c00fc358639cbf7e05dd63220ce8ace2b1cdb114938ce9c4ddfb5cb3756ec9",
+  "tests_sha256": "a60d8688f380e667f745ef3069fe08f21df561cb3fb6c1637228497f0c02b193",
+  "independent_review": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-git-summary-independent-review.json",
+    "sha256": "f6aab8a05eb33530fdac05617afdd88f3d112269087f32abb489c87745df96b4"
+  },
+  "requirements": {
+    "exact_literal_utf8_and_origin_chain": true,
+    "before_after_stat_and_hash": true,
+    "original_continuous_raw_and_pem_scan": true,
+    "decoded_whole_and_per_line_credential_scan": true,
+    "all_other_paths_original_301_base_9a": true,
+    "base_cargo_formats_exactly_two": true,
+    "additional_format_pinned_operator_note_anchor": true,
+    "no_raw_rename_or_edit_or_drop": true,
+    "no_generic_bracket_acceptance": true,
+    "preserve_original_plan_hold_and_diagnoses": true,
+    "no_production_or_native_change": true
+  },
+  "remaining": {
+    "archive_bytes": "PENDING",
+    "independent_archive_audit": "PENDING",
+    "portable_replay": "PENDING",
+    "public_acceptance": "PENDING"
+  },
+  "scientific_samples": 0
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "symbiote.independent-v11-closed-hour-audit/1",
+  "status": "PASS_DATA_ONLY_CLOSED_LOCAL_HOUR",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "registration_sha256": "91d726d4d0f52a0dd99c2caa1fa1406abb6afb02f7e50c3481ac62bd4e51e5f9",
+  "report_sha256": "2989c31eb51d807e8cde8389b47299e0253144f2824a5c7d360b83e030826987",
+  "native_report_sha256": "51c083c0e18e138bc75db230e582d218f4ad1ad788a2f2dece7b9d6497aa37aa",
+  "native_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+  "driver_sha256": "e442b2ec8c18dbe62235c5692fc396348ea3a30417428240251173e336292aa2",
+  "audit_script_sha256": "fca72be8622b01aa069726bdf017ab9e036baf114cd1a1fff088f74670b34f31",
+  "reference_source_pins": {
+    "stability_campaign.py": "bb17621588730bf2dd1cebdeb0ded28534d2815ee130e86be1fd11e1b1d7daae",
+    "soak_campaign.py": "f51696c58ade4a7068a1ddf0229dac102ed83159193677b08ada91acc8e7a475"
+  },
+  "reference_verification": {
+    "status": "PASS",
+    "classification": "HOUR_QUALIFICATION",
+    "cycles": 120,
+    "owners": [
+      "symbiote-7ec2acd6c52dd76d7e38e967",
+      "symbiote-4304e0086870e359ff420fae"
+    ],
+    "wire_keys": 483,
+    "durable_candidate_keys": 3,
+    "service_starts": 10,
+    "owned_stops": 10,
+    "retained_models": 2,
+    "model_digests": [
+      "26c236905d349ffe754dc005e1c82848bf4d4b61a607c58702fe8cfc4ef715d4",
+      "b57e47a5b74caa3b892aaf58474eaf157d345be933cba7b8d640a808dfded27f"
+    ],
+    "events_sha256": "1502e213f8c76db5f6968d5777ae8501124f6e1ab09a74dbf5bf345f9cf87b9a",
+    "independent_host_validation": "OPEN_UNAVAILABLE",
+    "scientific_samples": 0,
+    "report_sha256": "51c083c0e18e138bc75db230e582d218f4ad1ad788a2f2dece7b9d6497aa37aa",
+    "unreviewed_activation_guard": "POLICY_CHANGE_HOLD",
+    "timing_observations": {
+      "measurement_origin_ms": 611,
+      "measurement_elapsed_ms": 3602094,
+      "main_listener_span_ms": 3594299,
+      "max_maintenance_gap_ms": 1542,
+      "max_observed_idle_gap_ms": 1099,
+      "timing_basis": "ordered raw main readiness/positive stops, idle liveness and actual request/output/reply events"
+    }
+  },
+  "timing": {
+    "measurement_origin_ms": 611,
+    "measurement_elapsed_ms": 3602094,
+    "main_listener_span_ms": 3594299,
+    "max_maintenance_gap_ms": 1542,
+    "max_observed_idle_gap_ms": 1099,
+    "cycle_count": 120,
+    "listener_starts": 10,
+    "listener_stops": 10,
+    "killed_and_joined": [
+      {
+        "pid": 43620,
+        "cycle": 50
+      }
+    ]
+  },
+  "outer_elapsed_seconds": 3606.3280000000377,
+  "process_elapsed_seconds": 3603.25,
+  "host_awake_guard": {
+    "platform": "windows",
+    "global_policy_changed": false,
+    "display_setting_changed": false,
+    "idle_sleep_inhibited": true,
+    "released": true,
+    "suspension_tolerance_ms": 1000,
+    "max_observed_suspension_ms": 7,
+    "suspension_detection": "GetTickCount64 minus QueryUnbiasedInterruptTime"
+  },
+  "source_binding": "NOT_REQUESTED",
+  "local_subject_binding": "NOT_REQUESTED",
+  "raw_corpus_unchanged": true,
+  "census_sha256": "d6dd9b2839c93541bec086deff4d387c6fb15d3a668a80e64f42297fcb479db9",
+  "census_members": 1091,
+  "census_bytes": 2770043,
+  "scientific_samples": 0,
+  "independent_host_validation": "OPEN_UNAVAILABLE",
+  "native_execution_by_reader": false,
+  "limitations": [
+    "Data-only replay validates recorded local instrumentation; it does not newly observe historical OS execution or clock honesty.",
+    "Read-only reference-verifier functions are reused from exact frozen source; timing/pins/census have additional independent implementations.",
+    "One authorized Windows host and two retained finite-family models; no two-host, power-loss, generalized-learning or efficiency claim."
+  ]
+}

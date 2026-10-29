@@ -1,0 +1,57 @@
+{
+  "schema": "symbiote.embedding-platform-acceptance/1",
+  "status": "PASS_INDEPENDENT_EMBEDDING_LIFECYCLE",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "target": "x86_64-pc-windows-msvc",
+  "binary_sha256": "3efab4959ab9ea3849005eb0738b6fed02761bba300ee52450103affa5aa16f0",
+  "calls": [
+    {
+      "label": "embedding-version",
+      "argv": [
+        "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\symbiote-v11-public-x86_64-pc-windows-msvc-40967471449-1\\embedding\\executables\\embedding-consumer.exe",
+        "--version"
+      ],
+      "pid": 8560,
+      "exit_code": 0,
+      "outcome": "completed",
+      "elapsed_seconds": 0.07900480000000698,
+      "error": null,
+      "cleanup_verified": true,
+      "output_truncated": false,
+      "cleanup_elapsed_seconds": 0.0002653999999893131,
+      "containment": "windows-job-suspended-before-execution",
+      "process_receipt": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.process.json",
+      "stdout": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.stdout",
+      "stderr": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.stderr",
+      "stdout_sha256": "cd1051df55ecf35e20dce20bdc1170f30175c86017708fa97588b866d99a9a2f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 134,
+      "stderr_bytes": 0
+    },
+    {
+      "label": "independent-embedding-lifecycle",
+      "argv": [
+        "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\symbiote-v11-public-x86_64-pc-windows-msvc-40967471449-1\\embedding\\executables\\embedding-consumer.exe",
+        "--out",
+        "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\symbiote-v11-public-x86_64-pc-windows-msvc-40967471449-1\\embedding\\lifecycle"
+      ],
+      "pid": 7748,
+      "exit_code": 0,
+      "outcome": "completed",
+      "elapsed_seconds": 0.6029267999999774,
+      "error": null,
+      "cleanup_verified": true,
+      "output_truncated": false,
+      "cleanup_elapsed_seconds": 0.00031479999995553953,
+      "containment": "windows-job-suspended-before-execution",
+      "process_receipt": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.process.json",
+      "stdout": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.stdout",
+      "stderr": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.stderr",
+      "stdout_sha256": "8a67aa0d48d00c9bb53d04ea60b18b02ffce3cf6a611d29fcf04004955c9eeea",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 461,
+      "stderr_bytes": 0
+    }
+  ],
+  "native_acceptance_sha256": "97b859b74556384019eb9aab5cb42ed46c6c238c34b98373659a0748b6248cdc"
+}

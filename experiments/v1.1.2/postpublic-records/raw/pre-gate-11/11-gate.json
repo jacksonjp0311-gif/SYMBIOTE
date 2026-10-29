@@ -1,0 +1,42 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "source-ci",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "7194ee4d532f84932ba042cade226c8a8b7abbdf90761a2a95a6600d7a67bb5a",
+  "status": "PASS",
+  "started_unix_ns": 1793309445033613000,
+  "finished_unix_ns": 1793309445227845800,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-operator-8aa5f4c\\candidate-dispatch\\source-ci.json",
+      "bytes": 29851,
+      "sha256": "7194ee4d532f84932ba042cade226c8a8b7abbdf90761a2a95a6600d7a67bb5a",
+      "name": "source-ci-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\s\\data\\source-ci-gate.json",
+      "bytes": 1086,
+      "sha256": "4599d3873491bc9f936e458a1645384d923ec8416426354ddc84e5d9c3e6c777",
+      "name": "candidate-source-ci-gate"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\CORPUS-MANIFEST.json",
+      "bytes": 230455,
+      "sha256": "0062b9da3b1017e36ce98f55652e4b419194aec3c322e6375e3e26190e1f6d1f",
+      "name": "closed-candidate-corpus"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "source-platform-data-review"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual exact-source official push CI40941750300, all four jobs in attempt1 closed success, required MSRV/API documentation/current-stable test and Clippy steps observed. Scope is source software/provenance records, not public delivery or scientific advantage.",
+    "evidence_digest": "a2f9a0767510985b1eb97da084f2bd19ca7ee7a7146b1671a38e53af4d3ec7ce"
+  }
+}

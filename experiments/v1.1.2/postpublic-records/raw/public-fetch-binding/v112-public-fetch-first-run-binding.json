@@ -1,0 +1,24 @@
+{
+  "schema": "symbiote.v112-public-artifact-fetch-first-run-binding/1",
+  "status": "HELPER_BOUND_NO_PUBLIC_ARTIFACT_FETCH_YET",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "public_workflow_run_id": 40967471449,
+  "public_run_attempt": 1,
+  "candidate_run_id": 40945405929,
+  "release_id": 428461777,
+  "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+  "actual_provisional_operation_sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+  "template_sha256": "ca73e3e64505b584868ce125cc178bb467ff6dc401b04247c4d581e2f9d10b1f",
+  "bound_helper": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_public_artifact_fetch_40967471449.py",
+    "sha256": "d6db5ca5f65bf6be49589492c8c219100d7d1b488831bf60d6833bc69d5353a2"
+  },
+  "owned_noecho_guard": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_public_artifact_stdin_40967471449.py",
+    "sha256": "b30020f8451de9945f71aea91e54864429211c66a37327dccdb8b89bd4950593"
+  },
+  "change_scope": "Only RUN None becomes actual FIRST root-supplied public workflow identifier and its source comment. Typed guard/source/bounds/API digest/extraction/privacy unchanged. Original template preserved.",
+  "actual_public_fetches": 0,
+  "native_executions": 0,
+  "publication_mutations": 0
+}

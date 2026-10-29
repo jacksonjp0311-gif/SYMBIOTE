@@ -1,0 +1,36 @@
+{
+  "schema": "symbiote.v112-owned-publisher-capture/1",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "publisher_sha256": "f1bd6913a3264b013bf077f975d7325b8e38a275af6e01a2abb728fabdf5c297",
+  "mode": "provisional",
+  "command": [
+    "C:\\Users\\jacks\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\tools\\release\\v11_publish.py",
+    "provisional",
+    "--plan",
+    "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\publication-plan.json",
+    "--plan-sha256",
+    "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+    "--out",
+    "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001"
+  ],
+  "started_utc": "2026-10-29T22:36:08.549986+00:00",
+  "finished_utc": "2026-10-29T22:37:42.727128+00:00",
+  "elapsed_seconds": 94.17199999996228,
+  "exit_code": 0,
+  "streams": {
+    "stdout": {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001.stdout",
+      "bytes": 73774,
+      "sha256": "f8aaebfa2c464775a47ce44df5eba9c61da41ae071d7f594882ff07e557e8cc5"
+    },
+    "stderr": {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "credentials_logged": false,
+  "operator_sha256": "53af7735f7a290c89763faedf0f7f3fd7c071ea50988bfc274d6c1861342d149"
+}

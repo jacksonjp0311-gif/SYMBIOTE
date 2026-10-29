@@ -1,0 +1,66 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "candidate-native:x86_64-pc-windows-msvc",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+  "status": "PASS",
+  "started_unix_ns": 1793309447126774000,
+  "finished_unix_ns": 1793309447538088700,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\acceptance\\x86_64-pc-windows-msvc\\installed\\acceptance.json",
+      "bytes": 34334,
+      "sha256": "f1e569188bf54e059fa403f992465db5a1ad2e6d6d6acbf8d9c7b71348d692f6",
+      "name": "native-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.build.json",
+      "bytes": 32241,
+      "sha256": "873801a8d338726524c5dc34be558f086458e71477a3c1d4eb29036f290dd070",
+      "name": "staged-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\download.json",
+      "bytes": 46025,
+      "sha256": "f51f8258b848abf8f368bf6b9a8cddfbc59a087a4d5e8f4c6617d247a02205d9",
+      "name": "artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\candidate-run-and-jobs.ACTUAL.json",
+      "bytes": 60724,
+      "sha256": "290d9064aecab8d0a756c54376f5bdcab281102db7368f52f46b64761a0be2c7",
+      "name": "official-candidate-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\metadata-closed-before-hour\\artifacts.json",
+      "bytes": 4287,
+      "sha256": "a1f53b976f24550f4755b121e60afa190b2ae79ba8c6173a5adb2e985dd0cfd7",
+      "name": "complete-artifact-list"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "independent-platform-data-review"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-windows-independent-replacement-8aa.json",
+      "bytes": 3762,
+      "sha256": "97fd4c6cbd1ca4adab1046130bfa2ad4289f2afe7fa92edff4a86a498e1c8574",
+      "name": "independent-windows-data-review"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-windows-crypto-replacement-8aa5f4c\\windows-subject-review.json",
+      "bytes": 70521,
+      "sha256": "8e4fc13220045642848921df31fe60ccc80445a2992cb7f24eac280061a1e368",
+      "name": "scoped-windows-four-crypto"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual matching-platform installed native CLI lifecycle: authorized learning, retained source-off reuse, prediction, typed cancellation/revocation, backup/restore, legacy-writer refusal and native receiver outcome. Exact source/run/native/driver/build.proofs/API-census links inspected. Behavioral assessment; fresh build-origin crypto remains mandatory in original publisher before release writes.",
+    "evidence_digest": "4cec0f01e1872a7379ec5d14709df14084c4fd95b696c316f746aeb967d0e4d3"
+  }
+}

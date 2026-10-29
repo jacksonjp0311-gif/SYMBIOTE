@@ -1,0 +1,54 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "candidate-embedding:x86_64-apple-darwin",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "65b203887ea6597f2c4163ba034c645567b886000ea4db5677e54dd92a372a12",
+  "status": "PASS",
+  "started_unix_ns": 1793309450764241400,
+  "finished_unix_ns": 1793309451067990700,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\acceptance\\x86_64-apple-darwin\\embedding\\embedding-acceptance.json",
+      "bytes": 3399,
+      "sha256": "1c5ff554842a8b812ffb1256f2cd315d81b5673500d2a04449ff4dd82e8e904e",
+      "name": "embedding-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.build.json",
+      "bytes": 32222,
+      "sha256": "a16cdf26208b549706e032abf527b11e08424a656953e690e5439eee85fc4e2d",
+      "name": "staged-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\download.json",
+      "bytes": 46111,
+      "sha256": "92b8858821b80675806a1f0376f3cb8c35db07c3b54f4ffddb365dd216d4d76e",
+      "name": "artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\candidate-run-and-jobs.ACTUAL.json",
+      "bytes": 60724,
+      "sha256": "290d9064aecab8d0a756c54376f5bdcab281102db7368f52f46b64761a0be2c7",
+      "name": "official-candidate-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\metadata-closed-before-hour\\artifacts.json",
+      "bytes": 4287,
+      "sha256": "a1f53b976f24550f4755b121e60afa190b2ae79ba8c6173a5adb2e985dd0cfd7",
+      "name": "complete-artifact-list"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "independent-platform-data-review"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual separate matching-platform Rust consumer workspace/lock using the documented typed engine API: two isolated owners, observed/inferred/evaluated/retained prediction, cancellation, writer exclusion, close/reopen zero-source calls, revocation and checkpoint/restore. Exact consumer/build.proofs/raw process links; no economic or public-delivery claim. Mandatory publisher16 origin checks remain.",
+    "evidence_digest": "3bcbe8e0188028f9a926c02165c4b0a6af5243139039e7447e05bf06f8d48266"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "public-native:x86_64-unknown-linux-gnu",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3",
+  "status": "PASS",
+  "started_unix_ns": 1793313553000000000,
+  "finished_unix_ns": 1793313584000000000,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\public-acceptance.json",
+      "bytes": 41333,
+      "sha256": "0b055b7be2fbf0fe529eb881863345ec154f86a5ddd86fbdff32c73137f2ad34",
+      "name": "public-platform"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\native\\acceptance.json",
+      "bytes": 33039,
+      "sha256": "21388ccd17bcc3fc8a11db779c6ee6864e3ac9d4414caf69ffb6d96784ec7179",
+      "name": "native-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\embedding\\embedding-acceptance.json",
+      "bytes": 2679,
+      "sha256": "43b06eaf6a88d15bcd132eed214ca0c63df231ece6ba9b48365d898699d0ed03",
+      "name": "embedding-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+      "bytes": 36455,
+      "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+      "name": "official-public-run"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+      "bytes": 85956,
+      "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+      "name": "provisional-operation"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual first-public-run receipts and independent source-bound data review",
+    "decision": "ACCEPT",
+    "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim.",
+    "evidence_digest": "284b33e92e228c9f28bf49487bce3533601fb7bb53989729a4c929ecf45d672a"
+  },
+  "public_binding": {
+    "release_id": 428461777,
+    "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+    "asset_digest": "cf8d5c03f1c8628ed4e9c5f4f0772dfce4be64bb10d5f7de5f33d54547eff9f2"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "symbiote.v112-root-completed-archive-review/1",
+  "status": "ROOT_ACCEPTED_COMPLETED_ARCHIVE_AND_FINAL35_INPUTS_ONLY",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "archive_zip_sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a",
+  "archive_bytes": 118983597,
+  "manifest_sha256": "daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069",
+  "original_request": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\publication-inputs.FINAL35-ARCHIVE-REVIEW-REQUIRED.json",
+    "sha256": "b0255059ca95822b8620b7f0bc3d613ca14447f8a49ba18d7eea27069aaf1837"
+  },
+  "accepted_inputs": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-archive-accept-8aa\\publication-inputs.ACCEPTED-FINAL35.json",
+    "bytes": 48877,
+    "sha256": "55b6558e6190c1fff86e99cf0754186ea607d9b418241cf5110217f5736997d5"
+  },
+  "closed_proofs": [
+    {
+      "role": "independent_archive",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-archive-independent-8aa.json",
+      "sha256": "d5210d2d4f5a443ea942dc4706851e55b8f1312cb62c04c7efa45061d8c81f01"
+    },
+    {
+      "role": "portable_replay",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\replay-receipt.json",
+      "sha256": "6809b623bdb261e7ccee0dc766cbcba0f02946ce2c9b09a4eb4c1b0c0066d1e0"
+    },
+    {
+      "role": "post_replay_bytes",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\post-replay-recheck.json",
+      "sha256": "06e182dbd0b4e75fc14dc09b5af97366bb5f714f79417e16e535cbfd878e6399"
+    },
+    {
+      "role": "independent_replay_and_final35",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-portable-and-final35-independent-review.json",
+      "sha256": "29aa7c24516f7ef0db940b6a9463bf04d8265ecb7980ff80db4ade25c88a7277"
+    }
+  ],
+  "scope": "Completed evidence byte/data qualification and offline formal-plan assembly authorized. No GitHub mutation is performed by this script.",
+  "original_requests_mutated": false,
+  "twelve_gates_unchanged": true,
+  "body_editorial_review": "cbe8bb8c895b227e10053e9af2c11c0f6a60fd322dd40b67f721deb5508a2918",
+  "fresh_publisher_16_crypto": "MANDATORY_BEFORE_RELEASE_WRITE",
+  "public_acceptance": "PENDING_ALL_FOUR",
+  "stable": "PENDING",
+  "scientific_samples": 0,
+  "operator_sha256": "2e02de0b20c8c8b7b202f471d1db5f34cd889e9ce009a61fff59d7625a45128a"
+}

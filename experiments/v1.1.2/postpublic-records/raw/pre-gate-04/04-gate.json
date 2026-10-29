@@ -1,0 +1,54 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "candidate-native:aarch64-apple-darwin",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898",
+  "status": "PASS",
+  "started_unix_ns": 1793309449322260200,
+  "finished_unix_ns": 1793309449607816100,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\acceptance\\aarch64-apple-darwin\\installed\\acceptance.json",
+      "bytes": 41256,
+      "sha256": "5b2944b494d87ebc5558d86b271b7e6996508a94f17587e71509d80895cb380b",
+      "name": "native-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.build.json",
+      "bytes": 32227,
+      "sha256": "a11cad5a31f7a0f006de5377fbdee1225c704af2a478a83228f178adde3d62f9",
+      "name": "staged-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\download.json",
+      "bytes": 45568,
+      "sha256": "b2d1f33a6e038558ee6f38c0c256000ae3619b391ff15b4703394bfcc4c063f9",
+      "name": "artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\candidate-run-and-jobs.ACTUAL.json",
+      "bytes": 60724,
+      "sha256": "290d9064aecab8d0a756c54376f5bdcab281102db7368f52f46b64761a0be2c7",
+      "name": "official-candidate-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\metadata-closed-before-hour\\artifacts.json",
+      "bytes": 4287,
+      "sha256": "a1f53b976f24550f4755b121e60afa190b2ae79ba8c6173a5adb2e985dd0cfd7",
+      "name": "complete-artifact-list"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "independent-platform-data-review"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual matching-platform installed native CLI lifecycle: authorized learning, retained source-off reuse, prediction, typed cancellation/revocation, backup/restore, legacy-writer refusal and native receiver outcome. Exact source/run/native/driver/build.proofs/API-census links inspected. Behavioral assessment; fresh build-origin crypto remains mandatory in original publisher before release writes.",
+    "evidence_digest": "48fe726aae6c2341db81dceb77d19f6cb6004f689283b13bd4e6bbeddf6a8869"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "symbiote.v112-root-input-preparation-hold/1",
+  "status": "HOLD_BEFORE_ACCEPTED_COPY_OR_MUTATION",
+  "reason": "Root helper guessed public input timing fields; public input gates contain role, subject, evidence and review only. Underlying actual review/native chronology is separately preserved.",
+  "prior_source_sha256": "e8230635223350b8ec636f030697aed35695e53efc8025fa7edbe41328810906",
+  "data_changed": false,
+  "native_executions": 0,
+  "accepted_copy_written": false
+}

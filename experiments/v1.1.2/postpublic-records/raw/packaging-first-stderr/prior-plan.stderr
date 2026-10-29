@@ -1,0 +1,29 @@
+Traceback (most recent call last):
+  File "C:\Users\jacks\AppData\Local\Temp\v112_prepare_qualified_plan.py", line 35, in <module>
+    result=m.make_v1_plan(CONFIG)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_v1_evidence_v4.py", line 387, in make_v1_plan
+    collector.tree(root, prefix)
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_stability_evidence_v4.py", line 328, in tree
+    self.add(path, prefix + "/" + path.relative_to(root).as_posix())
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_stability_evidence_v4.py", line 299, in add
+    info = fingerprint(path)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_v1_evidence_v4.py", line 150, in classified_fingerprint
+    return ORIGINAL_FINGERPRINT(path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_stability_evidence_v4.py", line 268, in fingerprint
+    scan_json(parse(read_bounded(path, LIMITS["json_bytes"])), str(path))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\Documents\Codex\2026-10-26\codex-master-directive-symbiote-symbiotic-adaptive\tools\release\package_stability_evidence_v4.py", line 86, in parse
+    return json.loads(raw, object_pairs_hook=pairs,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jacks\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 2 (char 1)

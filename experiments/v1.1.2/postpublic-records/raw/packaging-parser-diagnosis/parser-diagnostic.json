@@ -1,0 +1,33 @@
+{
+  "schema": "symbiote.v112-qualified-parser-readonly-diagnostic/1",
+  "status": "EXACT_MEMBER_IDENTIFIED_NO_PLAN_OR_ARCHIVE",
+  "config_sha256": "0d4a6131aeb1d518ba7962a513319121fac83e760fda1e575e4971fe23dd876d",
+  "qualified_adapter_sha256": "301bf6030271c38f43902631c35ac852c87455ab2f2bd3118a74c5b879a26ffc",
+  "qualified_base_sha256": "9a2df3fc679ce154469013e02575551d9572e7cee4d2a0eca585e7fc3a780962",
+  "candidate_files": 335,
+  "jsonlooking_files_parsed": 253,
+  "bounded_raw_bytes_read": 1261346,
+  "first_invalid": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vx112\\p\\02469\\8.stdout",
+      "bytes": 177,
+      "sha256": "41bc1bb4e077def3cf33faaacc257bbe21bc433ffd0172d92b0cc0f0a062cfc0",
+      "payload_path": "p/02469/8.stdout",
+      "origins": [
+        {
+          "path": "source-freeze/8.stdout",
+          "source": "proofs"
+        }
+      ],
+      "error": "Expecting value: line 1 column 2 (char 1)",
+      "parser": "Unchanged base9a parse(json.loads object_pairs_hook/nonfinite guards) selected because .stdout/.stderr/.log/.txt first nonspace byte is JSON-looking",
+      "leading_byte": "[",
+      "recognized_format": "Bracket/brace/quote-prefixed ordinary captured text or non-single-JSON; exact parser classification pending root read",
+      "first_line_sha256": "4e6059a5e40d0ffa99e79a658cf95fac34b5b25429972f91396606b6fd354f09"
+    }
+  ],
+  "qualified_plan_retries": 0,
+  "inputs_or_guard_edits": 0,
+  "manifest_or_archive_created": false,
+  "native_executions": 0
+}

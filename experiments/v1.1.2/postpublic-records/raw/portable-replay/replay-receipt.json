@@ -1,0 +1,61 @@
+{
+  "archived_selector_sha256": "9b529e5cc1db05fd381cf8480b0ff8892b064e2353acaa88533e23a23447fe11",
+  "e3_receipt_sha256": "5137f4c47a221faad6b81935bd76261a76ccfe33d44a1cd0f69844129958fc05",
+  "guarded_read_stat_and_scan_operations": 784695,
+  "hour_receipt_sha256": "67e784799c475270582e30b948bfd20fc286f62ab9dc18c31d13aca3ca0e6c4f",
+  "images": {
+    "e3-consumer": {
+      "archive_payload": "p/00026/transfer-consumer.exe",
+      "sha256": "82a97759eb475fe022c96b5a082c994c2cb9645ba0250f4f4c8a975664d88675"
+    },
+    "hour-driver": {
+      "archive_payload": "p/00025/service-tests.exe",
+      "sha256": "e442b2ec8c18dbe62235c5692fc396348ea3a30417428240251173e336292aa2"
+    },
+    "staged-hour-native": {
+      "archive_payload": "p/00051/symbiote.exe",
+      "sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc"
+    }
+  },
+  "inner_manifest_sha256": "daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069",
+  "native_executions": 0,
+  "network_calls": 0,
+  "not_replayed": "Original155-file checkout/source-tree and original-location native execution checks are NOT_REPLAYED; their original independent actual-source/image audit records remain preserved. This is archived data/reference/counter replay only; no old gate is relabelled.",
+  "original_host_read_attempts": [],
+  "reader_sha256": "5c70f914eb6f26cd89414aa1aacccf215ea1866e6430f81e41836a063546a845",
+  "reconstructed": [
+    {
+      "excluded_original_files": [],
+      "files": 1091,
+      "independent_scientific_samples": 0,
+      "original_host_reads": 0,
+      "output": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\h",
+      "schema": "symbiote.v11-evidence-reconstruction/1",
+      "scope": "selected byte reconstruction only; original absolute paths are provenance, never a read fallback",
+      "selection_sha256": "df529992e1b0e08619701c1514f01aee813ca42b64d79b01895807bf3708f261",
+      "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+      "source_id": "hour",
+      "status": "PASS_SELECTED_BYTES_ONLY"
+    },
+    {
+      "excluded_original_files": [],
+      "files": 326,
+      "independent_scientific_samples": 0,
+      "original_host_reads": 0,
+      "output": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\e",
+      "schema": "symbiote.v11-evidence-reconstruction/1",
+      "scope": "selected byte reconstruction only; original absolute paths are provenance, never a read fallback",
+      "selection_sha256": "df529992e1b0e08619701c1514f01aee813ca42b64d79b01895807bf3708f261",
+      "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+      "source_id": "e3-reproduction",
+      "status": "PASS_SELECTED_BYTES_ONLY"
+    }
+  ],
+  "schema": "symbiote.v112-portable-data-replay/1",
+  "scientific_samples": 0,
+  "selection_sha256": "df529992e1b0e08619701c1514f01aee813ca42b64d79b01895807bf3708f261",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "status": "PASS_ARCHIVED_HOUR_AND_E3_DATA_REPLAY",
+  "subprocesses": 0,
+  "zip_sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a"
+}

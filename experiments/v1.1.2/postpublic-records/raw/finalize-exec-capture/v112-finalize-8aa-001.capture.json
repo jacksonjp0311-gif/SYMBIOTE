@@ -1,0 +1,40 @@
+{
+  "schema": "symbiote.v112-owned-publisher-capture/1",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "publisher_sha256": "f1bd6913a3264b013bf077f975d7325b8e38a275af6e01a2abb728fabdf5c297",
+  "mode": "finalize",
+  "command": [
+    "C:\\Users\\jacks\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\tools\\release\\v11_publish.py",
+    "finalize",
+    "--plan",
+    "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\publication-plan.json",
+    "--plan-sha256",
+    "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+    "--out",
+    "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-finalize-8aa-001",
+    "--public-acceptance",
+    "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\public-acceptance.json",
+    "--public-acceptance-sha256",
+    "919f4650322b0d405a90c2911d66608c12234568ec4df513fa0087acbf07867e"
+  ],
+  "started_utc": "2026-10-29T22:57:51.670592+00:00",
+  "finished_utc": "2026-10-29T22:59:26.730359+00:00",
+  "elapsed_seconds": 95.06199999997625,
+  "exit_code": 0,
+  "streams": {
+    "stdout": {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-finalize-8aa-001.stdout",
+      "bytes": 73966,
+      "sha256": "3859507cc7d71555d7f5e3f4c2ca82442f5fe4f661e90f60d409ffed12d902ce"
+    },
+    "stderr": {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-finalize-8aa-001.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "credentials_logged": false,
+  "operator_sha256": "53af7735f7a290c89763faedf0f7f3fd7c071ea50988bfc274d6c1861342d149"
+}

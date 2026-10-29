@@ -1,0 +1,75 @@
+{
+  "schema": "symbiote.embedding-platform-acceptance/1",
+  "status": "PASS_INDEPENDENT_EMBEDDING_LIFECYCLE",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "target": "x86_64-apple-darwin",
+  "binary_sha256": "65b203887ea6597f2c4163ba034c645567b886000ea4db5677e54dd92a372a12",
+  "calls": [
+    {
+      "label": "embedding-version",
+      "argv": [
+        "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/symbiote-v11-public-x86_64-apple-darwin-40967471449-1/embedding/executables/embedding-consumer",
+        "--version"
+      ],
+      "pid": 2899,
+      "exit_code": 0,
+      "outcome": "completed",
+      "elapsed_seconds": 0.14327128600001515,
+      "error": null,
+      "cleanup_verified": true,
+      "output_truncated": false,
+      "cleanup_elapsed_seconds": 0.04501622099996894,
+      "containment": "owned-posix-session",
+      "process_receipt": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.process.json",
+      "stdout": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.stdout",
+      "stderr": "p-embedding-ve-54ee74c59393bd9e124f16a4f4ba9b26c4cb960c23e6f698aec89b31a255c528.stderr",
+      "stdout_sha256": "cd1051df55ecf35e20dce20bdc1170f30175c86017708fa97588b866d99a9a2f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 134,
+      "stderr_bytes": 0,
+      "posix_group_observation": {
+        "basis": "native-ps-complete-pid-pgid-stat-census",
+        "sampler_pid": 2901,
+        "rows": 438,
+        "raw_bytes": 7446,
+        "raw_sha256": "7a96a2324d73adf4bd1b3e479c6e89f5340d9bdb880b65545d742158a75ac2ad",
+        "members": [],
+        "active": false
+      }
+    },
+    {
+      "label": "independent-embedding-lifecycle",
+      "argv": [
+        "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/symbiote-v11-public-x86_64-apple-darwin-40967471449-1/embedding/executables/embedding-consumer",
+        "--out",
+        "/private/var/folders/20/jp1_0n3n7kndh6rnbqb5344m0000gn/T/symbiote-v11-public-x86_64-apple-darwin-40967471449-1/embedding/lifecycle"
+      ],
+      "pid": 2903,
+      "exit_code": 0,
+      "outcome": "completed",
+      "elapsed_seconds": 0.5668488740000157,
+      "error": null,
+      "cleanup_verified": true,
+      "output_truncated": false,
+      "cleanup_elapsed_seconds": 0.04456961700003603,
+      "containment": "owned-posix-session",
+      "process_receipt": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.process.json",
+      "stdout": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.stdout",
+      "stderr": "p-independent--f5a005e6343ffce9c36ddd17c6315741ac91495a38f5279f22d266aedf591c79.stderr",
+      "stdout_sha256": "8b463f26b85b241c3ffb6000f958a9ec6a93f84cb66b2c0dedeba8f11ea76c74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 461,
+      "stderr_bytes": 0,
+      "posix_group_observation": {
+        "basis": "native-ps-complete-pid-pgid-stat-census",
+        "sampler_pid": 2905,
+        "rows": 436,
+        "raw_bytes": 7412,
+        "raw_sha256": "3fb8ccd0aa8c4dbc793134f2f9c437aae3d0ff4ccaa690beef6daf4c1c7388d5",
+        "members": [],
+        "active": false
+      }
+    }
+  ],
+  "native_acceptance_sha256": "6dc5d76dfed17e2a3e7dbab98fa8281fd32472e99bfad7ad07105f0d033ee9e6"
+}

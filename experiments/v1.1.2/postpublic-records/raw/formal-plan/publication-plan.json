@@ -1,0 +1,341 @@
+{
+  "schema": "symbiote.v11-publication-plan/1",
+  "repository": "jacksonjp0311-gif/SYMBIOTE",
+  "version": "v1.1.2",
+  "candidate_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "source_ci_run_id": 40941750300,
+  "publisher_sha256": "f1bd6913a3264b013bf077f975d7325b8e38a275af6e01a2abb728fabdf5c297",
+  "transport_sha256": "0705ad41644e5db69b596be242c19fc34905714844f883bef32d38586b240701",
+  "gh": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\symbiote-v11-gh-2.103.3\\gh.exe",
+    "bytes": 41785144,
+    "sha256": "d303d8ac3f5e9438bf7c977b64dd6425513eae46218f8881d30694f28c1d0dfd"
+  },
+  "cargo_lock_sha256": "7d6fbc0ecaad1263e4a3c8acd59cd6ebb4a5a01d47fc2a09bd4eb3359f789b4e",
+  "assets": [
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.zip",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.zip",
+      "bytes": 5049923,
+      "sha256": "474ac9cd6aa74823027885437985b8353ea4f2e1d498bb80c33d85cbcc5273b8"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.build.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.build.json",
+      "bytes": 32241,
+      "sha256": "873801a8d338726524c5dc34be558f086458e71477a3c1d4eb29036f290dd070"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.cdx.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.cdx.json",
+      "bytes": 60798,
+      "sha256": "f7b13f46c9552a8c82de1e32d4c4a5b5f7073beac39f6bcc99bdbd9deec4ba1b"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance.sigstore.json",
+      "bytes": 11750,
+      "sha256": "4090b52264b2445dd7cc9eb1eb5e5f43c151ce627dd89f77f741220e43f28d51"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom.sigstore.json",
+      "bytes": 65911,
+      "sha256": "a76240358071ce15b543c4313ed095d01de8e7c202e755dcbfb74c4c97804cff"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.provenance-verification.json",
+      "bytes": 15129,
+      "sha256": "dc1781f49608122c77f309b82b97ffcc8de1703dc46fc4e4692ca9923be392cf"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.sbom-verification.json",
+      "bytes": 109946,
+      "sha256": "e1e30533467982950b6128035c4f4697b48f8ddf201fd1c5067d527345a4c45f"
+    },
+    {
+      "name": "STAGED_SHA256SUMS-x86_64-pc-windows-msvc",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\STAGED_SHA256SUMS-x86_64-pc-windows-msvc",
+      "bytes": 855,
+      "sha256": "41631262e5d68d279ff455b07f44565c7ee8adf1d7e1730c5415b5681f03200c"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.zip",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.zip",
+      "bytes": 5364291,
+      "sha256": "7f5a8b1b931a90f172f08e2a2257ba7d40068fd324fe2d0509039aa6f20f09a2"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.build.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.build.json",
+      "bytes": 32247,
+      "sha256": "5f09d53d1bd9f64b346d3e1fe4ae7b2c103fd44b0ee00184b9031e160ff40e2f"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.cdx.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.cdx.json",
+      "bytes": 61631,
+      "sha256": "80a8605d44864ec729c5c7af47518969dd3c96361762e90f3ba7e99a20dfee1f"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance.sigstore.json",
+      "bytes": 11855,
+      "sha256": "13e8d2bf865adeaddc54753717659d0c3ecf5f62799f50ddc6afb957086c66e0"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom.sigstore.json",
+      "bytes": 66854,
+      "sha256": "24ba9ff0afa99c39868563d6e1bb8f1837f937128d573c2005bb4c4f0e89644a"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.provenance-verification.json",
+      "bytes": 30147,
+      "sha256": "4a4a2506a9da4bf9db6cf839dafa7440d5833957ce00f7903a5547b27bdbbfa3"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.sbom-verification.json",
+      "bytes": 222808,
+      "sha256": "db0de6cc68b88855deb801bbc1837305bb1c10a069098c0de42005d6b29f27b6"
+    },
+    {
+      "name": "STAGED_SHA256SUMS-x86_64-unknown-linux-gnu",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\STAGED_SHA256SUMS-x86_64-unknown-linux-gnu",
+      "bytes": 869,
+      "sha256": "a2f745df1bf67495cab216991e488d4c7e10ae69087bf5942e1b3a2669cc725b"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.zip",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.zip",
+      "bytes": 4862171,
+      "sha256": "485d7f5aa5ec5c18911082ec12481bd4803bce2116cd82ce55e43828bbcc61c2"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.build.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.build.json",
+      "bytes": 32227,
+      "sha256": "a11cad5a31f7a0f006de5377fbdee1225c704af2a478a83228f178adde3d62f9"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.cdx.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.cdx.json",
+      "bytes": 61727,
+      "sha256": "2e09e54d6aa1e2b8af574c9ddaa816d9e2be047108ce533c8f70a1ded4477e95"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.provenance.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.provenance.sigstore.json",
+      "bytes": 11553,
+      "sha256": "c718e7baf25160755d1f0aaeac0ade86591c44cf3d0f5d447aa91c8e5c3a8d2a"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.sbom.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.sbom.sigstore.json",
+      "bytes": 66707,
+      "sha256": "bda098e93c3c4c409b00f464efc97796a8196e0a9c2c9a8ad94e4b339b755dbf"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.provenance-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.provenance-verification.json",
+      "bytes": 14900,
+      "sha256": "1d9e4db4842714b91227342d448b73cbb2bf4ab8bd446b7e6365955802228323"
+    },
+    {
+      "name": "symbiote-v1.1.2-aarch64-apple-darwin.sbom-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\symbiote-v1.1.2-aarch64-apple-darwin.sbom-verification.json",
+      "bytes": 111347,
+      "sha256": "ef9dac76a903d27b8a834a51e9553845bbdb0b433f883c9ec01980d60d97b074"
+    },
+    {
+      "name": "STAGED_SHA256SUMS-aarch64-apple-darwin",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\a\\data\\STAGED_SHA256SUMS-aarch64-apple-darwin",
+      "bytes": 841,
+      "sha256": "baad7d148703f1e463bc55d8872f7527a2e713c067d0179a417034050116680d"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.zip",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.zip",
+      "bytes": 5179290,
+      "sha256": "ae52d4c294e414c4991f63bce9eb3866635a3711d741372b1006b96f14af9285"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.build.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.build.json",
+      "bytes": 32222,
+      "sha256": "a16cdf26208b549706e032abf527b11e08424a656953e690e5439eee85fc4e2d"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.cdx.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.cdx.json",
+      "bytes": 61626,
+      "sha256": "2cf17e811396978c5f37b85e25b09bc4351d5ec4f102c4bcc875fa7feb8116b1"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.provenance.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.provenance.sigstore.json",
+      "bytes": 11643,
+      "sha256": "c848312442b892dc1aa10fc5a6af7c84d593b61364df8d72a6a8edc68ad2efbe"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.sbom.sigstore.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.sbom.sigstore.json",
+      "bytes": 66748,
+      "sha256": "51adbef518e7a1b8c3c85ee6a8cb9d04a6c779451eb9a20b9dd8b0b704d284a4"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.provenance-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.provenance-verification.json",
+      "bytes": 30254,
+      "sha256": "ee76fa72a7dde778e858f8a7de4b156e4ec8008cd2a47b44397dd16e101a1bf3"
+    },
+    {
+      "name": "symbiote-v1.1.2-x86_64-apple-darwin.sbom-verification.json",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\symbiote-v1.1.2-x86_64-apple-darwin.sbom-verification.json",
+      "bytes": 222616,
+      "sha256": "e29d615b78a3ec67e3ed2de950933a23adb1ee0687b0d6da21c7c4de368e7bb6"
+    },
+    {
+      "name": "STAGED_SHA256SUMS-x86_64-apple-darwin",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\i\\data\\STAGED_SHA256SUMS-x86_64-apple-darwin",
+      "bytes": 834,
+      "sha256": "44818fbf7b542b7fed9752ef0552ede54d7533f043752af85d2ce0e41e27e6a4"
+    },
+    {
+      "name": "SHA256SUMS",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\checksums\\SHA256SUMS",
+      "bytes": 433,
+      "sha256": "10d772c7c14d12ec4c09cf549a4628d7f1ee964b9abecbe29d650017144416a7"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vz112\\EVIDENCE.zip",
+      "bytes": 118983597,
+      "sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a",
+      "name": "EVIDENCE.zip"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vz112\\EVIDENCE_SHA256SUMS",
+      "bytes": 79,
+      "sha256": "bb0eb2d5ed4ca93f61c0fe4a3f00ada62df8be722d04ed8cc63cc600ab9d9fe9",
+      "name": "EVIDENCE_SHA256SUMS"
+    }
+  ],
+  "platforms": {
+    "x86_64-pc-windows-msvc": {
+      "native_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+      "driver_sha256": "b5e22565e7a9b4d7a7c7bc9078b85ce26e825b2f170a34a7e0b8e20b73c61626",
+      "embedding_sha256": "3efab4959ab9ea3849005eb0738b6fed02761bba300ee52450103affa5aa16f0"
+    },
+    "x86_64-unknown-linux-gnu": {
+      "native_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3",
+      "driver_sha256": "81c5b2bbc033978ef93f7052ff7305d354bcf04980e557997909fda3dc1d6dc5",
+      "embedding_sha256": "dfed208757fb21a4395443e53600a3d87906e82e05c4946e979f5d3dd9aaacc4"
+    },
+    "aarch64-apple-darwin": {
+      "native_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898",
+      "driver_sha256": "f937d4f0a72b1ec3c3e3860097a5f095fc85c75cc5ade39b8244a56b6c034fc8",
+      "embedding_sha256": "c11ee756715b7be2150c8ca3ce9b534176bd3461226bec646ded95ac05735100"
+    },
+    "x86_64-apple-darwin": {
+      "native_sha256": "6be6664a7b2a27fdac856aae90a1e63f735dd649a978898ac7f2877fb4bad3af",
+      "driver_sha256": "c2c6ac2cc2d81b5f03dab37a8d70b96c6c33e2afe008423f12fcef1672e54bd7",
+      "embedding_sha256": "65b203887ea6597f2c4163ba034c645567b886000ea4db5677e54dd92a372a12"
+    }
+  },
+  "gates": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\00-gate.json",
+      "bytes": 2667,
+      "sha256": "bff68d33b9fef8ed1e3e93867896015644143420c576866a10f42dd51c093d4f",
+      "role": "candidate-embedding:aarch64-apple-darwin",
+      "subject_sha256": "c11ee756715b7be2150c8ca3ce9b534176bd3461226bec646ded95ac05735100"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\01-gate.json",
+      "bytes": 2664,
+      "sha256": "09d259d5325322c1bf46efcc028b1d6c9d613a87ab8c7061306977f2bc9cccc6",
+      "role": "candidate-embedding:x86_64-apple-darwin",
+      "subject_sha256": "65b203887ea6597f2c4163ba034c645567b886000ea4db5677e54dd92a372a12"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\02-gate.json",
+      "bytes": 3230,
+      "sha256": "134b89996e5b39868f4361ca02bcf9564b2f06b3965518081a3063a7f0ebbe44",
+      "role": "candidate-embedding:x86_64-pc-windows-msvc",
+      "subject_sha256": "3efab4959ab9ea3849005eb0738b6fed02761bba300ee52450103affa5aa16f0"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\03-gate.json",
+      "bytes": 2679,
+      "sha256": "d398672a2e25b8edcaae0a33bde7b355a15002d9744b0d79809c1c44eb31fed2",
+      "role": "candidate-embedding:x86_64-unknown-linux-gnu",
+      "subject_sha256": "dfed208757fb21a4395443e53600a3d87906e82e05c4946e979f5d3dd9aaacc4"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\04-gate.json",
+      "bytes": 2651,
+      "sha256": "3b56020889f79be525bef2fcf4094908a01460c8f03085dddaf65b6141a958dd",
+      "role": "candidate-native:aarch64-apple-darwin",
+      "subject_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\05-gate.json",
+      "bytes": 2648,
+      "sha256": "037f366eb6d8560459f349d977ba8b009d0d727491a77d520bc99d938316a3f6",
+      "role": "candidate-native:x86_64-apple-darwin",
+      "subject_sha256": "6be6664a7b2a27fdac856aae90a1e63f735dd649a978898ac7f2877fb4bad3af"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\06-gate.json",
+      "bytes": 3214,
+      "sha256": "b41025999736877526284d18a366a992b79d16e1f3a84c23332993951f208a8e",
+      "role": "candidate-native:x86_64-pc-windows-msvc",
+      "subject_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\07-gate.json",
+      "bytes": 2663,
+      "sha256": "285ad57bf7701183b4bdf596733f9733953851c680ca00fe3beb480ca81f415a",
+      "role": "candidate-native:x86_64-unknown-linux-gnu",
+      "subject_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\08-gate.json",
+      "bytes": 3188,
+      "sha256": "9e17bfc78a68cb452f225b70d87256a956ceeb3fdecf7034ec4059b88af8bfd1",
+      "role": "e3",
+      "subject_sha256": "82a97759eb475fe022c96b5a082c994c2cb9645ba0250f4f4c8a975664d88675"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\09-gate.json",
+      "bytes": 2932,
+      "sha256": "c82eba51df1f042fd0c859906cb140e8e340d7645202e84bf21c43aac5f3e0d1",
+      "role": "hour",
+      "subject_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\10-gate.json",
+      "bytes": 2084,
+      "sha256": "5f55cb4a4b8c9508833567705d13a75869501c2e3e2b56d890361ae1a1f1a660",
+      "role": "linux-enospc",
+      "subject_sha256": "531163a359152cee9bbd26c480ddd5bdb0fcb5b218cdcb3c7337c986f9570df3"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\11-gate.json",
+      "bytes": 1904,
+      "sha256": "49e4a8df3fe2912ac788a7035ea0f09ed6eac4f8f13d6e2a9f116d924b39bc7a",
+      "role": "source-ci",
+      "subject_sha256": "7194ee4d532f84932ba042cade226c8a8b7abbdf90761a2a95a6600d7a67bb5a"
+    }
+  ],
+  "body": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\RELEASE-BODY.REVIEWED.md",
+    "bytes": 7501,
+    "sha256": "4bbcc5045f7f7f4811f44088dc7167e546e953b0852eec4646b8cc1a245a3344"
+  }
+}

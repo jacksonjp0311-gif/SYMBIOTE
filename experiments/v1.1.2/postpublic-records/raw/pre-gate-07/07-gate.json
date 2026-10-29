@@ -1,0 +1,54 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "candidate-native:x86_64-unknown-linux-gnu",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3",
+  "status": "PASS",
+  "started_unix_ns": 1793309448343809900,
+  "finished_unix_ns": 1793309448640815500,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\acceptance\\x86_64-unknown-linux-gnu\\installed\\acceptance.json",
+      "bytes": 31221,
+      "sha256": "2d2715859c1db79fc7b0541ce2682e241bfa7affa271a8a044a4becc34a854c8",
+      "name": "native-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\data\\symbiote-v1.1.2-x86_64-unknown-linux-gnu.build.json",
+      "bytes": 32247,
+      "sha256": "5f09d53d1bd9f64b346d3e1fe4ae7b2c103fd44b0ee00184b9031e160ff40e2f",
+      "name": "staged-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\l\\download.json",
+      "bytes": 46462,
+      "sha256": "600213c940afb59e44d5b3a65f609544fe02f1f826b8bd03102f2aefc88b3c77",
+      "name": "artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\candidate-run-and-jobs.ACTUAL.json",
+      "bytes": 60724,
+      "sha256": "290d9064aecab8d0a756c54376f5bdcab281102db7368f52f46b64761a0be2c7",
+      "name": "official-candidate-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\metadata-closed-before-hour\\artifacts.json",
+      "bytes": 4287,
+      "sha256": "a1f53b976f24550f4755b121e60afa190b2ae79ba8c6173a5adb2e985dd0cfd7",
+      "name": "complete-artifact-list"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "independent-platform-data-review"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual matching-platform installed native CLI lifecycle: authorized learning, retained source-off reuse, prediction, typed cancellation/revocation, backup/restore, legacy-writer refusal and native receiver outcome. Exact source/run/native/driver/build.proofs/API-census links inspected. Behavioral assessment; fresh build-origin crypto remains mandatory in original publisher before release writes.",
+    "evidence_digest": "ab3723e26fa3f584132bd935c3922a9122bf8210097546806cf4944094f36dc8"
+  }
+}

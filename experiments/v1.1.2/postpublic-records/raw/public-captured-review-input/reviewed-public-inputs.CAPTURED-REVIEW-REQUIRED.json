@@ -1,0 +1,194 @@
+{
+  "schema": "symbiote.v11-reviewed-public-inputs/1",
+  "publication_plan": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\publication-plan.json",
+    "bytes": 17244,
+    "sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d"
+  },
+  "publisher": {
+    "path": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\tools\\release\\v11_publish.py",
+    "bytes": 35846,
+    "sha256": "f1bd6913a3264b013bf077f975d7325b8e38a275af6e01a2abb728fabdf5c297"
+  },
+  "transport": {
+    "path": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\tools\\release\\release_v1_candidate.py",
+    "bytes": 48737,
+    "sha256": "0705ad41644e5db69b596be242c19fc34905714844f883bef32d38586b240701"
+  },
+  "provisional_operation": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+    "bytes": 85956,
+    "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817"
+  },
+  "official_public_run": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+    "bytes": 36455,
+    "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a"
+  },
+  "gates": [
+    {
+      "role": "public-native:x86_64-pc-windows-msvc",
+      "subject_sha256": "0f081d8ed4f5b8e4f5b33b9d6eaff53416203f7cfeeebf99ee6511b6751d00dc",
+      "evidence": [
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\public-acceptance.json",
+          "bytes": 44593,
+          "sha256": "e18bfe17ac5777a460c11ed1a71d1d5440a7a09e2012ae2832f94f1080d896e6",
+          "name": "public-platform"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\native\\acceptance.json",
+          "bytes": 36140,
+          "sha256": "cd0c800226708a0d4cb85452e1e3e6c2b5febf00eb3b210a848b7b2dd1ab7506",
+          "name": "native-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\embedding\\embedding-acceptance.json",
+          "bytes": 2848,
+          "sha256": "e343a1e3c937ec87fa741705edff8336e15ee94574a92167c68cdd5a113b13ef",
+          "name": "embedding-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+          "bytes": 36455,
+          "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+          "name": "official-public-run"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+          "bytes": 85956,
+          "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+          "name": "provisional-operation"
+        }
+      ],
+      "review": {
+        "reviewer": "PENDING_ROOT_PUBLIC_REVIEW",
+        "decision": "REVIEW_REQUIRED",
+        "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim."
+      }
+    },
+    {
+      "role": "public-native:x86_64-unknown-linux-gnu",
+      "subject_sha256": "bae1c5328e62c2a52761947f4394d8cdde4c779a909080ffdc9eb2f76d9786f3",
+      "evidence": [
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\public-acceptance.json",
+          "bytes": 41333,
+          "sha256": "0b055b7be2fbf0fe529eb881863345ec154f86a5ddd86fbdff32c73137f2ad34",
+          "name": "public-platform"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\native\\acceptance.json",
+          "bytes": 33039,
+          "sha256": "21388ccd17bcc3fc8a11db779c6ee6864e3ac9d4414caf69ffb6d96784ec7179",
+          "name": "native-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\embedding\\embedding-acceptance.json",
+          "bytes": 2679,
+          "sha256": "43b06eaf6a88d15bcd132eed214ca0c63df231ece6ba9b48365d898699d0ed03",
+          "name": "embedding-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+          "bytes": 36455,
+          "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+          "name": "official-public-run"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+          "bytes": 85956,
+          "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+          "name": "provisional-operation"
+        }
+      ],
+      "review": {
+        "reviewer": "PENDING_ROOT_PUBLIC_REVIEW",
+        "decision": "REVIEW_REQUIRED",
+        "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim."
+      }
+    },
+    {
+      "role": "public-native:aarch64-apple-darwin",
+      "subject_sha256": "2ebd7b795ee7f14d8b0903f50be8fc9ecc616102b0694e673e577356f3c67898",
+      "evidence": [
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\public-acceptance.json",
+          "bytes": 52362,
+          "sha256": "d2c82e75bb387085be717c059bf6b5b0e3c21b081a32ff6093611905f45e4af3",
+          "name": "public-platform"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\native\\acceptance.json",
+          "bytes": 42902,
+          "sha256": "c2b5932e016a03327dca79d73aa74e6834a689bda40298bf7efb15d84799df87",
+          "name": "native-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\embedding\\embedding-acceptance.json",
+          "bytes": 3449,
+          "sha256": "845694233dfa3ccd2dc23b566f4d945cd7c568454c7479a3f3cd3ed23416cc47",
+          "name": "embedding-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+          "bytes": 36455,
+          "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+          "name": "official-public-run"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+          "bytes": 85956,
+          "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+          "name": "provisional-operation"
+        }
+      ],
+      "review": {
+        "reviewer": "PENDING_ROOT_PUBLIC_REVIEW",
+        "decision": "REVIEW_REQUIRED",
+        "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim."
+      }
+    },
+    {
+      "role": "public-native:x86_64-apple-darwin",
+      "subject_sha256": "6be6664a7b2a27fdac856aae90a1e63f735dd649a978898ac7f2877fb4bad3af",
+      "evidence": [
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\public-acceptance.json",
+          "bytes": 52281,
+          "sha256": "24949fb2a31f5ab2fad23ee3c78b8b2117bbe62cd08daf1f48dbc957be71b058",
+          "name": "public-platform"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\native\\acceptance.json",
+          "bytes": 42833,
+          "sha256": "0f590d7cfa4de85c30ec6346f9decde1bc00fb6e0856727f0a3f764aae46c394",
+          "name": "native-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\embedding\\embedding-acceptance.json",
+          "bytes": 3446,
+          "sha256": "ed13d679af732fe0c1a0fd41dd5dab85de50c59edbe335ed4aa703a21d3fe85b",
+          "name": "embedding-acceptance"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\metadata\\run-and-jobs.json",
+          "bytes": 36455,
+          "sha256": "c662648162e8eedcc39d0a881a9418336960098fef2dd68f3720889491432c6a",
+          "name": "official-public-run"
+        },
+        {
+          "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+          "bytes": 85956,
+          "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817",
+          "name": "provisional-operation"
+        }
+      ],
+      "review": {
+        "reviewer": "PENDING_ROOT_PUBLIC_REVIEW",
+        "decision": "REVIEW_REQUIRED",
+        "scope": "Actual first-attempt four-target anonymous public lifecycle; exact source/version/candidate/public-run/release/plan/ZIP/native/driver/consumer and nested raw receipts. Nine anonymous byte downloads per target; source-matched installed typed engine and independent embedding. No reciprocal efficiency or broader-host claim."
+      }
+    }
+  ]
+}

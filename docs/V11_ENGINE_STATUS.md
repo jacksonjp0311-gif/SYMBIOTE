@@ -1,129 +1,100 @@
-# Current engine release status: v1.1.2
+# Engine release status: v1.1.2
 
-**Not published or qualified yet.** Source freeze, new-source CI, staged images,
-new transfer compatibility reproduction, fresh staged-image hour and all four
-public platform acceptances must complete for this replacement.
+**Stable release.** Source,
+installed images, current local studies and public delivery have separate
+identities; a completed earlier gate does not qualify a replacement image.
+The [prospective correction](CORRECTIVE_RELEASE_112.md) changes only explicit,
+read-only GitHub metadata authentication and versioned delivery coordinates.
+Rust algorithms, embedding APIs, schemas, dependencies and scientific limits
+remain unchanged.
 
-| Dimension | Current v1.1.2 status |
+## Current qualification
+
+| Gate | Actual source `8aa5f4c` result |
 |---|---|
-| Engine/API | Existing four-crate Rust implementation retained; no algorithm or schema rewrite |
-| Correction | Explicit read-only REST metadata authentication; anonymous artifact bytes and credential-free native children |
-| Source/platform qualification | PENDING for the new frozen source and images |
-| Persistence/transfer/hour | Fresh image-specific qualification PENDING |
-| Delivery | No v1.1.2 tag, release or delivered acceptance yet |
-| Scientific advantage | Reciprocal efficiency NOT_DEMONSTRATED; historical isolated ties and extra transfer work retained |
-| Scope | Conditional affine acquisition widths 2–8; two-host and power-loss validation remain open |
+| Source | Frozen `8aa5f4c6ab26f7ccad53935a70414ae1765b57c6`; [official CI 40941750300](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40941750300), all four first-attempt jobs PASS |
+| Local build/source admission | Matching Rust 1.98.1 local build and independent source/build review PASS; this is not remote-platform qualification |
+| Replacement candidate | [40945405929](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929), attempt 1: **PASS (all six jobs, attempt 1)**; all six jobs remain mandatory |
+| Four installed images and consumers | **PASS (four installed native and four separate external-consumer lifecycles)**; each target needs its own native/driver/consumer and signed source/build/lock proofs |
+| Actual Linux ENOSPC | **PASS_ACTUAL_ENOSPC (Linux errno 28, bounded 1 MiB mount, committed bytes unchanged)**, within the existing isolated mount and failure bounds |
+| Transfer compatibility reproduction | **PASS_ENGINEERING_ONLY (registered compatibility reproduction; N=0)**, zero new independent scientific samples; preserve primary/parent pins and unknown economics |
+| Fresh Windows-image hour | **PASS_LOCAL_HOUR (120 cycles, measurement 3,602,094 ms, independent closed-data audits)**, 120 cycles/60-minute measurement, source-matched driver, real recovery and independent closed-data audit |
+| Archive and origin | **EVIDENCE.zip SHA256 `07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a`; inner manifest `daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069`**; selected raw bytes, exact source/images/roles, immutable manifest/checksum and independent byte/portable-data audits |
+| Public delivery | **PASS — four targets, first public attempt**, run **40967471449**, release **428461777**; all four first-attempt public platforms passed |
+| Receipt index | **[actual delivery index](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/experiments/v1.1.2/public-delivery.json)**; digest **e076f45f9d5400144577760e10390c826b6a88ab6de3672c176b62b1fd8c2dce** |
 
-See [the prospective v1.1.2 contract](CORRECTIVE_RELEASE_112.md).
+[Public run 40967471449](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40967471449) passed all five jobs in its first attempt. The four-platform acceptance is `919f4650322b0d405a90c2911d66608c12234568ec4df513fa0087acbf07867e`; independent data review is `4d9bf2387258ffc9e3a2bcc00154256f1b56cc9090e02975e93204af21a227d9`. Final publication operation `0b1473258141efe57611b20601ed0cab90223e7c7812ce7301c7b3053eb5078e` passed `PASS_FINAL_PUBLIC_LATEST`. An independent official latest-release read (`e96baa8ebf39953d1e440a49dc0cd7b0debf5dd3eabad980e3551676b009a9d0`) confirms v1.1.2, release 428461777, source `8aa5f4c`, non-draft/non-prerelease, and 35 assets.
 
-## Historical v1.1.1 delivery outcome
+Captured reference scopes preserve their review-time wording. The table above and
+the delivery index's top-level finalization fields describe the current release.
 
-Source `69d0bdf1efad739b56dc70c48bcb54dcb1dbc1ee` passed official source CI
-40909699948, all six candidate jobs in 40912669443, the 128-use transfer
-compatibility check and its own actual 120-cycle Windows hour. Its tag CI
-40936233585 also passed all four jobs. Public run 40937353809 passed Windows,
-Linux and Apple Silicon. Intel Mac failed on GitHub REST HTTP 403 quota before
-any download or native execution; Intel engine failure is not established.
+The immutable v1.1.2 annotated tag was pushed at source `8aa5f4c`: object
+`3364bcb5414253327e33a458c12a6a5c5058c8ab`. Its additional
+[tag CI 40958132994](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40958132994)
+passed all four jobs in attempt 1. The original source qualification remains
+CI 40941750300. Actual public acceptance/finalization is recorded separately;
+preparation files are not passing public records. The replacement run was
+separately authorized only after preserving failed candidate 40943349352. Its
+ARM native/embedding checks passed, then its build-provenance attestation failed
+with `InternalError: error fetching tlog entry - (404) Not Found`. The root cause
+is not established. No job rerun, source edit or old artifact admission is implied.
 
-Release 428282441 is permanently FAILED, prerelease/notlatest; its tag and 35
-asset bytes are unchanged. Failure flag operation SHA256 is
-`5f89c9bd723a17508f453cab9f129340b2d9f28c18f05a9a727601485dd89e49`.
-The immutable evidence ZIP SHA256 is
-`9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818`.
-v1.0.1 remains latest stable. These records qualify only their own sources and
-images, never a future v1.1.2 image.
+LOCAL_E3 may follow exact-source CI/local-build admission while remote jobs are
+OPEN. A Windows hour may follow its own actual staged image/signatures and
+closed E3 while other platforms remain OPEN. Neither scoped admission means
+all-platform PASS. All candidate, signature, fault, study, audit and public gates
+must close before their respective publication/finalization steps.
 
-## Superseded prepublication snapshots
+## Supported boundary
 
-The prior notes below are historical snapshots, not the current support table.
+The additive `symbiote_runtime::engine` interface and installed `symbiote engine`
+commands support explicit initialize/open, authorized observations, exact
+inference, independent candidate evaluation, retention, conditional prediction,
+inspection/counters/resources, revocation, cooperative cancellation, stopped-owner
+recovery and verified checkpoint/restore. The independent consumer has its own
+workspace/lock and uses only the public interface. Four substantive crates are
+retained; no language model or Python is needed by the native runtime.
 
-# SYMBIOTE v1.1 engine status
+Independently validated acquisition covers affine Boolean widths 2–8. Width-one
+learning abstains `Uncertain` when no distinct held-out case remains. Graph,
+Moore and reference interfaces retain their separately documented bounds.
+Incoming artifacts are inert; source identity, permission, applicability and
+actual local evaluation are checked before promotion. Local exchange uses two
+caller-owned engine handles and explicit grants. The existing TLS service is
+separate; this is not a universal remote truth adapter.
 
-Current stable release: **v1.0.1**. **v1.1.0 is a FAILED prerelease and is not
-latest**. Its public acceptance run failed on all four platform jobs before
-any download or SYMBIOTE execution. The prospective corrective target is
-**v1.1.1**, with new-source qualification and delivery gates still **PENDING**.
-See the [corrective contract](CORRECTIVE_RELEASE_111.md) for the actual failure,
-immutable evidence pins and required new-image checks.
+Owner markers reject legacy/generic writers before mutation. Unmarked prototype
+stores HOLD without automatic migration. Backups require stopped owners and an
+external manifest checksum; restored copies retain the same identity and rollback
+later learning. Native callbacks are cooperative and cannot be forcibly preempted
+in-process. Resource diagnostics report their actual work models, not a universal
+currency or a measured complete economic baseline.
 
-The [engine contract](V11_ENGINE_SUPPORT_CONTRACT.md) defines supported behavior.
-Completed candidate and hour results below belong to source
-`9016624350e9dcc506b1d0d1cd82e58cadc38882` and its recorded images. They do not
-qualify a newly stamped or newly versioned executable.
+## Historical releases and research
 
-| Dimension | Implemented support | Actual qualification boundary |
-|---|---|---|
-| Exactness | Existing BRUTE parity, enumerator/GF(2) reference equivalence, bounded affine inference and graph certificate conditions retained | Source901 official MSRV/platform and current-stable CI passed; corrective-source gates pending |
-| Embedding | `symbiote_runtime::engine`, typed errors, caller-owned authorization, budgets, adapters, events and cooperative cancellation; no library process-global presentation | All four source901 staged matching-platform external consumers passed; no four-platform public acceptance |
-| Learning | Observation → inference → independent evaluation → durable retention → conditional prediction; validated facade widths 2–8 | Original B46 primary and source901 qualification reproduction passed engineering checks; neither is a new scientific sample |
-| Outcome integrity | Exact local sender/receiver/artifact/evaluation/use binding, receiver-owned completion and once-only reconciliation | Actual interrupted-process recovery, fresh conditional uses and restart/idempotence checked in the source901 reproduction |
-| Reporting | Disjoint ordinary/receiver promotion counts, deduplicated totals, retained reuse, historical outcomes and current validity | Ledger-derived native/embedding component and candidate checks passed for source901; exact proof scopes retained |
-| Persistence | New/open distinction, writer exclusion, explicit engine-writer admission marker, stopped-owner recovery and verified checkpoint/restore | Source901 actual Linux ENOSPC and registered 120-cycle Windows hour passed for their exact images |
-| Resources | Finite queries, GF(2) work, duration, ledger/proof sizes; per-owner I/O/publication diagnostics and complete-operation study vectors | Ordinary transfer 4278 versus isolated 2852 GF(2) units per owner; extra repeat-control 1426 separately reported; unlike units and overlapping byte categories are not summed |
-| Compatibility | Existing public signatures retained; facade additive; new owner marker rejects legacy/generic writers before mutation | Actual historical v1.0.1 Windows executable refused marked new/restored state; four source901 staged images passed lifecycle checks |
-| Delivery | Four staged targets, installed acceptance, separate consumer, SBOM and verified build provenance | Source901 candidate passed. Provisional publisher checked 35 anonymous asset hashes, but actual four-platform public run 40893604489 failed before download. v1.1.0 is permanently flagged FAILED |
-| Scientific advantage | Isolated learner ties and negative complete-cost studies preserved | General reciprocal efficiency **NOT_DEMONSTRATED**; not a software-release blocker |
+[v1.1.1](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.1)
+remains permanently FAILED, prerelease/notlatest, with unchanged tag and 35 assets.
+Source69 passed its own four source jobs, all six candidate jobs, E3 reproduction
+and 120-cycle Windows hour. Three public platforms passed; public Intel stopped
+at metadata HTTP 403 before any download/native execution. Its evidence ZIP
+`9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818`
+qualifies only those original observations.
+[v1.1.0](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.0)
+is also an immutable failed prerelease after its checker rejected a metadata
+route before downloading or executing its native program. The
+[previous stable v1.0.1](../experiments/v1.0.1/public-delivery.json) retains its own
+qualification and delivery records. Historical failures and all older studies
+retain their original statuses; see [the correction](CORRECTIVE_RELEASE_112.md),
+[engine evolution](../experiments/engine-evolution-002/README.md) and
+[research findings](RESEARCH.md).
 
-The source901 Windows hour measured 3,602,287 ms over 120 cycles, including
-3,593,924 ms of main-listener live time, ten starts/stops and the declared recovery
-schedule. Independent byte/semantic audits and archived data-only replay passed.
-The immutable 96,606,792-byte evidence ZIP has SHA256
-`759029fd97c20b7efa5e600ddb8ddb3104133cbb52a1ca574cb6baa9e23a626f`.
-Its source/image identities remain historical; a v1.1.1 hour must use the actual
-new staged Windows image and a separately source-matched driver.
+Conditional fresh use and exact once-only receiver-owned outcomes are capability
+facts. They do not imply economic benefit. Isolated structural learners tie,
+transfer adds replay/journal work, and historical complete-cost comparisons lose.
+Reciprocal efficiency is **NOT_DEMONSTRATED**. Two-host validation remains
+**OPEN_UNAVAILABLE**, power-loss durability is unqualified, and no generalized
+intelligence or autonomous self-improvement claim follows from software release.
 
-The two already opened transfer cases contain 128 distinct case/input pairs and
-384 related native-arm prediction executions, plus 128 answer-cache abstentions.
-They are not 384 independent samples. Transfer, optimized isolation and equal
-resource arms all predicted correctly; isolated acquisition tied and transfer
-used extra replay/journal work. Unknown participant CPU/peak or aggregate net
-benefit is not silently represented as zero.
-
-## Corrective release gates
-
-All v1.1.1 gates remain pending until actual source/image-bound receipts exist:
-
-1. Correct the confirmed public metadata and existing-draft delivery reads; test
-   actual strict guards and preserve the old failed public run and failure flag.
-2. Freeze clean version 1.1.1/source/lock/compiler inputs, with production Rust
-   unchanged and only the explicitly declared Cargo version exceptions.
-3. Pass exact-source software/MSRV gates, four fresh staged installed-native and
-   external-consumer acceptances, actual Linux ENOSPC, checksums and signatures.
-4. Run the prospectively declared once-only delivery-compatibility reproduction
-   of the unchanged opened transfer workload, with its own raw evidence and
-   zero new independent scientific samples.
-5. Run a fresh 60-minute/120-cycle qualification on the exact newly staged Windows
-   image, independently audit it and package a separately reviewed evidence set.
-6. Publish immutable staged v1.1.1 bytes provisionally. All four actual public
-   download/behavior acceptances must pass before stable/latest finalization.
-
-No step may replace an old asset, move a tag, invent completed work, silently
-raise a study budget or relabel unknown economics as measured gain. A new failed
-public version remains flagged with its unchanged assets and requires a separate
-corrective version; it is not retried into the same stable release.
-
-[Implementation](V11_IMPLEMENTATION.md), [native CLI](ENGINE_CLI.md),
-[embedding](ENGINE_EMBEDDING.md), [compatibility](COMPATIBILITY.md) and
-[publication](V11_PUBLICATION.md) describe the concrete interfaces and delivery
-mechanism. Historical prospective wording is not a current acceptance claim.
-
-## Supported boundary and open research
-
-Primary embedding support is finite affine Boolean inference under declared
-family/source assumptions, widths 2–8 for independently validated learning,
-and exact conditional prediction. Width-one learning returns `Uncertain` because
-identification leaves no distinct held-out input. Existing lower-level reference
-APIs retain their bounds. Incoming artifacts are inert data and cannot authorize
-execution or independent trust.
-
-Local exchange uses two actual caller-owned engine handles and explicit grants.
-It is not an arbitrary-remote truth adapter. The existing TLS configured service
-remains separate. Native callbacks cannot be forcibly preempted in-process;
-supported local-file recovery is not a power-loss or network-filesystem guarantee.
-
-One-host software qualification, independent two-host deployment, scientific
-advantage and public delivery remain separate outcomes. Two-host validation is
-**OPEN_UNAVAILABLE**, as requested by the owner. Power-loss durability and general
-transfer efficiency remain unqualified. A new cheaper-certification experiment
-would need its own prospective protocol; repeating this structural learner does
-not establish an exchange advantage.
+[Embedding](ENGINE_EMBEDDING.md) · [CLI](ENGINE_CLI.md) ·
+[Fault matrix](V11_FAULT_MATRIX.md) · [Compatibility](COMPATIBILITY.md) ·
+[Publication](V11_PUBLICATION.md) · [Roadmap](ROADMAP.md).

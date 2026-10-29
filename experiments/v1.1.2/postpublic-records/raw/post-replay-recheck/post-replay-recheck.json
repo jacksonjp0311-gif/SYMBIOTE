@@ -1,0 +1,16 @@
+{
+  "schema": "symbiote.v112-post-replay-byte-guard/1",
+  "status": "PASS_ALL_ARCHIVED_BYTES_UNCHANGED",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "zip_sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a",
+  "zip_bytes": 118983597,
+  "manifest_sha256": "daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069",
+  "members_including_manifest": 2564,
+  "total_bytes": 350524278,
+  "entry_census_sha256": "321c247767e8a39fcfe34781f479c2975e54e48eeb951cf3c77bf6a13ad03ca8",
+  "replay_receipt_sha256": "6809b623bdb261e7ccee0dc766cbcba0f02946ce2c9b09a4eb4c1b0c0066d1e0",
+  "mapper_source_sha256": "5c70f914eb6f26cd89414aa1aacccf215ea1866e6430f81e41836a063546a845",
+  "native_executions": 0,
+  "original_host_roots_read": false,
+  "reader_sha256": "ed1511bbf1de27d964e7b750ca06d87a3fd66fedf797647606bec32720ae0f25"
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "symbiote.v11-offline-public-assessment-assembly/1",
+  "status": "PREPARED_FOR_SEPARATE_ROOT_REVIEW",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "public_run_id": 40967471449,
+  "public_assessment": {
+    "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\public-acceptance.json",
+    "bytes": 1841,
+    "sha256": "919f4650322b0d405a90c2911d66608c12234568ec4df513fa0087acbf07867e"
+  },
+  "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+  "reviewed_input_sha256": "68e9f0c824790a83c2642c1b8cf71c1c6e26c4e96347fb1b87112f9a25574a20",
+  "native_executions": 0,
+  "network_calls": 0,
+  "publication_mutations": 0,
+  "next_action": "Root reviews this exact separate public-assessment pin before any explicit publisher finalize operation."
+}

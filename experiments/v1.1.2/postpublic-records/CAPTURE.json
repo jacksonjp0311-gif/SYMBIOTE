@@ -1,0 +1,933 @@
+{
+  "collector_sha256": "a0d7275e11177c2257c7eeee11add8a7a2b3f2b3cd32c925544e552032363df1",
+  "files": [
+    {
+      "bytes": 17244,
+      "id": "formal-plan",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\publication-plan.json",
+      "purpose": "Exact formal35asset/12gate plan",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/formal-plan/publication-plan.json",
+      "sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d"
+    },
+    {
+      "bytes": 2667,
+      "id": "pre-gate-00",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\00-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-00/00-gate.json",
+      "sha256": "bff68d33b9fef8ed1e3e93867896015644143420c576866a10f42dd51c093d4f"
+    },
+    {
+      "bytes": 2664,
+      "id": "pre-gate-01",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\01-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-01/01-gate.json",
+      "sha256": "09d259d5325322c1bf46efcc028b1d6c9d613a87ab8c7061306977f2bc9cccc6"
+    },
+    {
+      "bytes": 3230,
+      "id": "pre-gate-02",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\02-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-02/02-gate.json",
+      "sha256": "134b89996e5b39868f4361ca02bcf9564b2f06b3965518081a3063a7f0ebbe44"
+    },
+    {
+      "bytes": 2679,
+      "id": "pre-gate-03",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\03-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-03/03-gate.json",
+      "sha256": "d398672a2e25b8edcaae0a33bde7b355a15002d9744b0d79809c1c44eb31fed2"
+    },
+    {
+      "bytes": 2651,
+      "id": "pre-gate-04",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\04-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-04/04-gate.json",
+      "sha256": "3b56020889f79be525bef2fcf4094908a01460c8f03085dddaf65b6141a958dd"
+    },
+    {
+      "bytes": 2648,
+      "id": "pre-gate-05",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\05-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-05/05-gate.json",
+      "sha256": "037f366eb6d8560459f349d977ba8b009d0d727491a77d520bc99d938316a3f6"
+    },
+    {
+      "bytes": 3214,
+      "id": "pre-gate-06",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\06-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-06/06-gate.json",
+      "sha256": "b41025999736877526284d18a366a992b79d16e1f3a84c23332993951f208a8e"
+    },
+    {
+      "bytes": 2663,
+      "id": "pre-gate-07",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\07-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-07/07-gate.json",
+      "sha256": "285ad57bf7701183b4bdf596733f9733953851c680ca00fe3beb480ca81f415a"
+    },
+    {
+      "bytes": 3188,
+      "id": "pre-gate-08",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\08-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-08/08-gate.json",
+      "sha256": "9e17bfc78a68cb452f225b70d87256a956ceeb3fdecf7034ec4059b88af8bfd1"
+    },
+    {
+      "bytes": 2932,
+      "id": "pre-gate-09",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\09-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-09/09-gate.json",
+      "sha256": "c82eba51df1f042fd0c859906cb140e8e340d7645202e84bf21c43aac5f3e0d1"
+    },
+    {
+      "bytes": 2084,
+      "id": "pre-gate-10",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\10-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-10/10-gate.json",
+      "sha256": "5f55cb4a4b8c9508833567705d13a75869501c2e3e2b56d890361ae1a1f1a660"
+    },
+    {
+      "bytes": 1904,
+      "id": "pre-gate-11",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-plan8aa-final-001\\11-gate.json",
+      "purpose": "Exact prepublication gate",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/pre-gate-11/11-gate.json",
+      "sha256": "49e4a8df3fe2912ac788a7035ea0f09ed6eac4f8f13d6e2a9f116d924b39bc7a"
+    },
+    {
+      "bytes": 2418,
+      "id": "root-archive-accept",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-archive-accept-8aa\\decision.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/root-archive-accept/decision.json",
+      "sha256": "fde6601891a5c9732bc9e858573003fb816c893149099b0c399a39af81c1ebc7"
+    },
+    {
+      "bytes": 11593,
+      "id": "root-twelve-accept",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-twelve-accept-8aa\\decision.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/root-twelve-accept/decision.json",
+      "sha256": "f6b2a415b5ad2e337ec04cdf024ef43ff7021f1049e7c2cda7309e5d7698113b"
+    },
+    {
+      "bytes": 7501,
+      "id": "reviewed-release-body",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\RELEASE-BODY.REVIEWED.md",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/reviewed-release-body/RELEASE-BODY.REVIEWED.md",
+      "sha256": "4bbcc5045f7f7f4811f44088dc7167e546e953b0852eec4646b8cc1a245a3344"
+    },
+    {
+      "bytes": 1816,
+      "id": "reviewed-body-decision",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-final-8aa5f4c-002\\BODY-ROOT-REVIEW.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/reviewed-body-decision/BODY-ROOT-REVIEW.json",
+      "sha256": "cbe8bb8c895b227e10053e9af2c11c0f6a60fd322dd40b67f721deb5508a2918"
+    },
+    {
+      "bytes": 956,
+      "id": "source-tag",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-tag-source-8aa\\operation.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/source-tag/operation.json",
+      "sha256": "899489d70107083c62a7fe79edf0263369fccf9bf66a9a0041aa290a50a8e7bd"
+    },
+    {
+      "bytes": 29861,
+      "id": "tag-ci-extra",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-tag-ci-8aa\\official-ci.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/tag-ci-extra/official-ci.json",
+      "sha256": "ebd3ea548f54fcc145d7698a6cbeba03ef26d80c04fe3c7b0f33052c296d27a4"
+    },
+    {
+      "bytes": 2038,
+      "id": "qualified-v4-receipt",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vt112b\\v1-packaging-receipt.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/qualified-v4-receipt/v1-packaging-receipt.json",
+      "sha256": "65f722d1062d3c3f6effce13cac3bb0d54f4349b6986ee6bf70eac31c52d915f"
+    },
+    {
+      "bytes": 888,
+      "id": "zip-derivation-receipt",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vz112\\zip-verification.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/zip-derivation-receipt/zip-verification.json",
+      "sha256": "dbe004362bc2d09880174b6a31318e90b23dae17e343ad53fa4e2c7de5e35181"
+    },
+    {
+      "bytes": 8544,
+      "id": "archive-independent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-archive-independent-8aa.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/archive-independent/v112-archive-independent-8aa.json",
+      "sha256": "d5210d2d4f5a443ea942dc4706851e55b8f1312cb62c04c7efa45061d8c81f01"
+    },
+    {
+      "bytes": 24047,
+      "id": "archive-independent-reader",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-archive-independent-8aa.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/archive-independent-reader/v112-archive-independent-8aa.py",
+      "sha256": "f4084b6d0ed0cf568ca9de3b9300d11c7678b3f3796b2b9acebf48cab3c89c4d"
+    },
+    {
+      "bytes": 3065,
+      "id": "portable-replay",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\replay-receipt.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/portable-replay/replay-receipt.json",
+      "sha256": "6809b623bdb261e7ccee0dc766cbcba0f02946ce2c9b09a4eb4c1b0c0066d1e0"
+    },
+    {
+      "bytes": 9430,
+      "id": "portable-reader",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_portable_data_replay_v2.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/portable-reader/v112_portable_data_replay_v2.py",
+      "sha256": "5c70f914eb6f26cd89414aa1aacccf215ea1866e6430f81e41836a063546a845"
+    },
+    {
+      "bytes": 3753,
+      "id": "portable-hour-audit",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\hour-audit\\audit.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/portable-hour-audit/audit.json",
+      "sha256": "67e784799c475270582e30b948bfd20fc286f62ab9dc18c31d13aca3ca0e6c4f"
+    },
+    {
+      "bytes": 302487,
+      "id": "portable-e3-cost",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\e3-audit.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/portable-e3-cost/e3-audit.json",
+      "sha256": "5137f4c47a221faad6b81935bd76261a76ccfe33d44a1cd0f69844129958fc05"
+    },
+    {
+      "bytes": 866,
+      "id": "post-replay-recheck",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vr112\\post-replay-recheck.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/post-replay-recheck/post-replay-recheck.json",
+      "sha256": "06e182dbd0b4e75fc14dc09b5af97366bb5f714f79417e16e535cbfd878e6399"
+    },
+    {
+      "bytes": 2294,
+      "id": "post-replay-reader",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\postcheck_v112_replay.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/post-replay-reader/postcheck_v112_replay.py",
+      "sha256": "ed1511bbf1de27d964e7b750ca06d87a3fd66fedf797647606bec32720ae0f25"
+    },
+    {
+      "bytes": 3616,
+      "id": "portable-independent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-portable-and-final35-independent-review.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/portable-independent/v112-portable-and-final35-independent-review.json",
+      "sha256": "29aa7c24516f7ef0db940b6a9463bf04d8265ecb7980ff80db4ade25c88a7277"
+    },
+    {
+      "bytes": 4835,
+      "id": "git-admission-wrapper",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\v112_git_summary_admission.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-wrapper/v112_git_summary_admission.py",
+      "sha256": "61c00fc358639cbf7e05dd63220ce8ace2b1cdb114938ce9c4ddfb5cb3756ec9"
+    },
+    {
+      "bytes": 4922,
+      "id": "git-admission-tests",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\test_v112_git_summary_admission.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-tests/test_v112_git_summary_admission.py",
+      "sha256": "a60d8688f380e667f745ef3069fe08f21df561cb3fb6c1637228497f0c02b193"
+    },
+    {
+      "bytes": 116,
+      "id": "git-admission-test-output",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\git-summary-tests.stderr",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-test-output/git-summary-tests.stderr",
+      "sha256": "a908400e50d5a14ad124e8119ee9fa63ba3e69f7152eca4e872d4ee26c48403d"
+    },
+    {
+      "bytes": 2710,
+      "id": "git-admission-note",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\git-format-admission-note.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-note/git-format-admission-note.json",
+      "sha256": "6ebdcab5a021637ab4b2029124d92994eed16d3ea076c7f68b26da5c3394ddea"
+    },
+    {
+      "bytes": 2880,
+      "id": "git-admission-review",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\git-summary-independent-review.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-review/git-summary-independent-review.json",
+      "sha256": "f6aab8a05eb33530fdac05617afdd88f3d112269087f32abb489c87745df96b4"
+    },
+    {
+      "bytes": 2287,
+      "id": "git-admission-authorization",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\root-exact-git-amendment.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/git-admission-authorization/root-exact-git-amendment.json",
+      "sha256": "5b03645073f0fe28ee81c9172b67c69915d659b7b96e02d5a2630c9563dcd721"
+    },
+    {
+      "bytes": 2755,
+      "id": "packaging-first-hold",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\prior-qualified-plan-HOLD.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/packaging-first-hold/prior-qualified-plan-HOLD.json",
+      "sha256": "90b201993e8bec2eea5a2aa101c31a5f7ddc0ce792dadf74685921fc5b72728f"
+    },
+    {
+      "bytes": 2432,
+      "id": "packaging-first-stderr",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\prior-plan.stderr",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/packaging-first-stderr/prior-plan.stderr",
+      "sha256": "768fd4056de2e190ae544c6b2ea707fe2c7df2c9436239ad893425f526ef8355"
+    },
+    {
+      "bytes": 1519,
+      "id": "packaging-parser-diagnosis",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\parser-diagnostic.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/packaging-parser-diagnosis/parser-diagnostic.json",
+      "sha256": "a548adb6ab3885c3b5cdc163b4d6617cc98dfc8edd6650b3a5f2ae693bd2622e"
+    },
+    {
+      "bytes": 10562,
+      "id": "five-direct-recipe",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\five-direct-note.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/five-direct-recipe/five-direct-note.json",
+      "sha256": "de6376c6e4fba9e953f1915ef2ea162019fecf01b4f2c14bc3f8ae7a82df3cb2"
+    },
+    {
+      "bytes": 4967,
+      "id": "source-provenance",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\source-provenance.json",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/source-provenance/source-provenance.json",
+      "sha256": "acca08de9e89728ec5a95575756ef95529ec8edfbdd6ec1a97dad58a737506ca"
+    },
+    {
+      "bytes": 35691,
+      "id": "qualified-adapter-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\package_v1_evidence_v4.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/qualified-adapter-source/package_v1_evidence_v4.py",
+      "sha256": "301bf6030271c38f43902631c35ac852c87455ab2f2bd3118a74c5b879a26ffc"
+    },
+    {
+      "bytes": 30002,
+      "id": "qualified-base-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\package_stability_evidence_v4.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/qualified-base-source/package_stability_evidence_v4.py",
+      "sha256": "9a2df3fc679ce154469013e02575551d9572e7cee4d2a0eca585e7fc3a780962"
+    },
+    {
+      "bytes": 13352,
+      "id": "zip-helper-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\vo112b\\v11_evidence_zip.py",
+      "purpose": "Exact compact prepublication decision/reader/derivation",
+      "scope": "Source8aa prepublication engineering evidence; N0 and efficiency NOT_DEMONSTRATED; postpublic events excluded from immutable archive",
+      "selected_relative_path": "raw/zip-helper-source/v11_evidence_zip.py",
+      "sha256": "2a5a03909828247ef090bc7cc9e9cb23693aa98affcdb9478260cd2a54de95eb"
+    },
+    {
+      "bytes": 86377,
+      "id": "stage-operation",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-stage-8aa-001\\operation.json",
+      "purpose": "Actual original publisher phase operation",
+      "scope": "stage phase only; later stable/public approval is not inferred",
+      "selected_relative_path": "raw/stage-operation/operation.json",
+      "sha256": "fd14422a158d3854caf72bc07d5244ef211d37e9d0bda2ca5427ca1f960ffdae"
+    },
+    {
+      "bytes": 1516,
+      "id": "stage-capture",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-stage-8aa-001.capture.json",
+      "purpose": "Actual owned process binary-output capture binding",
+      "scope": "stage phase only",
+      "selected_relative_path": "raw/stage-capture/v112-stage-8aa-001.capture.json",
+      "sha256": "a1f90413af15ca45507d5486b931285934279805cc593220691d8461147a11bd"
+    },
+    {
+      "bytes": 85956,
+      "id": "provisional-operation",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001\\operation.json",
+      "purpose": "Actual original publisher phase operation",
+      "scope": "provisional phase only; later stable/public approval is not inferred",
+      "selected_relative_path": "raw/provisional-operation/operation.json",
+      "sha256": "cfbb5d97e66644f50ddfb0d65298bfdf2801e02cee342b9a7276f98214a7e817"
+    },
+    {
+      "bytes": 1546,
+      "id": "provisional-capture",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-provisional-8aa-001.capture.json",
+      "purpose": "Actual owned process binary-output capture binding",
+      "scope": "provisional phase only",
+      "selected_relative_path": "raw/provisional-capture/v112-provisional-8aa-001.capture.json",
+      "sha256": "2cc7bb315733c8a0611c83af0b9094a6ed09cae836cc8b6a1aabe5e69f244980"
+    },
+    {
+      "bytes": 13445,
+      "id": "public-run",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\run.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-run/run.json",
+      "sha256": "cfc8726dd3c8b44b258731b3693e80dbe9f2bdfe6d3f5710e50c9fd6e255f9c1"
+    },
+    {
+      "bytes": 14118,
+      "id": "public-jobs",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\jobs.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-jobs/jobs.json",
+      "sha256": "41c9f8977820dd621d19dd1499bee13793d6847d229e3845b55599af4417bcb3"
+    },
+    {
+      "bytes": 2892,
+      "id": "public-artifacts-api",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\artifacts.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-artifacts-api/artifacts.json",
+      "sha256": "cd494a5723a1a7265e2fc6ee29b10ffcf476040f858232d9485a465f7e321c3a"
+    },
+    {
+      "bytes": 4139,
+      "id": "public-metadata-census",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\METADATA-MANIFEST.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-metadata-census/METADATA-MANIFEST.json",
+      "sha256": "78e7d0d80ac8fe68755dd2ad3cd08372fe48a82975061b55489a878ca26d9333"
+    },
+    {
+      "bytes": 173766,
+      "id": "public-corpus-census",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\CORPUS-MANIFEST.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-corpus-census/CORPUS-MANIFEST.json",
+      "sha256": "bea89b7d64d47c32edc52d648879e5dc296bc713d031f71f9f0bc87e5895ffc3"
+    },
+    {
+      "bytes": 1812,
+      "id": "public-helper-copy-census",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\HELPER-COPY-CENSUS.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-helper-copy-census/HELPER-COPY-CENSUS.json",
+      "sha256": "8215768e3b3febfe1a986ee55f9a4b83da814083ed78494b90074a1622f141a3"
+    },
+    {
+      "bytes": 8791,
+      "id": "public-fetch-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\helpers\\v112_public_artifact_fetch_40967471449.py",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-fetch-source/v112_public_artifact_fetch_40967471449.py",
+      "sha256": "d6db5ca5f65bf6be49589492c8c219100d7d1b488831bf60d6833bc69d5353a2"
+    },
+    {
+      "bytes": 1334,
+      "id": "public-fetch-binding",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\helpers\\v112-public-fetch-first-run-binding.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-fetch-binding/v112-public-fetch-first-run-binding.json",
+      "sha256": "0c70fb0e596a133bfc57f06b4e556da03836fd5de17845500fe39a9d7655931b"
+    },
+    {
+      "bytes": 2270,
+      "id": "public-fetch-exec-closures",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\helpers\\public112-owned-download-closures.json",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-fetch-exec-closures/public112-owned-download-closures.json",
+      "sha256": "de9dd503b4cc2710ed83467c1e95255a361543532ba808bffeb0e2e0cbc0b754"
+    },
+    {
+      "bytes": 4313,
+      "id": "public-preservation-reader",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\helpers\\seal_public112.py",
+      "purpose": "Actual public workflow preservation metadata/source",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-preservation-reader/seal_public112.py",
+      "sha256": "f85eed6ac21add681531adf9697fa805851f2b5010c56424a4dd587f1d005ff9"
+    },
+    {
+      "bytes": 40956,
+      "id": "public-w-transport",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\download.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-w-transport/download.json",
+      "sha256": "9e3fdb7fb9004cdc7e0ef81824644e7a2e39854967b80cf9a60f1fdd85d355b3"
+    },
+    {
+      "bytes": 44593,
+      "id": "public-w-parent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\public-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-w-parent/public-acceptance.json",
+      "sha256": "e18bfe17ac5777a460c11ed1a71d1d5440a7a09e2012ae2832f94f1080d896e6"
+    },
+    {
+      "bytes": 36140,
+      "id": "public-w-native",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\native\\acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-w-native/acceptance.json",
+      "sha256": "cd0c800226708a0d4cb85452e1e3e6c2b5febf00eb3b210a848b7b2dd1ab7506"
+    },
+    {
+      "bytes": 2848,
+      "id": "public-w-embedding",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\w\\data\\embedding\\embedding-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-w-embedding/embedding-acceptance.json",
+      "sha256": "e343a1e3c937ec87fa741705edff8336e15ee94574a92167c68cdd5a113b13ef"
+    },
+    {
+      "bytes": 40965,
+      "id": "public-l-transport",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\download.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-l-transport/download.json",
+      "sha256": "6cd4c235bdbfc14272c7ca2930f89be38693dd5255ff248da99e73a43fa5ce87"
+    },
+    {
+      "bytes": 41333,
+      "id": "public-l-parent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\public-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-l-parent/public-acceptance.json",
+      "sha256": "0b055b7be2fbf0fe529eb881863345ec154f86a5ddd86fbdff32c73137f2ad34"
+    },
+    {
+      "bytes": 33039,
+      "id": "public-l-native",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\native\\acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-l-native/acceptance.json",
+      "sha256": "21388ccd17bcc3fc8a11db779c6ee6864e3ac9d4414caf69ffb6d96784ec7179"
+    },
+    {
+      "bytes": 2679,
+      "id": "public-l-embedding",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\l\\data\\embedding\\embedding-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-l-embedding/embedding-acceptance.json",
+      "sha256": "43b06eaf6a88d15bcd132eed214ca0c63df231ece6ba9b48365d898699d0ed03"
+    },
+    {
+      "bytes": 40927,
+      "id": "public-a-transport",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\download.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-a-transport/download.json",
+      "sha256": "0ee070248ccdb9ff94c77fbd6f73f3b3b7f206d4ea41aa97ecfb11f50ce952aa"
+    },
+    {
+      "bytes": 52362,
+      "id": "public-a-parent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\public-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-a-parent/public-acceptance.json",
+      "sha256": "d2c82e75bb387085be717c059bf6b5b0e3c21b081a32ff6093611905f45e4af3"
+    },
+    {
+      "bytes": 42902,
+      "id": "public-a-native",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\native\\acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-a-native/acceptance.json",
+      "sha256": "c2b5932e016a03327dca79d73aa74e6834a689bda40298bf7efb15d84799df87"
+    },
+    {
+      "bytes": 3449,
+      "id": "public-a-embedding",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\a\\data\\embedding\\embedding-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-a-embedding/embedding-acceptance.json",
+      "sha256": "845694233dfa3ccd2dc23b566f4d945cd7c568454c7479a3f3cd3ed23416cc47"
+    },
+    {
+      "bytes": 40917,
+      "id": "public-i-transport",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\download.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-i-transport/download.json",
+      "sha256": "06b9a802eab8fb23cf56da91e9f0023734655d0a38a2a43ce2e1ee037a9fbe1d"
+    },
+    {
+      "bytes": 52281,
+      "id": "public-i-parent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\public-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-i-parent/public-acceptance.json",
+      "sha256": "24949fb2a31f5ab2fad23ee3c78b8b2117bbe62cd08daf1f48dbc957be71b058"
+    },
+    {
+      "bytes": 42833,
+      "id": "public-i-native",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\native\\acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-i-native/acceptance.json",
+      "sha256": "0f590d7cfa4de85c30ec6346f9decde1bc00fb6e0856727f0a3f764aae46c394"
+    },
+    {
+      "bytes": 3446,
+      "id": "public-i-embedding",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112\\i\\data\\embedding\\embedding-acceptance.json",
+      "purpose": "Actual byte-exact public component/transport receipt",
+      "scope": "Actual FIRST public40967471449 saved data/source8aa/release428461777; individual report scope only",
+      "selected_relative_path": "raw/public-i-embedding/embedding-acceptance.json",
+      "sha256": "ed13d679af732fe0c1a0fd41dd5dab85de50c59edbe335ed4aa703a21d3fe85b"
+    },
+    {
+      "bytes": 9751,
+      "id": "accepted-public-inputs",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-public-accept-8aa\\reviewed-public-inputs.ACCEPTED.json",
+      "purpose": "New accepted copy; original captured-review request remains preserved",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/accepted-public-inputs/reviewed-public-inputs.ACCEPTED.json",
+      "sha256": "68e9f0c824790a83c2642c1b8cf71c1c6e26c4e96347fb1b87112f9a25574a20"
+    },
+    {
+      "bytes": 1841,
+      "id": "formal-public-assessment",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\public-acceptance.json",
+      "purpose": "Exact formal four-platform public assessment used by publisher",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/formal-public-assessment/public-acceptance.json",
+      "sha256": "919f4650322b0d405a90c2911d66608c12234568ec4df513fa0087acbf07867e"
+    },
+    {
+      "bytes": 843,
+      "id": "formal-public-assembly",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\assembly-report.json",
+      "purpose": "Offline assembly process record",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/formal-public-assembly/assembly-report.json",
+      "sha256": "6e662de73f5d23ea2eb99c5f03ee6d4c3cba44f8deef26089170b4f2a4ad5274"
+    },
+    {
+      "bytes": 9745,
+      "id": "public-captured-review-input",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\reviewed-public-inputs.CAPTURED-REVIEW-REQUIRED.json",
+      "purpose": "Original captured REVIEW_REQUIRED input; never relabelled in place",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-captured-review-input/reviewed-public-inputs.CAPTURED-REVIEW-REQUIRED.json",
+      "sha256": "3b0b856645641ca5e1d9a8281b36f9dd71795247dfafdea0a5b29bbf13013c05"
+    },
+    {
+      "bytes": 18189,
+      "id": "public-capture-report",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\FOUR-PUBLIC-CAPTURE-REPORT.json",
+      "purpose": "Original captured evidence and no-execution source record",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-capture-report/FOUR-PUBLIC-CAPTURE-REPORT.json",
+      "sha256": "eae2bcf202ffd583c6ce1c7ab5cbbb922b2ec4fe311f4679f834ac3b289e49b0"
+    },
+    {
+      "bytes": 7419,
+      "id": "public-capture-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\capture_public_review.py",
+      "purpose": "Actual data-only capture source",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-capture-source/capture_public_review.py",
+      "sha256": "94d3ae6c18273c9ff63432138244daea0a5558c6f94d5b7ffc0c0b12d62242c2"
+    },
+    {
+      "bytes": 12786,
+      "id": "public-formal-assembler",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-assessment-8aa-002\\assemble_public_assessment.py",
+      "purpose": "Actual offline formal-assessment assembler source",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-formal-assembler/assemble_public_assessment.py",
+      "sha256": "c9e8eefdb00f8c0910923c715e0a7c0917c4d085c43b20ebb7e5973f61644c20"
+    },
+    {
+      "bytes": 19115,
+      "id": "public-independent",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-independent-review.json",
+      "purpose": "Independent actual saved-data four-platform review",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-independent/v112-public-independent-review.json",
+      "sha256": "4d9bf2387258ffc9e3a2bcc00154256f1b56cc9090e02975e93204af21a227d9"
+    },
+    {
+      "bytes": 21108,
+      "id": "public-independent-reader",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-independent-review.py",
+      "purpose": "Exact independent saved-data reader source",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-independent-reader/v112-public-independent-review.py",
+      "sha256": "f19a66b8ebf8fce1dd1567d0faad4ebe341e39d6027bb057a9c77deac2572fdd"
+    },
+    {
+      "bytes": 20858,
+      "id": "public-reader-prior-unsealed",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-independent-review.PRIOR-UNSEALED.py",
+      "purpose": "Prior unsealed reader assumed one pending poll; software-reader preparation scope only, no native failure",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/public-reader-prior-unsealed/v112-public-independent-review.PRIOR-UNSEALED.py",
+      "sha256": "c8834f736428f0c036dd6d7743e3331d827e3946db486ceabbe96b4e37f15a37"
+    },
+    {
+      "bytes": 492,
+      "id": "root-public-preparation-hold",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-public-preparation-HOLD.json",
+      "purpose": "Preserved guessed-timing-field helper preparation HOLD before accepted copy or mutation",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/root-public-preparation-hold/v112-root-public-preparation-HOLD.json",
+      "sha256": "0e54a094a93a6f8566ca84b4699e7f1bbca5401a3eda9e79f0d0f68893f0871e"
+    },
+    {
+      "bytes": 3287,
+      "id": "root-public-prior-helper",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_accept_public.PREPARATION-PRIOR.py",
+      "purpose": "Prior unused preparation helper; no raw evidence changed",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/root-public-prior-helper/v112_accept_public.PREPARATION-PRIOR.py",
+      "sha256": "e8230635223350b8ec636f030697aed35695e53efc8025fa7edbe41328810906"
+    },
+    {
+      "bytes": 3232,
+      "id": "root-public-actual-helper",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_accept_public.py",
+      "purpose": "Corrected actual root acceptance helper source",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/root-public-actual-helper/v112_accept_public.py",
+      "sha256": "3a43cc8c3c18c586a12b68b6d2f9bd941f5dec9b098f818451dff6fa007c23f5"
+    },
+    {
+      "bytes": 3253,
+      "id": "publisher-exec-capture-source",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112_capture_publisher.py",
+      "purpose": "Actual owned publisher process capture source",
+      "scope": "Actual postarchive source8aa/public409674/release428461777 only; stable finalization remains pending",
+      "selected_relative_path": "raw/publisher-exec-capture-source/v112_capture_publisher.py",
+      "sha256": "53af7735f7a290c89763faedf0f7f3fd7c071ea50988bfc274d6c1861342d149"
+    },
+    {
+      "bytes": 2527,
+      "id": "formal-public-gate-0",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\0-public-gate.json",
+      "purpose": "Exact accepted public platform gate",
+      "scope": "Actual public409674 attempt1/source8aa; no native rerun",
+      "selected_relative_path": "raw/formal-public-gate-0/0-public-gate.json",
+      "sha256": "56564cb4e01d2e439c1afab09c6f44ef155594cda9499d0977838d7ca6f08a55"
+    },
+    {
+      "bytes": 2526,
+      "id": "formal-public-gate-1",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\1-public-gate.json",
+      "purpose": "Exact accepted public platform gate",
+      "scope": "Actual public409674 attempt1/source8aa; no native rerun",
+      "selected_relative_path": "raw/formal-public-gate-1/1-public-gate.json",
+      "sha256": "6d5be01616074885021f1be7ce3cbe2283c28f34f45d9a52f6563dad86c8682d"
+    },
+    {
+      "bytes": 2529,
+      "id": "formal-public-gate-2",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\2-public-gate.json",
+      "purpose": "Exact accepted public platform gate",
+      "scope": "Actual public409674 attempt1/source8aa; no native rerun",
+      "selected_relative_path": "raw/formal-public-gate-2/2-public-gate.json",
+      "sha256": "0bff85b1c0ee379700294716cd965eaa5699aee776c196d2cde204984e88b2c8"
+    },
+    {
+      "bytes": 2531,
+      "id": "formal-public-gate-3",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-public-formal-8aa-001\\3-public-gate.json",
+      "purpose": "Exact accepted public platform gate",
+      "scope": "Actual public409674 attempt1/source8aa; no native rerun",
+      "selected_relative_path": "raw/formal-public-gate-3/3-public-gate.json",
+      "sha256": "ee85430cd91b5d8fde1750faa86abfb3319aa53bcfbb6f2d51397fb21dbd029a"
+    },
+    {
+      "bytes": 86152,
+      "id": "finalize-operation",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-finalize-8aa-001\\operation.json",
+      "purpose": "Actual original publisher FINALIZE PASS_LATEST with fresh16/full35 checks",
+      "scope": "Actual source8aa/release428461777/plane974/public409674; no native rebuild",
+      "selected_relative_path": "raw/finalize-operation/operation.json",
+      "sha256": "0b1473258141efe57611b20601ed0cab90223e7c7812ce7301c7b3053eb5078e"
+    },
+    {
+      "bytes": 1762,
+      "id": "finalize-exec-capture",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-finalize-8aa-001.capture.json",
+      "purpose": "Actual owned publisher execution closure capture",
+      "scope": "Actual finalization child exit0; original binary stdout/stderr protected locally",
+      "selected_relative_path": "raw/finalize-exec-capture/v112-finalize-8aa-001.capture.json",
+      "sha256": "6408037835b0989ef506c799ad0d33dd19fc7cf2c31966ab8ac1a67299a8b1fa"
+    },
+    {
+      "bytes": 78777,
+      "id": "official-stable-latest",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-stable-latest-proof\\official-latest.json",
+      "purpose": "Independent official releases/latest API response",
+      "scope": "Actual release428461777/v1.1.2/draftfalse/prereleasefalse/all35/source8aa",
+      "selected_relative_path": "raw/official-stable-latest/official-latest.json",
+      "sha256": "e96baa8ebf39953d1e440a49dc0cd7b0debf5dd3eabad980e3551676b009a9d0"
+    },
+    {
+      "bytes": 1185,
+      "id": "compact-copy-preparation-hold",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-sidecar-pending-v2-HOLD.json",
+      "purpose": "Preserved compact-only scanner preparation HOLD and declared single omission",
+      "scope": "Not a native, public workflow or publication failure; no raw bytes changed",
+      "selected_relative_path": "raw/compact-copy-preparation-hold/v112-sidecar-pending-v2-HOLD.json",
+      "sha256": "169568ee1a10237039979aeaf5f1e14ee44843305afede528a9209ed3ec37bb1"
+    }
+  ],
+  "git_note": "Raw copies are exact here. Git eol normalization must be separately recorded by comparing original SHA with indexed blob bytes before claiming byte-identical committed copies.",
+  "goal_bytes": 1048576,
+  "limits": {
+    "console_bytes": 65536,
+    "file_bytes": 1048576,
+    "files": 256,
+    "path": 240,
+    "total_bytes": 8388608
+  },
+  "native_or_archive_files_copied": 0,
+  "pending": {},
+  "public_qualification_inferred": false,
+  "qualified_scanner_sha256": "301bf6030271c38f43902631c35ac852c87455ab2f2bd3118a74c5b879a26ffc",
+  "references": [
+    {
+      "bytes": 118983597,
+      "id": "prepublication-evidence",
+      "manifest_sha256": "daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069",
+      "scope": "Immutable prepublication archive; excludes ALL subsequent publication and public-acceptance events",
+      "sha256": "07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.1.2/EVIDENCE.zip"
+    },
+    {
+      "id": "old111-evidence",
+      "scope": "Historical failed prerelease source69 own evidence; no current1.1.2 qualification inferred",
+      "sha256": "9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/download/v1.1.1/EVIDENCE.zip"
+    },
+    {
+      "bytes": 329551360,
+      "file_count": 993,
+      "id": "public-full-corpus",
+      "manifest_sha256": "bea89b7d64d47c32edc52d648879e5dc296bc713d031f71f9f0bc87e5895ffc3",
+      "original_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\pub112",
+      "scope": "Protected full originalAPI ZIPs and extracted public raw evidence retained locally; compact Git selection is explicitly partial, no archives/native images/massive logs copied"
+    },
+    {
+      "id": "official-public-run",
+      "scope": "Actual FIRST officialpublic workflow attempt1, all5jobs success; final stable operation pending",
+      "url": "https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40967471449"
+    },
+    {
+      "id": "excluded-raw-console",
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-portable-replay.stdout",
+      "reason": "Protected3JSONframe rawconsole not copied to singleJSON sidecar; individual replay and postguard receipts are copied exactly",
+      "sha256": "1683c4f7496192fb62f021dc853a5de0458f6b76011a264e7f97914aedd59bd3"
+    },
+    {
+      "bytes": 4954,
+      "id": "root-public-decision-raw-reference",
+      "original_path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-root-public-accept-8aa\\decision.json",
+      "scope": "Actual root first-public ACCEPT decision; original protected unchanged. Compact raw copy omitted because unchanged scanner rejects public prose field named authorization. Accepted raw inputs and formal assessment are copied; no general completeness claim.",
+      "sha256": "203fe8e674d723bc08d2f54e42f4c28b73799a68c33796e8eef9bfce64b80a05"
+    }
+  ],
+  "schema": "symbiote.v112-sidecar-capture/1",
+  "scientific_samples": 0,
+  "selected_file_bytes": 1817824,
+  "selection_sha256": "71bd78d23e418bcff2b0f45e562e91c77d69e72ff4976c36ee3d71cbfd4a87d5",
+  "source_bytes_unchanged": true,
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "status": "PASS_SELECTED_CLOSED_BYTE_COPY_ONLY",
+  "version": "v1.1.2",
+  "within_goal": false
+}

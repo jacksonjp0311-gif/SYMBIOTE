@@ -1,0 +1,121 @@
+{
+  "schema": "symbiote.v112-public-workflow-record-preservation/1",
+  "status": "ALL_FIVE_OFFICIAL_JOBS_SUCCESS_RECORDED_NOT_GLOBAL_ADOPTION",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "public_workflow_run_id": 40967471449,
+  "run_attempt": 1,
+  "release_id": 428461777,
+  "candidate_run_id": 40945405929,
+  "publication_plan_sha256": "e974dd7ecef3d2fc7356dfd090bdc32e086f00b4b51ae1efa7a823d474694b5d",
+  "files": [
+    {
+      "path": "run.json",
+      "bytes": 13445,
+      "sha256": "cfc8726dd3c8b44b258731b3693e80dbe9f2bdfe6d3f5710e50c9fd6e255f9c1"
+    },
+    {
+      "path": "jobs.json",
+      "bytes": 14118,
+      "sha256": "41c9f8977820dd621d19dd1499bee13793d6847d229e3845b55599af4417bcb3"
+    },
+    {
+      "path": "artifacts.json",
+      "bytes": 2892,
+      "sha256": "cd494a5723a1a7265e2fc6ee29b10ffcf476040f858232d9485a465f7e321c3a"
+    },
+    {
+      "path": "tool-metadata-0.json",
+      "bytes": 28993,
+      "sha256": "38fc2ce1dc68bcb2790595c487beaf73ce54324c4fe6d1620e93aa2b08b452aa"
+    },
+    {
+      "path": "tool-metadata-1.json",
+      "bytes": 31659,
+      "sha256": "612c8eacc9ce25fe821c165868f4e09d12a2423ef8185c73e362a36220e55ecd"
+    },
+    {
+      "path": "tool-metadata-2.json",
+      "bytes": 6807,
+      "sha256": "c9fe39f4c9d190858f92ff5ee54af33263ccbea727fccf0a0d1cee18ba44ba1e"
+    },
+    {
+      "path": "job-123775515639.txt",
+      "bytes": 15272,
+      "sha256": "446c7316ae3f0f64ea1a84554da4b130db40fdcef041a2566857549ca3459005"
+    },
+    {
+      "path": "tool-job-123775515639.json",
+      "bytes": 15830,
+      "sha256": "b10ac91321003fee94eda692917082852153b17d240d3e1a03a0a39200f8a1c2"
+    },
+    {
+      "path": "job-123775559912.txt",
+      "bytes": 106697,
+      "sha256": "efd67e3432a1262ee9ad6b0c2a42b752ef48501ec1252683c67a236183922f2a"
+    },
+    {
+      "path": "tool-job-123775559912.json",
+      "bytes": 110859,
+      "sha256": "298ef2db08920cdde01963bd05aad6567fff77ba231e83085719f51b37ae9204"
+    },
+    {
+      "path": "job-123775559922.txt",
+      "bytes": 106462,
+      "sha256": "2472a4ea58c25dbbda657a6026d61b2e3a808c14afaf498d32d29831f6ccfc44"
+    },
+    {
+      "path": "tool-job-123775559922.json",
+      "bytes": 110624,
+      "sha256": "9c49951ff9d3c02d4c3b98c92962278ee6e2fc7552397a55397e18b31f8bf80f"
+    },
+    {
+      "path": "job-123775559934.txt",
+      "bytes": 89967,
+      "sha256": "3de6a6800a2e35e75bc8a3e17d3cd7723016e9587641b18cdc2caca02fc94a43"
+    },
+    {
+      "path": "tool-job-123775559934.json",
+      "bytes": 93453,
+      "sha256": "94603cbca71523deec224842ac7d2ff1584e59b4d1a1b33c35b0093988ff0e29"
+    },
+    {
+      "path": "job-123775560026.txt",
+      "bytes": 93996,
+      "sha256": "758a733c89d39ecbefee6ae58971e4bfa9a74193a0ab699e3dbd3e033cdbe233"
+    },
+    {
+      "path": "tool-job-123775560026.json",
+      "bytes": 100053,
+      "sha256": "f54e63d7e8dcb05217c8637d16356297d647a90b688c635c667341d2026846d2"
+    },
+    {
+      "path": "artifact-12938742263.json",
+      "bytes": 712,
+      "sha256": "54f1b1a545ca2770a5f0490b40f88664823f95d29f1a6888dd7b228a49642806"
+    },
+    {
+      "path": "artifact-12938618483.json",
+      "bytes": 715,
+      "sha256": "b77a645cbc71b13124288a7835fee90ef8f6defd3a88601ab1f4568c12cef773"
+    },
+    {
+      "path": "artifact-12938488957.json",
+      "bytes": 713,
+      "sha256": "8515e3f8805d5a992d6ba77e89dc7bc80735110c2609f8e68c322b6a1183b608"
+    },
+    {
+      "path": "artifact-12938183207.json",
+      "bytes": 717,
+      "sha256": "f5063ea524b5bc72fc76800de0fc8e5fb572c8cfb7c3cd1a2dc0f0d57a41a2ed"
+    }
+  ],
+  "representation": "Purpose-built connector decoded UTF8 logs retain BOM/newline code points; raw toolresponse JSON serialized separately; not original HTTP log bytes.",
+  "log_reads_per_job": 1,
+  "workflow_reruns": 0,
+  "native_executions_by_preserver": 0,
+  "temporary_download_urls_saved": false,
+  "independent_scientific_samples": 0,
+  "public_qualification_inferred": false,
+  "helper_sha256": "c26b5039331d6e9320b1f4cc2e43e61d7537eb4c9659355d82c58ddc435ad1b4",
+  "payload_sha256": "460d471d5a3bb5a7290be0dbd84e2da3297f6a16a32fdf6ee543201fc8e3c727"
+}

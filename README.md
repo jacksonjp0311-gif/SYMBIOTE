@@ -18,30 +18,24 @@ to actual use and outcomes. The native core requires no language model or Python
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Embed in Rust](docs/ENGINE_EMBEDDING.md) · [Engine CLI](docs/ENGINE_CLI.md) ·
-[Release status](docs/V11_ENGINE_STATUS.md)
+[Release status](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md)
 
-> **v1.1.2 corrective target: qualification pending.** The typed Rust engine and
-> native learning interfaces are implemented. This correction gives the public
-> checker explicitly scoped, read-only metadata authentication; release-byte
-> downloads remain anonymous and native processes receive no credentials.
-> See the [prospective contract](docs/CORRECTIVE_RELEASE_112.md) and
-> [current support table](docs/V11_ENGINE_STATUS.md).
->
-> [v1.1.1](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.1)
-> remains a FAILED prerelease: three public platforms passed, while Intel Mac
-> metadata access hit GitHub's API rate limit before any download or native run.
-> Its own source, staged-platform and hour evidence remains preserved. The earlier
-> v1.1.0 failure also remains unchanged. v1.0.1 is still the latest stable release.
-> Software qualification and scientific advantage have separate gates; reciprocal
-> efficiency remains **NOT_DEMONSTRATED**.
+> **v1.1.2 — Stable release.** A typed Rust engine for authorized learning,
+> durable conditional prediction and receiver-owned outcomes. Source
+> `8aa5f4c6ab26f7ccad53935a70414ae1765b57c6` passed
+> [all four source CI jobs](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40941750300).
+> The separately authorized replacement
+> [candidate 40945405929](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929)
+> is **PASS (all six jobs, attempt 1)**. [Current gates](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md) distinguish
+> source checks, installed images, E3, the fresh Windows hour and public delivery.
+> **PASS — four targets, first public attempt**. Stable/latest status: **v1.1.2 — latest stable**. [v1.1.0](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.0)
+> and [v1.1.1](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.1)
+> are preserved failed prereleases. Reciprocal efficiency is **NOT_DEMONSTRATED**.
 
 ## Get started
 
-Download or clone this repository. The release installers select your platform,
-verify the downloaded archive against its SHA256 manifest, and install a standalone
-binary. Release installation does not need Rust, Python, or a model service.
-The commands below install v1.1.2 when its qualified bundles are published;
-before publication, use the source-build instructions below.
+Install the v1.1.2 standalone native binary for Windows x64, Linux x64, macOS ARM64 or macOS Intel. No Rust, Python, language model or API key is needed to run it.
+Installers verify the selected archive against its SHA256 manifest.
 
 **Windows — PowerShell**
 
@@ -49,32 +43,82 @@ before publication, use the source-build instructions below.
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
 .\tools\install.ps1 -Version v1.1.2 -AddToPath
-symbiote doctor
-symbiote demo
+symbiote --version
+symbiote engine --help
 ```
 
 **Linux or macOS — from the checkout**
 
 ```sh
 sh tools/install.sh --version v1.1.2
-~/.local/bin/symbiote doctor
-~/.local/bin/symbiote demo
+~/.local/bin/symbiote --version
+~/.local/bin/symbiote engine --help
 ```
 
-Install a native bundle from its exact tag release. Installers require the matching binary bundle on the
-[release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases). If a bundle
-has not been published for your version or architecture, build from source:
+Native bundles are on the
+[release page](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.2).
+You can also extract the matching archive and invoke its binary directly.
+See [installation and recovery](docs/OPERATIONS.md) for paths and platform details.
+For a source build, use `cargo install --path crates/symbiote-runtime --locked`
+with Rust 1.98.1 or later.
 
-```sh
-cargo install --path crates/symbiote-runtime --locked
-symbiote demo
+### Learn, close and reopen
+
+This PowerShell example supplies five individual observations to a new,
+explicitly authorized three-bit source. SYMBIOTE chooses its inputs, infers
+and independently evaluates a conditional model, then retains it. Every command
+closes its owned writers. After the observation file is deleted, the same
+`learn` command reopens and reuses the model with **zero source calls**.
+
+Run after the Windows installer above. With a directly extracted binary,
+replace `symbiote` with `.\symbiote.exe`. This is the
+[tested CLI recipe](docs/ENGINE_CLI.md#windows-quick-start), using the installed
+binary on PATH:
+
+```powershell
+$root = Join-Path ([IO.Path]::GetTempPath()) ("symbiote-engine-" + [guid]::NewGuid())
+[IO.Directory]::CreateDirectory($root) | Out-Null
+$utf8 = [Text.UTF8Encoding]::new($false)
+$observations = Join-Path $root 'observations.json'
+$config = Join-Path $root 'config.json'
+$state = Join-Path $root 'owner'
+$frames = '[{"sequence":0,"input":0,"output":0},{"sequence":1,"input":1,"output":1},{"sequence":2,"input":2,"output":0},{"sequence":3,"input":4,"output":1},{"sequence":4,"input":3,"output":1}]'
+[IO.File]::WriteAllText($observations, $frames, $utf8)
+$commitment = (Get-FileHash -LiteralPath $observations -Algorithm SHA256).Hash.ToLowerInvariant()
+$configuration = @{
+    schema = 'symbiote.engine-config/1'
+    authorized_sources = @(@{
+        source_id = 'owned-example'; scope = 'owned-example/v1'
+        epoch = 'epoch-1'; commitment = $commitment; width = 3
+    })
+    max_queries_per_episode = 16
+    max_gf2_work_per_episode = 10000
+    max_duration_ms = 5000
+} | ConvertTo-Json -Depth 5
+[IO.File]::WriteAllText($config, $configuration, $utf8)
+$initialized = symbiote engine init --state $state --config $config | ConvertFrom-Json
+$owner = $initialized.inspection.owner
+$learned = symbiote engine learn --state $state --owner $owner --config $config --source owned-example --observations $observations | ConvertFrom-Json
+$artifact = $learned.result.learning.artifact
+symbiote engine predict --state $state --owner $owner --config $config --artifact $artifact --input 6
+Remove-Item -LiteralPath $observations
+symbiote engine learn --state $state --owner $owner --config $config --source owned-example --observations $observations
 ```
 
-You can also download a matching archive directly, extract it, and run
-`symbiote demo` from its directory (`.\symbiote.exe demo` on Windows). See
-[installation and recovery](docs/OPERATIONS.md) for paths and platform details.
+The prediction for input 6 is 1. The final response must report
+`source_access: {"calls":0,"read_bytes":0,"file_opened":false}`.
+Operations return structured JSON; success is `status: "PASS"`, and failures
+return a nonzero exit with typed `error.kind`. Check both before continuing.
+State paths are absolute, and reopened operations require the exact returned
+owner and original configuration.
 
-## Use it
+For inspection, cancellation, revocation and verified backup/restore, continue
+with the [Engine CLI guide](docs/ENGINE_CLI.md). Restored copies share an identity;
+they are not independent agents. Predictions remain conditional on the declared
+finite source family, with validated acquisition at widths 2–8 and explicit
+abstention when the evidence does not suffice.
+
+## Embed in Rust
 
 For an application, start with the [typed Rust interface](docs/ENGINE_EMBEDDING.md).
 The independent consumer uses only that interface and its own Cargo workspace:
@@ -89,227 +133,82 @@ cancellation, writer exclusion, revocation and verified checkpoint/restore.
 The embedding host owns adapters, budgets, paths and event presentation. Callbacks
 are cooperative; hard termination requires an explicitly supervised process.
 
-The installed v1.1 product exposes the same lifecycle through `symbiote engine`.
-Follow the [copyable CLI recipe](docs/ENGINE_CLI.md) for a complete observation,
-restart and backup example. Every operation returns structured JSON with typed
-errors. Engine-owned directories are distinct from older demonstration stores;
+The installed `engine` commands above use the same typed lifecycle.
+Engine-owned directories remain distinct from older demonstration stores;
 incompatible writers refuse them before changing history.
 
-The existing simple local modes remain available:
+## Optional demonstrations and research
+
+The typed engine above is the primary learning interface. Older demonstrations
+remain available with separate state directories:
 
 ```sh
-symbiote demo       # Watch the original two-agent learning cycle
-symbiote observe-demo --state state/observation # Learn by choosing observations
-symbiote status     # Inspect retained identity and knowledge
-symbiote predict    # Use retained models without network requests
-symbiote doctor     # Inspect readiness without changing local state
+symbiote demo
+symbiote observe-demo --state state/observation
+symbiote doctor
 ```
 
-Output is readable by default. Add `--json` for scripts and complete receipts.
-Use `--state PATH` to keep independent experiments separate, and `--receipts FILE`
-to choose the report destination. Default local state is `state/demo`; generated
-reports are written under `experiments/local/`. Both are ignored by Git.
+These modes do not open engine-owned directories. `symbiote --help` lists the
+finite routing, native-peer and controlled research commands. For configured TLS
+peers, use [the live runtime](docs/LIVE_RUNTIME.md) and explicit
+[identity and grants](docs/TLS_DEPLOYMENT.md). Partners retain control over
+adoption; an exposed API is not authorization. Large research runs are optional,
+retain failures and require their declared protocols and resource limits.
 
-Run `demo` twice to observe retained knowledge being rechecked and reused. Run
-`status` or `predict` to inspect and use the retained state. Optional experiments
-exercise the broader native system:
-
-`observe-demo` starts from empty memory, chooses
-bounded queries through the engine's observation interface and stores a
-conditional affine model. Repeat the same command to reuse it with zero source
-queries. It needs no network, credentials or model service. Keep its state path
-separate from `demo`.
-
-| Command | What it runs |
-| --- | --- |
-| `symbiote research` | Structural learning, verified exchange and isolated controls |
-| `symbiote graph-research` | Paired routing tasks; prints a command for retained `route` queries |
-| `symbiote network-research` | Two native peer processes with private state and actual restart |
-| `symbiote adaptive-research --reproduce` | Full controlled study; allow about 20 minutes, with a 30-minute cap |
-
-Route queries return a conditional certificate or an explicit abstention. To run
-supervised peers over TLS, follow the
-[identity and credential guide](docs/TLS_DEPLOYMENT.md). The
-[configured knowledge service](docs/SERVICE.md) supports explicitly granted
-queries and quarantined offers over operator-provisioned TLS. Local evaluation
-controls promotion. `symbiote --help` lists every command and option.
-
-Start with `demo`. The full adaptive study owns its local peer processes,
-writes fresh temporary state and preserves all
-failed or unfinished cases. A recorded setup can be restored for reproducible
-control comparisons; it imports no learned knowledge or private keys.
-
-To preserve a stopped owner, use `backup-state`, `verify-backup` and
-`restore-state` with its separately saved manifest checksum. The
-[backup recipe](docs/OWNER_BACKUPS.md) keeps identity, evaluated knowledge and
-receipts together. A configured service additionally needs explicit
-[restore approval or certificate rotation](docs/SERVICE_LIFECYCLE.md); copying a
-configuration does not activate restored state.
-
-From a Windows checkout, the single entrypoint also supports:
-
-```powershell
-.\SYMBIOTE-All-One.ps1 -Run
-.\SYMBIOTE-All-One.ps1 -ObserveDemo -State state/observation
-.\SYMBIOTE-All-One.ps1 -Research
-.\SYMBIOTE-All-One.ps1 -GraphResearch
-.\SYMBIOTE-All-One.ps1 -AdaptiveResearch
-.\SYMBIOTE-All-One.ps1 -NetworkResearch
-.\SYMBIOTE-All-One.ps1 -Doctor
-.\SYMBIOTE-All-One.ps1 -Verify
-```
+The Windows entrypoint supports build, run, test, verify, benchmarks and Git
+status. For example, `./SYMBIOTE-All-One.ps1 -Verify` checks a source checkout.
+See [operations](docs/OPERATIONS.md) and [owner backups](docs/OWNER_BACKUPS.md).
+Engine checkpoint/restore follows the [engine CLI](docs/ENGINE_CLI.md), with
+stopped owners and an externally saved manifest checksum.
 
 ## How it works
 
-**SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN → CONTRIBUTE → MEASURE → REASSESS**
+SENSE → MODEL → CONNECT → EXCHANGE → VERIFY → LEARN → CONTRIBUTE → REASSESS.
 
-SYMBIOTE treats observations, conditional inferences and unverified hypotheses as
-different kinds of information. A received strategy cannot become trusted merely
-because a partner supplied it or because it matches a few examples.
-
-1. **Sense and model.** Read authorized structured telemetry and maintain exact
-   hypothesis support. Structural reasoning selects queries that maximize
-   worst-case elimination of surviving explanations within its declared family.
-2. **Exchange and verify.** Negotiate explicit capabilities, scope and resource
-   limits. Check received observations against the separate synthetic oracle
-   registry before replaying them into the receiver's unrestricted learner.
-3. **Learn durably.** Promote evaluated declarative models into a versioned ledger
-   with identity, applicability, provenance and evidence. Corruption or an
-   unsupported claim fails explicitly.
-4. **Contribute, measure and reassess.** Offer useful knowledge to the partner,
-   which retains adoption authority. Bind a decision to its exact offer,
-   evaluation, promotion, subsequent use and outcome. Measured, estimated and
-   unknown costs remain distinct. Durable favorable and unfavorable outcomes
-   inform bounded future exploration. Quarantine and promotion alone are not
-   partner benefit. Counterexamples revoke invalidated knowledge without
-   deleting its history.
-
-The corrective candidate also supports a narrowly authorized capability goal:
-transfer a partial routing certificate that the recipient can independently
-check and use on a fresh target. That objective is separate from an economic
-claim. Unknown partner costs stay unknown; receiver validation and measured
-task-window costs determine the outcome. Equivalent knowledge is suppressed,
-and changed artifacts, evaluator code or policy invalidate the relevant cached
-decision. [Measurement and limits](docs/CORRECTIVE_RELEASE_101.md).
-
-The structural experiment uses two separate learning algorithms: exact hypothesis
-enumeration and Gaussian elimination over binary observations. It evaluates
-unobserved inputs across configured widths 3–8 and seeds 7, 19, 43 and 101.
-Transferred observations supply evidence; hints never silently restrict the
-candidate family or authorize a prediction.
-
-Native observation-driven inference uses an incremental exact binary constraint
-system while retaining the enumerator as its reference. The compact reasoner
-supports widths 1–8; observation promotion also needs a distinct held-out input
-(currently widths 2–8). Row-operation counters and enumerated-model checks are explicitly different
-work units; a smaller representation alone is not a measured learning advantage.
-
-The local protocol provides mutual authentication, revocation, sequence checks,
-bounded JSONL frames and request budgets. It is scoped to trusted loopback use;
-the native process experiment uses that same explicit loopback protocol.
-A separate [TLS 1.3 API](docs/SECURITY.md) supplies mutual certificate validation,
-name/pin identity binding and resource-limited encrypted sessions for configured
-library integrations. The supervised runtime can use this transport with explicit operator credentials;
-its integration tests use real TLS on loopback. Nonlocal deployment remains a
-separate evidence gate.
-
-The native process experiment keeps each peer's identity and ledgers separate
-from the controller. Real process restarts use stored models, with actual oracle
-counters required to stay zero during retained prediction. [Deployment](docs/DEPLOYED_AGENTS.md)
-and [memory lifecycle](docs/MEMORY_LIFECYCLE.md) document supervision, copied-identity
-rejection, crash recovery, immutable backups and byte-preserving migration.
+The engine chooses bounded authorized observations, builds an exact conditional
+model and independently evaluates it before durable retention. In a granted
+relationship, a partner's artifact remains inert until local validation; receiver
+use and outcomes bind to actual ledger events, with no duplicate credit on
+restart. Known observations, inference and unverified hypotheses remain distinct.
+The native CLI and embedding use the same engine. Optional TLS adapters expose
+controlled peers; an API endpoint is not permission to attach.
 
 ## Evidence and limits
 
-| What is checked | Evidence |
-| --- | --- |
-| v1.1 typed engine, consumer, exact transfer and delivery | [Current release-specific support and qualification table](docs/V11_ENGINE_STATUS.md), [prospective contract](docs/V11_ENGINE_SUPPORT_CONTRACT.md), [fault matrix](docs/V11_FAULT_MATRIX.md) |
-| Unreleased main engine evolution | [Registered results and exact evidence](experiments/engine-evolution-002/README.md): exact cached-prefix parity, lower rank-query work, frozen fresh-input reuse and receiver-owned feedback; isolated learner ties and whole-cost gain remains unestablished |
-| Corrective v1.0.1 software | [Three-platform CI on source `6025fff`](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717); qualified native bytes and public installation are separate checks |
-| Learning from an authorized observation source | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): widths 3 and 8, independent held-out inputs, retained predictions and zero source queries after restart |
-| Useful normal reciprocal contribution and feedback | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): two-way independent adoption, actual later use, retained knowledge and harmful feedback changing a later choice |
-| Registered 64-cell engineering cohort | [Operational PASS, efficiency NOT_DEMONSTRATED](docs/CORRECTIVE_RELEASE_101.md#registered-engineering-cohort): all participant aggregate costs exceed isolation; each fixed order is cheaper in aggregate and matched controls reproduce coverage |
-| Fresh one-host hour | [PASS_LOCAL_HOUR with independent data audit](docs/CORRECTIVE_RELEASE_101.md#fresh-one-host-hour): 120 cycles, measured 3,602,431 ms; server retains two models and client remains unchanged genesis |
-| v1.0.1 public binary and archive delivery | PASS_PUBLIC_CORRECTIVE_DELIVERY, [actual receipt index](experiments/v1.0.1/public-delivery.json); exact tag source [`c55fc37`](https://github.com/jacksonjp0311-gif/SYMBIOTE/commit/c55fc37fd6de38d7d1af4088bbdce616f0446470), [release workflow](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40751115124); broader stable and two-host gates remain open |
-| Original BRUTE algorithm preserved exactly | [Byte-identical Python reference](docs/reference/brute/symbolic.py) and [parity receipt](experiments/parity.json): 6,093 cases, 20,843 checkpoints |
-| Original two-agent learning and restart | [Genesis verification](experiments/genesis-verification.json), including rejection, drift, rollback and newer-revision recovery |
-| Structural learning, held-out predictions and exchange controls | [Reciprocal exchange receipt](experiments/v0.2/reciprocal-exchange.json) and [v0.2 verification](experiments/v0.2/verification.json) |
-| Native processes, retained prediction, recovery and migration | [v0.3 software gates](experiments/v0.3/software-verification.json), [deployment verification](experiments/v0.3/deployed-verification.json) and [native exchange receipt](experiments/v0.3/native-process-exchange.json) |
-| Complete graph cohort, conditional routes and durable graph learning | [v0.4 graph verification](experiments/v0.4/graph-verification.json), [raw paired cases](experiments/v0.4/graph-exchange.json), and [experiment protocol](docs/RESEARCH_V04_PROTOCOL.md) |
-| Native adaptive relationships, exact setup replay and honest controls | [v0.5 engineering verification](experiments/v0.5/engineering-verification.json), [preserved primary HOLD](experiments/v0.5/primary-verification.json), and [methods/results](docs/RESEARCH_V05.md) |
-| v0.5.1 local maintenance and continuity | [S5 qualification](docs/LOCAL_QUALIFICATION_V051.md) and [evidence index](experiments/v0.5.1/README.md): 24 TLS cycles, reviewed rotation, denial/regrant, lost reply, owned crash and verified relocation |
-| Public v0.5.1 installation and native delivery | [Download/install receipt](experiments/v0.5.1/publication-verification.json): all seven assets verified, four ZIP architectures inspected, actual Windows restart and backup/restore passed |
-| Authentication, budgets, integrity and failure recovery | Native unit/integration tests and [cross-platform CI](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/workflows/ci.yml) |
-| Scientific interpretations and failed criteria | [Research findings](docs/RESEARCH.md) and [roadmap](docs/ROADMAP.md) |
+| Current evidence | Recorded result |
+|---|---|
+| Source `8aa5f4c` | [CI 40941750300](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40941750300), all four jobs PASS; [tag CI 40958132994](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40958132994) also passed |
+| Candidate 40945405929 | [All six jobs PASS](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40945405929): four native and four external-consumer lifecycles, actual bounded Linux ENOSPC |
+| Registered compatibility reproduction | PASS_ENGINEERING_ONLY; four directional transfers, 128 fresh conditional uses, four outcomes/reconciliations, restart zero credit; no new independent samples |
+| Fresh Windows-image hour | 120 cycles; measured 3,602,094 ms, main listener 3,594,299 ms; independent byte/semantic/boundary audits PASS |
+| Evidence archive | ZIP `07d2ea383c4dc2ac9fd34b95d5db4915edfab5151c9b921cff1f707dfd5d513a`; manifest `daafc48c29ffad69a9d0ec76209e523757d6446a4b7939b18a72d9fd25f6d069` |
+| Public delivery and stable status | **[PASS — four targets, first public attempt](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40967471449)**; **v1.1.2 — latest stable**; [actual delivery index](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/experiments/v1.1.2/public-delivery.json) |
 
-The new normal-policy fixture separates capability from efficiency. Its local
-SENSE-through-first-use windows gain at the expensive observation price and lose
-at the cheap price. Full participant cost comparisons lose in both cases;
-matched-resource controls reproduce the coverage. Favorable preference is retained,
-but does not change that fixture's winning choice; harmful feedback does change
-the later choice. [Exact scope and results](docs/CORRECTIVE_RELEASE_101.md#component-evidence).
+Current authority is the [main release status](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md)
+and delivery index. The frozen tag's [CLI](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/v1.1.2/docs/ENGINE_CLI.md)
+and [embedding API](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/v1.1.2/docs/ENGINE_EMBEDDING.md)
+document its contract, not later publication outcomes. Native source remains
+`8aa5f4c6ab26f7ccad53935a70414ae1765b57c6`; documentation commits do not become
+native campaign sources.
 
-The published v1.0.1 engine closes its own incoming learning and feedback loop. Return adoption
-and use are proved through separately authorized receiver CLI/test-harness
-checks; the live outbound `partner_benefits_verified` counter remains zero
-without witnessed receiver feedback. A fully autonomous network return-benefit
-protocol is not established. Validating a distinct held-out target and then
-reusing it does not establish an advantage over answer caching.
+Learning support is finite affine acquisition at widths 2–8; width one abstains
+when no distinct held-out input remains. Predictions are conditional. Callbacks
+are cooperative, restored copies share an identity, two-host validation remains
+**OPEN_UNAVAILABLE**, and power-loss durability is unqualified.
 
-The separately registered 64-cell cohort also passes operational reciprocity
-while losing its aggregate full-cost comparisons. Neither its fixed-order nor
-matched-resource controls establish an exchange-efficiency advantage.
+The [research record](docs/RESEARCH.md) preserves isolated ties and full-cost
+losses. Ordinary transfer used 4,278 versus 2,852 GF(2) work units per owner, with
+an extra 1,426-unit restart/idempotence control reported separately. Unknown costs
+remain unknown. Receiver-owned capability outcomes are not economic benefit.
+Reciprocal efficiency is **NOT_DEMONSTRATED**, with no generalized intelligence
+or autonomous self-improvement claim.
 
-Main now adds the separately authorized receiver-outcome channel and an
-independent observation-source embedding. Its frozen fresh-input workload
-distinguishes structural reuse from exact answer caching, while isolation ties.
-Next, reduce dominant acquisition/control costs and test complete economics of
-an exchange reused on fresh tasks. Broader stable qualification remains open.
-
-The v0.5.1 default software gate passed **292 Rust test executions, 53 Python
-tests and 6,093 parity cases**. A separately selected ignored test completed the
-24-cycle continuity check; 16 named regression repeats are existing tests, not
-new tests or independent samples. S5 took 83.969 seconds with 66 root commands.
-The earlier S3 and S4 checker failures remain **HOLD**, even though S4's native
-phase passed. The same two fixtures, two owners and two evaluated models were
-used throughout; this is narrow local recovery evidence, not long-term or
-two-host qualification. [Full account](docs/LOCAL_QUALIFICATION_V051.md).
-
-Genesis increased prediction coverage from 32/64 to 64/64 on repeated four-input
-tasks; its equal-probe-budget control also reached 64/64. This does not establish
-a sample-efficiency advantage for exchange.
-
-The structural experiment studies reuse of authenticated observations under a
-trusted synthetic oracle registry and an explicit cost model. Any reciprocal
-benefit is limited to those conditions. Acquisition cost is counted for both
-participants; exchanged evidence, verification, adoption and predictions also have
-declared costs. The learners, oracle implementations and evaluation logic are
-separate software components, not independent research teams. Conditional
-agreement within an affine family does not prove that an arbitrary external
-agent belongs to that family. Repeated laws or predictions must not be counted
-as independent discoveries.
-
-The [affine](docs/RESEARCH_V02.md) and [routing](docs/RESEARCH_V04.md) studies
-include conditional benefits, cheap-observation controls, harmful exchanges and
-withheld predictions. They retain their original formulas, evidence and limits.
-Declared participant costs exclude laboratory overhead and establish no general
-efficiency or wall-clock advantage.
-
-The v0.5 engineering reproduction runs five native learner roles across four
-controls and two prices on the same 24 unfamiliar graphs. It retains two complete
-graph contexts and replays 21 predictions per active learner with zero evaluator
-requests. Its 64 stored promotions are repetitions across private control profiles.
-Normal A+B1 logical cost falls from 110,119 to 107,380 versus isolation; the fixed
-control costs 107,176. Cheap-observation exchange costs more than isolation.
-Partner scores change, but this trace shows no changed actions from those scores.
-The first primary remains HOLD; complete evidence and failed criteria are
-[published together](experiments/v0.5/README.md). No wall-clock speedup is claimed.
-
-Stable v1.0 requires broader independent environments, demonstrated reciprocal
-benefits after all costs, secure external connections, robust persistent memory
-and a documented failure envelope. Version numbers advance after the evidence.
-The [release gates](docs/STABLE_RELEASE_GATES.md) record which local lifecycle
-checks passed and which deployment, duration and scientific criteria remain open.
+Historical v1.1.0/v1.1.1 failed prereleases, the first source-8aa attestation failure and
+all earlier studies remain preserved. [Correction and parent archive](docs/CORRECTIVE_RELEASE_112.md),
+[engine evolution](experiments/engine-evolution-002/README.md),
+[previous stable v1.0.1](experiments/v1.0.1/public-delivery.json),
+[BRUTE parity](experiments/parity.json) and [roadmap](docs/ROADMAP.md) keep their
+original scopes; a new release number does not regrade old failures.
 
 ## Architecture
 
@@ -333,26 +232,6 @@ behavior explicit without fragmenting the system into placeholder packages.
 
 [Architecture](docs/ARCHITECTURE.md) · [Compatibility](docs/COMPATIBILITY.md) · [Reasoning](docs/REASONING.md) ·
 [Protocol](docs/PROTOCOL.md) · [Operations](docs/OPERATIONS.md)
-
-### Published v1 and continuing qualification
-
-The public v1.0.0 source adds a configured native
-cognitive runtime, portable query strategies with durable revocation, controlled
-three-peer TLS topology, outcome-conditioned exploration and strategy-aware
-backup/migration. The runtime can also score a proposed exchange against an
-equal-query isolated control and refuses non-positive outbound fixture offers.
-The [release audit](docs/V1_RELEASE_AUDIT.md) found incorrect tagged benefit
-helpers; v1.0.1 qualifies the corrections separately. These are
-bounded engineering checks. Query-transfer protocol 001 remains
-`NOT_DEMONSTRATED`. The historical hour on source `31b9418` passed; the cancelled
-71/120 attempt remains HOLD. The replacement source's fresh hour records
-PASS_LOCAL_HOUR on `6025fff`, with independent data review passing.
-Anonymous public native installation, independent component audits and public evidence-archive delivery pass. Neither research question is closed by the value function. [Protocol 002](docs/RESEARCH_V06_PROTOCOL.md)
-is preregistered and has not been run.
-
-[Native architecture](docs/NATIVE_ARCHITECTURE.md) ·
-[Run your configured agent](docs/LIVE_RUNTIME.md) ·
-[Qualification contract](docs/V1_RELEASE_CONTRACT.md)
 
 ## Develop and verify
 
@@ -386,9 +265,9 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The v1.1 source snapshot is about 9.64 MB across 15 root entries, versus
+The historical v1.1.0 source snapshot is about 9.64 MB across 15 root entries, versus
 BRUTE's 574.80 MB and 41 entries: about 98.32% fewer bytes.
-[Current footprint](experiments/v1.1.0/footprint.json) excludes Git history, build
+[That footprint](experiments/v1.1.0/footprint.json) excludes Git history, build
 caches and local state; [the earlier snapshot](experiments/footprint.json) is
 preserved. Full study traces live in checksum-pinned release assets.
 

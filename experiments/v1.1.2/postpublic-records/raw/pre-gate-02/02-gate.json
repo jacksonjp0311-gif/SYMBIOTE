@@ -1,0 +1,66 @@
+{
+  "schema": "symbiote.v11-release-gate/1",
+  "role": "candidate-embedding:x86_64-pc-windows-msvc",
+  "source_commit": "8aa5f4c6ab26f7ccad53935a70414ae1765b57c6",
+  "candidate_run_id": 40945405929,
+  "subject_sha256": "3efab4959ab9ea3849005eb0738b6fed02761bba300ee52450103affa5aa16f0",
+  "status": "PASS",
+  "started_unix_ns": 1793309447744713900,
+  "finished_unix_ns": 1793309448137926200,
+  "evidence": [
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\acceptance\\x86_64-pc-windows-msvc\\embedding\\embedding-acceptance.json",
+      "bytes": 2785,
+      "sha256": "8bf671b08723a26ad46f80fd365bf62ea06302f6988490c999b07482612633c5",
+      "name": "embedding-acceptance"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\data\\symbiote-v1.1.2-x86_64-pc-windows-msvc.build.json",
+      "bytes": 32241,
+      "sha256": "873801a8d338726524c5dc34be558f086458e71477a3c1d4eb29036f290dd070",
+      "name": "staged-build"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\w\\download.json",
+      "bytes": 46025,
+      "sha256": "f51f8258b848abf8f368bf6b9a8cddfbc59a087a4d5e8f4c6617d247a02205d9",
+      "name": "artifact-download"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-publication-actual-8aa5f4c\\candidate-run-and-jobs.ACTUAL.json",
+      "bytes": 60724,
+      "sha256": "290d9064aecab8d0a756c54376f5bdcab281102db7368f52f46b64761a0be2c7",
+      "name": "official-candidate-raw"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\c112\\metadata-closed-before-hour\\artifacts.json",
+      "bytes": 4287,
+      "sha256": "a1f53b976f24550f4755b121e60afa190b2ae79ba8c6173a5adb2e985dd0cfd7",
+      "name": "complete-artifact-list"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-platforms-independent-8aa.json",
+      "bytes": 15992,
+      "sha256": "e788e5bcc291c72a7ba840ef9172f24f2c6e66e27af79792bfbe6c2319ebe4a1",
+      "name": "independent-platform-data-review"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-windows-independent-replacement-8aa.json",
+      "bytes": 3762,
+      "sha256": "97fd4c6cbd1ca4adab1046130bfa2ad4289f2afe7fa92edff4a86a498e1c8574",
+      "name": "independent-windows-data-review"
+    },
+    {
+      "path": "C:\\Users\\jacks\\AppData\\Local\\Temp\\v112-windows-crypto-replacement-8aa5f4c\\windows-subject-review.json",
+      "bytes": 70521,
+      "sha256": "8e4fc13220045642848921df31fe60ccc80445a2992cb7f24eac280061a1e368",
+      "name": "scoped-windows-four-crypto"
+    }
+  ],
+  "operator_review": {
+    "reviewer": "Codex root: actual source-bound evidence and independent data reviews",
+    "decision": "ACCEPT",
+    "scope": "Actual separate matching-platform Rust consumer workspace/lock using the documented typed engine API: two isolated owners, observed/inferred/evaluated/retained prediction, cancellation, writer exclusion, close/reopen zero-source calls, revocation and checkpoint/restore. Exact consumer/build.proofs/raw process links; no economic or public-delivery claim. Mandatory publisher16 origin checks remain.",
+    "evidence_digest": "afa8234e1c152947acbb24b12ff3e795cfef43e8e963ba811ab73e7ad4a6e99c"
+  }
+}
