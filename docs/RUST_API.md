@@ -90,6 +90,30 @@ See [the corrective release account](CORRECTIVE_RELEASE_101.md) for task-window
 accounting and experimental scope. Newly typed histories must not be opened by
 an older writer that cannot validate them.
 
+## Unreleased engine additions after v1.0.1
+
+These APIs require the [new main implementation](ENGINE_EVOLUTION_002.md), not
+the published v1.0.1 executable. `infer_from_source` keeps its existing signature
+and reference query policy. The additive `infer_with_policy` accepts
+`AffineQueryPolicy::RankBasis`; hints and width one retain the reference path,
+and supported widths stay 1–8. See the native
+`crates/symbiote-runtime/examples/independent_observer.rs` embedding for bounded
+external observations, a durable freeze and source-free fresh predictions.
+
+`OperationalJournal::open_reference` retains full-prefix serialization;
+`event_prefix_sha256_reference` and `prefix_work()` expose comparison and
+diagnostic boundaries. The production index is private and derived only from
+validated durable history. Its counters are not rewards or a replacement for
+the older reasoning cost units. `symbiote_memory::witness::LedgerWitness`
+validates a bounded complete ledger snapshot without opening caller-supplied
+paths; it establishes ledger consistency, not independent remote honesty.
+
+The configured receiver channel is an explicit policy/grant opt-in rather than
+a public remote execution API. Its typed history requires a writer that knows
+those events; preserve backups and do not force older writers past unknown rows.
+Verified outcome/capability counters remain distinct from economic benefit.
+See [receiver permissions and proofs](RECEIVER_OUTCOMES.md).
+
 ## Cancellation and ownership
 
 Pass an `Arc<AtomicBool>` to `run_with_cancel`; the host may set it with release

@@ -23,6 +23,10 @@ local demonstrations.
 > receiver-outcome channel and optional rank-based observation learning are
 > [documented separately](docs/ENGINE_EVOLUTION_002.md). Build this checkout to
 > use them; the v1.0.1 downloads remain the corrective baseline described below.
+> The [registered engineering run](experiments/engine-evolution-002/README.md)
+> passes: exact hash parity, 128 fresh case/input predictions per structural arm,
+> retained knowledge after restart, and receiver-owned outcome reconciliation.
+> Isolation ties and unknown economic benefits remain explicit.
 
 > **v1.0.1 is a corrective release for a bounded, one-host engine.**
 > Source, native component, 64-cell operational and fresh-hour checks pass.
@@ -198,6 +202,7 @@ rejection, crash recovery, immutable backups and byte-preserving migration.
 
 | What is checked | Evidence |
 | --- | --- |
+| Unreleased main engine evolution | [Registered results and exact evidence](experiments/engine-evolution-002/README.md): exact cached-prefix parity, lower rank-query work, frozen fresh-input reuse and receiver-owned feedback; isolated learner ties and whole-cost gain remains unestablished |
 | Corrective v1.0.1 software | [Three-platform CI on source `6025fff`](https://github.com/jacksonjp0311-gif/SYMBIOTE/actions/runs/40733730717); qualified native bytes and public installation are separate checks |
 | Learning from an authorized observation source | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): widths 3 and 8, independent held-out inputs, retained predictions and zero source queries after restart |
 | Useful normal reciprocal contribution and feedback | [Source-pinned component checks](docs/CORRECTIVE_RELEASE_101.md#component-evidence): two-way independent adoption, actual later use, retained knowledge and harmful feedback changing a later choice |
@@ -222,7 +227,7 @@ matched-resource controls reproduce the coverage. Favorable preference is retain
 but does not change that fixture's winning choice; harmful feedback does change
 the later choice. [Exact scope and results](docs/CORRECTIVE_RELEASE_101.md#component-evidence).
 
-The engine closes its own incoming learning and feedback loop. Return adoption
+The published v1.0.1 engine closes its own incoming learning and feedback loop. Return adoption
 and use are proved through separately authorized receiver CLI/test-harness
 checks; the live outbound `partner_benefits_verified` counter remains zero
 without witnessed receiver feedback. A fully autonomous network return-benefit
@@ -233,9 +238,11 @@ The separately registered 64-cell cohort also passes operational reciprocity
 while losing its aggregate full-cost comparisons. Neither its fixed-order nor
 matched-resource controls establish an exchange-efficiency advantage.
 
-Next, reduce or amortize the measured evaluation/control overhead while keeping
-the checks, add an authorized receiver-outcome channel, and test an unfamiliar
-independent observation adapter. Broader stable qualification remains open.
+Main now adds the separately authorized receiver-outcome channel and an
+independent observation-source embedding. Its frozen fresh-input workload
+distinguishes structural reuse from exact answer caching, while isolation ties.
+Next, reduce dominant acquisition/control costs and test complete economics of
+an exchange reused on fresh tasks. Broader stable qualification remains open.
 
 The v0.5.1 default software gate passed **292 Rust test executions, 53 Python
 tests and 6,093 parity cases**. A separately selected ignored test completed the
@@ -354,8 +361,8 @@ All 983 upstream files are classified in the
 authorship and scientific evidence remain untouched and accessible through
 pinned links. Historical archives and massive generated results stay upstream.
 
-The active tracked tree is about 7.85 MB across 14 root entries, versus BRUTE's
-574.80 MB and 41 entries: about 98.63% fewer bytes. [Footprint](experiments/footprint.json)
+The active tracked tree is about 8.90 MB across 15 root entries, versus BRUTE's
+574.80 MB and 41 entries: about 98.45% fewer bytes. [Footprint](experiments/footprint.json)
 excludes Git history, build caches and local state. Full study traces live in
 checksum-pinned release assets.
 

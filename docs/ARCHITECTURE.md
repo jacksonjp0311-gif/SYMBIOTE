@@ -1,5 +1,13 @@
 # Intelligence architecture
 
+The current four-crate native design is documented in
+[Native architecture](NATIVE_ARCHITECTURE.md). Unreleased main now includes
+[verified-learning engine evolution](ENGINE_EVOLUTION_002.md): exact prefix reuse,
+optional rank queries, independent process observations with frozen fresh-input
+reuse, and opt-in receiver-owned outcome feedback. Published v1.0.1 remains the
+corrective baseline. The versioned history below records earlier slices and
+does not extend their original evidence to the new implementation.
+
 The v0.4 operational system has four crates. The reasoning crate contains exact
 Moore prefix inference, affine version spaces, conservative positive-cost graph
 certificates and a participant-specific value-of-symbiosis decision. The protocol

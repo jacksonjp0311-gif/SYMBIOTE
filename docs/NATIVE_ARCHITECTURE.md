@@ -36,10 +36,20 @@ Inside the existing runtime crate, responsibilities are separated into
 `service/selection.rs` (semantic inventory and durable proposal history),
 `service/evaluation.rs` (local independent validation), `service/observation.rs`
 (active evidence acquisition), `service/feedback.rs` (causal measurement and
-replay), `service/timing.rs` (bounded diagnostics), and `service/cognitive.rs`
+replay), `service/outcomes.rs` (opt-in receiver-owned processing and witnessed
+outcomes), `service/timing.rs` (bounded diagnostics), and `service/cognitive.rs`
 (finite orchestration). No additional crates or external model dependency are
 required. The exact compact affine implementation lives beside its enumerating
 reference in the reasoning crate.
+
+Unreleased main adds exact cached operational prefix hashes and an ordered
+feedback-startup cursor, while preserving the original hash bytes and reference
+algorithms. Optional rank-basis query selection reduces work within the same
+bounded affine family. The independent-observer embedding talks to a separate
+authorized source process, freezes a validated model, and reopens it for fresh
+predictions with the source stopped. This embedding is separate from the normal
+configured receiver channel. [Measured results and limits](ENGINE_EVOLUTION_002.md)
+keep component costs, retained exchange use and fresh source reuse distinct.
 
 ## Three kinds of state
 
@@ -89,6 +99,16 @@ The runtime may offer a locally validated model to another compatible partner.
 Acceptance into quarantine is delivery evidence. The receiving owner keeps
 evaluation and adoption authority. Benefits to the sender and receiver are
 reported separately; a negative total cost result stays negative.
+
+The [unreleased receiver channel](RECEIVER_OUTCOMES.md) adds a separately granted
+read-only `outcome.read` operation. An opt-in local receiver policy evaluates a
+quarantined contribution and uses the resulting model for its own declared goal.
+The sender verifies complete bounded ledger witnesses, binds the exact exchange
+and current policy epoch, then persists a once-only reconciliation. Remote polling
+cannot authorize evaluation or execute transferred instructions. The initial
+envelope is one peer/context and retained affine use; operator fixture authority
+remains an assumption. Outcome and capability counters do not imply economic
+benefit when costs are unknown.
 
 ## Value of an exchange
 

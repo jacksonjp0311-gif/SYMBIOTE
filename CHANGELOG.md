@@ -15,6 +15,12 @@
   component tests and the published v1.0.1 baseline.
 - Bound concurrent native integration-fixture groups without increasing runtime
   timeouts. Preserve the initial parallel baseline failures and their isolated passes.
+- Complete the once-only source-pinned engineering workload in 35.015 seconds:
+  all prefix digests match; structural models correctly predict 128 fresh
+  case/input pairs per arm after restart; normal receiver feedback reconciles
+  once. Preserve isolated ties, cache abstentions, index/metadata overhead and
+  zero strict economic-benefit credit. Publish exact nonbinary evidence and
+  independent data-only audits in [the result account](experiments/engine-evolution-002/README.md).
 
 These changes are on main and require a source build. No new release or broader
 stable/general-efficiency qualification is implied.

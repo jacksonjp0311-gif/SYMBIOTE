@@ -1,6 +1,6 @@
 # Engine evolution after the corrective baseline
 
-Status: **unreleased main implementation; registered measurement pending**.
+Status: **unreleased main implementation; bounded engineering workload passed**.
 The public v1.0.1 tag, executables and qualification archive remain unchanged.
 These additions require building this source checkout. A package version is not
 evidence that a particular executable contains or qualifies these changes.
@@ -8,6 +8,10 @@ evidence that a particular executable contains or qualifies these changes.
 The next iteration follows [engineering protocol 002](ENGINE_EVOLUTION_PROTOCOL_002.md),
 committed at `03dcddc060f0b701c89c6f96fd6603ae365400bf` before implementation.
 That protocol is distinct from the earlier transfer-research Protocol 002.
+The frozen implementation is `bb1b88eaa771be5e201ccfcfe93840c6750eb9d7`.
+The once-only workload completed in 35.015 seconds on this Windows PC, within
+600 seconds and 128 MiB. [Results and exact evidence](../experiments/engine-evolution-002/README.md)
+separate software correctness, local optimization, fresh reuse and receiver feedback.
 
 ## Changes in the existing engine
 
@@ -63,6 +67,43 @@ Rank metadata occupied 785 more retained bytes. The isolated rank learner tied.
 These are software-smoke results, not execution of the registered four-case study
 or evidence of a reciprocal efficiency advantage.
 
+## Registered results
+
+The four width-eight cases each learned from nine training observations and one
+distinct validation observation. The source then stopped. Each restarted model
+answered all 32 previously unanswered inputs correctly: 128 distinct case/input
+pairs per structural arm. Every prediction was committed before labels were
+computed. The exact answer cache abstained on all 128; the isolated structural
+learner tied. This demonstrates conditional structural reuse beyond a cache of
+answers, without establishing an advantage over isolated learning or a benefit
+from exchanging an artifact in this particular workload.
+
+Reference inference and validation consumed 28,439 GF(2) work units per case;
+the optional rank policy consumed 713. Both used ten source queries and 5,300
+plaintext bytes per case. Cold reopening and prediction cost a further
+634–642 units in both arms. Rank-policy metadata occupied 785 more retained
+bytes per case. These are operation and byte measurements; source computation,
+process supervision, persistence and grading are retained separately. They do
+not become interchangeable economic units or a whole-engine speedup claim.
+
+All prefixes agreed at histories of 0, 16, 64 and 256 events. At 256 events,
+32 reference captures canonicalized and hashed 2,319,520 bytes and visited
+8,192 events. Indexed cold construction canonicalized 72,228 bytes, supplied
+72,741 bytes to SHA-256, visited 256 events and occupied 16,656 index bytes;
+the subsequent 32 captures added no canonicalization, hashing or event visits.
+Cold validation, durable setup and close costs remain in the evidence. At an
+empty history, the indexed warm capture timing was slightly slower. The profile
+is a single local component comparison, not a statistical timing benchmark or
+measurement of all service startup work.
+
+The normal native sender learned a model, contributed it, and verified a proof
+of the receiver's own evaluation, adoption and actual goal use. It recorded one
+verified partner outcome and one capability gain. After both processes restarted,
+it added no duplicate credit and made no new observation queries. Strict verified
+economic benefits remained zero because costs were unknown. This closes the
+initial receiver-feedback path within its one-peer/context proof envelope;
+its retained-case task is separate from the frozen fresh-input experiment.
+
 ## Checks and reproducible workload
 
 Before registration, the full Windows workspace passed 429 Rust test executions,
@@ -93,6 +134,15 @@ the exact prefix comparison, four separately sourced width-eight cases with 32
 fresh tasks each, an exact answer cache and persistent isolated learner, and the
 automatic native receiver-outcome loop. Every failed or interrupted prefix must
 remain visible; there is no retry or budget increase to turn a loss into a win.
+The completed registration SHA256 is
+`89241bf8b120508053a91966e57c02f70343a1f8a3e8aafe3d8a59ec1b385409`;
+raw report SHA256 is
+`a0dcb9752c578041e745489b80198f42011fd788e377eed674e84b7d45f1cf68`.
+The [machine-readable summary](../experiments/engine-evolution-002/summary.json)
+pins the four saved executables, source manifest and complete nonbinary archive.
+Independent data-only audits checked the saved component evidence without
+rerunning targets. The archive includes initial baseline failures and the initial
+formatting diff alongside later passing checks; earlier failures are not rewritten.
 
 ## Limits that remain
 

@@ -1,10 +1,28 @@
-# SYMBIOTE: corrective-release handoff
+# SYMBIOTE: engine evolution handoff
 
 The corrective 1.0.1 engine descends from BRUTE and remains a four-crate Rust
 workspace. Continue the existing engine. Its purpose is persistent learning from
 authorized evidence and reciprocal interaction, without a language-model dependency.
 
-Qualified native implementation source (F1): `6025fff43ad4b508b94977eeff801aeebf549fd9`.
+Current unreleased implementation: `bb1b88eaa771be5e201ccfcfe93840c6750eb9d7`.
+The prospective engineering protocol was committed first at
+`03dcddc060f0b701c89c6f96fd6603ae365400bf`; the single registered workload passed
+in 35.015 seconds. [Results and exact nonbinary evidence](../experiments/engine-evolution-002/README.md)
+include independent data-only audits, all cost vectors and the original baseline
+parallel failures. Build this checkout to use the additions. The published
+v1.0.1 downloads and their qualification below are unchanged.
+
+The additions reuse exact verified prefix hashes, validate feedback through one
+ordered startup cursor, add optional exact rank-based query selection, and close
+an opt-in receiver-owned outcome channel. A separate Python observation source
+feeds the native embedding example without supplying coefficients or tables.
+Frozen models reopen and correctly answer 128 fresh case/input pairs per arm;
+the isolated structural learner ties. The sender reconciles one actual receiver
+capability outcome and gives it no duplicate credit after restart. Unknown costs
+still produce zero verified economic benefits. See [the engineering account](ENGINE_EVOLUTION_002.md)
+for the limits and [the receiver setup](RECEIVER_OUTCOMES.md) for explicit grants.
+
+Published v1.0.1 baseline qualified native source (F1): `6025fff43ad4b508b94977eeff801aeebf549fd9`.
 The 128-file `symbiote.source-manifest/2` digest is
 `aedf4208a3630b31ec9e7383dd018120d4b021f54e70140e63b4f01e91564aad`.
 Release documentation, downloaded executables and their qualification have separate
@@ -54,10 +72,12 @@ count is zero: related finite engineering cases are not independent discoveries.
 No answer-caching advantage, generalized transfer efficiency or whole-agent speedup
 is established.
 
-Live outbound `partner_benefits_verified` remains zero without receiver-originated
-witnesses. Current return adoption/use is proved by separately authorized receiver
-CLI checks and the test harness. It is not an autonomous network return-benefit
-protocol. Two-host deployment remains `OPEN_UNAVAILABLE`; broad stable qualification
+In the published baseline, outbound `partner_benefits_verified` remains zero
+without receiver-originated witnesses; return adoption/use was proved through
+separately authorized receiver CLI checks. Main now has an opt-in native outcome
+channel with receiver-owned processing and separate verified outcome/capability
+counters. Its strict economic counter remains zero when costs are unknown.
+Two-host deployment remains `OPEN_UNAVAILABLE`; broad stable qualification
 and generalization remain open. Protocol 002 stays `NOT_RUN` and needs its declared
 amendment before targets open. Preserve original HOLDs and negative results.
 
@@ -67,21 +87,25 @@ amendment before targets open. Preserve original HOLDs and negative results.
 | --- | --- |
 | Exact inference and reference algorithms | `crates/symbiote-reasoning/src/structural/compact.rs`, `structural.rs`, `planning.rs` |
 | Causal feedback and measurement | `crates/symbiote-runtime/src/service/feedback.rs` |
+| Receiver-owned processing and outcome proof | `crates/symbiote-runtime/src/service/outcomes.rs`, `docs/RECEIVER_OUTCOMES.md` |
 | Authorized evidence acquisition | `service/observation.rs`, `service/evaluation.rs` |
+| Independent source and frozen prediction | `crates/symbiote-runtime/examples/independent_observer.rs`, `adapters/switchbox_source.py` |
 | Selection, semantic inventory and backoff | `service/selection.rs`, `service/cognitive.rs` |
 | Durable evidence and witnessed receipts | `crates/symbiote-memory/src/knowledge.rs`, `reciprocal.rs` |
 | Independent engineering consumers | `tools/reciprocal_engineering.py`, `tools/soak_campaign.py` |
+| New prospective engineering workload | `tools/engine_evolution.py`, `docs/ENGINE_EVOLUTION_PROTOCOL_002.md` |
 
 Run `cargo test --workspace --locked`, strict workspace Clippy and
 `python tools/verify.py`. Registered campaigns require their explicit external
 registration, fresh output directory, immutable source/executable pins and existing
 bounds. Do not retry or retune a failed cohort into a gain.
 
-Next: reduce or amortize actual evaluation/control overhead without weakening
-validation; add an authorized, independently checked receiver-outcome channel;
-then test an independently implemented unfamiliar adapter under a new prospective
-contract. Keep own observations, conditional inference and outside suggestions
-distinct.
+Next: reduce or amortize dominant acquisition/control costs without weakening
+validation. Test a useful exchange with independent validation and reuse across
+fresh tasks under a new prospective complete-cost contract. Keep isolated adaptive
+and exact cache controls; unrelated domains and independent-host operation remain
+open. Preserve the historical cohort losses, the unreleased study's isolated ties,
+and the distinction between retained-case exchange and fresh source reuse.
 
 Read [the corrective account](CORRECTIVE_RELEASE_101.md), [runtime setup](LIVE_RUNTIME.md),
 [API compatibility](RUST_API.md), [release gates](STABLE_RELEASE_GATES.md) and

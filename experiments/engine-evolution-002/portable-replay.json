@@ -1,0 +1,56 @@
+{
+  "schema": "symbiote.engine-evolution-portable-replay/1",
+  "status": "PASS_DATA_ONLY_ALL_THREE_COMPONENTS",
+  "evidence_archive_sha256": "ab61624544dc89a0df920c19d27867e40e91d1d1229cf415b5d3ff182fa312ce",
+  "portable_receiver_script": {
+    "path": "verify_receiver.py",
+    "sha256": "af292104a2d32bbe220feb5b315dfa7d440cf59ecc65ae3529fd598af179de61"
+  },
+  "archive": {
+    "path": "portable-audits.zip",
+    "sha256": "777c1aed21eb710c64049f4c8b1ff122f42f69481b90c931faa463e1757faf95",
+    "bytes": 37141
+  },
+  "files": [
+    {
+      "path": "fresh.json",
+      "bytes": 143144,
+      "sha256": "4707fd7e7936d9534d9bfec569c1ad77ae0f195efca2d2856877dc23b1da8a51"
+    },
+    {
+      "path": "prefix-fresh-check.py",
+      "bytes": 2322,
+      "sha256": "4e3b536c8e245f3c4ec755eba593768464bf5c5f8374927824e14a6b09f412ee"
+    },
+    {
+      "path": "prefix.json",
+      "bytes": 13268,
+      "sha256": "2db444e7496c61e98a797cfaed49b6595fb2e13a7e4d06aea3d7f569f14387fc"
+    },
+    {
+      "path": "receiver-check.py",
+      "bytes": 3952,
+      "sha256": "2ddeaa68d1adfeab8f282ad4c782a989e682d4c4952cbe15f97d47cfbf0fa2cb"
+    },
+    {
+      "path": "receiver-proof.json",
+      "bytes": 1154,
+      "sha256": "fa8d6a3ab7a0548e59f252a6c57ebab5904e6a654caaf93f9d6f16b10163d9c9"
+    },
+    {
+      "path": "receiver.json",
+      "bytes": 8962,
+      "sha256": "33dd08ac88c039e43cea18b4e53d8cd1246ad317251456facb6b052bc1ed7a8f"
+    }
+  ],
+  "replay_status": {
+    "prefix": "PASS_DATA_ONLY_PREFIX_REPLAY",
+    "fresh": "PASS_DATA_ONLY_FRESH_REUSE_AND_DECLARED_COSTS",
+    "receiver": "PASS_PORTABLE_DATA_ONLY_RECEIVER_LOOP"
+  },
+  "native_processes_launched": 0,
+  "original_receiver_roots_process_and_network_access_denied": true,
+  "original_receiver_denied_access_attempts": [],
+  "physical_binary_and_source_verification": "NOT_REQUESTED; those bytes were checked in original local audits, not reconstructed from data-only archive",
+  "interpretation": "Additional relocated data reads only; no new target run, trial, sample, clock attestation or release binary qualification"
+}

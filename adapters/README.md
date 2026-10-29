@@ -4,6 +4,18 @@ This development example learns a conditional Boolean affine model from a separa
 
 The published v1.0.1 baseline and evidence remain fixed. This work belongs to [Engine Evolution Protocol 002](../docs/ENGINE_EVOLUTION_PROTOCOL_002.md). Development smoke and registered four-case validation are separate results.
 
+**Registered result.** The once-only run on source `bb1b88eaa771be5e201ccfcfe93840c6750eb9d7` completed in 35.015 seconds with status `PASS_ENGINEERING_ONLY`. Its fresh-task component tested four related width-eight wirings, with 32 unseen inputs per case after all learning arms froze. Reference, rank and isolated structural learners each answered all 128 case/input pairs correctly after a separate process restart; the exact-answer cache abstained on all 128. These are 384 model prediction executions over 128 case/input pairs, with no independent scientific samples claimed.
+
+| Measured component | Reference | Rank / isolated |
+| --- | ---: | ---: |
+| Learning GF(2) units per case | 28,439 | 713 |
+| Authorized source calls per case | 10 | 10 |
+| Cold reopen plus 32 predictions, cases 0–3 | 638 / 634 / 640 / 642 | 638 / 634 / 640 / 642 |
+| Plaintext request/response bytes per case | 5,300 | 5,300 |
+| Retained state bytes relative to reference | 0 | +785 per case |
+
+The independently replayed observations, commitment openings, prediction receipts, ledgers and cost vectors support fresh conditional model reuse and lower query-selection computation in this family. The isolated learner ties the rank arm; this fresh-task suite exchanges no artifact between agents and establishes no reciprocal benefit or whole-operation net saving. See the [study account](../experiments/engine-evolution-002/README.md) and [exact result vectors](../experiments/engine-evolution-002/summary.json).
+
 **Development smoke.** From the repository root in PowerShell:
 
 ```powershell

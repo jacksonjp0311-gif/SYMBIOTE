@@ -227,3 +227,63 @@ complete API responses, public configurations and journals, process IDs and pinn
 executable/test-driver snapshots; private `.key` files are excluded. These are
 software/operational checks. The separately frozen unanswered-input experiment
 and registered qualification workloads have their own admission and evidence.
+
+## Closed bounded component observation
+
+The once-only engineering workload at source
+`bb1b88eaa771be5e201ccfcfe93840c6750eb9d7` closed as
+`PASS_ENGINEERING_ONLY` in 35.015 seconds within its 600-second / 128-MiB limits.
+The receiver component's contained native test took 4.375 seconds, exited 0 and
+had verified cleanup without output truncation. See the
+[iteration account](../experiments/engine-evolution-002/README.md) and
+[machine-readable summary](../experiments/engine-evolution-002/summary.json).
+These are bounded local engineering observations; broader stable qualification
+remains HOLD.
+
+| Observed item | Actual result |
+| --- | --- |
+| Receiver ledger promotion / stored-model use | 1 / 1 |
+| Sender new verified outcome / capability counters | 1 / 1 |
+| Strict economic benefit counter | 0; unknown baseline and absent measured net |
+| Sender own observation | 5 source queries, 203 GF2 row-operation units |
+| Sender restart | 0 source queries, 39 GF2 units, 0 new outcomes or capability credits |
+| Receiver goal | Input 7 produced 0; receiver validation had already checked inputs 5, 6 and 7 |
+| Complete proof | 20,905 bytes stored in 11 chunks; API response 20,974 bytes |
+| Receiver history | 2 knowledge rows and 10 operational rows, including each genesis |
+| Sender history after restart | 2 knowledge rows and 47 operational rows, including genesis |
+
+Both engines restarted under distinct process IDs with unchanged retained
+knowledge anchors. The sender made one contribution and one outcome poll; its
+restart neither sent another contribution nor repolled the completed outcome.
+Matching sender/receiver plaintext counters recorded 19 first-run and 14 restart
+RPC attempts. Those attempts and restart computation remain real costs.
+
+The receiver's ordinary `fresh_promotions` summary field is 0: that field is
+updated by the ordinary learning loop, while the separate receiver role made the
+one adoption shown by its actual knowledge ledger and changed anchor. The
+independent audit derives that adoption from the ledger instead of treating this
+summary field as a total across roles.
+
+The assessment records 9 local evaluation/adoption units and one stored-use unit.
+Its outcome cost of 10 is not a complete economic account. Incoming wire,
+whole-process replay and lifetime costs are not established by those components;
+`verified_benefit` stays false. Use of input 7 is a retained-case demonstration,
+separate from the independently frozen unanswered-input experiment.
+
+| Immutable content pin | SHA256 |
+| --- | --- |
+| Workload registration | `89241bf8b120508053a91966e57c02f70343a1f8a3e8aafe3d8a59ec1b385409` |
+| Native executable | `ef7cd032820653f36e7e141fecb85426d98349c1bfb96224713b989a0418fc66` |
+| Native test driver | `42e745ff0763a9cd69affb948d4aff4af669ea70b4c0b50043babdf3b187278a` |
+| Raw receiver artifact manifest | `a4c6bb7a804f1de3b42845e9347d409ec15d78ba2c8198e2f6c5700a909364fe` |
+| Whole workload report | `a0dcb9752c578041e745489b80198f42011fd788e377eed674e84b7d45f1cf68` |
+| Independent receiver audit JSON | `317501d16544920f932b1fa2d10cac50dbc6bca1c1505478360e324c5462ece0` |
+| Independent data-only audit script | `6c26cbd2da444443d7aff657b15d42a0f6e750998c317365c2060f223f65deb9` |
+
+The independent reader rehashed all 135 frozen source files and 37 copied
+receiver artifact members, checked full raw causal histories and exact current
+policy/fixture bindings, and confirmed byte-identical raw evidence before/after
+its read. It did not execute a native engine or rerun a target. Its original
+implementation uses the recorded local paths; preserving the script does not by
+itself make those paths portable. No private keys or token values were found in
+the non-executable raw evidence scanned for the audit.

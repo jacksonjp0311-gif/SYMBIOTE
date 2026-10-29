@@ -28,10 +28,18 @@ evidence archive and downloaded replacement-binary checks pass within the
 [declared scope](../experiments/v1.0.1/public-delivery.json). Each is recorded
 independently; historical HOLDs and broader stable criteria remain.
 
-After the corrective release, the next milestone is an independently implemented
-observation/receiver adapter with a prospectively frozen evaluation contract.
-Test drift, useful and harmful transfer, fresh-task reuse and receiver-originated
-feedback under its own costs. Independent two-host testing remains explicitly
+The unreleased [engine evolution](ENGINE_EVOLUTION_002.md), frozen at
+`bb1b88eaa771be5e201ccfcfe93840c6750eb9d7`, now passes a separate prospective
+engineering contract: exact prefix reuse, optional rank queries, independent
+process observations with frozen fresh-input prediction, and receiver-originated
+feedback. The isolated structural learner ties and whole-cost advantage remains
+unestablished. This adds evidence without advancing the published version or
+closing the roadmap's research gates.
+
+Next, reduce the dominant acquisition/control costs and test an exchange whose
+independent validation can be amortized across fresh tasks. Declare complete
+participant economics before opening targets, retain isolated adaptive and cache
+controls, and measure drift and harmful transfer. Independent two-host testing remains explicitly
 open until another machine or endpoint is authorized. Wider environments and
 general reciprocal efficiency require new evidence rather than another version
 number.
