@@ -9,7 +9,10 @@ use super::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::Instant;
 use symbiote_memory::knowledge::{
     KnowledgeAnchor, KnowledgePayload, KnowledgeRecord, KnowledgeStore,
 };
@@ -19,6 +22,45 @@ pub const SCHEMA: &str = "symbiote.learning-feedback/1";
 const RECEIVER_DECISION: &str = "symbiote.receiver-evaluation-decision/1";
 const LIMIT: u64 = 1_000_000_000;
 const TASK_WINDOW: &str = "received-graph-task-sense-through-first-use/1";
+
+/// Thread-local actual feedback validation work. These diagnostic counts do not
+/// price hardware, change logical reasoning units, or establish learning gain.
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct ReplayWork {
+    pub rebuilds: u64,
+    pub event_visits: u64,
+    pub store_use_prediction_rechecks: u64,
+    pub reference_prefix_reads: u64,
+    pub reference_prefix_event_visits: u64,
+    pub reference_prefix_bytes: u64,
+    pub single_pass_starts: u64,
+    pub single_pass_finishes: u64,
+    pub elapsed_ns: u64,
+    pub saturated: bool,
+}
+thread_local! { static REPLAY_WORK: RefCell<ReplayWork> = RefCell::new(ReplayWork::default()); }
+fn work(update: impl FnOnce(&mut ReplayWork)) {
+    REPLAY_WORK.with(|current| update(&mut current.borrow_mut()));
+}
+fn add_count(target: &mut u64, amount: u64) -> bool {
+    let overflow = target.checked_add(amount).is_none();
+    *target = target.saturating_add(amount);
+    overflow
+}
+struct ReplayTimer(Instant);
+impl Drop for ReplayTimer {
+    fn drop(&mut self) {
+        work(|work| {
+            work.saturated |= add_count(
+                &mut work.elapsed_ns,
+                self.0.elapsed().as_nanos().min(u128::from(u64::MAX)) as u64,
+            );
+        });
+    }
+}
+pub fn replay_work() -> ReplayWork {
+    REPLAY_WORK.with(|current| current.borrow().clone())
+}
 
 /// Opaque, actually sampled native counters. Capture at SENSE entry and carry
 /// only the unique artifact's acquisition; this is not a caller-supplied fee.
@@ -44,9 +86,7 @@ pub fn capture_local_execution(
         boundary: SenseBoundary {
             owner: journal.identity().into(),
             events: journal.events().len(),
-            prefix_sha256: digest(
-                &serde_json::to_value(journal.events()).map_err(|e| e.to_string())?,
-            )?,
+            prefix_sha256: journal.event_prefix_sha256(journal.events().len())?,
         },
         execution: crate::graph_transfer::execution_snapshot(),
         forecast: symbiote_memory::knowledge::graph::forecast_work_units()?,
@@ -391,6 +431,14 @@ fn decode(event: &OperationalEvent) -> Result<Option<Feedback>, String> {
         return Err("feedback carrier identity does not bind its exact typed body".into());
     }
     Ok(Some(envelope.event))
+}
+/// Validate the exact typed envelope and its carrier hash before a bounded
+/// witness consumer inspects fields. This alone does not validate learning,
+/// authority, promotion, use, current membership, or economic benefit.
+pub(super) fn validate_carrier(event: &OperationalEvent) -> Result<(), String> {
+    decode(event)?
+        .ok_or_else(|| "event is not a typed feedback carrier".to_string())
+        .map(|_| ())
 }
 fn carrier(event: Feedback, scope: &str) -> Result<OperationalEvent, String> {
     let envelope = Envelope {
@@ -739,18 +787,43 @@ fn delta(after: u64, before: u64) -> Result<u64, String> {
         .filter(|value| *value <= LIMIT)
         .ok_or_else(|| "task window counter regressed or exceeded its bound".into())
 }
+#[cfg(test)]
 fn validate_sense_boundary(
     boundary: &SenseBoundary,
     events: &[OperationalEvent],
     binding: &Binding,
     sense_decision_id: &str,
 ) -> Result<(), String> {
+    validate_sense_boundary_inner(boundary, events, binding, sense_decision_id, None)
+}
+fn validate_sense_boundary_inner(
+    boundary: &SenseBoundary,
+    events: &[OperationalEvent],
+    binding: &Binding,
+    sense_decision_id: &str,
+    journal: Option<&OperationalJournal>,
+) -> Result<(), String> {
     let prefix = events
         .get(..boundary.events)
         .ok_or("SENSE start prefix is absent")?;
+    let prefix_sha256 = if let Some(journal) = journal {
+        // Only private callers constructing replay from this actual journal (or
+        // its exact committed prefix plus a proposed append) supply this source.
+        // No external event slice or deserialized cache can choose a witness.
+        journal.event_prefix_sha256(boundary.events)?
+    } else {
+        let value = serde_json::to_value(prefix).map_err(|error| error.to_string())?;
+        let bytes = serde_json::to_vec(&value).map_err(|error| error.to_string())?;
+        work(|work| {
+            work.saturated |= add_count(&mut work.reference_prefix_reads, 1);
+            work.saturated |=
+                add_count(&mut work.reference_prefix_event_visits, prefix.len() as u64);
+            work.saturated |= add_count(&mut work.reference_prefix_bytes, bytes.len() as u64);
+        });
+        format!("{:x}", Sha256::digest(&bytes))
+    };
     if boundary.owner != binding.receiver_id
-        || digest(&serde_json::to_value(prefix).map_err(|e| e.to_string())?)?
-            != boundary.prefix_sha256
+        || prefix_sha256 != boundary.prefix_sha256
         || !matches!(events.get(boundary.events), Some(OperationalEvent::PartnerDecisionRecorded { decision })
             if decision.decision_id == sense_decision_id
                 && decision.context == binding.scope
@@ -774,6 +847,7 @@ fn scoped_measurement(
     before: MeterPoint,
     after: MeterPoint,
     lookups: Vec<crate::graph_transfer::Lookup>,
+    journal: Option<&OperationalJournal>,
 ) -> Result<ScopedMeasurement, String> {
     if scope != trace.binding.scope
         || sender != trace.binding.sender_id
@@ -791,11 +865,12 @@ fn scoped_measurement(
     let acquisition: SenseAcquisition =
         serde_json::from_value(decision.details["acquisition"].clone())
             .map_err(|_| "task cost lacks unique actual acquisition witness")?;
-    validate_sense_boundary(
+    validate_sense_boundary_inner(
         &boundary,
         events,
         &trace.binding,
         &acquisition.sense_decision_id,
+        journal,
     )?;
     let sense = original(events, &acquisition.sense_decision_id)?;
     let wire = acquisition
@@ -1006,280 +1081,311 @@ fn derive(trace: &Trace, store: &KnowledgeStore, at: &KnowledgeAnchor) -> Result
     })
 }
 fn rebuild(events: &[OperationalEvent], store: &KnowledgeStore) -> Result<FeedbackIndex, String> {
+    rebuild_inner(events, store, None)
+}
+fn rebuild_inner(
+    events: &[OperationalEvent],
+    store: &KnowledgeStore,
+    journal: Option<&OperationalJournal>,
+) -> Result<FeedbackIndex, String> {
+    let _timer = ReplayTimer(Instant::now());
+    work(|work| work.saturated |= add_count(&mut work.rebuilds, 1));
     let mut index = FeedbackIndex::default();
     let mut credited = BTreeSet::new();
     for (position, event) in events.iter().enumerate() {
-        if receiver_decision(event, &events[..position], store)? {
-            continue;
-        }
-        let Some(event) = decode(event)? else {
-            continue;
-        };
-        match event {
-            Feedback::Decision {
-                binding,
-                before,
-                baseline,
-            } => {
-                validate_binding(&binding, &before, &events[..position], store)?;
-                validate_baseline(&baseline)?;
-                if index.traces.contains_key(&binding.exchange_id)
-                    || index
-                        .traces
-                        .values()
-                        .any(|trace| trace.binding.candidate_id == binding.candidate_id)
-                {
-                    return Err("duplicate feedback decision/candidate credit".into());
-                }
-                index.traces.insert(
-                    binding.exchange_id.clone(),
-                    Trace {
-                        binding,
-                        before,
-                        decision_position: position,
-                        baseline,
-                        promotion: None,
-                        uses: 0,
-                        correct_uses: 0,
-                        extended_uses: 0,
-                        uncertain_prior: false,
-                        use_work: 0,
-                        outcome: None,
-                        rejected: None,
-                        task_measurement: None,
-                    },
-                );
+        apply_feedback_event(
+            &mut index,
+            &mut credited,
+            position,
+            event,
+            events,
+            store,
+            journal,
+        )?;
+    }
+    finish_index(index, store)
+}
+fn rechecked_prediction(record: &KnowledgeRecord, input: u16) -> Result<(u8, u64), String> {
+    work(|work| work.saturated |= add_count(&mut work.store_use_prediction_rechecks, 1));
+    prediction(record, input)
+}
+fn apply_feedback_event(
+    index: &mut FeedbackIndex,
+    credited: &mut BTreeSet<String>,
+    position: usize,
+    event: &OperationalEvent,
+    events: &[OperationalEvent],
+    store: &KnowledgeStore,
+    journal: Option<&OperationalJournal>,
+) -> Result<(), String> {
+    work(|work| work.saturated |= add_count(&mut work.event_visits, 1));
+    if receiver_decision(event, &events[..position], store)? {
+        return Ok(());
+    }
+    let Some(event) = decode(event)? else {
+        return Ok(());
+    };
+    match event {
+        Feedback::Decision {
+            binding,
+            before,
+            baseline,
+        } => {
+            validate_binding(&binding, &before, &events[..position], store)?;
+            validate_baseline(&baseline)?;
+            if index.traces.contains_key(&binding.exchange_id)
+                || index
+                    .traces
+                    .values()
+                    .any(|trace| trace.binding.candidate_id == binding.candidate_id)
+            {
+                return Err("duplicate feedback decision/candidate credit".into());
             }
-            Feedback::Promoted {
-                exchange_id,
-                record_sha256,
+            index.traces.insert(
+                binding.exchange_id.clone(),
+                Trace {
+                    binding,
+                    before,
+                    decision_position: position,
+                    baseline,
+                    promotion: None,
+                    uses: 0,
+                    correct_uses: 0,
+                    extended_uses: 0,
+                    uncertain_prior: false,
+                    use_work: 0,
+                    outcome: None,
+                    rejected: None,
+                    task_measurement: None,
+                },
+            );
+        }
+        Feedback::Promoted {
+            exchange_id,
+            record_sha256,
+            before,
+            after,
+            evidence_sha256,
+            promotion_sha256,
+            costs,
+            baseline,
+        } => {
+            let trace = index
+                .traces
+                .get_mut(&exchange_id)
+                .ok_or("promotion lacks prior feedback decision")?;
+            let record = prepared(&events[..position], &trace.binding, trace.decision_position)?;
+            let (promotion, evidence) =
+                store.promotion_evidence_between(&record, &before, &after)?;
+            let original = original(&events[..position], &trace.binding.decision_id)?;
+            let request: Request = serde_json::from_value(original.details["request"].clone())
+                .map_err(|_| "original request changed")?;
+            let Operation::Submit { offer } = request.body else {
+                unreachable!()
+            };
+            if trace.promotion.is_some()
+                || before != trace.before
+                || record.digest()? != record_sha256
+                || record.payload != offer.record.payload
+                || promotion != promotion_sha256
+                || digest(&evidence)? != evidence_sha256
+                || !credited.insert(promotion.clone())
+            {
+                return Err("feedback promotion was swapped, replayed or credited twice".into());
+            }
+            if costs.total()? != cost_value(&evidence, "candidate")?
+                || costs.acquisition != cost_value(&evidence, "acquisition")?
+                || costs.validation != cost_value(&evidence, "verification")?
+                || costs.adoption != cost_value(&evidence, "adoption")?
+            {
+                return Err("feedback costs differ from original stored evaluation".into());
+            }
+            validate_baseline(&baseline)?;
+            if baseline != trace.baseline {
+                let recorded = events[..position]
+                    .iter()
+                    .find_map(|event| match event {
+                        OperationalEvent::EvaluationCompleted {
+                            candidate_id,
+                            response,
+                            ..
+                        } if candidate_id == &trace.binding.candidate_id => {
+                            response.get("feedback_baseline")
+                        }
+                        _ => None,
+                    })
+                    .ok_or("changed baseline has no actual typed evaluation measurement")?;
+                if serde_json::from_value::<Baseline>(recorded.clone())
+                    .map_err(|_| "typed evaluation baseline rejected")?
+                    != baseline
+                {
+                    return Err(
+                        "feedback baseline changed independently of its actual evaluation".into(),
+                    );
+                }
+                trace.baseline = baseline;
+            }
+            if let Baseline::Measured {
+                units,
+                evidence_sha256: baseline_sha,
+            } = &trace.baseline
+            {
+                if *units != cost_value(&evidence, "baseline")? || baseline_sha != &evidence_sha256
+                {
+                    return Err(
+                        "measured baseline is not the exact stored evaluation evidence".into(),
+                    );
+                }
+            }
+            trace.promotion = Some(Promotion {
+                record,
                 before,
                 after,
+                evidence,
                 evidence_sha256,
-                promotion_sha256,
+                promotion_sha256: promotion,
                 costs,
-                baseline,
-            } => {
-                let trace = index
-                    .traces
-                    .get_mut(&exchange_id)
-                    .ok_or("promotion lacks prior feedback decision")?;
-                let record =
-                    prepared(&events[..position], &trace.binding, trace.decision_position)?;
-                let (promotion, evidence) =
-                    store.promotion_evidence_between(&record, &before, &after)?;
-                let original = original(&events[..position], &trace.binding.decision_id)?;
-                let request: Request = serde_json::from_value(original.details["request"].clone())
-                    .map_err(|_| "original request changed")?;
-                let Operation::Submit { offer } = request.body else {
-                    unreachable!()
-                };
-                if trace.promotion.is_some()
-                    || before != trace.before
-                    || record.digest()? != record_sha256
-                    || record.payload != offer.record.payload
-                    || promotion != promotion_sha256
-                    || digest(&evidence)? != evidence_sha256
-                    || !credited.insert(promotion.clone())
-                {
-                    return Err("feedback promotion was swapped, replayed or credited twice".into());
-                }
-                if costs.total()? != cost_value(&evidence, "candidate")?
-                    || costs.acquisition != cost_value(&evidence, "acquisition")?
-                    || costs.validation != cost_value(&evidence, "verification")?
-                    || costs.adoption != cost_value(&evidence, "adoption")?
-                {
-                    return Err("feedback costs differ from original stored evaluation".into());
-                }
-                validate_baseline(&baseline)?;
-                if baseline != trace.baseline {
-                    let recorded = events[..position]
-                        .iter()
-                        .find_map(|event| match event {
-                            OperationalEvent::EvaluationCompleted {
-                                candidate_id,
-                                response,
-                                ..
-                            } if candidate_id == &trace.binding.candidate_id => {
-                                response.get("feedback_baseline")
-                            }
-                            _ => None,
-                        })
-                        .ok_or("changed baseline has no actual typed evaluation measurement")?;
-                    if serde_json::from_value::<Baseline>(recorded.clone())
-                        .map_err(|_| "typed evaluation baseline rejected")?
-                        != baseline
-                    {
-                        return Err(
-                            "feedback baseline changed independently of its actual evaluation"
-                                .into(),
-                        );
-                    }
-                    trace.baseline = baseline;
-                }
-                if let Baseline::Measured {
-                    units,
-                    evidence_sha256: baseline_sha,
-                } = &trace.baseline
-                {
-                    if *units != cost_value(&evidence, "baseline")?
-                        || baseline_sha != &evidence_sha256
-                    {
-                        return Err(
-                            "measured baseline is not the exact stored evaluation evidence".into(),
-                        );
-                    }
-                }
-                trace.promotion = Some(Promotion {
-                    record,
-                    before,
-                    after,
-                    evidence,
-                    evidence_sha256,
-                    promotion_sha256: promotion,
-                    costs,
-                });
+            });
+        }
+        Feedback::StoreUse {
+            exchange_id,
+            record_sha256,
+            knowledge_at,
+            input,
+            output,
+            model_work,
+            sequence,
+            basis,
+        } => {
+            let trace = index
+                .traces
+                .get_mut(&exchange_id)
+                .ok_or("model use lacks prior feedback decision")?;
+            let promotion = trace
+                .promotion
+                .as_ref()
+                .ok_or("model use precedes local promotion")?;
+            if trace.outcome.is_some()
+                || sequence != trace.uses
+                || record_sha256 != promotion.record.digest()?
+                || knowledge_at.records < promotion.after.records
+                || !active_at(store, &promotion.record, &knowledge_at)?
+                || rechecked_prediction(&promotion.record, input)? != (output, model_work)
+            {
+                return Err(
+                    "model use is inactive, mismatched, replayed or not its actual prediction"
+                        .into(),
+                );
             }
-            Feedback::StoreUse {
-                exchange_id,
-                record_sha256,
-                knowledge_at,
-                input,
-                output,
-                model_work,
-                sequence,
-                basis,
-            } => {
-                let trace = index
-                    .traces
-                    .get_mut(&exchange_id)
-                    .ok_or("model use lacks prior feedback decision")?;
-                let promotion = trace
-                    .promotion
-                    .as_ref()
-                    .ok_or("model use precedes local promotion")?;
-                if trace.outcome.is_some()
-                    || sequence != trace.uses
-                    || record_sha256 != promotion.record.digest()?
-                    || knowledge_at.records < promotion.after.records
-                    || !active_at(store, &promotion.record, &knowledge_at)?
-                    || prediction(&promotion.record, input)? != (output, model_work)
-                {
-                    return Err(
-                        "model use is inactive, mismatched, replayed or not its actual prediction"
-                            .into(),
-                    );
+            let correct = expected(&promotion.evidence, input) == Some(output);
+            let exact_basis = if correct {
+                UseBasis::RetainedEvaluation {
+                    evidence_sha256: promotion.evidence_sha256.clone(),
                 }
-                let correct = expected(&promotion.evidence, input) == Some(output);
-                let exact_basis = if correct {
-                    UseBasis::RetainedEvaluation {
-                        evidence_sha256: promotion.evidence_sha256.clone(),
-                    }
-                } else {
-                    UseBasis::ConditionalFamily {
-                        family: "declared finite knowledge family".into(),
-                    }
-                };
-                if basis != exact_basis {
-                    return Err("model use correctness basis is unsupported".into());
+            } else {
+                UseBasis::ConditionalFamily {
+                    family: "declared finite knowledge family".into(),
                 }
-                trace.use_work = trace
-                    .use_work
-                    .checked_add(model_work)
-                    .filter(|value| *value <= LIMIT)
-                    .ok_or("model use work overflow")?;
-                trace.uses += 1;
-                trace.correct_uses += usize::from(correct);
-                if correct {
-                    let coverage = earlier_coverage(
-                        &store.active_at(&trace.before)?,
-                        &promotion.record,
-                        input,
-                    )?;
-                    trace.extended_uses += usize::from(coverage == Some(false));
-                    trace.uncertain_prior |= coverage.is_none();
-                }
+            };
+            if basis != exact_basis {
+                return Err("model use correctness basis is unsupported".into());
             }
-            Feedback::Outcome {
-                exchange_id,
-                knowledge_at,
-                outcome,
-            } => {
-                let trace = index
-                    .traces
-                    .get_mut(&exchange_id)
-                    .ok_or("outcome lacks its decision")?;
-                if trace.outcome.is_some() || derive(trace, store, &knowledge_at)? != outcome {
-                    return Err("feedback outcome is fabricated or duplicated".into());
-                }
-                trace.outcome = Some(outcome);
-            }
-            Feedback::Rejected {
-                exchange_id,
-                knowledge_at,
-                rejection_sha256,
-                outcome,
-            } => {
-                let trace = index
-                    .traces
-                    .get_mut(&exchange_id)
-                    .ok_or("rejection lacks its earlier feedback decision")?;
-                store.validate_anchor(&knowledge_at)?;
-                let rejection = events[..position]
-                    .iter()
-                    .enumerate()
-                    .find(|(index, event)| {
-                        matches!(event,OperationalEvent::EvaluationRejected{candidate_id,..}
-                    if candidate_id==&trace.binding.candidate_id)
-                            && *index > trace.decision_position
-                    })
-                    .map(|(_, event)| event)
-                    .ok_or("feedback rejection lacks a later actual evaluator rejection")?;
-                if trace.promotion.is_some()
-                    || trace.outcome.is_some()
-                    || trace.uses != 0
-                    || digest(&serde_json::to_value(rejection).map_err(|e| e.to_string())?)?
-                        != rejection_sha256
-                    || outcome != rejected_outcome(&trace.baseline)
-                {
-                    return Err("rejection feedback is fabricated or credited twice".into());
-                }
-                trace.rejected = Some((rejection_sha256, knowledge_at));
-                trace.outcome = Some(outcome);
-            }
-            Feedback::CostObservation {
-                exchange_id,
-                measurement,
-            } => {
-                let trace = index
-                    .traces
-                    .get_mut(&exchange_id)
-                    .ok_or("cost observation has no prior exchange")?;
-                if trace.task_measurement.is_some() {
-                    return Err(
-                        "task measurement cannot be replayed or superseded after opening".into(),
-                    );
-                }
-                let expected = scoped_measurement(
-                    trace,
-                    &events[..position],
-                    measurement.scope.clone(),
-                    measurement.sender.clone(),
-                    measurement.boundary.clone(),
-                    measurement.before.clone(),
-                    measurement.after.clone(),
-                    measurement.lookups.clone(),
-                )?;
-                if expected != measurement {
-                    return Err(
-                        "scoped task costs differ from actual bound meter/control/wire receipts"
-                            .into(),
-                    );
-                }
-                trace.task_measurement = Some(measurement);
+            trace.use_work = trace
+                .use_work
+                .checked_add(model_work)
+                .filter(|value| *value <= LIMIT)
+                .ok_or("model use work overflow")?;
+            trace.uses += 1;
+            trace.correct_uses += usize::from(correct);
+            if correct {
+                let coverage =
+                    earlier_coverage(&store.active_at(&trace.before)?, &promotion.record, input)?;
+                trace.extended_uses += usize::from(coverage == Some(false));
+                trace.uncertain_prior |= coverage.is_none();
             }
         }
+        Feedback::Outcome {
+            exchange_id,
+            knowledge_at,
+            outcome,
+        } => {
+            let trace = index
+                .traces
+                .get_mut(&exchange_id)
+                .ok_or("outcome lacks its decision")?;
+            if trace.outcome.is_some() || derive(trace, store, &knowledge_at)? != outcome {
+                return Err("feedback outcome is fabricated or duplicated".into());
+            }
+            trace.outcome = Some(outcome);
+        }
+        Feedback::Rejected {
+            exchange_id,
+            knowledge_at,
+            rejection_sha256,
+            outcome,
+        } => {
+            let trace = index
+                .traces
+                .get_mut(&exchange_id)
+                .ok_or("rejection lacks its earlier feedback decision")?;
+            store.validate_anchor(&knowledge_at)?;
+            let rejection = events[..position]
+                .iter()
+                .enumerate()
+                .find(|(index, event)| {
+                    matches!(event,OperationalEvent::EvaluationRejected{candidate_id,..}
+                if candidate_id==&trace.binding.candidate_id)
+                        && *index > trace.decision_position
+                })
+                .map(|(_, event)| event)
+                .ok_or("feedback rejection lacks a later actual evaluator rejection")?;
+            if trace.promotion.is_some()
+                || trace.outcome.is_some()
+                || trace.uses != 0
+                || digest(&serde_json::to_value(rejection).map_err(|e| e.to_string())?)?
+                    != rejection_sha256
+                || outcome != rejected_outcome(&trace.baseline)
+            {
+                return Err("rejection feedback is fabricated or credited twice".into());
+            }
+            trace.rejected = Some((rejection_sha256, knowledge_at));
+            trace.outcome = Some(outcome);
+        }
+        Feedback::CostObservation {
+            exchange_id,
+            measurement,
+        } => {
+            let trace = index
+                .traces
+                .get_mut(&exchange_id)
+                .ok_or("cost observation has no prior exchange")?;
+            if trace.task_measurement.is_some() {
+                return Err(
+                    "task measurement cannot be replayed or superseded after opening".into(),
+                );
+            }
+            let expected = scoped_measurement(
+                trace,
+                &events[..position],
+                measurement.scope.clone(),
+                measurement.sender.clone(),
+                measurement.boundary.clone(),
+                measurement.before.clone(),
+                measurement.after.clone(),
+                measurement.lookups.clone(),
+                journal,
+            )?;
+            if expected != measurement {
+                return Err(
+                    "scoped task costs differ from actual bound meter/control/wire receipts".into(),
+                );
+            }
+            trace.task_measurement = Some(measurement);
+        }
     }
+    Ok(())
+}
+fn finish_index(mut index: FeedbackIndex, store: &KnowledgeStore) -> Result<FeedbackIndex, String> {
     for trace in index.traces.values() {
         if let (Some(promotion), Some(outcome)) = (&trace.promotion, &trace.outcome) {
             let current = store
@@ -1315,6 +1421,7 @@ fn rebuild(events: &[OperationalEvent], store: &KnowledgeStore) -> Result<Feedba
     }
     Ok(index)
 }
+
 fn recommend(outcome: &Outcome, active: bool) -> Recommendation {
     if !active
         || outcome.quality == Quality::Rejected
@@ -1339,6 +1446,17 @@ fn rejected_outcome(baseline: &Baseline) -> Outcome {
     }
 }
 pub fn replay_index(
+    journal: &OperationalJournal,
+    store: &KnowledgeStore,
+) -> Result<FeedbackIndex, String> {
+    if journal.identity() != store.identity() {
+        return Err("feedback journal belongs to another knowledge owner".into());
+    }
+    rebuild_inner(journal.events(), store, Some(journal))
+}
+/// Retained full-prefix calculation for exact regression/profiling comparisons.
+/// It checks the same evidence and intentionally bypasses the derived index.
+pub fn replay_index_reference(
     journal: &OperationalJournal,
     store: &KnowledgeStore,
 ) -> Result<FeedbackIndex, String> {
@@ -1430,7 +1548,7 @@ fn append(
     let event = carrier(event, scope)?;
     let mut events = journal.events().to_vec();
     events.push(event.clone());
-    rebuild(&events, store)?;
+    rebuild_inner(&events, store, Some(journal))?;
     journal.append(event)
 }
 pub fn begin(
@@ -1550,7 +1668,7 @@ pub fn begin_evaluation(
     )?;
     let mut checked = journal.events().to_vec();
     checked.extend([event.clone(), feedback.clone()]);
-    rebuild(&checked, store)?;
+    rebuild_inner(&checked, store, Some(journal))?;
     // One durable replacement prevents a crash from separating the receiver
     // decision and its feedback boundary. Existing bytes remain an exact prefix.
     let expected_head = journal.head_sha256().to_string();
@@ -1721,6 +1839,7 @@ pub fn measure_local(
         before,
         after,
         lookups,
+        Some(journal),
     )?;
     let value = serde_json::to_value(&measurement).map_err(|error| error.to_string())?;
     append(
@@ -1765,7 +1884,22 @@ pub fn rejected(
     )?;
     Ok(Some(outcome))
 }
+// Retained chronological per-carrier startup reference used by qualification
+// tests. Production uses StartupReplay with the same authority/event checks.
+#[cfg(test)]
 pub(super) fn validate_profile_event(
+    config: &Config,
+    event: &OperationalEvent,
+    prior: &[OperationalEvent],
+    store: &KnowledgeStore,
+) -> Result<(), String> {
+    validate_profile_authority(config, event, prior, store)?;
+    let mut events = prior.to_vec();
+    events.push(event.clone());
+    rebuild(&events, store).map(|_| ())
+}
+
+fn validate_profile_authority(
     config: &Config,
     event: &OperationalEvent,
     prior: &[OperationalEvent],
@@ -1812,9 +1946,80 @@ pub(super) fn validate_profile_event(
             .peer(&binding.sender_id)?
             .access(&binding.scope, "candidate.submit")?;
     }
-    let mut events = prior.to_vec();
-    events.push(event.clone());
-    rebuild(&events, store).map(|_| ())
+    Ok(())
+}
+
+/// A single cold-start validation cursor over one live, already hash-checked
+/// journal. Each event must be supplied in order with its historical operator
+/// policy. It is not serializable, shared, or reusable for another journal.
+pub(super) struct StartupReplay<'a> {
+    journal: &'a OperationalJournal,
+    index: FeedbackIndex,
+    credited: BTreeSet<String>,
+    next: usize,
+    failed: bool,
+}
+impl<'a> StartupReplay<'a> {
+    pub(super) fn new(
+        journal: &'a OperationalJournal,
+        store: &KnowledgeStore,
+    ) -> Result<Self, String> {
+        if journal.identity() != store.identity() {
+            return Err("feedback startup owner changed".into());
+        }
+        work(|work| work.saturated |= add_count(&mut work.single_pass_starts, 1));
+        Ok(Self {
+            journal,
+            index: FeedbackIndex::default(),
+            credited: BTreeSet::new(),
+            next: 0,
+            failed: false,
+        })
+    }
+    pub(super) fn validate_next(
+        &mut self,
+        config: &Config,
+        position: usize,
+        store: &KnowledgeStore,
+    ) -> Result<(), String> {
+        let _timer = ReplayTimer(Instant::now());
+        if self.failed || position != self.next || store.identity() != self.journal.identity() {
+            self.failed = true;
+            return Err("feedback startup skipped/replayed an event or changed owner".into());
+        }
+        self.failed = true;
+        let events = self.journal.events();
+        let event = events
+            .get(position)
+            .ok_or("feedback startup event is absent")?;
+        if handles(event) {
+            validate_profile_authority(config, event, &events[..position], store)?;
+        }
+        apply_feedback_event(
+            &mut self.index,
+            &mut self.credited,
+            position,
+            event,
+            events,
+            store,
+            Some(self.journal),
+        )?;
+        self.next += 1;
+        self.failed = false;
+        Ok(())
+    }
+    pub(super) fn finish(self, store: &KnowledgeStore) -> Result<FeedbackIndex, String> {
+        let _timer = ReplayTimer(Instant::now());
+        if self.failed
+            || self.next != self.journal.events().len()
+            || store.identity() != self.journal.identity()
+        {
+            return Err("feedback startup did not validate the complete owned journal".into());
+        }
+        let result = finish_index(self.index, store)?;
+        work(|work| work.saturated |= add_count(&mut work.single_pass_finishes, 1));
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -2457,6 +2662,219 @@ mod tests {
         .is_err());
     }
 
+    fn configured_fixture() -> (Fixture, Config) {
+        let path = std::env::temp_dir().join(format!(
+            "symbiote-feedback-configured-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir(&path).unwrap();
+        let owner = Arc::new(Store::open(&path).unwrap());
+        let identity = owner.identity().to_string();
+        let fixture_pin = "22".repeat(32);
+        let contexts = ["a", "b"].map(|name| json!({"scope":format!("affine-{name}/v1"),"schema_fingerprint":affine_schema_fingerprint(3).unwrap(),"truth_fixture":format!("{name}.json"),"truth_sha256":fixture_pin}));
+        let peers = ["a", "b"].into_iter().enumerate().map(|(index,name)| json!({
+            "alias":format!("peer-{name}"),"id":format!("sender-{name}"),"address":format!("127.0.0.1:{}",9200+index),"server_name":"localhost",
+            "certificate_sha256":if index==0 {"bb".repeat(32)} else {"cc".repeat(32)},
+            "access":[{"scope":format!("affine-{name}/v1"),"operations":["candidate.submit"],"artifacts":["*"]}]
+        })).collect::<Vec<_>>();
+        let config = Config::historical(&json!({"ca_sha256":"dd".repeat(32),"manifest":{
+            "schema":"symbiote.service-config/1","state":path,"identity":identity,"certificate":"public.pem","private_key":"private.pem","certificate_sha256":"aa".repeat(32),"ca_certificate":"ca.pem","bind_address":"127.0.0.1:0","peers":peers,"contexts":contexts,
+            "limits":{"max_requests":32,"max_connections":8,"max_frame_bytes":65536,"timeout_ms":1000,"lifetime_ms":10000,"per_peer_requests":16,"max_offers":8,"max_offer_bytes":8192,"model_work":100000}
+        }})).unwrap();
+        let journal =
+            OperationalJournal::open(owner, "configured-peer/v1", &config.policy_digest).unwrap();
+        let store = KnowledgeStore::open(&path, &identity).unwrap();
+        (
+            Fixture {
+                path,
+                journal: Some(journal),
+                store: Some(store),
+                policy: config.policy_digest.clone(),
+                fixture: fixture_pin,
+            },
+            config,
+        )
+    }
+    fn single_pass(fixture: &Fixture, config: &Config) -> Result<FeedbackIndex, String> {
+        let journal = fixture.journal.as_ref().unwrap();
+        let store = fixture.store.as_ref().unwrap();
+        let mut replay = StartupReplay::new(journal, store)?;
+        for position in 0..journal.events().len() {
+            replay.validate_next(config, position, store)?;
+        }
+        replay.finish(store)
+    }
+    #[test]
+    fn single_pass_matches_reference_with_rejection_of_wrong_epochs_and_later_revocation() {
+        let (mut fixture, config) = configured_fixture();
+        let a = fixture.learn("a", 0, 20);
+        fixture.use_and_complete(&a, 2);
+        let b = fixture.learn("b", 0, 5);
+        fixture.use_and_complete(&b, 2);
+        let journal = fixture.journal.as_ref().unwrap();
+        let store = fixture.store.as_ref().unwrap();
+        let before = replay_work();
+        for (position, event) in journal.events().iter().enumerate() {
+            if handles(event) {
+                validate_profile_event(&config, event, &journal.events()[..position], store)
+                    .unwrap();
+            }
+        }
+        let reference_work = replay_work();
+        let actual = single_pass(&fixture, &config).unwrap();
+        let optimized_work = replay_work();
+        let expected = replay_index_reference(journal, store).unwrap();
+        assert_eq!(
+            serde_json::to_value(&actual.experiences).unwrap(),
+            serde_json::to_value(&expected.experiences).unwrap()
+        );
+        assert!(
+            reference_work.event_visits - before.event_visits
+                > optimized_work.event_visits - reference_work.event_visits
+        );
+        assert!(
+            reference_work.store_use_prediction_rechecks - before.store_use_prediction_rechecks
+                > optimized_work.store_use_prediction_rechecks
+                    - reference_work.store_use_prediction_rechecks
+        );
+        assert_eq!(
+            optimized_work.event_visits - reference_work.event_visits,
+            journal.events().len() as u64
+        );
+        assert_eq!(
+            optimized_work.store_use_prediction_rechecks
+                - reference_work.store_use_prediction_rechecks,
+            2
+        );
+        assert_eq!(
+            actual.experience(&a.id).unwrap().recommendation,
+            Recommendation::Prefer
+        );
+        assert_eq!(
+            actual.experience(&b.id).unwrap().recommendation,
+            Recommendation::Defer
+        );
+        let mut wrong = Config::historical(&config.public_snapshot()).unwrap();
+        wrong.policy_digest = "ee".repeat(32);
+        assert!(single_pass(&fixture, &wrong).is_err());
+        let mut wrong = Config::historical(&config.public_snapshot()).unwrap();
+        wrong.contexts[0].truth_sha256 = Some("ff".repeat(32));
+        assert!(single_pass(&fixture, &wrong).is_err());
+        let mut denied = Config::historical(&config.public_snapshot()).unwrap();
+        denied.peers[0].access[0].operations = vec!["knowledge.list".into()];
+        assert!(single_pass(&fixture, &denied).is_err());
+        fixture
+            .store
+            .as_mut()
+            .unwrap()
+            .revoke(&a.record.id, "later counterexample")
+            .unwrap();
+        let actual = single_pass(&fixture, &config).unwrap();
+        let expected = replay_index_reference(
+            fixture.journal.as_ref().unwrap(),
+            fixture.store.as_ref().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            serde_json::to_value(&actual.experiences).unwrap(),
+            serde_json::to_value(&expected.experiences).unwrap()
+        );
+        assert_eq!(
+            actual.experience(&a.id).unwrap().recommendation,
+            Recommendation::Defer
+        );
+        let historical = replay_prefix(
+            fixture.journal.as_ref().unwrap().events(),
+            fixture.store.as_ref().unwrap(),
+            &b.after,
+        )
+        .unwrap();
+        assert_eq!(
+            historical.experience(&a.id).unwrap().recommendation,
+            Recommendation::Prefer
+        );
+    }
+    #[test]
+    fn startup_cursor_cannot_skip_repeat_finish_early_or_credit_duplicate_feedback() {
+        let (mut fixture, config) = configured_fixture();
+        let proof = fixture.learn("a", 0, 20);
+        fixture.use_and_complete(&proof, 2);
+        let journal = fixture.journal.as_ref().unwrap();
+        let store = fixture.store.as_ref().unwrap();
+        let mut replay = StartupReplay::new(journal, store).unwrap();
+        assert!(replay.validate_next(&config, 1, store).is_err());
+        assert!(replay.validate_next(&config, 0, store).is_err());
+        assert!(replay.finish(store).is_err());
+        let mut replay = StartupReplay::new(journal, store).unwrap();
+        replay.validate_next(&config, 0, store).unwrap();
+        assert!(replay.validate_next(&config, 0, store).is_err());
+        assert!(replay.finish(store).is_err());
+        let mut malformed = journal.events().to_vec();
+        let duplicate = malformed
+            .iter()
+            .find(|event| matches!(decode(event), Ok(Some(Feedback::Outcome { .. }))))
+            .unwrap()
+            .clone();
+        malformed.push(duplicate);
+        assert!(rebuild(&malformed, store).is_err());
+        let mut index = FeedbackIndex::default();
+        let mut credited = BTreeSet::new();
+        let mut rejected = false;
+        for (position, event) in malformed.iter().enumerate() {
+            if apply_feedback_event(
+                &mut index,
+                &mut credited,
+                position,
+                event,
+                &malformed,
+                store,
+                None,
+            )
+            .is_err()
+            {
+                rejected = true;
+                break;
+            }
+        }
+        assert!(
+            rejected,
+            "single-pass body must reject the same duplicate credit"
+        );
+    }
+
+    #[test]
+    fn typed_carrier_validation_rejects_rehashed_unknown_or_unbound_envelopes() {
+        let mut fixture = Fixture::new();
+        let proof = fixture.learn("a", 0, 20);
+        fixture.use_and_complete(&proof, 2);
+        let events = fixture.journal.as_ref().unwrap().events();
+        for event in events.iter().filter(|event| handles(event)) {
+            validate_carrier(event).unwrap();
+        }
+        assert!(
+            validate_carrier(&events[0]).is_err(),
+            "ordinary operational metadata is not a feedback carrier"
+        );
+        let original = events.iter().find(|event| handles(event)).unwrap();
+        for change in ["scope", "extra", "schema", "id"] {
+            let mut changed = original.clone();
+            let OperationalEvent::PartnerDecisionRecorded { decision } = &mut changed else {
+                unreachable!()
+            };
+            match change {
+                "scope" => decision.details["scope"] = json!("foreign/v1"),
+                "extra" => {
+                    decision.details["event"]["unrecognized"] = json!(true);
+                    decision.decision_id =
+                        format!("feedback-{}", digest(&decision.details).unwrap());
+                }
+                "schema" => decision.details["schema"] = json!("symbiote.learning-feedback/999"),
+                _ => decision.decision_id = format!("feedback-{}", "a".repeat(64)),
+            }
+            assert!(validate_carrier(&changed).is_err(), "{change}");
+        }
+    }
     #[test]
     fn a_legal_late_capture_cannot_omit_the_actual_sense_boundary() {
         let mut fixture = Fixture::new();
@@ -2493,15 +2911,52 @@ mod tests {
             .unwrap();
         let events = fixture.journal.as_ref().unwrap().events();
         validate_sense_boundary(&early.boundary, events, &binding, "sense").unwrap();
+        let journal = fixture.journal.as_ref().unwrap();
+        assert_eq!(
+            early.boundary.prefix_sha256,
+            journal
+                .event_prefix_sha256_reference(early.boundary.events)
+                .unwrap()
+        );
+        validate_sense_boundary_inner(&early.boundary, events, &binding, "sense", Some(journal))
+            .unwrap();
+
         let late = capture_local_execution(fixture.journal.as_ref().unwrap(), "graph/v1", "sender")
             .unwrap();
         assert!(validate_sense_boundary(&late.boundary, events, &binding, "sense").is_err());
+        assert!(validate_sense_boundary_inner(
+            &late.boundary,
+            events,
+            &binding,
+            "sense",
+            Some(journal)
+        )
+        .is_err());
+
         let mut substituted = early.boundary.clone();
         substituted.owner = "different-owner".into();
         assert!(validate_sense_boundary(&substituted, events, &binding, "sense").is_err());
+        assert!(validate_sense_boundary_inner(
+            &substituted,
+            events,
+            &binding,
+            "sense",
+            Some(journal)
+        )
+        .is_err());
+
         substituted = early.boundary.clone();
         substituted.prefix_sha256 = "44".repeat(32);
         assert!(validate_sense_boundary(&substituted, events, &binding, "sense").is_err());
+        assert!(validate_sense_boundary_inner(
+            &substituted,
+            events,
+            &binding,
+            "sense",
+            Some(journal)
+        )
+        .is_err());
+
         assert!(
             validate_sense_boundary(&early.boundary, events, &binding, "foreign-sense").is_err()
         );

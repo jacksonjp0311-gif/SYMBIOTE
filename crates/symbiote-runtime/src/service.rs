@@ -9,6 +9,7 @@ mod evaluation;
 pub mod feedback;
 mod lifecycle;
 pub mod observation;
+mod outcomes;
 mod selection;
 pub mod timing;
 mod wire;
@@ -37,6 +38,7 @@ const OPERATIONS: &[&str] = &[
     "knowledge.predict",
     "candidate.submit",
     "candidate.status",
+    "outcome.read",
 ];
 
 fn digest<T: Serialize>(value: &T) -> Result<String, String> {
@@ -161,14 +163,19 @@ impl State {
         let _compute = timing::Timer::start(timing::Stage::Compute);
         lifecycle::check_context_history(&self.config, &self.journal, None)?;
         let mut policy = lifecycle::initial_policy(&self.config, &self.journal)?;
+        let mut feedback_replay = feedback::StartupReplay::new(&self.journal, &self.knowledge)?;
         for (event_index, event) in self.journal.events().iter().enumerate() {
-            if feedback::handles(event) {
-                feedback::validate_profile_event(
+            feedback_replay.validate_next(&policy, event_index, &self.knowledge)?;
+            if outcomes::handles(event) {
+                outcomes::validate_event(
                     &policy,
                     event,
                     &self.journal.events()[..event_index],
                     &self.knowledge,
                 )?;
+                continue;
+            }
+            if feedback::handles(event) {
                 continue;
             }
             if selection::handles(event) {
@@ -296,6 +303,7 @@ impl State {
                 _ => {}
             }
         }
+        feedback_replay.finish(&self.knowledge)?;
         lifecycle::restore_inspection(self)?;
         if policy.policy_digest != self.config.policy_digest {
             return Err("HOLD: configured policy differs from the latest approved epoch".into());
@@ -631,6 +639,18 @@ impl State {
                     .completed(candidate)
                     .unwrap_or_else(|| quarantine_response(candidate)))
             }
+            Operation::OutcomeRead {
+                candidate,
+                request_sha256,
+                challenge,
+            } => outcomes::export(
+                self,
+                &session.peer_id,
+                &request.scope,
+                candidate,
+                request_sha256,
+                challenge,
+            ),
         }
     }
     fn record(&self, id: &str, scope: &str) -> Result<KnowledgeRecord, String> {

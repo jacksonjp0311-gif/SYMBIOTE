@@ -27,6 +27,12 @@ pub(super) enum Operation {
     Submit { offer: Box<Offer> },
     #[serde(rename = "candidate.status")]
     CandidateStatus { candidate: String },
+    #[serde(rename = "outcome.read")]
+    OutcomeRead {
+        candidate: String,
+        request_sha256: String,
+        challenge: String,
+    },
 }
 impl Operation {
     pub fn name(&self) -> &'static str {
@@ -37,6 +43,7 @@ impl Operation {
             Self::Predict { .. } => "knowledge.predict",
             Self::Submit { .. } => "candidate.submit",
             Self::CandidateStatus { .. } => "candidate.status",
+            Self::OutcomeRead { .. } => "outcome.read",
         }
     }
     pub fn artifact(&self) -> Option<&str> {
@@ -102,6 +109,19 @@ impl Request {
         if let Operation::CandidateStatus { candidate } = &self.body {
             if !super::config::sha(candidate) {
                 return Err("candidate digest rejected".into());
+            }
+        }
+        if let Operation::OutcomeRead {
+            candidate,
+            request_sha256,
+            challenge,
+        } = &self.body
+        {
+            if [candidate, request_sha256, challenge]
+                .iter()
+                .any(|s| !super::config::sha(s))
+            {
+                return Err("outcome evidence digest/challenge rejected".into());
             }
         }
         Ok(())

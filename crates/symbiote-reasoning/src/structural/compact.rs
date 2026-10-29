@@ -15,11 +15,31 @@ use super::{
     check_input, check_width, domain_size, AffineObservation, AffinePrediction, AffineStatus,
     AffineStrategy, CandidateAssessment, PredictionBasis, AFFINE_FAMILY, MAX_WIDTH,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const MAX_PARAMETERS: usize = MAX_WIDTH as usize + 1;
 pub const SNAPSHOT_SCHEMA: &str = "symbiote.affine-gf2-snapshot/1";
 pub const WORK_MODEL: &str = "gf2-row-operations/1";
+
+/// The existing scan remains the default. RankBasis constructs exactly the
+/// same lowest informative input; with a hint it delegates to the reference
+/// scan so the existing hint tie rule remains unchanged.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AffineQueryPolicy {
+    #[default]
+    #[serde(rename = "finite-domain-scan/v1")]
+    Reference,
+    #[serde(rename = "rank-basis-min/v1")]
+    RankBasis,
+}
+impl AffineQueryPolicy {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Reference => "finite-domain-scan/v1",
+            Self::RankBasis => "rank-basis-min/v1",
+        }
+    }
+}
 
 /// One unit per basis-slot test, packed row XOR (including its RHS), stored
 /// equation, scored query or strategy prediction. Administrative input/history
@@ -67,6 +87,9 @@ pub struct CompactAffineSnapshot {
     pub last_failure: Option<String>,
     pub pending_observation: Option<AffineObservation>,
     pub physical_certificate_authorized: bool,
+    /// Omitted for the historical default, preserving reference receipt bytes.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_policy: Option<&'static str>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -90,6 +113,7 @@ pub struct CompactAffineLearner {
     last_failure: Option<String>,
     pending_observation: Option<AffineObservation>,
     hint: Option<AffineStrategy>,
+    query_policy: Option<&'static str>,
 }
 impl CompactAffineLearner {
     pub fn new(width: u8, max_work_units: usize) -> Result<Self, String> {
@@ -108,6 +132,7 @@ impl CompactAffineLearner {
             last_failure: None,
             pending_observation: None,
             hint: None,
+            query_policy: None,
         })
     }
     pub fn width(&self) -> u8 {
@@ -143,6 +168,7 @@ impl CompactAffineLearner {
             last_failure: self.last_failure.clone(),
             pending_observation: self.pending_observation.clone(),
             physical_certificate_authorized: false,
+            query_policy: self.query_policy,
         }
     }
     pub fn set_hint(&mut self, strategy: &AffineStrategy) -> Result<(), String> {
@@ -292,6 +318,7 @@ impl CompactAffineLearner {
         })
     }
     pub fn choose_query(&mut self) -> Result<Option<u16>, String> {
+        self.query_policy = None;
         if self.status != AffineStatus::Supported || self.hypothesis_count() == 1 {
             return Ok(None);
         }
@@ -327,6 +354,47 @@ impl CompactAffineLearner {
         }
         self.work.add(work);
         Ok(best.map(|(_, _, reversed)| u16::MAX - reversed))
+    }
+    pub fn choose_query_with_policy(
+        &mut self,
+        policy: AffineQueryPolicy,
+    ) -> Result<Option<u16>, String> {
+        if policy == AffineQueryPolicy::Reference {
+            return self.choose_query();
+        }
+        // At width one the two-input scan is cheaper than rechecking zero and
+        // the single coordinate. Retain that exact scan rather than claim a
+        // construction win where its actual operation count is worse.
+        if self.hint.is_some() || self.width == 1 {
+            let answer = self.choose_query();
+            self.query_policy = Some(policy.name());
+            return answer;
+        }
+        self.query_policy = Some(policy.name());
+        if self.status != AffineStatus::Supported || self.hypothesis_count() == 1 {
+            return Ok(None);
+        }
+        // Let R be the observed augmented-row span. If [0,1] is outside R,
+        // input zero is the first informative query. Otherwise the first e_i
+        // outside R gives input 2^i: every smaller integer is a combination of
+        // earlier e_j in R, plus [0,1]. Thus this is the exact reference winner,
+        // without enumerating the input domain or changing the hypothesis set.
+        let bound = self.parameters() * (2 * self.parameters() + 1);
+        if !self.admit(bound) {
+            return Ok(None);
+        }
+        let mut work = CompactAffineWork::default();
+        let inputs = std::iter::once(0).chain((0..self.width).map(|bit| 1_u16 << bit));
+        let mut answer = None;
+        for input in inputs {
+            work.query_candidates += 1;
+            if self.reduce(self.query_row(input), 0, &mut work).row != 0 {
+                answer = Some(input);
+                break;
+            }
+        }
+        self.work.add(work);
+        Ok(answer)
     }
     pub fn assess_candidate(
         &mut self,
@@ -687,6 +755,116 @@ mod tests {
         assert_eq!(inferred.conditional_family, AFFINE_FAMILY);
         assert!(!inferred.physical_certificate_authorized);
         assert_eq!(learner.choose_query().unwrap(), Some(4));
+    }
+
+    #[test]
+    fn rank_basis_policy_matches_every_canonical_world_without_changing_reference_receipts() {
+        for width in 1..=MAX_WIDTH {
+            for coefficients in 0..domain_size(width) {
+                for bias in [false, true] {
+                    let truth = AffineStrategy::new(width, coefficients, bias).unwrap();
+                    let mut reference = CompactAffineLearner::new(width, BUDGET).unwrap();
+                    let mut rank = reference.clone();
+                    let mut queries = 0;
+                    loop {
+                        let expected = reference.choose_query().unwrap();
+                        assert_eq!(
+                            rank.choose_query_with_policy(AffineQueryPolicy::RankBasis)
+                                .unwrap(),
+                            expected
+                        );
+                        let Some(input) = expected else { break };
+                        let output = truth.predict(input).unwrap();
+                        reference.observe(input, output).unwrap();
+                        rank.observe(input, output).unwrap();
+                        assert_eq!(rank.hypothesis_count(), reference.hypothesis_count());
+                        queries += 1;
+                    }
+                    assert_eq!(queries, usize::from(width) + 1);
+                    assert_eq!(rank.identified(), reference.identified());
+                    assert!(rank.snapshot().work_units <= reference.snapshot().work_units);
+                    assert!(
+                        rank.snapshot().work.query_candidates <= (usize::from(width) + 1).pow(2)
+                    );
+                    assert_eq!(
+                        rank.snapshot().query_policy,
+                        Some(AffineQueryPolicy::RankBasis.name())
+                    );
+                    assert!(serde_json::to_value(reference.snapshot())
+                        .unwrap()
+                        .get("query_policy")
+                        .is_none());
+                    for input in 0..domain_size(width) {
+                        assert_eq!(
+                            rank.forecast(input).unwrap(),
+                            reference.forecast(input).unwrap()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rank_basis_preserves_arbitrary_history_hint_and_failure_semantics() {
+        let mut random = 0x91ab_u64;
+        for width in 1..=MAX_WIDTH {
+            for seed in 0..24 {
+                let truth =
+                    AffineStrategy::new(width, (seed * 11 + 1) % domain_size(width), seed % 2 == 0)
+                        .unwrap();
+                let mut learner = CompactAffineLearner::new(width, BUDGET).unwrap();
+                for index in 0..12 {
+                    if index % 2 == 0 {
+                        learner.set_hint(&truth).unwrap();
+                    } else {
+                        learner.clear_hint();
+                    }
+                    let mut reference = learner.clone();
+                    let mut rank = learner.clone();
+                    assert_eq!(
+                        reference.choose_query().unwrap(),
+                        rank.choose_query_with_policy(AffineQueryPolicy::RankBasis)
+                            .unwrap()
+                    );
+                    if learner.hint.is_some() {
+                        assert_eq!(reference.snapshot().work, rank.snapshot().work);
+                    }
+                    for input in [0, domain_size(width) / 2, domain_size(width) - 1] {
+                        assert_eq!(
+                            reference.forecast(input).unwrap(),
+                            rank.forecast(input).unwrap()
+                        );
+                    }
+                    random = random.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    let input = (random >> 32) as u16 % domain_size(width);
+                    learner
+                        .observe(input, truth.predict(input).unwrap())
+                        .unwrap();
+                }
+                let first = learner.observations()[0].clone();
+                assert!(learner.observe(first.input, first.output ^ 1).is_err());
+                let before = learner.snapshot();
+                assert_eq!(
+                    learner
+                        .choose_query_with_policy(AffineQueryPolicy::RankBasis)
+                        .unwrap(),
+                    None
+                );
+                assert_eq!(learner.snapshot().status, before.status);
+                assert_eq!(learner.snapshot().work, before.work);
+            }
+        }
+        let mut bounded = CompactAffineLearner::new(8, 1).unwrap();
+        assert_eq!(
+            bounded
+                .choose_query_with_policy(AffineQueryPolicy::RankBasis)
+                .unwrap(),
+            None
+        );
+        assert_eq!(bounded.status(), &AffineStatus::BudgetExhausted);
+        assert_eq!(bounded.snapshot().work_units, 0);
+        assert!(bounded.observations().is_empty());
     }
 
     #[test]

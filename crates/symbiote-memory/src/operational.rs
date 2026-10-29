@@ -7,10 +7,14 @@
 use crate::{digest, knowledge::KnowledgeRecord, maintenance, Store};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
+use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::time::Instant;
 
 const FILE_NAME: &str = "operations.jsonl";
 pub(crate) const OWNER_FILE: &str = "operations-owner.json";
@@ -26,6 +30,125 @@ const MAX_IDENTITIES: usize = 128;
 const MAX_DECISIONS: usize = 2048;
 const MAX_SOURCE_WARMUPS: usize = 25;
 const ZERO_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+
+/// Actual prefix-index work, separate from reasoning units and learning rewards.
+/// Byte counts are application bytes supplied to canonical JSON/SHA-256, not
+/// allocator overhead, hash padding or exclusive CPU time. Memory is the index's
+/// inline size plus reserved digest storage, not whole-process peak memory.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+pub struct PrefixWork {
+    pub canonicalized_bytes: u64,
+    pub hashed_bytes: u64,
+    pub event_visits: u64,
+    pub cache_reads: u64,
+    pub reference_reads: u64,
+    pub reference_event_visits: u64,
+    pub reference_canonicalized_bytes: u64,
+    pub reference_hashed_bytes: u64,
+    pub ledger_bytes_read: u64,
+    pub durable_bytes_written: u64,
+    pub committed_bytes_cloned: u64,
+    pub index_bytes: u64,
+    pub index_elapsed_ns: u64,
+    pub reference_elapsed_ns: u64,
+    pub saturated: bool,
+}
+fn add_count(target: &mut u64, amount: u64) -> bool {
+    let overflow = target.checked_add(amount).is_none();
+    *target = target.saturating_add(amount);
+    overflow
+}
+fn elapsed(start: Instant) -> u64 {
+    start.elapsed().as_nanos().min(u128::from(u64::MAX)) as u64
+}
+struct PrefixIndex {
+    // Hash of '[' + canonical elements/commas, deliberately without ']'.
+    state: Sha256,
+    digests: Vec<[u8; 32]>,
+    work: RefCell<PrefixWork>,
+    indexed: bool,
+}
+impl PrefixIndex {
+    fn new(indexed: bool) -> Self {
+        let mut state = Sha256::new();
+        let mut digests = Vec::new();
+        if indexed {
+            state.update(b"[");
+            let mut closed = state.clone();
+            closed.update(b"]");
+            digests.push(closed.finalize().into());
+        }
+        Self {
+            state,
+            digests,
+            work: RefCell::new(PrefixWork {
+                hashed_bytes: if indexed { 2 } else { 0 },
+                ..PrefixWork::default()
+            }),
+            indexed,
+        }
+    }
+    fn advance(
+        &self,
+        state: &mut Sha256,
+        event: &OperationalEvent,
+        previous_events: usize,
+    ) -> Result<[u8; 32], String> {
+        let started = Instant::now();
+        // Value serialization matches the retained whole-array reference's
+        // ordering/escaping exactly, including arbitrary nested JSON objects.
+        let value = serde_json::to_value(event).map_err(|error| error.to_string())?;
+        let bytes = serde_json::to_vec(&value).map_err(|error| error.to_string())?;
+        if previous_events != 0 {
+            state.update(b",");
+        }
+        state.update(&bytes);
+        let mut closed = state.clone();
+        closed.update(b"]");
+        let result = closed.finalize().into();
+        let mut work = self.work.borrow_mut();
+        work.saturated |= add_count(&mut work.canonicalized_bytes, bytes.len() as u64);
+        work.saturated |= add_count(
+            &mut work.hashed_bytes,
+            bytes.len() as u64 + u64::from(previous_events != 0) + 1,
+        );
+        work.saturated |= add_count(&mut work.event_visits, 1);
+        work.saturated |= add_count(&mut work.index_elapsed_ns, elapsed(started));
+        Ok(result)
+    }
+    fn append_replayed(&mut self, event: &OperationalEvent) -> Result<(), String> {
+        if !self.indexed {
+            return Ok(());
+        }
+        let mut state = self.state.clone();
+        let digest = self.advance(&mut state, event, self.digests.len() - 1)?;
+        self.state = state;
+        self.digests.push(digest);
+        Ok(())
+    }
+    fn digest(&self, events: usize) -> Result<String, String> {
+        let started = Instant::now();
+        let bytes = self
+            .digests
+            .get(events)
+            .ok_or("operational event prefix is unavailable")?;
+        let mut result = String::with_capacity(64);
+        for byte in bytes {
+            write!(&mut result, "{byte:02x}").expect("String formatting cannot fail");
+        }
+        let mut work = self.work.borrow_mut();
+        work.saturated |= add_count(&mut work.cache_reads, 1);
+        work.saturated |= add_count(&mut work.index_elapsed_ns, elapsed(started));
+        Ok(result)
+    }
+    fn snapshot(&self) -> PrefixWork {
+        let mut work = self.work.borrow().clone();
+        work.index_bytes = (std::mem::size_of::<Self>()
+            + self.digests.capacity() * std::mem::size_of::<[u8; 32]>())
+            as u64;
+        work
+    }
+}
 
 fn label(value: &str) -> bool {
     !value.is_empty()
@@ -728,8 +851,12 @@ struct Replay {
     state: State,
     last_hash: String,
     count: usize,
+    prefixes: PrefixIndex,
 }
 fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
+    replay_inner(bytes, owner, false)
+}
+fn replay_inner(bytes: &[u8], owner: &str, indexed: bool) -> Result<Replay, String> {
     if bytes.is_empty() || bytes.len() > crate::MAX_LEDGER_BYTES || bytes.last() != Some(&b'\n') {
         return Err("operational journal is empty, truncated or exceeds its byte budget".into());
     }
@@ -738,6 +865,7 @@ fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
     let mut genesis_sha256 = String::new();
     let mut events = Vec::new();
     let mut state = State::default();
+    let mut prefixes = PrefixIndex::new(indexed);
     let raw = std::str::from_utf8(bytes).map_err(|error| error.to_string())?;
     let mut count = 0;
     for (sequence, line) in raw.lines().enumerate() {
@@ -788,6 +916,7 @@ fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
             }
             state.validate(&event)?;
             state.apply(&event, &row.sha256)?;
+            prefixes.append_replayed(&event)?;
             events.push(event);
         }
         last_hash = row.sha256;
@@ -803,6 +932,7 @@ fn replay(bytes: &[u8], owner: &str) -> Result<Replay, String> {
         state,
         last_hash,
         count,
+        prefixes,
     })
 }
 
@@ -847,10 +977,21 @@ pub struct OperationalJournal {
     committed: Vec<u8>,
     last_hash: String,
     count: usize,
+    prefixes: PrefixIndex,
 }
 impl OperationalJournal {
     pub fn open(owner: Arc<Store>, service_id: &str, policy_digest: &str) -> Result<Self, String> {
         Self::open_with_initialization_hook(owner, service_id, policy_digest, || Ok(()))
+    }
+    /// Retained full-serialization path for exact engineering comparisons.
+    /// All owner, policy, hash-chain and durable-write checks remain identical;
+    /// only the derived prefix index is disabled, including its construction.
+    pub fn open_reference(
+        owner: Arc<Store>,
+        service_id: &str,
+        policy_digest: &str,
+    ) -> Result<Self, String> {
+        Self::open_internal(owner, service_id, policy_digest, || Ok(()), false)
     }
     // A private supervised test boundary; never controlled by service requests.
     fn open_with_initialization_hook(
@@ -859,13 +1000,14 @@ impl OperationalJournal {
         policy_digest: &str,
         before_genesis: impl FnOnce() -> Result<(), String>,
     ) -> Result<Self, String> {
-        Self::open_internal(owner, service_id, policy_digest, before_genesis)
+        Self::open_internal(owner, service_id, policy_digest, before_genesis, true)
     }
     fn open_internal(
         owner: Arc<Store>,
         service_id: &str,
         policy_digest: &str,
         before_genesis: impl FnOnce() -> Result<(), String>,
+        indexed: bool,
     ) -> Result<Self, String> {
         if !label(service_id) || !sha256(policy_digest) {
             return Err(
@@ -882,7 +1024,7 @@ impl OperationalJournal {
             return Err("HOLD: operational journal/owner registration is missing; preserve the surviving file and restore history, never reset denial or idempotency state".into());
         }
         if let Some(bytes) = committed {
-            let replay = replay(&bytes, lease.owner.identity())?;
+            let replay = replay_inner(&bytes, lease.owner.identity(), indexed)?;
             validate_registration(
                 registration
                     .as_ref()
@@ -894,6 +1036,7 @@ impl OperationalJournal {
             {
                 return Err("HOLD: operational service/policy changed; preserve deny and idempotency history and use an explicit supported policy revision".into());
             }
+            replay.prefixes.work.borrow_mut().ledger_bytes_read = bytes.len() as u64;
             return Ok(Self {
                 lease,
                 genesis: replay.genesis,
@@ -902,6 +1045,7 @@ impl OperationalJournal {
                 committed: bytes,
                 last_hash: replay.last_hash,
                 count: replay.count,
+                prefixes: replay.prefixes,
             });
         }
         let genesis = Genesis {
@@ -941,6 +1085,8 @@ impl OperationalJournal {
             policy_digest: genesis.policy_digest.clone(),
             ..State::default()
         };
+        let prefixes = PrefixIndex::new(indexed);
+        prefixes.work.borrow_mut().durable_bytes_written = committed.len() as u64;
         Ok(Self {
             lease,
             genesis,
@@ -949,10 +1095,44 @@ impl OperationalJournal {
             committed,
             last_hash: row.sha256,
             count: 1,
+            prefixes,
         })
     }
     pub fn events(&self) -> &[OperationalEvent] {
         &self.events
+    }
+    /// Exact retained SHA256(canonical JSON array of typed events), excluding
+    /// genesis. Derived only from this live journal's validated history; an
+    /// imported digest or a missing prefix never creates a trusted index entry.
+    pub fn event_prefix_sha256(&self, events: usize) -> Result<String, String> {
+        if self.prefixes.indexed {
+            self.prefixes.digest(events)
+        } else {
+            self.event_prefix_sha256_reference(events)
+        }
+    }
+    /// Retained full-serialization reference for parity and bounded profiling.
+    /// This deliberately performs the original work rather than reading cache.
+    pub fn event_prefix_sha256_reference(&self, events: usize) -> Result<String, String> {
+        let prefix = self
+            .events
+            .get(..events)
+            .ok_or("operational event prefix is unavailable")?;
+        let started = Instant::now();
+        let value = serde_json::to_value(prefix).map_err(|error| error.to_string())?;
+        let bytes = serde_json::to_vec(&value).map_err(|error| error.to_string())?;
+        let result = format!("{:x}", Sha256::digest(&bytes));
+        let mut work = self.prefixes.work.borrow_mut();
+        work.saturated |= add_count(&mut work.reference_reads, 1);
+        work.saturated |= add_count(&mut work.reference_event_visits, prefix.len() as u64);
+        work.saturated |= add_count(&mut work.reference_canonicalized_bytes, bytes.len() as u64);
+        work.saturated |= add_count(&mut work.reference_hashed_bytes, bytes.len() as u64);
+        work.saturated |= add_count(&mut work.reference_elapsed_ns, elapsed(started));
+        Ok(result)
+    }
+    /// Diagnostic actual work only; never an input to trust, reward or grants.
+    pub fn prefix_work(&self) -> PrefixWork {
+        self.prefixes.snapshot()
     }
     pub fn record_count(&self) -> usize {
         self.count
@@ -1048,8 +1228,14 @@ impl OperationalJournal {
         }
         let mut state = self.state.clone();
         let mut bytes = self.committed.clone();
+        {
+            let mut work = self.prefixes.work.borrow_mut();
+            work.saturated |= add_count(&mut work.committed_bytes_cloned, bytes.len() as u64);
+        }
         let mut last_hash = self.last_hash.clone();
         let mut count = self.count;
+        let mut prefix_state = self.prefixes.state.clone();
+        let mut prefix_digests = Vec::with_capacity(events.len());
         for event in &events {
             if let OperationalEvent::PolicyTransitioned {
                 expected_head: anchor,
@@ -1087,6 +1273,13 @@ impl OperationalJournal {
                 return Err("operational journal byte budget exhausted".into());
             }
             state.apply(event, &row.sha256)?;
+            if self.prefixes.indexed {
+                prefix_digests.push(self.prefixes.advance(
+                    &mut prefix_state,
+                    event,
+                    self.events.len() + prefix_digests.len(),
+                )?);
+            }
             last_hash = row.sha256;
             count += 1;
         }
@@ -1096,11 +1289,18 @@ impl OperationalJournal {
         before_publish()?;
         maintenance::atomic_replace(&self.lease.owner.directory, FILE_NAME, &bytes)?;
         after_publish();
+        {
+            let mut work = self.prefixes.work.borrow_mut();
+            work.saturated |= add_count(&mut work.durable_bytes_written, bytes.len() as u64);
+        }
         self.committed = bytes;
         self.last_hash = last_hash;
         self.count = count;
         self.state = state;
         self.events.extend(events);
+        // No cache state becomes visible before the complete journal is durable.
+        self.prefixes.state = prefix_state;
+        self.prefixes.digests.extend(prefix_digests);
         Ok(())
     }
 }
@@ -1268,6 +1468,12 @@ mod policy_lifecycle_tests {
                 if after_publication { 4 } else { 1 }
             );
             let recovered = fs::read(reopened.ledger_path()).unwrap();
+            for end in 0..=reopened.events().len() {
+                assert_eq!(
+                    reopened.event_prefix_sha256(end).unwrap(),
+                    reopened.event_prefix_sha256_reference(end).unwrap()
+                );
+            }
             if after_publication {
                 assert!(recovered.starts_with(&original));
             } else {
@@ -1427,3 +1633,433 @@ mod lifecycle_anchor_tests {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod prefix_index_tests {
+    use super::*;
+    use serde_json::json;
+    use std::fs;
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "symbiote-prefix-unit-{}-{}",
+                std::process::id(),
+                crate::TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+        fn journal(&self) -> OperationalJournal {
+            OperationalJournal::open(
+                Arc::new(Store::open(&self.0).unwrap()),
+                "prefix-unit/v1",
+                &"a".repeat(64),
+            )
+            .unwrap()
+        }
+    }
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn decision(index: usize) -> OperationalEvent {
+        OperationalEvent::PartnerDecisionRecorded {
+            decision: PartnerDecisionRecord {
+                decision_id: format!("prefix-{index}"),
+                context: "prefix-unit/v1".into(),
+                frontier_edge: None,
+                selected_peer: Some("peer".into()),
+                details: json!({"z": [null, true, false, 0, -7, 1.25, {"\u{3b2}":"\u{e9} \u{1f980}", "a": "line\n\r\t\u{0}\"\\", "literal":"\\n\\u0000"}], "a": {"nested": [index, {}]}}),
+            },
+        }
+    }
+    fn every_prefix(journal: &OperationalJournal) {
+        for end in 0..=journal.events().len() {
+            assert_eq!(
+                journal.event_prefix_sha256(end).unwrap(),
+                journal.event_prefix_sha256_reference(end).unwrap()
+            );
+            assert_eq!(
+                journal.event_prefix_sha256(end).unwrap(),
+                digest(&serde_json::to_value(&journal.events()[..end]).unwrap()).unwrap()
+            );
+        }
+        assert!(journal
+            .event_prefix_sha256(journal.events().len() + 1)
+            .is_err());
+        assert!(journal
+            .event_prefix_sha256_reference(journal.events().len() + 1)
+            .is_err());
+    }
+    #[test]
+    fn exact_prefixes_match_reference_after_single_batch_and_cold_reopen() {
+        let fixture = Fixture::new();
+        let mut journal = fixture.journal();
+        every_prefix(&journal);
+        for index in 0..3 {
+            journal.append(decision(index)).unwrap();
+            every_prefix(&journal);
+        }
+        let original = fs::read(journal.ledger_path()).unwrap();
+        let head = journal.head_sha256().to_string();
+        journal
+            .append_checked_batch(&head, (3..8).map(decision).collect())
+            .unwrap();
+        every_prefix(&journal);
+        assert!(fs::read(journal.ledger_path())
+            .unwrap()
+            .starts_with(&original));
+        let saved = (0..=journal.events().len())
+            .map(|end| journal.event_prefix_sha256(end).unwrap())
+            .collect::<Vec<_>>();
+        let bytes = fs::read(journal.ledger_path()).unwrap();
+        drop(journal);
+        let reopened = fixture.journal();
+        every_prefix(&reopened);
+        assert_eq!(reopened.prefix_work().ledger_bytes_read, bytes.len() as u64);
+        assert_eq!(reopened.prefix_work().durable_bytes_written, 0);
+        for (end, hash) in saved.iter().enumerate() {
+            assert_eq!(&reopened.event_prefix_sha256(end).unwrap(), hash);
+        }
+        assert_eq!(fs::read(reopened.ledger_path()).unwrap(), bytes);
+    }
+    #[test]
+    fn rejected_and_prepublication_failed_appends_do_not_publish_prefixes() {
+        let fixture = Fixture::new();
+        let mut journal = fixture.journal();
+        journal.append(decision(0)).unwrap();
+        let hash = journal.event_prefix_sha256(1).unwrap();
+        let bytes = fs::read(journal.ledger_path()).unwrap();
+        let head = journal.head_sha256().to_string();
+        assert!(journal.append(decision(0)).is_err());
+        assert!(journal
+            .append_checked_batch(&"b".repeat(64), vec![decision(1)])
+            .is_err());
+        assert!(journal
+            .append_checked_batch_with_hooks(
+                &head,
+                vec![decision(1), decision(2)],
+                || Err("injected before publication".into()),
+                || {}
+            )
+            .is_err());
+        assert_eq!(journal.events().len(), 1);
+        assert_eq!(journal.event_prefix_sha256(1).unwrap(), hash);
+        assert!(journal.event_prefix_sha256(2).is_err());
+        assert_eq!(fs::read(journal.ledger_path()).unwrap(), bytes);
+        assert_eq!(
+            journal.prefix_work().event_visits,
+            3,
+            "failed proposed work is still counted"
+        );
+        journal.append(decision(3)).unwrap();
+        every_prefix(&journal);
+        drop(journal);
+        every_prefix(&fixture.journal());
+    }
+    #[test]
+    fn warm_reads_do_not_serialize_or_hash_history_and_reference_work_is_visible() {
+        let fixture = Fixture::new();
+        let mut journal = fixture.journal();
+        let head = journal.head_sha256().to_string();
+        journal
+            .append_checked_batch(&head, (0..5).map(decision).collect())
+            .unwrap();
+        let before = journal.prefix_work();
+        for _ in 0..7 {
+            journal.event_prefix_sha256(5).unwrap();
+        }
+        let warm = journal.prefix_work();
+        assert_eq!(warm.cache_reads - before.cache_reads, 7);
+        assert_eq!(warm.canonicalized_bytes, before.canonicalized_bytes);
+        assert_eq!(warm.hashed_bytes, before.hashed_bytes);
+        assert_eq!(warm.event_visits, before.event_visits);
+        let expected = digest(&serde_json::to_value(journal.events()).unwrap()).unwrap();
+        assert_eq!(journal.event_prefix_sha256_reference(5).unwrap(), expected);
+        let reference = journal.prefix_work();
+        assert_eq!(reference.reference_reads - warm.reference_reads, 1);
+        assert_eq!(
+            reference.reference_event_visits - warm.reference_event_visits,
+            5
+        );
+        assert!(reference.reference_hashed_bytes > warm.reference_hashed_bytes);
+        assert!(reference.index_bytes >= 6 * 32);
+        assert!(!reference.saturated);
+    }
+
+    fn registered_profile_guard() -> Result<(Value, Vec<u8>, String, PathBuf), String> {
+        let registration_path = PathBuf::from(
+            std::env::var_os("SYMBIOTE_ENGINE_EVOLUTION_REGISTRATION")
+                .ok_or("external registration path required")?,
+        );
+        let pin = std::env::var("SYMBIOTE_ENGINE_EVOLUTION_REGISTRATION_SHA256")
+            .map_err(|_| "external registration SHA required")?;
+        if !sha256(&pin)
+            || fs::metadata(&registration_path)
+                .map_err(|e| e.to_string())?
+                .len()
+                > 1024 * 1024
+        {
+            return Err("registration pin/size rejected".into());
+        }
+        let raw = fs::read(&registration_path).map_err(|e| e.to_string())?;
+        if format!("{:x}", Sha256::digest(&raw)) != pin {
+            return Err("external registration SHA mismatch".into());
+        }
+        let registration: Value = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
+        if registration["schema"] != "symbiote.engine-evolution-registration/1"
+            || registration["protocol"] != "SYMBIOTE-ENGINE-EVOLUTION-002"
+            || registration["baseline_source"] != "0616f9a6dc6788078c623a3c2ed2ef237ae11de6"
+            || registration["prefix_profile"] != json!({"histories":[0,16,64,256],"captures":32})
+        {
+            return Err("registered prefix workload differs from frozen protocol".into());
+        }
+        let protocol = format!(
+            "{:x}",
+            Sha256::digest(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../docs/ENGINE_EVOLUTION_PROTOCOL_002.md"
+            )))
+        );
+        if registration["protocol_sha256"] != protocol {
+            return Err("registration protocol SHA differs from compiled source".into());
+        }
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let declared = PathBuf::from(
+            registration["memory_test"]["path"]
+                .as_str()
+                .ok_or("memory test path missing")?,
+        );
+        if fs::canonicalize(&exe).map_err(|e| e.to_string())?
+            != fs::canonicalize(declared).map_err(|e| e.to_string())?
+            || fs::metadata(&exe).map_err(|e| e.to_string())?.len() > 128 * 1024 * 1024
+        {
+            return Err("registered memory executable path/size differs".into());
+        }
+        let exe_sha = format!(
+            "{:x}",
+            Sha256::digest(fs::read(&exe).map_err(|e| e.to_string())?)
+        );
+        if registration["memory_test"]["sha256"] != exe_sha {
+            return Err("registered memory executable SHA differs".into());
+        }
+        let output = PathBuf::from(
+            std::env::var_os("SYMBIOTE_PREFIX_PROFILE_ARTIFACTS")
+                .ok_or("fresh profile artifact directory required")?,
+        );
+        Ok((registration, raw, pin, output))
+    }
+    fn profile_arm(
+        path: &std::path::Path,
+        indexed: bool,
+        history: usize,
+    ) -> Result<(Value, Vec<String>), String> {
+        let started = Instant::now();
+        let owner = Arc::new(Store::open(path)?);
+        let journal = if indexed {
+            OperationalJournal::open(owner, "prefix-profile/v1", &"a".repeat(64))?
+        } else {
+            OperationalJournal::open_reference(owner, "prefix-profile/v1", &"a".repeat(64))?
+        };
+        let cold_elapsed = elapsed(started);
+        let cold = journal.prefix_work();
+        if journal.events().len() != history {
+            return Err("registered history count differs".into());
+        }
+        let started = Instant::now();
+        let mut captures = Vec::new();
+        for _ in 0..32 {
+            captures.push(journal.event_prefix_sha256(history)?);
+        }
+        let capture_elapsed = elapsed(started);
+        let after_captures = journal.prefix_work();
+        let started = Instant::now();
+        let prefixes = (0..=history)
+            .map(|end| journal.event_prefix_sha256(end))
+            .collect::<Result<Vec<_>, _>>()?;
+        let parity_elapsed = elapsed(started);
+        let after_parity = journal.prefix_work();
+        if captures.iter().any(|hash| Some(hash) != prefixes.last()) {
+            return Err("capture changed within frozen history".into());
+        }
+        let started = Instant::now();
+        drop(journal);
+        let close_elapsed = elapsed(started);
+        Ok((
+            json!({"mode":if indexed{"indexed"}else{"reference"},"cold_open_elapsed_ns":cold_elapsed,
+            "capture_elapsed_ns":capture_elapsed,"all_prefixes_elapsed_ns":parity_elapsed,"close_elapsed_ns":close_elapsed,
+            "cold_work":cold,"after_captures_work":after_captures,"after_parity_work":after_parity,
+            "capture_count":captures.len(),"capture_digest":captures.first(),"prefixes":prefixes}),
+            prefixes,
+        ))
+    }
+    /// Registered once-only engineering workload; ordinary tests do not open
+    /// these histories. The external supervisor provides source/executable pins,
+    /// a hard process-tree deadline and the complete evidence byte ceiling.
+    #[test]
+    #[ignore = "requires frozen engine-evolution-002 registration and external bounded supervisor"]
+    fn registered_engine_evolution_002_prefix_profile() -> Result<(), String> {
+        let whole_started = Instant::now();
+        let (registration, registration_raw, registration_sha, root) = registered_profile_guard()?;
+        fs::create_dir(&root).map_err(|e| format!("fresh profile directory required: {e}"))?;
+        fs::write(root.join("registration.json"), registration_raw).map_err(|e| e.to_string())?;
+        let mut histories = Vec::new();
+        for (case, history) in [0_usize, 16, 64, 256].into_iter().enumerate() {
+            if whole_started.elapsed() > std::time::Duration::from_secs(600) {
+                return Err("prefix profile deadline exhausted".into());
+            }
+            let path = root.join(format!("history-{history:03}"));
+            fs::create_dir(&path).map_err(|e| e.to_string())?;
+            let started = Instant::now();
+            let mut seed = OperationalJournal::open_reference(
+                Arc::new(Store::open(&path)?),
+                "prefix-profile/v1",
+                &"a".repeat(64),
+            )?;
+            for from in (0..history).step_by(64) {
+                let end = (from + 64).min(history);
+                let head = seed.head_sha256().to_string();
+                seed.append_checked_batch(&head, (from..end).map(decision).collect())?;
+            }
+            let setup_work = seed.prefix_work();
+            let owner = seed.identity().to_string();
+            let head = seed.head_sha256().to_string();
+            drop(seed);
+            let setup_elapsed = elapsed(started);
+            let ledger = fs::read(path.join(FILE_NAME)).map_err(|e| e.to_string())?;
+            let ledger_sha = format!("{:x}", Sha256::digest(&ledger));
+            // Counterbalanced predetermined order; warm OS/filesystem effects
+            // remain engineering diagnostics, not independent hardware samples.
+            let order = if case % 2 == 0 {
+                [false, true]
+            } else {
+                [true, false]
+            };
+            let mut arms = Vec::new();
+            let mut gold = None;
+            for indexed in order {
+                let (report, prefixes) = profile_arm(&path, indexed, history)?;
+                if let Some(expected) = &gold {
+                    if expected != &prefixes {
+                        return Err("indexed/reference prefix parity failed".into());
+                    }
+                } else {
+                    gold = Some(prefixes);
+                }
+                arms.push(report);
+            }
+            if fs::read(path.join(FILE_NAME)).map_err(|e| e.to_string())? != ledger {
+                return Err("profile reads changed durable history".into());
+            }
+            histories.push(json!({"history_events":history,"owner":owner,"journal_head_sha256":head,"journal_sha256":ledger_sha,
+                "journal_bytes":ledger.len(),"setup":{"mode":"reference","work":setup_work,"elapsed_ns":setup_elapsed},
+                "arms":arms,"all_prefixes_equal":true}));
+        }
+        let report = json!({"schema":"symbiote.prefix-profile/1","status":"PASS_EXACT_PREFIX_ENGINEERING",
+            "protocol":"SYMBIOTE-ENGINE-EVOLUTION-002","registration_sha256":registration_sha,"registration":registration,
+            "histories":histories,"elapsed_ns_before_final_census":elapsed(whole_started),"logical_graph_units_changed":false,"independent_scientific_samples":0,
+            "scope":"one-host retained canonical-hash algorithm versus derived index; all setup/cold/warm/parity costs retained separately",
+            "work_basis":"prefix-only byte/event counters; cold-open elapsed includes Store and journal validation; ledger read/write bytes are this journal instance, not physical disk counters",
+            "memory_basis":"index inline size plus reserved digest storage; external supervisor measures process peak memory",
+            "comparison":"per-arm cold+warm totals include shared setup once; whole experiment includes setup plus both arms; overlapping timers are not additive CPU"});
+        let bytes = serde_json::to_vec_pretty(&report).map_err(|e| e.to_string())?;
+        let mut census_bytes = 0_u64;
+        let mut pending = vec![root.clone()];
+        while let Some(path) = pending.pop() {
+            for entry in fs::read_dir(path).map_err(|e| e.to_string())? {
+                let entry = entry.map_err(|e| e.to_string())?;
+                let kind = entry.file_type().map_err(|e| e.to_string())?;
+                if kind.is_dir() {
+                    pending.push(entry.path());
+                } else if kind.is_file() {
+                    census_bytes = census_bytes
+                        .checked_add(entry.metadata().map_err(|e| e.to_string())?.len())
+                        .ok_or("evidence byte overflow")?;
+                } else {
+                    return Err("unexpected evidence filesystem object".into());
+                }
+            }
+        }
+        if census_bytes
+            .checked_add(bytes.len() as u64)
+            .is_none_or(|total| total > 128 * 1024 * 1024)
+            || whole_started.elapsed() > std::time::Duration::from_secs(600)
+        {
+            return Err("final profile closure exceeds registered evidence/time bounds".into());
+        }
+        fs::write(root.join("profile-report.json"), &bytes).map_err(|e| e.to_string())?;
+        if whole_started.elapsed() > std::time::Duration::from_secs(600) {
+            return Err("profile final write exceeded deadline".into());
+        }
+        println!("SYMBIOTE_PREFIX_PROFILE_JSON {}",serde_json::to_string(&json!({"schema":"symbiote.prefix-profile-location/1","status":"PASS_EXACT_PREFIX_ENGINEERING","path":root.join("profile-report.json"),"sha256":format!("{:x}",Sha256::digest(&bytes)),"evidence_bytes":census_bytes+bytes.len() as u64,"whole_elapsed_ns":elapsed(whole_started)})).map_err(|e|e.to_string())?);
+        Ok(())
+    }
+    #[test]
+    fn explicit_reference_mode_preserves_hashes_without_constructing_an_index() {
+        let indexed_fixture = Fixture::new();
+        let reference_fixture = Fixture::new();
+        let mut indexed = indexed_fixture.journal();
+        let mut reference = OperationalJournal::open_reference(
+            Arc::new(Store::open(&reference_fixture.0).unwrap()),
+            "prefix-unit/v1",
+            &"a".repeat(64),
+        )
+        .unwrap();
+        for event in (0..5).map(decision) {
+            indexed.append(event.clone()).unwrap();
+            reference.append(event).unwrap();
+        }
+        for end in 0..=5 {
+            assert_eq!(
+                indexed.event_prefix_sha256(end).unwrap(),
+                reference.event_prefix_sha256(end).unwrap()
+            );
+        }
+        let actual = reference.prefix_work();
+        assert_eq!(actual.event_visits, 0);
+        assert_eq!(actual.hashed_bytes, 0);
+        assert_eq!(actual.reference_reads, 6);
+        assert_eq!(actual.reference_event_visits, 15);
+        assert!(actual.durable_bytes_written > 0);
+        assert!(actual.committed_bytes_cloned > 0);
+        let before = fs::read(reference.ledger_path()).unwrap();
+        drop(reference);
+        let reference = OperationalJournal::open_reference(
+            Arc::new(Store::open(&reference_fixture.0).unwrap()),
+            "prefix-unit/v1",
+            &"a".repeat(64),
+        )
+        .unwrap();
+        assert_eq!(reference.prefix_work().hashed_bytes, 0);
+        assert_eq!(reference.prefix_work().event_visits, 0);
+        assert_eq!(
+            reference.prefix_work().ledger_bytes_read,
+            before.len() as u64
+        );
+        for end in 0..=5 {
+            assert_eq!(
+                indexed.event_prefix_sha256(end).unwrap(),
+                reference.event_prefix_sha256(end).unwrap()
+            );
+        }
+    }
+    #[test]
+    fn corrupt_durable_history_cannot_supply_a_cached_prefix_on_reopen() {
+        let fixture = Fixture::new();
+        let mut journal = fixture.journal();
+        journal.append(decision(0)).unwrap();
+        let path = journal.ledger_path();
+        drop(journal);
+        let mut bytes = fs::read(&path).unwrap();
+        let at = bytes
+            .windows(8)
+            .position(|window| window == b"prefix-0")
+            .unwrap();
+        bytes[at + 7] = b'9';
+        fs::write(&path, bytes).unwrap();
+        let owner = Arc::new(Store::open(&fixture.0).unwrap());
+        assert!(OperationalJournal::open(owner, "prefix-unit/v1", &"a".repeat(64)).is_err());
+    }
+}

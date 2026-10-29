@@ -12,7 +12,7 @@ use symbiote_memory::knowledge::{
     affine_schema_fingerprint, assess, KnowledgeRecord, KnowledgeStore, TrialCase, TrialCosts,
     TrialEvidence,
 };
-use symbiote_reasoning::structural::{AffineStrategy, CompactAffineLearner};
+use symbiote_reasoning::structural::{AffineQueryPolicy, AffineStrategy, CompactAffineLearner};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -161,6 +161,29 @@ pub fn infer_from_source<S: ObservationSource>(
     usage: &mut Usage,
     cancelled: &AtomicBool,
     deadline: Instant,
+    emit: impl FnMut(&str, Value) -> Result<(), String>,
+) -> Result<Inference, String> {
+    infer_with_policy(
+        source,
+        permit,
+        usage,
+        cancelled,
+        deadline,
+        AffineQueryPolicy::Reference,
+        emit,
+    )
+}
+
+/// Additive policy selection; callers must retain the selected policy name with
+/// their audit. Reference callers keep their existing query and receipt shapes.
+#[allow(clippy::too_many_arguments)]
+pub fn infer_with_policy<S: ObservationSource>(
+    source: &mut S,
+    permit: &ObservationPermit,
+    usage: &mut Usage,
+    cancelled: &AtomicBool,
+    deadline: Instant,
+    query_policy: AffineQueryPolicy,
     mut emit: impl FnMut(&str, Value) -> Result<(), String>,
 ) -> Result<Inference, String> {
     permit.validate()?;
@@ -172,17 +195,47 @@ pub fn infer_from_source<S: ObservationSource>(
             "observation adapter width or remaining query/work allowance is invalid".into(),
         );
     }
-    infer(source, permit, usage, cancelled, deadline, &mut emit)
+    infer_policy(
+        source,
+        permit,
+        usage,
+        cancelled,
+        deadline,
+        query_policy,
+        &mut emit,
+    )
 }
 
 /// Active query selection cannot use fixture contents, an imported model or a
 /// received hint. The caller chooses this compact backend explicitly.
+#[cfg(test)]
 fn infer<S: ObservationSource>(
     source: &mut S,
     permit: &ObservationPermit,
     usage: &mut Usage,
     cancelled: &AtomicBool,
     deadline: Instant,
+    emit: &mut impl FnMut(&str, Value) -> Result<(), String>,
+) -> Result<Inference, String> {
+    infer_policy(
+        source,
+        permit,
+        usage,
+        cancelled,
+        deadline,
+        AffineQueryPolicy::Reference,
+        emit,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn infer_policy<S: ObservationSource>(
+    source: &mut S,
+    permit: &ObservationPermit,
+    usage: &mut Usage,
+    cancelled: &AtomicBool,
+    deadline: Instant,
+    query_policy: AffineQueryPolicy,
     emit: &mut impl FnMut(&str, Value) -> Result<(), String>,
 ) -> Result<Inference, String> {
     let remaining = permit
@@ -198,7 +251,7 @@ fn infer<S: ObservationSource>(
             let input = {
                 let _timer = super::timing::Timer::start(super::timing::Stage::Compute);
                 learner
-                    .choose_query()?
+                    .choose_query_with_policy(query_policy)?
                     .ok_or("exact affine inference has no admissible query")?
             };
             let before = learner.snapshot();
@@ -209,6 +262,7 @@ fn infer<S: ObservationSource>(
             // after performing work. Retrying cannot reclaim a spent allowance.
             usage.queries += 1;
             let observation = source.observe(input, cancelled, deadline)?;
+            check(cancelled, deadline)?;
             if observation.sequence != queries.len()
                 || observation.input != input
                 || observation.output > 1
@@ -257,6 +311,7 @@ fn infer<S: ObservationSource>(
             }
             usage.queries += 1;
             let observation = source.observe(input, cancelled, deadline)?;
+            check(cancelled, deadline)?;
             if observation.sequence != queries.len()
                 || observation.input != input
                 || observation.output > 1
@@ -285,6 +340,7 @@ fn infer<S: ObservationSource>(
                     .into(),
             );
         }
+        check(cancelled, deadline)?;
         Ok(Inference {
             model,
             queries,
@@ -623,5 +679,113 @@ mod tests {
         }
         assert_eq!(source.0, 1);
         assert_eq!(usage.queries, 1);
+    }
+
+    #[test]
+    fn late_or_cancelled_final_source_reply_cannot_return_success() {
+        struct FinalReply {
+            queries: usize,
+            expire: bool,
+        }
+        impl ObservationSource for FinalReply {
+            fn width(&self) -> u8 {
+                3
+            }
+            fn observe(
+                &mut self,
+                input: u16,
+                cancelled: &AtomicBool,
+                deadline: Instant,
+            ) -> Result<Observation, String> {
+                let result = Observation {
+                    sequence: self.queries,
+                    input,
+                    output: (input.count_ones() % 2) as u8,
+                };
+                self.queries += 1;
+                if self.queries == 5 {
+                    if self.expire {
+                        std::thread::sleep(
+                            deadline.saturating_duration_since(Instant::now())
+                                + std::time::Duration::from_millis(1),
+                        );
+                    } else {
+                        cancelled.store(true, Ordering::Release);
+                    }
+                }
+                Ok(result)
+            }
+        }
+        for expire in [false, true] {
+            let mut source = FinalReply { queries: 0, expire };
+            let mut usage = Usage::default();
+            let cancelled = AtomicBool::new(false);
+            let result = infer_with_policy(
+                &mut source,
+                &permit(8),
+                &mut usage,
+                &cancelled,
+                Instant::now() + std::time::Duration::from_millis(200),
+                AffineQueryPolicy::RankBasis,
+                |_, _| Ok(()),
+            );
+            assert!(result.is_err());
+            assert_eq!(usage.queries, 5);
+            assert!(usage.gf2_work > 0);
+        }
+    }
+
+    #[test]
+    fn optional_rank_policy_uses_identical_observations_with_less_selection_work() {
+        let mut usages = Vec::new();
+        let mut traces = Vec::new();
+        for policy in [AffineQueryPolicy::Reference, AffineQueryPolicy::RankBasis] {
+            let mut source = LocalOracle {
+                width: 8,
+                outputs: (0..256u16)
+                    .map(|input| (input.count_ones() % 2) as u8)
+                    .collect(),
+                queries: 0,
+            };
+            let mut usage = Usage::default();
+            let result = infer_with_policy(
+                &mut source,
+                &permit(16),
+                &mut usage,
+                &AtomicBool::new(false),
+                Instant::now() + std::time::Duration::from_secs(1),
+                policy,
+                |_, _| Ok(()),
+            )
+            .unwrap();
+            traces.push(serde_json::to_value(result.queries).unwrap());
+            usages.push(usage);
+        }
+        assert_eq!(traces[0], traces[1]);
+        assert_eq!(usages[0].queries, 10);
+        assert_eq!(usages[1].queries, 10);
+        assert!(usages[1].gf2_work < usages[0].gf2_work);
+    }
+    #[test]
+    fn failed_emission_keeps_spent_source_and_work_allowances() {
+        let mut source = LocalOracle {
+            width: 3,
+            outputs: vec![0; 8],
+            queries: 0,
+        };
+        let mut usage = Usage::default();
+        assert!(infer_with_policy(
+            &mut source,
+            &permit(8),
+            &mut usage,
+            &AtomicBool::new(false),
+            Instant::now() + std::time::Duration::from_secs(1),
+            AffineQueryPolicy::RankBasis,
+            |_, _| Err("observer audit publication failed".into())
+        )
+        .is_err());
+        assert_eq!(usage.queries, 1);
+        assert_eq!(source.queries, 1);
+        assert!(usage.gf2_work > 0);
     }
 }

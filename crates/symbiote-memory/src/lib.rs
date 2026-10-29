@@ -9,6 +9,7 @@ pub mod maintenance;
 pub mod operational;
 pub mod reciprocal;
 pub mod strategy;
+pub mod witness;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

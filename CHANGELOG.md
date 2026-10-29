@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — verified-learning engine evolution
+
+- Reuse exact canonical operational prefix hashes and validate startup feedback
+  in one ordered pass; retain original receipt bytes and explicit reference paths.
+- Add an opt-in, separately authorized receiver-outcome channel with complete
+  bounded ledger witnesses, receiver-owned evaluation/use and once-only causal
+  reconciliation. Unknown economics remain unverified.
+- Add optional exact rank-basis queries, cooperative post-response deadline
+  checks, and a native independent-observation embedding with frozen fresh-task
+  prediction and external grading.
+- Add a prospectively declared engineering workload, cost vectors and independent
+  source simulator. Its registered measurements are recorded separately from
+  component tests and the published v1.0.1 baseline.
+- Bound concurrent native integration-fixture groups without increasing runtime
+  timeouts. Preserve the initial parallel baseline failures and their isolated passes.
+
+These changes are on main and require a source build. No new release or broader
+stable/general-efficiency qualification is implied.
+
 ## v1.0.1 — corrective bounded one-host release — 2026-10-28
 
 Native source `6025fff43ad4b508b94977eeff801aeebf549fd9` passes

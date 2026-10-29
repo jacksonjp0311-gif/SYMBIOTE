@@ -38,6 +38,8 @@ struct RunPolicy {
     observation: Option<super::observation::ObservationPermit>,
     #[serde(default, skip_serializing_if = "is_false")]
     capability_contributions: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    outcomes: Option<super::outcomes::Policy>,
 }
 fn is_false(value: &bool) -> bool {
     !*value
@@ -87,7 +89,29 @@ impl RunPolicy {
                 if !self.scopes.contains(scope) {
                     return Err("observation scope is outside the run policy".into());
                 }
-                super::observation::validate_context(config, scope)?;
+                // Historical replay checks policy metadata only. Never reopen an old
+                // source path or execute a provider from saved decision evidence.
+                config.context(scope)?;
+            }
+        }
+        if let Some(outcomes) = &self.outcomes {
+            outcomes.validate(config)?;
+            for (peer, scope) in outcomes
+                .receiver
+                .iter()
+                .map(|p| (&p.peer, &p.scope))
+                .chain(outcomes.sender.iter().map(|p| (&p.peer, &p.scope)))
+            {
+                if !self.peers.contains(peer) || !self.scopes.contains(scope) {
+                    return Err("outcome channel exceeds run peer/context permission".into());
+                }
+            }
+            if outcomes
+                .receiver
+                .as_ref()
+                .is_some_and(|p| p.max_candidates_per_episode > self.max_candidates_per_episode)
+            {
+                return Err("receiver outcome candidate allowance exceeds run policy".into());
             }
         }
         Ok(())
@@ -1583,12 +1607,13 @@ impl Cycle<'_> {
             )
         };
         let mut count = 0;
+        let mut attempts = 0;
         for model in models {
             for target in targets
                 .iter()
                 .filter(|profile| profile.scope == model.scope && profile.peer != model.source)
             {
-                if count >= self.policy.max_contributions_per_episode {
+                if attempts >= self.policy.max_contributions_per_episode {
                     return Ok(count);
                 }
                 let record_sha = model.digest()?;
@@ -1903,6 +1928,7 @@ impl Cycle<'_> {
                         "used_before":used,"offer_admitted":true,"gain_qualified":false,"local_utility":Value::Null,"remote_utility":Value::Null,
                         "ordinary_policy":plan_value(&exchange_plan)?,"basis":"explicit bounded operator experiment; uncertain value, no positive sender or partner benefit claim"}))?;
                 }
+                attempts += 1;
                 let result = self.call(&target.peer, &submit);
                 let (sent, received) = delta(&before, &self.traffic.snapshot());
                 match result {
@@ -1974,6 +2000,139 @@ impl Cycle<'_> {
             }
         }
         Ok(count)
+    }
+
+    fn receiver_tick(&mut self) -> Result<usize, String> {
+        let Some(permit) = self
+            .policy
+            .outcomes
+            .as_ref()
+            .and_then(|p| p.receiver.as_ref())
+        else {
+            return Ok(0);
+        };
+        let mut owner =
+            super::timing::lock(self.state).map_err(|_| "native owner lock poisoned")?;
+        let index = feedback::replay_index(&owner.journal, &owner.knowledge)?;
+        let pending=owner.journal.events().iter().any(|e|matches!(e,OperationalEvent::Quarantined{candidate_id,..}if !index.experiences.iter().any(|e|e.binding.candidate_id==*candidate_id)));
+        if !pending {
+            return Ok(0);
+        }
+        super::timing::lock(self.budget)
+            .map_err(|_| "native resource lock poisoned")?
+            .model(self.policy, 65_536)?;
+        let used = super::outcomes::process_pending(&mut owner, permit)?;
+        self.recorder.emit("RECEIVER_OUTCOME",json!({"used":used,"goal":permit.goal,"scope":permit.scope,"basis":"receiver-owned retained evaluation case; no unanswered-task or economic gain claim"}))?;
+        Ok(used)
+    }
+    fn channel(&mut self, remaining: usize) -> Result<(usize, usize, usize), String> {
+        let Some(permit) = self
+            .policy
+            .outcomes
+            .as_ref()
+            .and_then(|p| p.sender.as_ref())
+        else {
+            return Ok((0, 0, 0));
+        };
+        let (peer, model) = {
+            let owner =
+                super::timing::lock(self.state).map_err(|_| "native owner lock poisoned")?;
+            let peer = owner.config.peer_alias(&permit.peer)?.id.clone();
+            let model = owner.knowledge.active().into_iter().find(|r| {
+                r.scope == permit.scope
+                    && r.source == owner.config.identity
+                    && !super::outcomes::already_sent(&owner, &peer, &permit.scope, r)
+                        .unwrap_or(true)
+            });
+            (peer, model)
+        };
+        let mut sent = 0;
+        if let Some(record) = model.filter(|_| remaining > 0) {
+            if !self.policy.contribute {
+                return Err("outcome sender requires explicit contribution opt-in".into());
+            }
+            let audit: Value = serde_json::from_str(&record.provenance)
+                .map_err(|_| "owned observation provenance absent")?;
+            let training_inputs = audit["queries"]
+                .as_array()
+                .ok_or("owned observation query audit absent")?
+                .iter()
+                .map(|q| {
+                    q["input"]
+                        .as_u64()
+                        .and_then(|v| u16::try_from(v).ok())
+                        .ok_or("owned observation query rejected")
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let submit = request(
+                &permit.scope,
+                format!("channel-{}", &record.digest()?[..40]),
+                Operation::Submit {
+                    offer: Box::new(Offer {
+                        record: record.clone(),
+                        training_inputs,
+                    }),
+                },
+            );
+            let decision = self.intent(
+                "contribute",
+                &peer,
+                &permit.scope,
+                Some(submit.clone()),
+                Some(record.source.clone()),
+            )?;
+            let response = self.call(&peer, &submit)?;
+            self.recorder.emit("CHANNEL_CONTRIBUTE",json!({"decision":decision.decision_id,"peer":peer,"response":response,"objective":"explicit receiver-owned retained-use goal","economic_benefit_verified":false}))?;
+            sent += usize::from(response["status"] == "QUARANTINED");
+        }
+        let pending = {
+            let owner =
+                super::timing::lock(self.state).map_err(|_| "native owner lock poisoned")?;
+            super::outcomes::next_poll(&owner, permit)?
+        };
+        let Some((decision, _, request_sha)) = pending else {
+            return Ok((sent, 0, 0));
+        };
+        let (candidate, challenge) = {
+            let mut owner =
+                super::timing::lock(self.state).map_err(|_| "native owner lock poisoned")?;
+            super::outcomes::begin_poll(&mut owner, permit, &decision, &request_sha)?
+        };
+        let query = request(
+            &permit.scope,
+            format!("outcome-{}", &challenge[..40]),
+            Operation::OutcomeRead {
+                candidate,
+                request_sha256: request_sha.clone(),
+                challenge: challenge.clone(),
+            },
+        );
+        let response = self.call(&peer, &query)?;
+        super::timing::lock(self.budget)
+            .map_err(|_| "native resource lock poisoned")?
+            .model(self.policy, 65_536)?;
+        self.recorder.emit(
+            "OUTCOME_RECEIVED",
+            json!({"decision":decision,"request":query,"response":response}),
+        )?;
+        let result = {
+            let mut owner =
+                super::timing::lock(self.state).map_err(|_| "native owner lock poisoned")?;
+            super::outcomes::reconcile(
+                &mut owner,
+                permit,
+                &decision,
+                &request_sha,
+                &challenge,
+                response,
+            )?
+        };
+        self.recorder.emit("OUTCOME_RECONCILIATION",json!({"decision":decision,"verified":result.is_some(),"capability_verified":result==Some(true),"cost_benefit_verified":false,"cost_baseline":"unknown"}))?;
+        Ok((
+            sent,
+            usize::from(result.is_some()),
+            usize::from(result == Some(true)),
+        ))
     }
 
     fn record_value(&mut self, receipt: ValueReceipt<'_>) -> Result<(), String> {
@@ -2085,6 +2244,14 @@ fn run_controlled(
     let policy: RunPolicy =
         serde_json::from_slice(&policy_bytes).map_err(|_| "native run policy schema rejected")?;
     policy.validate(&config)?;
+    if let Some(outcomes) = &policy.outcomes {
+        super::outcomes::validate_live(&config, outcomes)?;
+    }
+    if let Some(permit) = &policy.observation {
+        for scope in &permit.scopes {
+            super::observation::validate_context(&config, scope)?;
+        }
+    }
     let deadline = Instant::now() + Duration::from_millis(policy.max_duration_ms);
     let owner = State::open_for_cognition(config)?;
     if Instant::now() >= deadline {
@@ -2161,6 +2328,8 @@ fn run_controlled(
     let mut episodes = 0;
     let mut novel = 0;
     let mut contributions = 0;
+    let mut receiver_outcomes = 0;
+    let mut receiver_capabilities = 0;
     let mut reason = "episode-budget".to_string();
     let mut observation_usage = super::observation::Usage::default();
     let mut observed_scopes = BTreeSet::new();
@@ -2179,6 +2348,29 @@ fn run_controlled(
             }
             if config::read_bounded(policy_path, 16_384)? != policy_bytes {
                 return Err("HOLD: immutable native run policy changed during execution".into());
+            }
+            if policy
+                .outcomes
+                .as_ref()
+                .is_some_and(|p| p.receiver.is_some() && p.sender.is_none())
+            {
+                episodes += 1;
+                let mut cycle = Cycle {
+                    state: &state,
+                    budget: &budget,
+                    policy: &policy,
+                    traffic: &traffic,
+                    cancelled: &cancelled,
+                    deadline,
+                    recorder: &mut recorder,
+                };
+                cycle.receiver_tick()?;
+                let until = (Instant::now() + Duration::from_millis(policy.interval_ms.min(1000)))
+                    .min(deadline);
+                while !cancelled.load(Ordering::Acquire) && Instant::now() < until {
+                    std::thread::sleep(Duration::from_millis(5));
+                }
+                continue;
             }
             if let Some(permit) = &policy.observation {
                 if let Some(scope) = permit
@@ -2253,7 +2445,35 @@ fn run_controlled(
                     }
                 }
             }
+            let before_contributions = if policy
+                .outcomes
+                .as_ref()
+                .is_some_and(|p| p.sender.is_some())
+            {
+                let owner =
+                    super::timing::lock(cycle.state).map_err(|_| "native owner lock poisoned")?;
+                owner.journal.events().iter().filter(|e|matches!(e,OperationalEvent::PartnerDecisionRecorded{decision}if decision.details["schema"]==DETAILS&&decision.details["phase"]=="contribute")).count()
+            } else {
+                0
+            };
             contributions += cycle.contribute()?;
+            let used_contributions = if policy.outcomes.as_ref().is_some_and(|p| p.sender.is_some())
+            {
+                let owner =
+                    super::timing::lock(cycle.state).map_err(|_| "native owner lock poisoned")?;
+                owner.journal.events().iter().filter(|e|matches!(e,OperationalEvent::PartnerDecisionRecorded{decision}if decision.details["schema"]==DETAILS&&decision.details["phase"]=="contribute")).count().checked_sub(before_contributions).ok_or("contribution attempt count regressed")?
+            } else {
+                0
+            };
+            cycle.receiver_tick()?;
+            let (sent, verified, capability) = cycle.channel(
+                policy
+                    .max_contributions_per_episode
+                    .saturating_sub(used_contributions),
+            )?;
+            contributions += sent;
+            receiver_outcomes += verified;
+            receiver_capabilities += capability;
             // VALUE events already recorded the pre-exchange decision. This row
             // only states that delivery and promotion are not benefit.
             cycle.recorder.emit("MEASURE", json!({
@@ -2285,7 +2505,7 @@ fn run_controlled(
         }
     }
     let owner = super::timing::lock(&state).map_err(|_| "native owner lock poisoned")?;
-    let summary = json!({"schema":"symbiote.cognition-summary/1","status":"STOPPED","identity":identity,"reason":reason,"episodes":episodes,
+    let mut summary = json!({"schema":"symbiote.cognition-summary/1","status":"STOPPED","identity":identity,"reason":reason,"episodes":episodes,
         "initial_knowledge_anchor":initial,"final_knowledge_anchor":owner.knowledge.history_anchor(),"active_models":owner.knowledge.active().len(),
         "fresh_promotions":novel,"quarantined_contributions":contributions,"partner_benefits_verified":0,
         "profiles":profiles(owner.journal.events(),&owner.config,&policy,&owner.knowledge,&owner.knowledge.history_anchor())?,"budget":super::timing::lock(&budget).map_err(|_|"native resource lock poisoned")?.clone(),
@@ -2297,6 +2517,10 @@ fn run_controlled(
         "protocol":"symbiote/2","oracle_assumption":"operator-pinned local finite fixtures; no remote honesty or generalization claim",
         "bandwidth_basis":"JSON negotiation/RPC application plaintext; cryptographic handshake and TLS wire framing excluded",
         "learning_basis":"fresh actual local model promotions, never peer PASS receipts; duplicate promoted receipts are reused"});
+    if policy.outcomes.is_some() {
+        summary["receiver_outcomes_verified"] = json!(receiver_outcomes);
+        summary["receiver_capability_outcomes_verified"] = json!(receiver_capabilities);
+    }
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -2529,6 +2753,7 @@ mod replay_tests {
             contribute: true,
             observation: None,
             capability_contributions: false,
+            outcomes: None,
         }
     }
     fn offer() -> Offer {

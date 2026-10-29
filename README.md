@@ -19,6 +19,11 @@ local demonstrations.
 [Evidence](#evidence-and-limits) · [Roadmap](docs/ROADMAP.md) ·
 [Operations](docs/OPERATIONS.md) · [Local qualification](docs/LOCAL_QUALIFICATION_V051.md)
 
+> **Main includes unreleased engine evolution.** Exact prefix reuse, an authorized
+> receiver-outcome channel and optional rank-based observation learning are
+> [documented separately](docs/ENGINE_EVOLUTION_002.md). Build this checkout to
+> use them; the v1.0.1 downloads remain the corrective baseline described below.
+
 > **v1.0.1 is a corrective release for a bounded, one-host engine.**
 > Source, native component, 64-cell operational and fresh-hour checks pass.
 > Independent hour review, anonymous public native acceptance and public evidence delivery pass. Corrected verification,

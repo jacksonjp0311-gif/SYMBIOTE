@@ -9,7 +9,9 @@
 use serde::{Deserialize, Serialize};
 
 mod compact;
-pub use compact::{CompactAffineLearner, CompactAffineSnapshot, CompactAffineWork};
+pub use compact::{
+    AffineQueryPolicy, CompactAffineLearner, CompactAffineSnapshot, CompactAffineWork,
+};
 
 pub const AFFINE_FAMILY: &str = "boolean-affine/v1";
 pub const MAX_WIDTH: u8 = 8;

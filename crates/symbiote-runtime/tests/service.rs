@@ -9,7 +9,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Output, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Condvar, Mutex, Weak};
 use std::thread;
 use std::time::{Duration, Instant};
 use symbiote_memory::knowledge::graph::graph_schema_fingerprint;
@@ -27,10 +27,64 @@ use symbiote_reasoning::planning::{Edge, GraphSchema};
 mod cognitive;
 #[path = "service/endurance.rs"]
 mod endurance;
+#[path = "service/outcomes.rs"]
+mod outcomes;
 #[path = "service/soak.rs"]
 mod soak;
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
+// These integration tests launch native services with real 500ms I/O and 15s
+// lifetimes. Bound test groups rather than widening production limits on hosts
+// where the test runner starts many groups at once. Nested fixtures on the same
+// test thread share a slot, so a test can own several peers without deadlocking.
+static NATIVE_FIXTURE_GROUPS: Mutex<usize> = Mutex::new(0);
+static NATIVE_FIXTURE_READY: Condvar = Condvar::new();
+thread_local! {
+    static NATIVE_FIXTURE_SLOT: std::cell::RefCell<Weak<NativeFixtureSlot>> = const { std::cell::RefCell::new(Weak::new()) };
+}
+struct NativeFixtureSlot;
+impl Drop for NativeFixtureSlot {
+    fn drop(&mut self) {
+        let mut active = NATIVE_FIXTURE_GROUPS
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        *active = active.checked_sub(1).expect("fixture slot accounting");
+        NATIVE_FIXTURE_READY.notify_one();
+    }
+}
+fn native_fixture_slot() -> Arc<NativeFixtureSlot> {
+    NATIVE_FIXTURE_SLOT.with(|current| {
+        if let Some(slot) = current.borrow().upgrade() {
+            return slot;
+        }
+        let deadline = Instant::now() + Duration::from_secs(120);
+        let mut active = NATIVE_FIXTURE_GROUPS.lock().unwrap();
+        while *active >= 2 {
+            let remaining = deadline
+                .checked_duration_since(Instant::now())
+                .expect("native fixture group admission exceeded its test-only bound");
+            let (next, _) = NATIVE_FIXTURE_READY
+                .wait_timeout(active, remaining)
+                .unwrap();
+            active = next;
+        }
+        *active += 1;
+        drop(active);
+        let slot = Arc::new(NativeFixtureSlot);
+        *current.borrow_mut() = Arc::downgrade(&slot);
+        slot
+    })
+}
+#[test]
+fn nested_native_fixtures_share_a_slot_and_release_it_after_the_last_owner() {
+    let first = native_fixture_slot();
+    let nested = native_fixture_slot();
+    assert!(Arc::ptr_eq(&first, &nested));
+    drop(first);
+    assert!(NATIVE_FIXTURE_SLOT.with(|slot| slot.borrow().upgrade().is_some()));
+    drop(nested);
+    assert!(NATIVE_FIXTURE_SLOT.with(|slot| slot.borrow().upgrade().is_none()));
+}
 thread_local! {
     static COGNITION_BINARY: std::cell::RefCell<Option<PathBuf>> = const { std::cell::RefCell::new(None) };
 }
@@ -145,9 +199,11 @@ struct Fixture {
     server: Value,
     client: Value,
     ids: [String; 2],
+    _native_slot: Arc<NativeFixtureSlot>,
 }
 impl Fixture {
     fn new(ip: IpAddr) -> Self {
+        let native_slot = native_fixture_slot();
         let dir = Directory::new();
         let ids = ["server-state", "client-state"].map(|name| {
             let store = Store::open(&dir.0.join(name)).unwrap();
@@ -217,6 +273,7 @@ impl Fixture {
             client: create(1),
             dir,
             ids,
+            _native_slot: native_slot,
         };
         fixture.save();
         fixture
