@@ -139,12 +139,15 @@ jobs:
               output.write('path='+str(command)+'\nsha256='+digest+'\nacceptance='+str(acceptance)+'\n')
           PY
       - name: Anonymous public bytes, original signed components, actual installed behavior
+        env:
+          SYMBIOTE_METADATA_TOKEN: ${{ github.token }}
         run: >-
           python -B tools/release/v11_release_checks.py public-accept
           --candidate-root candidate --candidate-run-id ${{ inputs.candidate_run_id }}
-          --target ${{ matrix.target }} --tag v1.1.1 --commit ${{ needs.bind.outputs.source }}
+          --target ${{ matrix.target }} --tag v1.1.2 --commit ${{ needs.bind.outputs.source }}
           --bundle-sha256 ${{ inputs[matrix.digest_input] }} --plan-sha256 ${{ inputs.plan_sha256 }}
           --gh "${{ steps.verifier.outputs.path }}" --gh-sha256 ${{ steps.verifier.outputs.sha256 }}
+          --metadata-token-env SYMBIOTE_METADATA_TOKEN
           --out "${{ steps.verifier.outputs.acceptance }}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

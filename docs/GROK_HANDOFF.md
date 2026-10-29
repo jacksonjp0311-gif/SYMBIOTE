@@ -1,3 +1,25 @@
+# Current corrective delivery: v1.1.2
+
+Continue the existing engine under [CORRECTIVE_RELEASE_112.md](CORRECTIVE_RELEASE_112.md).
+The only new functional correction is authenticated, narrowly scoped GitHub
+metadata access in the public checker. Anonymous downloads and credential-free
+native children remain mandatory. Do not rewrite the Rust engine or relax gates.
+
+v1.1.1 (source69d) remains a FAILED prerelease after an Intel REST quota error
+before download/native execution. Its source/staged/hour evidence and three
+public platform passes are retained at their own scope. Its immutable evidence
+ZIP is pinned in the corrective contract. v1.0.1 remains latest stable.
+
+Freeze the new source, complete source and platform checks, run the once-only
+compatibility reproduction and fresh actual staged-image hour, then all four
+public platform checks before stable promotion. No new scientific sample or
+reciprocal-efficiency claim is authorized. Preserve the completed studies.
+
+## Earlier roadmap/handoff snapshot
+
+The following earlier notes are historical; their source IDs, proposed release
+statuses and commands do not replace the current correction contract.
+
 # SYMBIOTE: engine evolution handoff
 
 ## Current target — v1.1.1 corrective delivery

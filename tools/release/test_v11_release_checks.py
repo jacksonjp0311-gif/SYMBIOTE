@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 import tempfile
 import types
@@ -20,7 +21,7 @@ exec(compile(SOURCE.read_bytes(), str(SOURCE), "exec"), m.__dict__)
 
 
 def cargo_fixture():
-    packages = [{"id": name, "name": name, "version": "1.1.1" if name.startswith("symbiote-") else "1.0.0",
+    packages = [{"id": name, "name": name, "version": "1.1.2" if name.startswith("symbiote-") else "1.0.0",
                  "source": None if name.startswith("symbiote-") else "registry+https://github.com/rust-lang/crates.io-index",
                  "license": "MIT"} for name in ("symbiote-runtime", "symbiote-memory", "serde", "dev-only", "build-only")]
     nodes = [{"id": item["id"], "features": [], "deps": []} for item in packages]
@@ -133,7 +134,7 @@ class MetadataBoundaryTests(unittest.TestCase):
                 m.fresh(destination)
 
     def test_source_or_compiler_mismatch_rejected_before_metadata(self):
-        args = types.SimpleNamespace(version="v1.1.1", commit="c" * 40)
+        args = types.SimpleNamespace(version="v1.1.2", commit="c" * 40)
         with mock.patch.object(m, "command_text", return_value="d" * 40), self.assertRaisesRegex(ValueError, "clean exact"):
             m.metadata(args)
 
@@ -243,7 +244,7 @@ class InstalledAcceptanceTests(unittest.TestCase):
     def test_stage_seal_preserves_attestation_bytes_and_refuses_replacement(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
-            prefix = "symbiote-v1.1.1-x86_64-unknown-linux-gnu"
+            prefix = "symbiote-v1.1.2-x86_64-unknown-linux-gnu"
             for suffix in (".zip", ".build.json", ".cdx.json", ".provenance-verification.json", ".sbom-verification.json"):
                 (root / (prefix + suffix)).write_bytes(b"synthetic selected source bytes")
             raw = b'{"mediaType":"synthetic untouched offline bundle"}\r\n'
@@ -252,7 +253,7 @@ class InstalledAcceptanceTests(unittest.TestCase):
             m.preserve_attestation(source, root / (prefix + ".sbom.sigstore.json"))
             with self.assertRaises(FileExistsError):
                 m.preserve_attestation(source, root / (prefix + ".provenance.sigstore.json"))
-            args = types.SimpleNamespace(out=root, version="v1.1.1", target="x86_64-unknown-linux-gnu")
+            args = types.SimpleNamespace(out=root, version="v1.1.2", target="x86_64-unknown-linux-gnu")
             receipt = m.seal_stage(args)
             self.assertEqual(len(receipt["files"]), 7)
             self.assertEqual((root / (prefix + ".provenance.sigstore.json")).read_bytes(), raw)
@@ -327,7 +328,7 @@ class SourceCiTests(unittest.TestCase):
 
 class PublicDeliveryTests(unittest.TestCase):
     def fixture(self,root):
-        target=m.host_target();prefix="symbiote-v1.1.1-"+target
+        target=m.host_target();prefix="symbiote-v1.1.2-"+target
         candidate=root/"candidate";candidate.mkdir();gh=root/"gh.exe";gh.write_bytes(b"synthetic never executed")
         retained=candidate/"acceptance"/target
         (retained/"installed/native-outcomes").mkdir(parents=True)
@@ -339,7 +340,7 @@ class PublicDeliveryTests(unittest.TestCase):
                     service_test_driver_sha256=m.sha(retained/"installed/native-outcomes/service-tests.exe"))
         embedded=dict(status="PASS_INDEPENDENT_EMBEDDING_LIFECYCLE",source_commit="a"*40,binary_sha256=m.sha(consumer))
         m.write_new(retained/"installed/acceptance.json",native);m.write_new(retained/"embedding/embedding-acceptance.json",embedded)
-        build=dict(source_commit="a"*40,version="v1.1.1",target=target,compiler_locked="1.98.1",
+        build=dict(source_commit="a"*40,version="v1.1.2",target=target,compiler_locked="1.98.1",
             proofs=[dict(name=name,sha256=m.sha(path))for name,path in (("acceptance.json",retained/"installed/acceptance.json"),
                     ("embedding-acceptance.json",retained/"embedding/embedding-acceptance.json"))])
         suffixes=(".zip",".build.json",".cdx.json",".provenance.sigstore.json",".sbom.sigstore.json",
@@ -351,9 +352,9 @@ class PublicDeliveryTests(unittest.TestCase):
         # The public four-target manifest deliberately differs from the one-ZIP
         # candidate manifest. Both original byte streams must remain untouched.
         (candidate/"SHA256SUMS").write_text(bundle_sha+"  "+prefix+".zip\n",encoding="ascii")
-        payloads["SHA256SUMS"]="".join((bundle_sha if item==target else "d"*64)+"  symbiote-v1.1.1-"+item+".zip\n"for item in sorted(m.bundles.TARGETS)).encode()
-        release=dict(id=123,tag_name="v1.1.1",draft=False,assets=[dict(id=index+1,name=name,size=len(raw),
-            browser_download_url="https://github.com/"+m.REPOSITORY+"/releases/download/v1.1.1/"+name,
+        payloads["SHA256SUMS"]="".join((bundle_sha if item==target else "d"*64)+"  symbiote-v1.1.2-"+item+".zip\n"for item in sorted(m.bundles.TARGETS)).encode()
+        release=dict(id=123,tag_name="v1.1.2",draft=False,assets=[dict(id=index+1,name=name,size=len(raw),
+            browser_download_url="https://github.com/"+m.REPOSITORY+"/releases/download/v1.1.2/"+name,
             expected=hashlib.sha256(raw).hexdigest())for index,(name,raw)in enumerate(payloads.items())])
         trace=[]
         def download(url,path,size,expected):
@@ -364,7 +365,7 @@ class PublicDeliveryTests(unittest.TestCase):
         def sums(path,expected):
             actual={line.split("  ")[1]:line.split("  ")[0]for line in path.read_text().splitlines()}
             m.require(actual==expected,"fixture checksum mismatch")
-        transport=types.SimpleNamespace(configure_tag=lambda tag:self.assertEqual(tag,"v1.1.1"),
+        transport=types.SimpleNamespace(configure_tag=lambda tag:self.assertEqual(tag,"v1.1.2"),
             metadata=lambda path:release if "/releases/"in path else dict(id=456),resolve_tag=lambda commit:self.assertEqual(commit,"a"*40),
             download=download,check_asset_digest=lambda asset,actual:self.assertEqual(asset["expected"],actual))
         def verified(value,subject,commit,run,predicate,repository_id):
@@ -374,7 +375,7 @@ class PublicDeliveryTests(unittest.TestCase):
         publisher=types.SimpleNamespace(transport=transport,SUFFIXES=suffixes,PREDICATES=("slsa","sbom"),
             check_run=lambda *args:(trace.append("official-run") or {"run":{"repository":{"full_name":m.REPOSITORY,"id":456}}}),
             check_sums=sums,verified_attestation=verified)
-        args=types.SimpleNamespace(target=target,tag="v1.1.1",commit="a"*40,bundle_sha256=bundle_sha,plan_sha256="b"*64,
+        args=types.SimpleNamespace(target=target,tag="v1.1.2",commit="a"*40,bundle_sha256=bundle_sha,plan_sha256="b"*64,
             gh=gh,gh_sha256=m.sha(gh),candidate_run_id=789,candidate_root=candidate,out=root/"public")
         return args,publisher,payloads,trace
 
@@ -436,10 +437,11 @@ class PublicDeliveryTests(unittest.TestCase):
     def test_children_receive_only_runtime_environment_and_parent_is_restored_on_error(self):
         original=dict(os.environ)
         with mock.patch.dict(os.environ,{"GH_TOKEN":"never pass","GITHUB_TOKEN":"never pass","ACTIONS_RUNTIME_TOKEN":"never pass",
+                "SYMBIOTE_METADATA_TOKEN":"never pass",
                 "UNREVIEWED_SECRET":"never pass","SYMBIOTE_UNSELECTED_STATE":"never pass","PSModulePath":"incompatible parent shell modules"}):
             before=dict(os.environ)
             def execute(*args,**kwargs):
-                self.assertFalse(any(key in os.environ for key in ("GH_TOKEN","GITHUB_TOKEN","ACTIONS_RUNTIME_TOKEN","UNREVIEWED_SECRET","SYMBIOTE_UNSELECTED_STATE","PSModulePath")))
+                self.assertFalse(any(key in os.environ for key in ("GH_TOKEN","GITHUB_TOKEN","ACTIONS_RUNTIME_TOKEN","SYMBIOTE_METADATA_TOKEN","UNREVIEWED_SECRET","SYMBIOTE_UNSELECTED_STATE","PSModulePath")))
                 self.assertEqual(os.environ.get("PATH"),before.get("PATH"))
                 self.assertEqual(kwargs["environment"],{"SYMBIOTE_COGNITION_TEST_BINARY":"explicit actual image"})
                 raise RuntimeError("controlled launch failure")
@@ -447,6 +449,153 @@ class PublicDeliveryTests(unittest.TestCase):
                 m.child_execute(["synthetic never executed"],environment={"SYMBIOTE_COGNITION_TEST_BINARY":"explicit actual image"})
             self.assertEqual(dict(os.environ),before)
         self.assertEqual(dict(os.environ),original)
+
+
+class MetadataAuthenticationTests(unittest.TestCase):
+    fixture = PublicDeliveryTests.fixture
+    token = "unit-fixture-not-an-actual-actions-token"
+
+    def real_http_flow(self, args, fixture_publisher, payloads):
+        publisher, _ = m.public_verifier()
+        transport = publisher.transport
+        original_metadata = transport.metadata
+        release = fixture_publisher.transport.metadata("/releases/fixture")
+        for asset in release["assets"]:
+            asset["digest"] = "sha256:" + asset["expected"]
+        prefix = "/repos/" + m.REPOSITORY + "/"
+        run = dict(id=args.candidate_run_id, repository=dict(full_name=m.REPOSITORY, id=456), head_sha=args.commit,
+                   path=".github/workflows/v11-candidate.yml", event="workflow_dispatch", status="completed", conclusion="success")
+        routes = {prefix + "actions/runs/789": run,
+                  prefix + "actions/runs/789/jobs": dict(total_count=1, jobs=[dict(status="completed", conclusion="success")]),
+                  prefix + "releases/tags/v1.1.2": release,
+                  prefix + "git/ref/tags/v1.1.2": dict(object=dict(type="tag", sha="c" * 40)),
+                  prefix + "git/tags/" + "c" * 40: dict(object=dict(type="commit", sha=args.commit))}
+        metadata, downloaded = [], []
+
+        class Response:
+            status = 200
+            def __init__(self, raw): self.raw = raw; self.offset = 0
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self, maximum):
+                block = self.raw[self.offset:self.offset + maximum]; self.offset += len(block); return block
+
+        class Opener:
+            def __init__(inner, handlers): inner.handlers = handlers
+            def open(inner, request, timeout):
+                url = transport.urllib.parse.urlsplit(request.full_url)
+                headers = {key.lower(): value for key, value in request.header_items()}
+                self.assertEqual(request.get_method(), "GET"); self.assertIsNone(request.data)
+                self.assertNotIn(self.token, request.full_url)
+                if url.hostname == "api.github.com":
+                    self.assertEqual(timeout, 60)
+                    self.assertTrue(any(isinstance(handler, transport.NoRedirect) for handler in inner.handlers))
+                    metadata.append(url.path)
+                    if headers.get("authorization") != "Bearer " + self.token:
+                        raise transport.urllib.error.HTTPError(request.full_url, 403, "rate limit exceeded", {}, None)
+                    self.assertIn(url.path, routes)
+                    return Response(json.dumps(routes[url.path]).encode())
+                self.assertIs(transport.metadata, original_metadata)  # Restored before first anonymous byte read.
+                self.assertEqual(url.hostname, "github.com")
+                self.assertNotIn("authorization", headers)
+                self.assertTrue(any(isinstance(handler, transport.PublicAssetRedirect) for handler in inner.handlers))
+                name = url.path.rsplit("/", 1)[-1]; self.assertIn(name, payloads); downloaded.append(name)
+                return Response(payloads[name])
+
+        with mock.patch.dict(os.environ, {"GITHUB_RUN_ID": "125", "GITHUB_SHA": args.commit,
+                    "GITHUB_REPOSITORY": m.REPOSITORY, "SYMBIOTE_METADATA_TOKEN": self.token,
+                    "GH_TOKEN": "unused-other-token", "GITHUB_TOKEN": "unused-other-token"}), \
+             mock.patch.object(m, "public_verifier", return_value=(publisher, "e" * 64)), \
+             mock.patch.object(transport.urllib.request, "build_opener", side_effect=lambda *handlers: Opener(handlers)), \
+             mock.patch.object(m, "child_execute", side_effect=ValueError("fixture:crypto-boundary")), \
+             mock.patch.object(m, "acceptance", side_effect=AssertionError("no native acceptance in metadata test")), \
+             mock.patch.object(m, "embedding_acceptance", side_effect=AssertionError("no consumer execution in metadata test")):
+            result = m.public_acceptance(args)
+        self.assertIs(transport.metadata, original_metadata)
+        self.assertNotIn(self.token, json.dumps(result))
+        return result, metadata, downloaded
+
+    def test_anonymous_rate_limit_preserved_without_implicit_token_or_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            args, publisher, payloads, _ = self.fixture(Path(directory).resolve())
+            result, metadata, downloaded = self.real_http_flow(args, publisher, payloads)
+            self.assertEqual(result["status"], "HOLD")
+            self.assertIn("403", result["failure"])
+            self.assertEqual(len(metadata), 1); self.assertEqual(downloaded, [])
+            self.assertEqual(result["anonymous_downloads"], [])
+            self.assertEqual(result["metadata_access"]["mode"], "anonymous")
+
+    def test_explicit_metadata_auth_all_five_gets_then_nine_anonymous_byte_guards(self):
+        with tempfile.TemporaryDirectory() as directory:
+            args, publisher, payloads, _ = self.fixture(Path(directory).resolve())
+            args.metadata_token_env = "SYMBIOTE_METADATA_TOKEN"
+            result, metadata, downloaded = self.real_http_flow(args, publisher, payloads)
+            self.assertEqual(result["status"], "HOLD")  # Intentional offline crypto boundary.
+            self.assertEqual(result["failure"], "fixture:crypto-boundary")
+            self.assertEqual(len(metadata), 5); self.assertEqual(len(downloaded), 9)
+            self.assertEqual(len(result["anonymous_downloads"]), 9)
+            diagnostic = result["metadata_access"]
+            self.assertEqual(diagnostic["mode"], "explicit-metadata-only-token")
+            self.assertFalse(diagnostic["token_value_recorded"])
+            self.assertEqual([item["path"] for item in diagnostic["requests"]], metadata)
+            self.assertTrue(all(item["method"] == "GET" and item["host"] == "api.github.com" for item in diagnostic["requests"]))
+
+    def test_authenticated_routes_reject_other_hosts_repositories_queries_and_operations(self):
+        publisher, _ = m.public_verifier(); transport = publisher.transport; original = transport.metadata
+        args = types.SimpleNamespace(candidate_run_id=789, tag="v1.1.2", metadata_token_env="SYMBIOTE_METADATA_TOKEN")
+        for suffix in ("", "releases/latest", "actions/runs/790", "actions/runs/789?per_page=100",
+                       "actions/runs/789#fragment", "git/tags/not-a-sha", "releases/123/assets"):
+            with self.subTest(suffix=suffix), mock.patch.dict(os.environ, SYMBIOTE_METADATA_TOKEN=self.token), \
+                 mock.patch.object(transport.urllib.request, "build_opener", side_effect=AssertionError("rejected before HTTP")):
+                with m.public_metadata_access(transport, args), self.assertRaises((ValueError, transport.ReleaseError)):
+                    transport.metadata("/repos/" + m.REPOSITORY + "/" + suffix)
+                self.assertIs(transport.metadata, original)
+        for path in ("https://api.github.com/repos/" + m.REPOSITORY + "/actions/runs/789",
+                     "/repos/other/foreign/actions/runs/789", "/repos/" + m.REPOSITORY):
+            with self.subTest(path=path), mock.patch.dict(os.environ, SYMBIOTE_METADATA_TOKEN=self.token), \
+                 mock.patch.object(transport.urllib.request, "build_opener", side_effect=AssertionError("rejected before HTTP")):
+                with m.public_metadata_access(transport, args), self.assertRaises((ValueError, transport.ReleaseError)):
+                    transport.metadata(path)
+
+    def test_metadata_redirect_is_refused_and_public_redirect_discards_auth(self):
+        publisher, _ = m.public_verifier(); transport = publisher.transport; original = transport.metadata
+        args = types.SimpleNamespace(candidate_run_id=789, tag="v1.1.2", metadata_token_env="SYMBIOTE_METADATA_TOKEN")
+        class Opener:
+            def __init__(self, handlers): self.handlers = handlers
+            def open(self, request, timeout):
+                return self.handlers[0].redirect_request(request, None, 302, "redirect", {}, "https://other.invalid/")
+        with mock.patch.dict(os.environ, SYMBIOTE_METADATA_TOKEN=self.token), \
+             mock.patch.object(transport.urllib.request, "build_opener", side_effect=lambda *handlers: Opener(handlers)):
+            with self.assertRaisesRegex(transport.ReleaseError, "redirect refused"):
+                with m.public_metadata_access(transport, args):
+                    transport.metadata("/repos/" + m.REPOSITORY + "/actions/runs/789")
+        self.assertIs(transport.metadata, original)
+        request = transport.urllib.request.Request("https://github.com/public/asset", headers={"Authorization": "Bearer " + self.token})
+        redirected = transport.PublicAssetRedirect(transport.CDN_HOSTS).redirect_request(
+            request, None, 302, "redirect", {}, "https://release-assets.githubusercontent.com/owned")
+        self.assertFalse(any(name.lower() == "authorization" for name, _ in redirected.header_items()))
+
+    def test_missing_malformed_or_unselected_token_refuses_without_reader_mutation(self):
+        publisher, _ = m.public_verifier(); transport = publisher.transport; original = transport.metadata
+        for selected, token in (("GH_TOKEN", self.token), ("SYMBIOTE_METADATA_TOKEN", ""),
+                                ("SYMBIOTE_METADATA_TOKEN", "line\nbreak"), ("SYMBIOTE_METADATA_TOKEN", "x" * 16385)):
+            args = types.SimpleNamespace(candidate_run_id=789, tag="v1.1.2", metadata_token_env=selected)
+            with self.subTest(selected=selected, token_length=len(token)), mock.patch.dict(os.environ, SYMBIOTE_METADATA_TOKEN=token):
+                with self.assertRaises(ValueError):
+                    with m.public_metadata_access(transport, args): self.fail("invalid token reached scope")
+                self.assertIs(transport.metadata, original)
+
+    def test_owned_python_child_has_no_tokens_and_parent_environment_is_restored(self):
+        names = ("SYMBIOTE_METADATA_TOKEN", "GH_TOKEN", "GITHUB_TOKEN", "ACTIONS_RUNTIME_TOKEN")
+        with tempfile.TemporaryDirectory(prefix="symbiote-token-child-fixture-") as directory, \
+             mock.patch.dict(os.environ, {name: "synthetic-never-log-token-value" for name in names}):
+            before = dict(os.environ)
+            command = [sys.executable, "-I", "-c", "import json,os;print(json.dumps({name:name in os.environ for name in " + repr(names) + "}))"]
+            result = m.child_execute(command, Path(directory).resolve(), "metadata-token-child-isolation", timeout=10)
+            m.safety.check_exit(result)
+            self.assertEqual(m.parse(m.safety.output(result, Path(directory))), {name: False for name in names})
+            self.assertEqual(dict(os.environ), before)
+            self.assertNotIn("synthetic-never-log-token-value", json.dumps(result))
 
 
 class PublicRouteGuardTests(unittest.TestCase):
@@ -469,8 +618,8 @@ class PublicRouteGuardTests(unittest.TestCase):
         jobs=dict(total_count=1,jobs=[dict(status="completed",conclusion="success")])
         routes={"/repos/"+m.REPOSITORY+"/actions/runs/789":run,
                 "/repos/"+m.REPOSITORY+"/actions/runs/789/jobs":jobs,
-                "/repos/"+m.REPOSITORY+"/releases/tags/v1.1.1":release,
-                "/repos/"+m.REPOSITORY+"/git/ref/tags/v1.1.1":dict(object=dict(type="commit",sha=args.commit))}
+                "/repos/"+m.REPOSITORY+"/releases/tags/v1.1.2":release,
+                "/repos/"+m.REPOSITORY+"/git/ref/tags/v1.1.2":dict(object=dict(type="commit",sha=args.commit))}
         observed=[];downloads=[]
         class Response:
             status=200
@@ -485,7 +634,7 @@ class PublicRouteGuardTests(unittest.TestCase):
                 self.assertEqual(parsed.scheme,"https")
                 self.assertFalse(any(key.lower()=="authorization"for key,_ in request.header_items()))
                 if parsed.netloc=="github.com"and payloads is not None:
-                    prefix="/"+m.REPOSITORY+"/releases/download/v1.1.1/"
+                    prefix="/"+m.REPOSITORY+"/releases/download/v1.1.2/"
                     self.assertTrue(parsed.path.startswith(prefix))
                     name=parsed.path.removeprefix(prefix);self.assertIn(name,payloads)
                     return Response(payloads[name])
@@ -515,7 +664,7 @@ class PublicRouteGuardTests(unittest.TestCase):
             self.assertEqual(result["status"],"HOLD")  # Deliberate offline boundary, never a qualification PASS.
             self.assertEqual(result["failure"],"fixture:anonymous-download-boundary")
             self.assertEqual(observed,["/repos/"+m.REPOSITORY+suffix for suffix in (
-                "/actions/runs/789","/actions/runs/789/jobs","/releases/tags/v1.1.1","/git/ref/tags/v1.1.1")])
+                "/actions/runs/789","/actions/runs/789/jobs","/releases/tags/v1.1.2","/git/ref/tags/v1.1.2")])
             self.assertEqual(len(downloads),1)
             self.assertEqual(downloads[0]["sha256"],args.bundle_sha256)
 
@@ -541,7 +690,7 @@ class PublicRouteGuardTests(unittest.TestCase):
                 result,observed,downloads=self.real_route_flow(args,publisher,repository)
                 self.assertEqual(result["status"],"HOLD")
                 self.assertEqual(downloads,[])
-                self.assertNotIn("/repos/"+m.REPOSITORY+"/releases/tags/v1.1.1",observed)
+                self.assertNotIn("/repos/"+m.REPOSITORY+"/releases/tags/v1.1.2",observed)
 
 
 if __name__ == "__main__":

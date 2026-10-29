@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.1.2 — corrective qualification in progress
+
+- Add explicitly scoped, read-only GitHub metadata authentication to public
+  acceptance. Keep all release bytes anonymous, the real route guard and
+  redirect/time/byte bounds intact, and all credentials outside native children.
+- Preserve v1.1.1 as a FAILED prerelease with unchanged tag/assets: its first
+  public run passed Windows, Linux and Apple Silicon; Intel metadata returned
+  HTTP 403 before downloading or running the native executable.
+- Rust algorithms, public embedding interfaces, schemas, dependencies and
+  research conclusions are unchanged; local package versions move to 1.1.2.
+- New-source/platform/transfer/hour/public qualification remains pending.
+
+Earlier entries below retain their historical status; an old pending note is
+not a current release result.
+
 ## v1.1.1 corrective candidate — 2026-10-29
 
 Fresh qualification and public delivery are pending under the

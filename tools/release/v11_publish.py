@@ -31,7 +31,7 @@ transport = types.ModuleType("symbiote_v11_transport")
 transport.__file__ = str(_transport_path)
 exec(compile(_transport_raw, str(_transport_path), "exec"), transport.__dict__)
 REPO = "jacksonjp0311-gif/SYMBIOTE"
-TAG = "v1.1.1"
+TAG = "v1.1.2"
 PREVIOUS = "v1.0.1"
 WORKFLOW = ".github/workflows/v11-candidate.yml"
 TARGETS = tuple(transport.TARGETS)
@@ -180,7 +180,7 @@ def load_plan(path, expected):
     fields(plan, {"schema", "repository", "version", "candidate_commit", "candidate_run_id", "source_ci_run_id",
                   "publisher_sha256", "transport_sha256", "gh", "cargo_lock_sha256", "assets", "platforms", "gates", "body"})
     need(plan["schema"] == "symbiote.v11-publication-plan/1" and plan["repository"] == REPO and plan["version"] == TAG,
-         "only the reviewed v1.1.1 repository publication is supported")
+         "only the reviewed v1.1.2 repository publication is supported")
     transport.configure_tag(TAG)
     pin(plan["candidate_commit"], 40); integer(plan["candidate_run_id"]); integer(plan["source_ci_run_id"])
     need(sha(Path(__file__)) == pin(plan["publisher_sha256"]) and sha(HERE / "release_v1_candidate.py") == pin(plan["transport_sha256"])

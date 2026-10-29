@@ -4,6 +4,7 @@ No publish, tag, study or hour is started here. The SBOM describes Cargo's
 target-filtered normal/build dependency closure, not unidentified system code.
 """
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -717,8 +718,67 @@ def selected_install_input(downloads,out,tag,target,bundle_sha256):
     return destination
 
 
+@contextmanager
+def public_metadata_access(transport, args):
+    """Opt in to token-bearing fixed API GETs; restore before public byte reads.
+
+    The token is never an argument, diagnostic value or child environment option.
+    The original transport and its anonymous asset redirect reader are unchanged.
+    """
+    selected = getattr(args, "metadata_token_env", None)
+    diagnostic = {"schema": "symbiote.public-metadata-access/1",
+                  "mode": "anonymous" if selected is None else "explicit-metadata-only-token",
+                  "requests": [], "token_value_recorded": False}
+    if selected is None:
+        yield diagnostic
+        return
+    require(selected == "SYMBIOTE_METADATA_TOKEN", "explicit dedicated metadata token environment required")
+    token = os.environ.get(selected, "")
+    require(0 < len(token) <= 16384 and all(33 <= ord(char) <= 126 for char in token),
+            "selected metadata token is absent or malformed")
+    require(transport.REPOSITORY == REPOSITORY and type(args.candidate_run_id) is int
+            and args.candidate_run_id > 0 and re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", args.tag),
+            "fixed metadata repository/run/tag required")
+    prefix = "/repos/" + REPOSITORY + "/"
+    fixed = {prefix + "actions/runs/" + str(args.candidate_run_id),
+             prefix + "actions/runs/" + str(args.candidate_run_id) + "/jobs",
+             prefix + "releases/tags/" + args.tag, prefix + "git/ref/tags/" + args.tag}
+    annotated = re.compile(re.escape(prefix) + r"git/tags/[0-9a-f]{40}")
+    original = transport.metadata
+
+    def metadata(path):
+        # Preserve the legacy guard and narrow the authenticated subset further.
+        transport.need(isinstance(path, str) and path.startswith(prefix) and "?" not in path and "#" not in path,
+                       "fixed repository API route required")
+        transport.need(path in fixed or annotated.fullmatch(path) is not None,
+                       "unreviewed authenticated metadata route")
+        transport.need(len(diagnostic["requests"]) < 12, "bounded metadata request count exceeded")
+        observed = {"method": "GET", "host": "api.github.com", "path": path}
+        diagnostic["requests"].append(observed)
+        request = transport.urllib.request.Request(
+            "https://api.github.com" + path + "?verification_stamp=" + str(time.time_ns()),
+            headers={"Authorization": "Bearer " + token, "User-Agent": "SYMBIOTE-public-verification",
+                     "Accept": "application/vnd.github+json", "Cache-Control": "no-cache"}, method="GET")
+        try:
+            with transport.urllib.request.build_opener(transport.NoRedirect()).open(request, timeout=60) as response:
+                observed["status_code"] = response.status
+                transport.need(response.status == 200, "authenticated metadata returned unexpected status")
+                raw = response.read(transport.LIMITS["json_bytes"] + 1)
+        except transport.urllib.error.HTTPError as error:
+            observed["status_code"] = error.code
+            raise
+        transport.need(len(raw) <= transport.LIMITS["json_bytes"], "API metadata byte limit")
+        return transport.parse(raw)
+
+    transport.metadata = metadata
+    try:
+        yield diagnostic
+    finally:
+        transport.metadata = original
+
+
 def public_acceptance(args):
-    require(args.tag=="v1.1.1" and args.target==host_target(),"fixed v1.1.1 matching-host public acceptance required")
+    require(args.tag=="v1.1.2" and args.target==host_target(),"fixed v1.1.2 matching-host public acceptance required")
     pin(args.bundle_sha256);pin(args.plan_sha256);pin(args.gh_sha256)
     require(re.fullmatch(r"[0-9a-f]{40}",args.commit),"full source commit required")
     require(type(args.candidate_run_id) is int and args.candidate_run_id>0,"candidate workflow ID required")
@@ -736,13 +796,15 @@ def public_acceptance(args):
                 public_workflow_run_id=int(public_run),
                 gh_sha256=args.gh_sha256,publisher_helper_sha256=publisher_sha,anonymous_downloads=[])
     try:
-        candidate_run=publisher.check_run(args.candidate_run_id,args.commit,".github/workflows/v11-candidate.yml","workflow_dispatch")
-        repository=candidate_run["run"]["repository"]
-        require(isinstance(repository,dict) and repository.get("full_name")==REPOSITORY
-                and type(repository.get("id")) is int and repository["id"]>0,"validated candidate repository identity differs")
-        release=transport.metadata("/repos/"+REPOSITORY+"/releases/tags/"+args.tag)
-        require(release["tag_name"]==args.tag and release["draft"] is False,"actual public release required")
-        transport.resolve_tag(args.commit)
+        with public_metadata_access(transport, args) as metadata_access:
+            report["metadata_access"] = metadata_access
+            candidate_run=publisher.check_run(args.candidate_run_id,args.commit,".github/workflows/v11-candidate.yml","workflow_dispatch")
+            repository=candidate_run["run"]["repository"]
+            require(isinstance(repository,dict) and repository.get("full_name")==REPOSITORY
+                    and type(repository.get("id")) is int and repository["id"]>0,"validated candidate repository identity differs")
+            release=transport.metadata("/repos/"+REPOSITORY+"/releases/tags/"+args.tag)
+            require(release["tag_name"]==args.tag and release["draft"] is False,"actual public release required")
+            transport.resolve_tag(args.commit)
         prefix="symbiote-"+args.tag+"-"+args.target
         names=[prefix+suffix for suffix in publisher.SUFFIXES]+["STAGED_SHA256SUMS-"+args.target,"SHA256SUMS"]
         assets={}
@@ -833,6 +895,8 @@ def main():
     public.add_argument("--tag",required=True);public.add_argument("--commit",required=True);public.add_argument("--bundle-sha256",required=True)
     public.add_argument("--plan-sha256",required=True);public.add_argument("--candidate-run-id",type=int,required=True)
     public.add_argument("--gh",type=Path,required=True);public.add_argument("--gh-sha256",required=True);public.add_argument("--out",type=Path,required=True)
+    public.add_argument("--metadata-token-env", choices=("SYMBIOTE_METADATA_TOKEN",),
+                        help="Explicit metadata-only API token environment; token excluded from release bytes and child programs")
     for name in ("metadata", "accept"):
         command = subs.add_parser(name)
         command.add_argument("--bundle", type=Path, required=True)

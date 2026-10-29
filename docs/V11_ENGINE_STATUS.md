@@ -1,3 +1,42 @@
+# Current engine release status: v1.1.2
+
+**Not published or qualified yet.** Source freeze, new-source CI, staged images,
+new transfer compatibility reproduction, fresh staged-image hour and all four
+public platform acceptances must complete for this replacement.
+
+| Dimension | Current v1.1.2 status |
+|---|---|
+| Engine/API | Existing four-crate Rust implementation retained; no algorithm or schema rewrite |
+| Correction | Explicit read-only REST metadata authentication; anonymous artifact bytes and credential-free native children |
+| Source/platform qualification | PENDING for the new frozen source and images |
+| Persistence/transfer/hour | Fresh image-specific qualification PENDING |
+| Delivery | No v1.1.2 tag, release or delivered acceptance yet |
+| Scientific advantage | Reciprocal efficiency NOT_DEMONSTRATED; historical isolated ties and extra transfer work retained |
+| Scope | Conditional affine acquisition widths 2–8; two-host and power-loss validation remain open |
+
+See [the prospective v1.1.2 contract](CORRECTIVE_RELEASE_112.md).
+
+## Historical v1.1.1 delivery outcome
+
+Source `69d0bdf1efad739b56dc70c48bcb54dcb1dbc1ee` passed official source CI
+40909699948, all six candidate jobs in 40912669443, the 128-use transfer
+compatibility check and its own actual 120-cycle Windows hour. Its tag CI
+40936233585 also passed all four jobs. Public run 40937353809 passed Windows,
+Linux and Apple Silicon. Intel Mac failed on GitHub REST HTTP 403 quota before
+any download or native execution; Intel engine failure is not established.
+
+Release 428282441 is permanently FAILED, prerelease/notlatest; its tag and 35
+asset bytes are unchanged. Failure flag operation SHA256 is
+`5f89c9bd723a17508f453cab9f129340b2d9f28c18f05a9a727601485dd89e49`.
+The immutable evidence ZIP SHA256 is
+`9bd06daf11ba96f25c9d34cafd0c2ca33dcfccdae9947ebdf8ee926ae7956818`.
+v1.0.1 remains latest stable. These records qualify only their own sources and
+images, never a future v1.1.2 image.
+
+## Superseded prepublication snapshots
+
+The prior notes below are historical snapshots, not the current support table.
+
 # SYMBIOTE v1.1 engine status
 
 Current stable release: **v1.0.1**. **v1.1.0 is a FAILED prerelease and is not

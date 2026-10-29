@@ -20,25 +20,27 @@ to actual use and outcomes. The native core requires no language model or Python
 [Embed in Rust](docs/ENGINE_EMBEDDING.md) · [Engine CLI](docs/ENGINE_CLI.md) ·
 [Release status](docs/V11_ENGINE_STATUS.md)
 
-> **v1.1.1 corrective target: typed, embeddable engine.** This checkout adds a small Rust
-> interface, native `engine` commands, independent consumer, role-aware counters,
-> and exact transfer/use/outcome binding. Candidate qualification and public
-> delivery are tracked in the [current support table](https://github.com/jacksonjp0311-gif/SYMBIOTE/blob/main/docs/V11_ENGINE_STATUS.md).
-> Corrective qualification and publication are pending. The preserved
-> [v1.1.0 prerelease](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.0)
-> failed its public delivery checker before downloading or running the native
-> programs; its tag and assets remain unchanged. Its source/platform/hour results
-> remain evidence for their own images. v1.0.1 remains the latest stable release.
-> Software qualification and scientific advantage have separate gates. General
-> transfer efficiency remains **NOT_DEMONSTRATED**.
-
+> **v1.1.2 corrective target: qualification pending.** The typed Rust engine and
+> native learning interfaces are implemented. This correction gives the public
+> checker explicitly scoped, read-only metadata authentication; release-byte
+> downloads remain anonymous and native processes receive no credentials.
+> See the [prospective contract](docs/CORRECTIVE_RELEASE_112.md) and
+> [current support table](docs/V11_ENGINE_STATUS.md).
+>
+> [v1.1.1](https://github.com/jacksonjp0311-gif/SYMBIOTE/releases/tag/v1.1.1)
+> remains a FAILED prerelease: three public platforms passed, while Intel Mac
+> metadata access hit GitHub's API rate limit before any download or native run.
+> Its own source, staged-platform and hour evidence remains preserved. The earlier
+> v1.1.0 failure also remains unchanged. v1.0.1 is still the latest stable release.
+> Software qualification and scientific advantage have separate gates; reciprocal
+> efficiency remains **NOT_DEMONSTRATED**.
 
 ## Get started
 
 Download or clone this repository. The release installers select your platform,
 verify the downloaded archive against its SHA256 manifest, and install a standalone
 binary. Release installation does not need Rust, Python, or a model service.
-The commands below install v1.1.1 when its qualified bundles are published;
+The commands below install v1.1.2 when its qualified bundles are published;
 before publication, use the source-build instructions below.
 
 **Windows — PowerShell**
@@ -46,7 +48,7 @@ before publication, use the source-build instructions below.
 ```powershell
 git clone https://github.com/jacksonjp0311-gif/SYMBIOTE.git
 cd SYMBIOTE
-.\tools\install.ps1 -Version v1.1.1 -AddToPath
+.\tools\install.ps1 -Version v1.1.2 -AddToPath
 symbiote doctor
 symbiote demo
 ```
@@ -54,7 +56,7 @@ symbiote demo
 **Linux or macOS — from the checkout**
 
 ```sh
-sh tools/install.sh --version v1.1.1
+sh tools/install.sh --version v1.1.2
 ~/.local/bin/symbiote doctor
 ~/.local/bin/symbiote demo
 ```
