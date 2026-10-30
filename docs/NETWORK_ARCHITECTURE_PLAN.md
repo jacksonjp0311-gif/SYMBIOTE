@@ -8,14 +8,31 @@ SYMBIOTE remains an independent, Rust-native, evidence-gated learning participan
 
 Agents may visit once or remain participating partners **as their owners' current authorization permits**. Every agent/owner can disconnect. Network relationships must not silently outlive scope, budget, or lease limits.
 
+## Boundary after Protocol 002, 2026-10-30
+
+This note is later than the October 27 inspection below. It does not rewrite that inspection, and it does not implement the network.
+
+Research Protocol 002, `SYMBIOTE-STRUCTURAL-TRANSFER-002`, has a terminal result on `main`:
+
+- Status: `NOT_DEMONSTRATED`.
+- Source pin: `5c0857b9e6c2c725bc652dd8a9947e4c2f65b1eb`.
+- Registration: `870159868f77a8e3bfe3426e3275a8df732a3a7ee42655f8f7a065ea9facb2a5`.
+- Result: `e4c5d9f315d744f5513c7c5d32bfcc4243db97d67ba279facf52c9f2ffa352d7`.
+- Both owners: net -7 on unit `affine-oracle-check/1`. Incorrect certificates: 0.
+- The hint did not shrink the hypothesis count. The independent textbook learner tied the isolated arm. The mismatched AND arm was rejected and its history stayed unchanged.
+
+The October 27 inspection recorded that protocol as `NOT_RUN`. That sentence stays as the record of that date. The cancelled 71/120 hour remains `HOLD`.
+
+This branch is not efficiency evidence. A gateway, a relationship, a tribute, or a merged pull request does not turn the -7 result into a gain. Participation stays voluntary. The receiver still validates knowledge. Tribute stays evidence-gated. Pull request 1 stays unmerged. This commit does not authorize unattended credential renewal or self-modification.
+
 ## Existing foundation, inspected October 27 2026
 
 - Main commit: 31b9418789db067f405738ed06f9a39d9463794c; current public release: v0.5.1. Main source is an unreleased v1 software candidate; stable qualification is incomplete.
 - Reuse symbiote-protocol secure TLS 1.3, pinned identities, scoped grants, metering, explicit cancellation and revocation.
 - Reuse symbiote-runtime network consent edges, custody envelope, hop/resource limits and receipts. They are an internal research foundation, **not** already a public registry.
 - Reuse symbiote-memory private owner histories and promotion/revocation; receipts with ledger attribution must remain separate from forwarding or delivery.
-- Reuse symbiote-reasoning value-of-symbiosis plans. The current fixtures decline costly offers. Positive mutual benefits have NOT been demonstrated in the main cognitive runtime.
-- Preserve the canceled duration run at 71/120 cycles as HOLD and protocol SYMBIOTE-STRUCTURAL-TRANSFER-002 as NOT_RUN. Do not relabel either.
+- Reuse symbiote-reasoning value-of-symbiosis plans. The current fixtures decline costly offers. Positive mutual benefits have NOT been demonstrated in the main cognitive runtime. The 2026-10-30 boundary section records the later Protocol 002 result, which also did not show mutual benefit.
+- Preserve the canceled duration run at 71/120 cycles as HOLD. As inspected on this date, protocol SYMBIOTE-STRUCTURAL-TRANSFER-002 was NOT_RUN. Do not relabel the cancelled hour. The later terminal status of Protocol 002 is in the 2026-10-30 boundary section and is not a rewrite of this inspection.
 
 ## System boundary
 
