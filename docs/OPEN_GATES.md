@@ -31,15 +31,26 @@ is still **NOT_RUN**.
 | Network-filesystem durability | Unqualified | A disconnect of an independent file server during commit, then recovery or a recorded hold. A share of the same local disk does not count. Absent that server, the status is `UNAVAILABLE_ON_THIS_HOST` | Local crash recovery |
 | Private network, pull request 1 | Open draft on `design/voluntary-symbiote-network` at `4cf88ae`. Not merged | Its own branch, after Protocol 002 has a terminal result, and only if merge is separately requested. Participation stays voluntary, knowledge stays receiver-validated, and tribute stays evidence-gated | Using the network branch as an efficiency result |
 
+## Phase B decision, recorded before any Protocol 002 target
+
+No cost-path code change. `TrialCosts` already stores acquisition,
+verification, adoption, the isolated baseline, and the exchange total.
+`ExchangeTerms` already stores transfer cost, verification cost, and
+regression risk in one participant's units. A new amortized verifier would be
+a different unit, and it would still be forbidden from deleting a hypothesis
+or authorizing a prediction before the receiver's own observations. On the
+declared affine family the identification lower bound is `width + 1` queries.
+`AffineLearner::set_hint` does not shrink that support. The width-3
+enumeration remains a mechanism check, not Protocol 002.
+
 ## Order
 
-Write any cost-meter change before Protocol 002 registration, or record that
-the existing meters already name every Protocol 002 cost term. Do not generate
-Protocol 002 targets before the source commit, native executable SHA-256, and
-the bytes of `docs/RESEARCH_V06_PROTOCOL.md` are pinned. Do not edit that
-protocol's acceptance table in the same change as the run. Two-host, power-loss,
-and network-filesystem rows stay blocked until their evidence exists. The
-private network does not start ahead of Protocol 002's terminal record.
+Do not generate Protocol 002 targets before the source commit, native
+executable SHA-256, and the bytes of `docs/RESEARCH_V06_PROTOCOL.md` are
+pinned. Do not edit that protocol's acceptance table in the same change as
+the run. Two-host, power-loss, and network-filesystem rows stay blocked until
+their evidence exists. The private network does not start ahead of Protocol
+002's terminal record.
 
 ## Preserved anchors
 

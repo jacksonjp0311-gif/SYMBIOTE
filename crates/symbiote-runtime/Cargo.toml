@@ -9,6 +9,10 @@ license.workspace = true
 name = "symbiote"
 path = "src/main.rs"
 
+[[bin]]
+name = "structural-transfer-002"
+path = "src/bin/structural_transfer_002.rs"
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
