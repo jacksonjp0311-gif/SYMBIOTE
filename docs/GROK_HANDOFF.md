@@ -17,6 +17,9 @@ model or Python. Use [embedding](ENGINE_EMBEDDING.md), [CLI](ENGINE_CLI.md),
 [compatibility](COMPATIBILITY.md), [faults](V11_FAULT_MATRIX.md),
 [registered transfer](V11_TRANSFER_PROTOCOL_001.md) and
 [publication](V11_PUBLICATION.md), rather than introducing a parallel framework.
+The remaining open items, and the only results that can close them, are in
+[the open-gate register](OPEN_GATES.md). v1.1.2 delivery does not close that
+register.
 
 ## Maintain the bounded release
 
