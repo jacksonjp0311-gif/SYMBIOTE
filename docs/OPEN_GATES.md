@@ -30,7 +30,7 @@ about efficiency. Protocol 002 did not reverse them.
 | Independent two-host operation | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No second authorized machine was available | A new protocol, written before the first connection, on two authorized machines with no shared disk: the same pinned binary, two identities, explicit mutual authorization, one exchange, a restart on each host, and a revocation on one host observed by the other | Loopback TLS, a second process on this PC, or a remote CI runner |
 | Host power-loss durability | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No storage-power-cut rig was available | A cut that removes power from the storage device without a flush, on a disposable state copy, followed by a reboot and a hash comparison | Process kill or a unit test that simulates a crash |
 | Network-filesystem durability | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No independent file server was available | A disconnect of an independent file server during commit, then recovery or a recorded hold. A share of the same local disk does not count | Local crash recovery |
-| Private network, pull request 1 | Open draft on `design/voluntary-symbiote-network` at `4cf88ae`. Not merged | Its own branch, after Protocol 002 has a terminal result, and only if merge is separately requested. Participation stays voluntary, knowledge stays receiver-validated, and tribute stays evidence-gated | Using the network branch as an efficiency result |
+| Private network, pull request 1 | Open draft on `design/voluntary-symbiote-network` at `9b14431`. Not merged. That commit records Protocol 002 as `NOT_DEMONSTRATED` and states the branch is not an efficiency result | Its own branch, and only if merge is separately requested. Participation stays voluntary, knowledge stays receiver-validated, and tribute stays evidence-gated | Using the network branch as an efficiency result |
 
 ## Phase B decision, recorded before any Protocol 002 target
 
@@ -51,7 +51,8 @@ executable SHA-256, and the bytes of `docs/RESEARCH_V06_PROTOCOL.md` are
 pinned. Do not edit that protocol's acceptance table in the same change as
 the run. Two-host, power-loss, and network-filesystem rows stay blocked until
 their evidence exists. The private network does not start ahead of Protocol
-002's terminal record.
+002's terminal record. That record now exists. The design branch notes it at
+`9b14431` and stays unmerged.
 
 ## Preserved anchors
 

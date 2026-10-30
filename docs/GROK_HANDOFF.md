@@ -21,7 +21,9 @@ The remaining open items, and the only results that can close them, are in
 [the open-gate register](OPEN_GATES.md). v1.1.2 delivery does not close that
 register. Research Protocol 002 has since completed as `NOT_DEMONSTRATED`:
 both nets are −7 affine-oracle checks on source `5c0857b`. That result does
-not close two-host, power-loss, or network-filesystem durability.
+not close two-host, power-loss, or network-filesystem durability. The unmerged
+design branch records the same negative at `9b14431` and is not efficiency
+evidence.
 
 ## Maintain the bounded release
 
