@@ -19,7 +19,9 @@ model or Python. Use [embedding](ENGINE_EMBEDDING.md), [CLI](ENGINE_CLI.md),
 [publication](V11_PUBLICATION.md), rather than introducing a parallel framework.
 The remaining open items, and the only results that can close them, are in
 [the open-gate register](OPEN_GATES.md). v1.1.2 delivery does not close that
-register.
+register. Research Protocol 002 has since completed as `NOT_DEMONSTRATED`:
+both nets are −7 affine-oracle checks on source `5c0857b`. That result does
+not close two-host, power-loss, or network-filesystem durability.
 
 ## Maintain the bounded release
 

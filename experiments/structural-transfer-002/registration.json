@@ -1,0 +1,16 @@
+{
+  "schema": "symbiote.structural-transfer-002-registration/1",
+  "protocol": "SYMBIOTE-STRUCTURAL-TRANSFER-002",
+  "protocol_sha256": "375e4df2bf0b449b5f7c143d5c9c2c3397f006043308194093d3eda2589468a5",
+  "source_commit": "5c0857b9e6c2c725bc652dd8a9947e4c2f65b1eb",
+  "repository": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive",
+  "executable": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\target\\debug\\structural-transfer-002.exe",
+  "executable_sha256": "c8056f290a8207f9d85ec45bc86034df561730eda4eb2c24a09b7a8d1aa34cda",
+  "independent_learner": "C:\\Users\\jacks\\Documents\\Codex\\2026-10-26\\codex-master-directive-symbiote-symbiotic-adaptive\\adapters\\independent_affine.py",
+  "independent_learner_sha256": "a543472cebb71109f6b01da09dd8acff954f76d63789a6272e510d608177bb98",
+  "python": "C:\\Users\\jacks\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "seed": "80e4c5bdee33b8cb",
+  "width": 4,
+  "tasks_per_owner": 4,
+  "unit": "affine-oracle-check/1"
+}

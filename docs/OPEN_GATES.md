@@ -14,21 +14,22 @@ Completed studies already support the current efficiency sentence in
 [the engine status](V11_ENGINE_STATUS.md): isolated learners tie, ordinary
 transfer costs more recorded work than isolation, and reciprocal efficiency is
 **NOT_DEMONSTRATED**. That sentence is not a Protocol 002 result. Protocol 002
-is still **NOT_RUN**.
+is now **NOT_DEMONSTRATED**. The earlier completed studies already said the same
+about efficiency. Protocol 002 did not reverse them.
 
 ## Rows
 
 | Open item | Current status | Closes only by | Forbidden substitutes |
 |---|---|---|---|
-| Reciprocal efficiency under [research Protocol 002](RESEARCH_V06_PROTOCOL.md) | `NOT_RUN` | One registered run. `PASS` only when both nets are positive after transfer, verification, and regression costs, incorrect certificates are zero, both owners retain a nonempty prediction after a real restart with zero replay oracle calls, and the mismatched arm is rejected or revoked with history kept. A finished run that misses any of those conditions is `NOT_DEMONSTRATED`. An incomplete run, a budget breach, or a changed pin is `HOLD`. | The v1.1.2 hour, the E3 reproduction, engine-evolution 002, the width-3 mechanism check, and protocol 001 |
-| Unfamiliar observation adapter | Open. No prospective adapter registration exists | A study registered before its observations are generated, covering malformed input, dishonest labels, budget exhaustion, and abstention. If Protocol 002's independent learner and wrong-family arm are that study, record the mapping instead of opening a second run | Another affine fixture inside the current family |
-| Finite-family question inside Protocol 002 | `NOT_RUN` | The same Protocol 002 run | A claim of arbitrary-domain generalization |
+| Reciprocal efficiency under [research Protocol 002](RESEARCH_V06_PROTOCOL.md) | `NOT_DEMONSTRATED` on 2026-10-30. Registration `870159868f77a8e3bfe3426e3275a8df732a3a7ee42655f8f7a065ea9facb2a5`. Result `e4c5d9f315d744f5513c7c5d32bfcc4243db97d67ba279facf52c9f2ffa352d7`. Both nets −7. | Closed by that one run. Do not retune it. | The v1.1.2 hour, the E3 reproduction, engine-evolution 002, the width-3 mechanism check, and protocol 001 |
+| Unfamiliar observation adapter | Closed by mapping, not by a gain. The same run's textbook basis learner and rejected AND-constraint are the envelope. No second study. | No further run unless a new protocol is written first | Another affine fixture inside the current family |
+| Finite-family question inside Protocol 002 | `NOT_DEMONSTRATED` by the same run | Closed with Protocol 002 | A claim of arbitrary-domain generalization |
 | Arbitrary generalization | Permanent exclusion | Not a deliverable of the current support contract. A later protocol would have to be written before any such target exists | A passing finite-family run |
 | Autonomous self-modification | Permanent exclusion | The engine does not rewrite its own source, grants, or acceptance rules. Closing this row means keeping that exclusion | An unattended rewriter |
 | Unattended credential renewal | Permanent exclusion | Issuance and renewal stay operator-authorized. Closing this row means keeping that exclusion | A long-running local campaign |
-| Independent two-host operation | `OPEN_UNAVAILABLE` | A new protocol, written before the first connection, on two authorized machines with no shared disk: the same pinned binary, two identities, explicit mutual authorization, one exchange, a restart on each host, and a revocation on one host observed by the other | Loopback TLS, a second process on this PC, or a remote CI runner |
-| Host power-loss durability | Unqualified | A cut that removes power from the storage device without a flush, on a disposable state copy, followed by a reboot and a hash comparison. Absent that rig, the status is `UNAVAILABLE_ON_THIS_HOST` | Process kill or a unit test that simulates a crash |
-| Network-filesystem durability | Unqualified | A disconnect of an independent file server during commit, then recovery or a recorded hold. A share of the same local disk does not count. Absent that server, the status is `UNAVAILABLE_ON_THIS_HOST` | Local crash recovery |
+| Independent two-host operation | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No second authorized machine was available | A new protocol, written before the first connection, on two authorized machines with no shared disk: the same pinned binary, two identities, explicit mutual authorization, one exchange, a restart on each host, and a revocation on one host observed by the other | Loopback TLS, a second process on this PC, or a remote CI runner |
+| Host power-loss durability | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No storage-power-cut rig was available | A cut that removes power from the storage device without a flush, on a disposable state copy, followed by a reboot and a hash comparison | Process kill or a unit test that simulates a crash |
+| Network-filesystem durability | `UNAVAILABLE_ON_THIS_HOST` as inspected 2026-10-30. No independent file server was available | A disconnect of an independent file server during commit, then recovery or a recorded hold. A share of the same local disk does not count | Local crash recovery |
 | Private network, pull request 1 | Open draft on `design/voluntary-symbiote-network` at `4cf88ae`. Not merged | Its own branch, after Protocol 002 has a terminal result, and only if merge is separately requested. Participation stays voluntary, knowledge stays receiver-validated, and tribute stays evidence-gated | Using the network branch as an efficiency result |
 
 ## Phase B decision, recorded before any Protocol 002 target
@@ -54,7 +55,7 @@ their evidence exists. The private network does not start ahead of Protocol
 
 ## Preserved anchors
 
-- Protocol 002 text: [RESEARCH_V06_PROTOCOL.md](RESEARCH_V06_PROTOCOL.md). Status remains `NOT_RUN`.
+- Protocol 002 text: [RESEARCH_V06_PROTOCOL.md](RESEARCH_V06_PROTOCOL.md). Status is `NOT_DEMONSTRATED`.
 - Protocol 001: `NOT_DEMONSTRATED`, frozen.
 - Engine status: [V11_ENGINE_STATUS.md](V11_ENGINE_STATUS.md).
 - Roadmap next research step: [ROADMAP.md](ROADMAP.md).

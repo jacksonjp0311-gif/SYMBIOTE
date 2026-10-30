@@ -1,5 +1,15 @@
 # Changelog
 
+## Research record — 2026-10-30 — not a release
+
+- Structural transfer protocol 002 completed `NOT_DEMONSTRATED` on source
+  `5c0857b9e6c2c725bc652dd8a9947e4c2f65b1eb`. Registration
+  `870159868f77a8e3bfe3426e3275a8df732a3a7ee42655f8f7a065ea9facb2a5`. Result
+  `e4c5d9f315d744f5513c7c5d32bfcc4243db97d67ba279facf52c9f2ffa352d7`.
+  Both owners scored −7 against isolation. Incorrect certificates were zero.
+  v1.1.2 is unchanged. Two-host, power-loss, and network-filesystem rows stay
+  unavailable on this host.
+
 ## v1.1.2 — 2026-10-29 — Stable release
 
 - Package the existing typed Rust engine and native `engine` lifecycle for

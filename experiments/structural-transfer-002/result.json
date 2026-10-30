@@ -1,0 +1,81 @@
+{
+  "arms": {
+    "equal_budget": [
+      20,
+      20
+    ],
+    "exchange_total": [
+      27,
+      27
+    ],
+    "fixed_basis": [
+      20,
+      20
+    ],
+    "hinted_queries": [
+      20,
+      20
+    ],
+    "independent_learner_queries": [
+      20,
+      20
+    ],
+    "isolated": [
+      20,
+      20
+    ]
+  },
+  "cohort_executions": 1,
+  "incorrect_certificates": 0,
+  "mismatch": {
+    "history_unchanged": true,
+    "rejected": true,
+    "wrong_strategy_certified": false
+  },
+  "mutual_benefit": false,
+  "nets": [
+    -7,
+    -7
+  ],
+  "protocol": "SYMBIOTE-STRUCTURAL-TRANSFER-002",
+  "receipts": [
+    {
+      "benefit_verified": false,
+      "exchange_path_cost": 27,
+      "isolated_control_cost": 20,
+      "receiver": "owner-a",
+      "restart_oracle_calls": 0,
+      "retained_after_reopen": true,
+      "sender": "owner-b"
+    },
+    {
+      "benefit_verified": false,
+      "exchange_path_cost": 27,
+      "isolated_control_cost": 20,
+      "receiver": "owner-b",
+      "restart_oracle_calls": 0,
+      "retained_after_reopen": true,
+      "sender": "owner-a"
+    }
+  ],
+  "registration_sha256": "870159868f77a8e3bfe3426e3275a8df732a3a7ee42655f8f7a065ea9facb2a5",
+  "remapped_control_matches": true,
+  "schema": "symbiote.structural-transfer-002-result/1",
+  "scientific_samples": 0,
+  "shared_mask": 12,
+  "source_commit": "5c0857b9e6c2c725bc652dd8a9947e4c2f65b1eb",
+  "status": "NOT_DEMONSTRATED",
+  "support_unchanged_by_hint": true,
+  "task_biases": [
+    false,
+    true,
+    true,
+    true,
+    false,
+    false,
+    true,
+    false
+  ],
+  "unit": "affine-oracle-check/1",
+  "width": 4
+}

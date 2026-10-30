@@ -1,11 +1,16 @@
 # Structural transfer protocol 002 — preregistered, not executed
 
-Protocol: SYMBIOTE-STRUCTURAL-TRANSFER-002. Status: **NOT_RUN**.
+Protocol: SYMBIOTE-STRUCTURAL-TRANSFER-002. Status: **NOT_DEMONSTRATED**.
 
-This document freezes the question and the acceptance rule before any target
-truth for the study is opened. Registration of a run, when it happens, must pin
-the source commit, executable SHA-256 and this file's bytes before the first
-target is generated. Nothing in the current repository is that registration.
+This document froze the question and the acceptance rule before any target
+truth for the study was opened. The executed registration is
+`870159868f77a8e3bfe3426e3275a8df732a3a7ee42655f8f7a065ea9facb2a5` on source
+`5c0857b9e6c2c725bc652dd8a9947e4c2f65b1eb`. The result is
+`e4c5d9f315d744f5513c7c5d32bfcc4243db97d67ba279facf52c9f2ffa352d7`.
+Both owner nets are −7 affine-oracle checks. Incorrect certificates are zero,
+both retained predictions survive a process restart with zero replay oracle
+calls, and the mismatched arm is rejected with history unchanged. The hint
+does not shrink support. The acceptance table below is unchanged.
 
 Query-transfer protocol 001 remains `NOT_DEMONSTRATED`. Its receipts stay
 frozen. This protocol does not retune them and does not count them as samples.
@@ -52,8 +57,8 @@ and an unfinished promotion do not satisfy it. Durable benefit additionally
 requires the restart flag. Research success requires two such receipts with
 crossed identities and the same transferred record; a caller-supplied sender
 net on one receipt is not the other participant's result. Scores in different
-units are not added. The acceptance table below is unchanged. Status remains
-**NOT_RUN**.
+units are not added. The acceptance table below is unchanged. The executed status is
+**NOT_DEMONSTRATED**.
 
 A transferred constraint may choose an experiment. It may not remove a
 hypothesis or authorize a prediction until the receiver's own observations do.
